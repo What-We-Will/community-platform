@@ -1,5 +1,5 @@
-import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { updateSession } from "@/lib/supabase/proxy";
 
 const PROTECTED_ROUTES = [
   "/dashboard",
@@ -32,51 +32,15 @@ function isAuthPath(pathname: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    console.error(
-      "[proxy] Missing Supabase env vars: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)"
-    );
-    return NextResponse.next({ request });
-  }
-
-  let supabaseResponse = NextResponse.next({
-    request,
-  });
-
-  const supabase = createServerClient(supabaseUrl, supabaseKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value);
-        });
-        supabaseResponse = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) => {
-          try {
-            supabaseResponse.cookies.set(name, value, options ?? {});
-          } catch {
-            supabaseResponse.cookies.set(name, value);
-          }
-        });
-      },
-    },
-  });
-
+  let response: NextResponse;
   let user: { id: string } | null = null;
+
   try {
-    const { data } = await supabase.auth.getUser();
-    user = data?.user ?? null;
+    const result = await updateSession(request);
+    response = result.supabaseResponse;
+    user = result.user;
   } catch (err) {
-    console.error("[proxy] Auth error:", err);
+    console.error("[proxy] Error:", err);
     return NextResponse.next({ request });
   }
 
@@ -84,7 +48,7 @@ export async function proxy(request: NextRequest) {
 
   // Unauthenticated users on auth pages — never redirect (prevents auth loop)
   if (isAuthPath(pathname) && !user) {
-    return supabaseResponse;
+    return response;
   }
 
   if (isProtectedPath(pathname) && !user) {
@@ -100,7 +64,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  return response;
 }
 
 export const config = {
