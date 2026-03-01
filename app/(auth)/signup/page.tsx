@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import OAuthButtons, { OAuthDivider } from "@/components/auth/oauth-buttons";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -101,6 +102,8 @@ export default function SignupPage() {
               {error}
             </div>
           )}
+          <OAuthButtons redirectTo="/onboarding" />
+          <OAuthDivider />
           <div className="space-y-2">
             <Label htmlFor="fullName">Full name</Label>
             <Input

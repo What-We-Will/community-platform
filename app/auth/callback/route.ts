@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
+  const next = requestUrl.searchParams.get("next");
 
   if (code) {
     const cookieStore = await cookies();
@@ -43,12 +44,16 @@ export async function GET(request: Request) {
         .eq("id", data.user.id)
         .single();
 
-      const redirectPath = profile?.is_onboarded ? "/dashboard" : "/onboarding";
+      // Use "next" param if valid relative path, otherwise use onboarding/dashboard
+      let redirectPath = profile?.is_onboarded ? "/dashboard" : "/onboarding";
+      if (next && next.startsWith("/") && !next.startsWith("//")) {
+        redirectPath = next;
+      }
       return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
     }
   }
 
   // Redirect to login on error; to dashboard if no code (e.g. already logged in)
-  const fallbackPath = code ? "/login" : "/dashboard";
+  const fallbackPath = code ? "/login" : next && next.startsWith("/") ? next : "/dashboard";
   return NextResponse.redirect(new URL(fallbackPath, requestUrl.origin));
 }

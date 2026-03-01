@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import OAuthButtons, { OAuthDivider } from "@/components/auth/oauth-buttons";
 
 interface LoginFormProps {
   redirectTo: string;
@@ -68,6 +69,8 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
               {error}
             </div>
           )}
+          <OAuthButtons redirectTo={redirectTo} />
+          <OAuthDivider />
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
