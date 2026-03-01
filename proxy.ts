@@ -82,6 +82,11 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Unauthenticated users on auth pages — never redirect (prevents auth loop)
+  if (isAuthPath(pathname) && !user) {
+    return supabaseResponse;
+  }
+
   if (isProtectedPath(pathname) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
