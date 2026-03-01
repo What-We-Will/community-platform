@@ -80,6 +80,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
           linkedin_url: linkedinUrl || null,
           github_url: githubUrl || null,
           portfolio_url: portfolioUrl || null,
+          is_onboarded: true,
         })
         .eq("id", profile.id);
 
