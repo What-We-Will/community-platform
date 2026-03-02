@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -88,11 +89,18 @@ export default function AppShell({ children, user }: AppShellProps) {
         <div className="flex h-full flex-col">
           <div className="flex h-14 items-center justify-between border-b px-4 lg:justify-center">
             <Link
-              href="/dashboard"
-              className="text-lg font-semibold tracking-tight"
+              href="/"
+              className="flex items-center gap-2 text-lg font-bold uppercase tracking-tight text-primary-orange"
               onClick={() => setSidebarOpen(false)}
             >
-              What We Will
+              <Image
+                src="/images/logo-mark.webp"
+                alt="What We Will logo"
+                width={28}
+                height={28}
+                className="h-7 w-7"
+              />
+              <span>What We Will</span>
             </Link>
             <Button
               variant="ghost"
@@ -157,7 +165,7 @@ export default function AppShell({ children, user }: AppShellProps) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center border-b bg-background px-4 lg:hidden">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background px-4 lg:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -166,7 +174,19 @@ export default function AppShell({ children, user }: AppShellProps) {
           >
             <Menu className="size-5" />
           </Button>
-          <span className="ml-2 font-semibold">What We Will</span>
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-bold uppercase tracking-tight text-primary-orange"
+          >
+            <Image
+              src="/images/logo-mark.webp"
+              alt="What We Will logo"
+              width={28}
+              height={28}
+              className="h-7 w-7"
+            />
+            <span>What We Will</span>
+          </Link>
         </header>
 
         <main className="flex-1 p-4 lg:p-6">{children}</main>

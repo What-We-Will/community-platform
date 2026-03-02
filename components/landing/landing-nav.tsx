@@ -1,8 +1,9 @@
+import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export function LandingNav() {
+export function LandingNav({ user }: { user?: User | null }) {
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-white">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-6 px-4">
@@ -39,14 +40,25 @@ export function LandingNav() {
           >
             Our Future
           </a>
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
-            asChild
-          >
-            <Link href="/login">Login</Link>
-          </Button>
+          {user ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
+              asChild
+            >
+              <Link href="/dashboard">Dashboard</Link>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
+              asChild
+            >
+              <Link href="/login">Login</Link>
+            </Button>
+          )}
         </nav>
       </div>
     </header>
