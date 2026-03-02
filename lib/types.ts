@@ -140,3 +140,36 @@ export interface GroupJoinRequest {
 export interface GroupJoinRequestWithProfile extends GroupJoinRequest {
   profile: Profile;
 }
+
+// ─── Polls ──────────────────────────────────────────────────────────────────
+
+export interface Poll {
+  id: string;
+  question: string;
+  created_by: string | null;
+  group_id: string | null;
+  allow_multiple: boolean;
+  closes_at: string | null;
+  created_at: string;
+}
+
+export interface PollOption {
+  id: string;
+  poll_id: string;
+  label: string;
+  order_index: number;
+}
+
+export interface PollVote {
+  poll_id: string;
+  option_id: string;
+  user_id: string;
+  created_at: string;
+}
+
+export interface PollWithDetails extends Poll {
+  options: (PollOption & { voteCount: number })[];
+  totalVotes: number;
+  userVotes: string[]; // option IDs the current user voted for
+  creator: Profile | null;
+}
