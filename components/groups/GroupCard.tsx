@@ -27,7 +27,7 @@ export function GroupCard({ group, compact = false }: GroupCardProps) {
           <div className="flex items-center gap-1.5">
             <p className="text-sm font-medium truncate">{group.name}</p>
             {group.is_private && <Lock className="size-3 text-muted-foreground shrink-0" />}
-            {group.archived && <Archive className="size-3 text-muted-foreground shrink-0" title="Archived" />}
+            {group.archived && <Archive className="size-3 text-muted-foreground shrink-0" aria-label="Archived" />}
           </div>
           <p className="text-xs text-muted-foreground">
             {group.memberCount} member{group.memberCount !== 1 ? "s" : ""}
