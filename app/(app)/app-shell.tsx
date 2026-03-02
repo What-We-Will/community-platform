@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   UserSearch,
   UsersRound,
+  Calendar,
   MessageSquare,
   UserCircle,
   Menu,
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/members", label: "Members", icon: UserSearch },
   { href: "/groups", label: "Groups", icon: UsersRound },
+  { href: "/events", label: "Events", icon: Calendar },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];

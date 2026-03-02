@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { NotebookPen, Video, Loader2, LogOut, Settings, Archive } from "lucide-react";
+import { NotebookPen, Video, Loader2, LogOut, Settings, Archive, Calendar, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,7 @@ import {
   updateGroupSettingsAction,
 } from "@/app/(app)/groups/actions";
 import { JoinRequestsPanel } from "@/components/groups/JoinRequestsPanel";
+import { EventCard } from "@/components/events/EventCard";
 import type { Group, Profile, GroupMember, MessageWithSender, GroupJoinRequestWithProfile } from "@/lib/types";
 
 interface GroupHubClientProps {
@@ -41,6 +43,9 @@ interface GroupHubClientProps {
   members: Array<Profile & { role: GroupMember["role"] }>;
   initialMessages: MessageWithSender[];
   pendingRequests: GroupJoinRequestWithProfile[];
+  upcomingEvents: Array<Record<string, unknown>>;
+  eventRsvpCounts: Record<string, { going: number; maybe: number; declined: number }>;
+  eventUserRsvp: Record<string, { status: string }>;
 }
 
 export function GroupHubClient({
@@ -51,6 +56,9 @@ export function GroupHubClient({
   members,
   initialMessages,
   pendingRequests,
+  upcomingEvents,
+  eventRsvpCounts,
+  eventUserRsvp,
 }: GroupHubClientProps) {
   const router = useRouter();
   const [joining, setJoining] = useState(false);
@@ -227,6 +235,7 @@ export function GroupHubClient({
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="recordings">Recordings</TabsTrigger>
           {currentUserRole === "admin" && (
@@ -313,6 +322,55 @@ export function GroupHubClient({
             onUpdateRole={handleUpdateRole}
             onRemoveMember={handleRemoveMember}
           />
+        </TabsContent>
+
+        {/* Events */}
+        <TabsContent value="events" className="mt-4 space-y-4">
+          <div className="flex justify-end">
+            <Button size="sm" asChild>
+              <Link href={`/events/create?group=${group.id}`} className="gap-1.5">
+                <Plus className="size-4" />
+                Create Event
+              </Link>
+            </Button>
+          </div>
+          {upcomingEvents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-muted-foreground">
+              <Calendar className="size-10 opacity-40" />
+              <p className="font-medium">No events scheduled for this group yet</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {upcomingEvents.map((event) => {
+                const e = event as {
+                  id: string;
+                  title: string;
+                  description: string | null;
+                  event_type: string;
+                  host_id: string | null;
+                  group_id: string | null;
+                  location: string | null;
+                  video_room_name: string | null;
+                  starts_at: string;
+                  ends_at: string;
+                  max_attendees: number | null;
+                  created_at: string;
+                  updated_at: string;
+                  host: Profile | null;
+                };
+                return (
+                  <li key={e.id}>
+                    <EventCard
+                      event={e}
+                      rsvpCounts={eventRsvpCounts[e.id] ?? { going: 0, maybe: 0, declined: 0 }}
+                      currentUserRsvp={eventUserRsvp[e.id] ? { event_id: e.id, user_id: currentUser.id, status: eventUserRsvp[e.id].status as "going" | "maybe" | "declined", created_at: "" } : null}
+                      currentUserId={currentUser.id}
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </TabsContent>
 
         {/* Notes placeholder */}

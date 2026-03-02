@@ -173,3 +173,45 @@ export interface PollWithDetails extends Poll {
   userVotes: string[]; // option IDs the current user voted for
   creator: Profile | null;
 }
+
+// ─── Events ──────────────────────────────────────────────────────────────────
+
+export type EventType =
+  | "skillshare"
+  | "workshop"
+  | "ama"
+  | "mock_interview"
+  | "social"
+  | "other";
+
+export interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  event_type: EventType;
+  host_id: string | null;
+  group_id: string | null;
+  location: string | null;
+  video_room_name: string | null;
+  starts_at: string;
+  ends_at: string;
+  max_attendees: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventRsvp {
+  event_id: string;
+  user_id: string;
+  status: "going" | "maybe" | "declined";
+  created_at: string;
+}
+
+export interface EventWithDetails extends Event {
+  host: Profile | null;
+  group: Group | null;
+  rsvpCounts: { going: number; maybe: number; declined: number };
+  currentUserRsvp: EventRsvp | null;
+  isLive: boolean;
+  isPast: boolean;
+}

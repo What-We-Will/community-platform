@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GroupHubClient } from "./GroupHubClient";
 import { PrivateGroupGate } from "./PrivateGroupGate";
+import { fetchUpcomingEvents } from "@/lib/events";
 import type { Profile, GroupMember, GroupJoinRequest, GroupJoinRequestWithProfile } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -140,6 +141,34 @@ export default async function GroupHubPage({ params }: Props) {
     avatar_url: currentUserProfile?.avatar_url ?? null,
   };
 
+  let upcomingEvents: Awaited<ReturnType<typeof fetchUpcomingEvents>> = [];
+  let eventRsvpCounts: Record<string, { going: number; maybe: number; declined: number }> = {};
+  let eventUserRsvp: Record<string, { status: string }> = {};
+  try {
+    upcomingEvents = await fetchUpcomingEvents({ groupId: group.id });
+    if (upcomingEvents.length > 0) {
+      const eventIds = upcomingEvents.map((e) => (e as { id: string }).id);
+      const { data: rsvps } = await supabase
+        .from("event_rsvps")
+        .select("event_id, user_id, status")
+        .in("event_id", eventIds);
+      for (const eid of eventIds) {
+        eventRsvpCounts[eid] = { going: 0, maybe: 0, declined: 0 };
+      }
+      for (const r of rsvps ?? []) {
+        const row = r as { event_id: string; user_id: string; status: string };
+        if (eventRsvpCounts[row.event_id]) {
+          eventRsvpCounts[row.event_id][row.status as "going" | "maybe" | "declined"]++;
+          if (row.user_id === user.id) {
+            eventUserRsvp[row.event_id] = { status: row.status };
+          }
+        }
+      }
+    }
+  } catch {
+    // leave upcomingEvents empty
+  }
+
   return (
     <GroupHubClient
       group={group}
@@ -149,6 +178,9 @@ export default async function GroupHubPage({ params }: Props) {
       members={membersWithRole}
       initialMessages={messages}
       pendingRequests={pendingRequests}
+      upcomingEvents={upcomingEvents}
+      eventRsvpCounts={eventRsvpCounts}
+      eventUserRsvp={eventUserRsvp}
     />
   );
 }
