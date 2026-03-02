@@ -1,7 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GroupHubClient } from "./GroupHubClient";
-import type { Profile, GroupMember } from "@/lib/types";
+import { PrivateGroupGate } from "./PrivateGroupGate";
+import type { Profile, GroupMember, GroupJoinRequest, GroupJoinRequestWithProfile } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -34,16 +35,21 @@ export default async function GroupHubPage({ params }: Props) {
   const currentUserRole = (myMembership?.role as GroupMember["role"]) ?? null;
   const isMember = !!myMembership;
 
-  // Private group: non-members can't see content
+  // Private group gate for non-members
   if (group.is_private && !isMember) {
+    // Check if the user already has a pending/rejected request
+    const { data: existingRequest } = await supabase
+      .from("group_join_requests")
+      .select("*")
+      .eq("group_id", group.id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
     return (
-      <div className="mx-auto max-w-lg mt-20 text-center space-y-4 px-4">
-        <div className="text-5xl">🔒</div>
-        <h1 className="text-xl font-semibold">{group.name}</h1>
-        <p className="text-muted-foreground text-sm">
-          This is a private group. Contact an admin to request an invitation.
-        </p>
-      </div>
+      <PrivateGroupGate
+        group={group}
+        existingRequest={existingRequest as GroupJoinRequest | null}
+      />
     );
   }
 
@@ -62,6 +68,37 @@ export default async function GroupHubPage({ params }: Props) {
     })
     .filter(Boolean) as Array<Profile & { role: GroupMember["role"] }>;
 
+  // Fetch pending join requests (admins only)
+  let pendingRequests: GroupJoinRequestWithProfile[] = [];
+  if (currentUserRole === "admin") {
+    const { data: requests } = await supabase
+      .from("group_join_requests")
+      .select("*")
+      .eq("group_id", group.id)
+      .eq("status", "pending")
+      .order("created_at", { ascending: true });
+
+    if (requests && requests.length > 0) {
+      const requesterIds = requests.map((r) => r.user_id);
+      const { data: requesterProfiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", requesterIds);
+
+      const requesterMap = new Map(
+        (requesterProfiles ?? []).map((p) => [p.id, p as Profile])
+      );
+
+      pendingRequests = requests
+        .map((r) => {
+          const profile = requesterMap.get(r.user_id);
+          if (!profile) return null;
+          return { ...r, status: r.status as GroupJoinRequest["status"], profile };
+        })
+        .filter(Boolean) as GroupJoinRequestWithProfile[];
+    }
+  }
+
   // Current user's profile
   const { data: currentUserProfile } = await supabase
     .from("profiles")
@@ -69,7 +106,6 @@ export default async function GroupHubPage({ params }: Props) {
     .eq("id", user.id)
     .single();
 
-  // Fetch messages for the group conversation
   const conversationId = group.conversation_id as string | null;
 
   const { data: rawMessages } = conversationId
@@ -90,7 +126,6 @@ export default async function GroupHubPage({ params }: Props) {
     sender: msg.sender_id ? (profileMap.get(msg.sender_id) ?? null) : null,
   }));
 
-  // Mark as read
   if (conversationId && isMember) {
     await supabase
       .from("conversation_participants")
@@ -113,6 +148,7 @@ export default async function GroupHubPage({ params }: Props) {
       isMember={isMember}
       members={membersWithRole}
       initialMessages={messages}
+      pendingRequests={pendingRequests}
     />
   );
 }

@@ -8,6 +8,7 @@ import {
   leaveGroup,
   generateSlug,
 } from "@/lib/groups";
+import type { GroupJoinRequest } from "@/lib/types";
 
 // ─── Create group ─────────────────────────────────────────────────────────────
 
@@ -151,4 +152,114 @@ export async function removeMemberAction(
     console.error("[removeMemberAction]", err);
     return { error: "Failed to remove member." };
   }
+}
+
+// ─── Request to join private group ───────────────────────────────────────────
+
+export async function requestJoinGroupAction(
+  groupId: string,
+  message?: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase.from("group_join_requests").insert({
+    group_id: groupId,
+    user_id: user.id,
+    message: message || null,
+    status: "pending",
+  });
+
+  if (error) {
+    if (error.code === "23505") return { error: "You have already requested to join this group." };
+    console.error("[requestJoinGroupAction]", error);
+    return { error: "Failed to submit request. Please try again." };
+  }
+
+  revalidatePath(`/groups/[slug]`, "page");
+  return {};
+}
+
+// ─── Withdraw join request ────────────────────────────────────────────────────
+
+export async function withdrawJoinRequestAction(
+  requestId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("group_join_requests")
+    .delete()
+    .eq("id", requestId)
+    .eq("user_id", user.id)
+    .eq("status", "pending");
+
+  if (error) {
+    console.error("[withdrawJoinRequestAction]", error);
+    return { error: "Failed to withdraw request." };
+  }
+
+  revalidatePath(`/groups/[slug]`, "page");
+  return {};
+}
+
+// ─── Approve join request (admin) ─────────────────────────────────────────────
+
+export async function approveJoinRequestAction(
+  request: GroupJoinRequest
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  try {
+    // Add the user to the group
+    await joinGroup(request.group_id, request.user_id);
+
+    // Mark request as approved
+    await supabase
+      .from("group_join_requests")
+      .update({ status: "approved" })
+      .eq("id", request.id);
+
+    revalidatePath(`/groups/[slug]`, "page");
+    return {};
+  } catch (err) {
+    console.error("[approveJoinRequestAction]", err);
+    return { error: "Failed to approve request." };
+  }
+}
+
+// ─── Reject join request (admin) ──────────────────────────────────────────────
+
+export async function rejectJoinRequestAction(
+  requestId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("group_join_requests")
+    .update({ status: "rejected" })
+    .eq("id", requestId);
+
+  if (error) {
+    console.error("[rejectJoinRequestAction]", error);
+    return { error: "Failed to reject request." };
+  }
+
+  revalidatePath(`/groups/[slug]`, "page");
+  return {};
 }

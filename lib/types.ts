@@ -122,3 +122,16 @@ export interface GroupWithDetails extends Group {
   currentUserRole: "member" | "admin" | "moderator" | null;
   recentMembers: Profile[];
 }
+
+export interface GroupJoinRequest {
+  id: string;
+  group_id: string;
+  user_id: string;
+  status: "pending" | "approved" | "rejected";
+  message: string | null;
+  created_at: string;
+}
+
+export interface GroupJoinRequestWithProfile extends GroupJoinRequest {
+  profile: Profile;
+}

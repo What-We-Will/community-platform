@@ -24,7 +24,8 @@ import {
   updateMemberRoleAction,
   removeMemberAction,
 } from "@/app/(app)/groups/actions";
-import type { Group, Profile, GroupMember, MessageWithSender } from "@/lib/types";
+import { JoinRequestsPanel } from "@/components/groups/JoinRequestsPanel";
+import type { Group, Profile, GroupMember, MessageWithSender, GroupJoinRequestWithProfile } from "@/lib/types";
 
 interface GroupHubClientProps {
   group: Group;
@@ -33,6 +34,7 @@ interface GroupHubClientProps {
   isMember: boolean;
   members: Array<Profile & { role: GroupMember["role"] }>;
   initialMessages: MessageWithSender[];
+  pendingRequests: GroupJoinRequestWithProfile[];
 }
 
 export function GroupHubClient({
@@ -42,6 +44,7 @@ export function GroupHubClient({
   isMember,
   members,
   initialMessages,
+  pendingRequests,
 }: GroupHubClientProps) {
   const router = useRouter();
   const [joining, setJoining] = useState(false);
@@ -119,8 +122,13 @@ export function GroupHubClient({
       <Tabs defaultValue="chat">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="chat">Chat</TabsTrigger>
-          <TabsTrigger value="members">
+          <TabsTrigger value="members" className="gap-1.5">
             Members ({members.length})
+            {pendingRequests.length > 0 && (
+              <span className="flex size-4 items-center justify-center rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                {pendingRequests.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="recordings">Recordings</TabsTrigger>
@@ -169,6 +177,12 @@ export function GroupHubClient({
 
         {/* Members */}
         <TabsContent value="members" className="mt-4">
+          {pendingRequests.length > 0 && (
+            <JoinRequestsPanel
+              requests={pendingRequests}
+              onRefresh={() => router.refresh()}
+            />
+          )}
           <GroupMemberList
             members={members}
             currentUserId={currentUser.id}
