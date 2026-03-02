@@ -16,7 +16,7 @@ export function LandingFutureWeDemand() {
           </h2>
           <blockquote className="mt-4 border-l-4 border-primary-orange pl-4 italic text-muted-foreground">
             &ldquo;Eight hours for work, eight hours for rest, eight hours for
-            <strong> what we will</strong>.&rdquo; — Ira Steward (1863)
+            <strong className="text-primary-orange"> what we will</strong>.&rdquo; — Ira Steward (1863)
           </blockquote>
           <p className="mt-2 text-xs text-muted-foreground">
             Machinists and Blacksmiths Union labor leader who fought for the
@@ -37,7 +37,7 @@ export function LandingFutureWeDemand() {
             But every great disruption is also an opening for building better.
             The workers in the New Deal era didn&apos;t just survive
             industrialization; they reimagined work itself. <br/><br/><strong>What can we
-            imagine—and build together—for the future of work?</strong>
+            imagine<span className="text-primary-orange">—and build together—</span>for the future of work?</strong>
           </p>
         </div>
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted md:w-1/2">

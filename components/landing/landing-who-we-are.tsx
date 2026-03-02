@@ -6,10 +6,10 @@ export function LandingWhoWeAre() {
       <div className="mx-auto max-w-6xl">
         <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
           <span className="text-foreground">Who</span>{" "}
-          <span className="text-light-green">We Are</span>
+          <span className="text-primary-orange">We Are</span>
         </h2>
         <p className="mt-5 max-w-3xl text-muted-foreground">
-          <strong className="text-light-green font-semibold">What We Will</strong>{" "}
+          <strong className="text-primary-orange font-semibold">What We Will</strong>{" "}
           is a worker center for workers across sectors impacted by rapid
           technological change. We started in response to mass layoffs in
           2025–2026, as part of the{" "}
@@ -17,7 +17,7 @@ export function LandingWhoWeAre() {
             href="https://techworkerscoalition.org/"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-light-green underline underline-offset-2 hover:opacity-90"
+            className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover"
           >
             Tech Workers Coalition
           </Link>
