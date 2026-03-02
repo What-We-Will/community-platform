@@ -54,6 +54,11 @@ export default function JitsiMeet({
           startWithVideoMuted: false,
           disableDeepLinking: true,
           prejoinPageEnabled: true,
+          // No host login or lobby — first to join (call initiator) is the de facto host/moderator
+          enableHostPage: false,
+          enableLobby: false,
+          enableWelcomePage: false,
+          requireDisplayName: false,
           toolbarButtons: [
             "microphone",
             "camera",
