@@ -21,8 +21,9 @@ export default function OAuthButtons({ redirectTo = "/dashboard" }: OAuthButtons
 
     try {
       const supabase = createClient();
-      const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+      const siteUrl = (
+        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin
+      ).replace(/\/$/, "");
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {

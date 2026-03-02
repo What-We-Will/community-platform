@@ -4,6 +4,11 @@ import { type NextRequest, NextResponse } from "next/server";
 const LAST_SEEN_COOKIE = "last_seen";
 const LAST_SEEN_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
+// Caches is_onboarded=true in a cookie so we don't query the DB on every request.
+// The middleware only does a DB lookup when this cookie is absent (first request
+// per browser session, or after cookie expiry).
+export const ONBOARDED_COOKIE = "profile_onboarded";
+
 export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey =
@@ -14,6 +19,7 @@ export async function updateSession(request: NextRequest) {
     return {
       supabaseResponse: NextResponse.next({ request }),
       user: null,
+      isOnboarded: false,
     };
   }
 
@@ -48,8 +54,33 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Update last_seen_at if user is authenticated and cookie is stale
+  let isOnboarded = false;
+
   if (user) {
+    // ── Onboarding status ──────────────────────────────────────────────────
+    // Check the cookie cache first to avoid a DB round-trip on every request.
+    if (request.cookies.get(ONBOARDED_COOKIE)?.value === "1") {
+      isOnboarded = true;
+    } else {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_onboarded, last_seen_at")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      isOnboarded = profile?.is_onboarded ?? false;
+
+      if (isOnboarded) {
+        // Cache so future requests skip the DB query (30-day TTL)
+        supabaseResponse.cookies.set(ONBOARDED_COOKIE, "1", {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 30,
+          sameSite: "lax",
+        });
+      }
+    }
+
+    // ── last_seen_at update ────────────────────────────────────────────────
     const lastSeenCookie = request.cookies.get(LAST_SEEN_COOKIE)?.value;
     const now = Date.now();
     const shouldUpdate =
@@ -64,10 +95,10 @@ export async function updateSession(request: NextRequest) {
 
       supabaseResponse.cookies.set(LAST_SEEN_COOKIE, now.toString(), {
         path: "/",
-        maxAge: 60 * 60 * 24, // 24 hours
+        maxAge: 60 * 60 * 24,
       });
     }
   }
 
-  return { supabaseResponse, user };
+  return { supabaseResponse, user, isOnboarded };
 }

@@ -31,14 +31,20 @@ function isAuthPath(pathname: string): boolean {
   );
 }
 
+function isOnboardingPath(pathname: string): boolean {
+  return pathname === "/onboarding" || pathname.startsWith("/onboarding/");
+}
+
 export async function proxy(request: NextRequest) {
   let response: NextResponse;
   let user: { id: string } | null = null;
+  let isOnboarded = false;
 
   try {
     const result = await updateSession(request);
     response = result.supabaseResponse;
     user = result.user;
+    isOnboarded = result.isOnboarded;
   } catch (err) {
     console.error("[proxy] Error:", err);
     return NextResponse.next({ request });
@@ -46,11 +52,12 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Unauthenticated users on auth pages — never redirect (prevents auth loop)
+  // Unauthenticated users on auth pages — allow through (prevents redirect loop)
   if (isAuthPath(pathname) && !user) {
     return response;
   }
 
+  // Unauthenticated users on protected routes → login
   if (isProtectedPath(pathname) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -58,7 +65,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Authenticated users on auth pages → dashboard
   if (isAuthPath(pathname) && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
+  // Authenticated but not yet onboarded → force onboarding
+  // Allow /onboarding itself through to prevent an infinite redirect loop.
+  if (user && !isOnboarded && isProtectedPath(pathname) && !isOnboardingPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/onboarding";
+    return NextResponse.redirect(url);
+  }
+
+  // Onboarded users who navigate to /onboarding → send to dashboard
+  if (user && isOnboarded && isOnboardingPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

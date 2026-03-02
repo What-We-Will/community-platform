@@ -42,6 +42,10 @@ export default function AppShell({ children, user }: AppShellProps) {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
+    // Clear the onboarding cache cookie so the next user on this browser
+    // gets a fresh check instead of inheriting the previous session's state.
+    document.cookie =
+      "profile_onboarded=; path=/; max-age=0; samesite=lax";
     router.push("/login");
     router.refresh();
   }

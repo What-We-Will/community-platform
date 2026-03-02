@@ -39,8 +39,9 @@ export default function SignupPage() {
 
     try {
       const supabase = createClient();
-      const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+      const siteUrl = (
+        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin
+      ).replace(/\/$/, "");
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
