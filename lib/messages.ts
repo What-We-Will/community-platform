@@ -1,5 +1,23 @@
-import { randomUUID } from "crypto";
+import { createHash } from "crypto";
 import { createClient } from "@/lib/supabase/server";
+
+/**
+ * Generates a stable UUID for a DM between two users.
+ * Sorting ensures deterministism regardless of argument order.
+ * Format matches UUID v5 conventions (version nibble = 5, variant = 8x).
+ */
+function dmConversationId(userId1: string, userId2: string): string {
+  const [a, b] = [userId1, userId2].sort();
+  const hash = createHash("sha256").update(`dm:${a}:${b}`).digest("hex");
+  // Format as xxxxxxxx-xxxx-5xxx-8xxx-xxxxxxxxxxxx
+  return [
+    hash.slice(0, 8),
+    hash.slice(8, 12),
+    "5" + hash.slice(13, 16),
+    (parseInt(hash.slice(16, 18), 16) & 0x3f | 0x80).toString(16).padStart(2, "0") + hash.slice(18, 20),
+    hash.slice(20, 32),
+  ].join("-");
+}
 
 /**
  * Find an existing DM conversation between two users.
@@ -47,8 +65,10 @@ export async function findExistingDM(
 }
 
 /**
- * Create a new DM conversation between two users.
- * Returns the new conversation ID, or throws with the DB error message attached.
+ * Find or create a DM conversation between two users.
+ * Uses a deterministic conversation ID derived from the sorted user pair, so
+ * the database PRIMARY KEY constraint itself enforces uniqueness — two calls
+ * for the same pair always resolve to the same conversation.
  */
 export async function createDMConversation(
   userId1: string,
@@ -56,21 +76,22 @@ export async function createDMConversation(
 ): Promise<string> {
   const supabase = await createClient();
 
-  // Generate the ID server-side so we never need to SELECT the conversation
-  // back after inserting — the SELECT policy requires at least one participant
-  // to exist, creating an RLS chicken-and-egg problem if we insert then select.
-  const conversationId = randomUUID();
+  // Deterministic ID: same pair always produces the same UUID regardless of
+  // argument order. If the row already exists, the INSERT returns a 23505
+  // (unique_violation) error which we treat as a success.
+  const conversationId = dmConversationId(userId1, userId2);
 
   const { error: convError } = await supabase
     .from("conversations")
     .insert({ id: conversationId, type: "dm" });
 
-  if (convError) {
+  if (convError && convError.code !== "23505") {
     throw new Error(
       `Failed to create conversation: ${convError.message} (code: ${convError.code})`
     );
   }
 
+  // Insert participants — ignore 23505 in case they were already added
   const { error: partError } = await supabase
     .from("conversation_participants")
     .insert([
@@ -78,7 +99,7 @@ export async function createDMConversation(
       { conversation_id: conversationId, user_id: userId2 },
     ]);
 
-  if (partError) {
+  if (partError && partError.code !== "23505") {
     throw new Error(
       `Failed to add participants: ${partError.message} (code: ${partError.code})`
     );
