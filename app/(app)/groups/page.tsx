@@ -92,7 +92,7 @@ export default async function GroupsPage() {
   // Sort by member count descending
   enriched.sort((a, b) => b.memberCount - a.memberCount);
 
-  const myGroups = enriched.filter((g) => g.isMember);
+  const myGroups = enriched.filter((g) => g.isMember && !(g.archived === true));
   const discoverGroups = enriched.filter((g) => !g.isMember && !(g.archived === true));
 
   return (

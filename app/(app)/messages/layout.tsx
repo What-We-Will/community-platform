@@ -125,14 +125,16 @@ export default async function MessagesLayout({
       if (groupConvs.length > 0) {
         const groupConvIds = groupConvs.map((c) => c.id);
 
-        // Look up group details by conversation_id
+        // Look up group details by conversation_id (exclude archived)
         const { data: groups } = await supabase
           .from("groups")
-          .select("id, name, slug, conversation_id")
+          .select("id, name, slug, conversation_id, archived")
           .in("conversation_id", groupConvIds);
 
         const groupByConvId = new Map(
-          (groups ?? []).map((g) => [g.conversation_id as string, g])
+          (groups ?? [])
+            .filter((g) => !(g as { archived?: boolean }).archived)
+            .map((g) => [g.conversation_id as string, g])
         );
 
         const [groupLastMsgs, groupUnreads] = await Promise.all([
@@ -176,6 +178,7 @@ export default async function MessagesLayout({
 
         for (const conv of groupConvs) {
           const group = groupByConvId.get(conv.id);
+          if (!group) continue; // skip archived groups (filtered out above)
           conversations.push({
             conversation: conv as Conversation,
             participants: [],

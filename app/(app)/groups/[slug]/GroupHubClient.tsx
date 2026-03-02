@@ -251,7 +251,13 @@ export function GroupHubClient({
                 participants={members}
                 initialMessages={initialMessages}
                 readOnlyFooter={
-                  !isMember ? (
+                  group.archived ? (
+                    <div className="border-t bg-muted/40 px-4 py-3">
+                      <p className="text-sm text-muted-foreground text-center">
+                        This group is archived. Chat is closed and no longer accessible.
+                      </p>
+                    </div>
+                  ) : !isMember ? (
                     <div className="flex items-center justify-between gap-3 border-t bg-muted/40 px-4 py-3">
                       <p className="text-sm text-muted-foreground">
                         Join this group to send messages
