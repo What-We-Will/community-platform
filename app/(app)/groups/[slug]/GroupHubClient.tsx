@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { NotebookPen, Video, Loader2, LogOut, Settings } from "lucide-react";
+import { NotebookPen, Video, Loader2, LogOut, Settings, Archive } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,9 +57,14 @@ export function GroupHubClient({
   const [leavingOpen, setLeavingOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState(group.name);
+  const [groupDescription, setGroupDescription] = useState(group.description ?? "");
+  const [isPrivate, setIsPrivate] = useState(group.is_private);
   const [isDiscoverable, setIsDiscoverable] = useState(group.is_discoverable);
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [archiving, setArchiving] = useState(false);
 
   async function handleJoin() {
     setJoining(true);
@@ -105,8 +112,59 @@ export function GroupHubClient({
     }
   }
 
+  async function handleSaveNameDescription() {
+    setSavingSettings(true);
+    setSettingsError(null);
+    const result = await updateGroupSettingsAction(group.id, {
+      name: groupName.trim() || group.name,
+      description: groupDescription.trim() || null,
+    });
+    setSavingSettings(false);
+    if (result.error) setSettingsError(result.error);
+    else router.refresh();
+  }
+
+  async function handleTogglePrivate(value: boolean) {
+    setSavingSettings(true);
+    setSettingsError(null);
+    setIsPrivate(value);
+    if (value) setIsDiscoverable(true);
+    const result = await updateGroupSettingsAction(group.id, { is_private: value, is_discoverable: value ? isDiscoverable : true });
+    setSavingSettings(false);
+    if (result.error) {
+      setIsPrivate(!value);
+      setSettingsError(result.error);
+    } else router.refresh();
+  }
+
+  async function handleArchive() {
+    setArchiving(true);
+    setSettingsError(null);
+    const result = await updateGroupSettingsAction(group.id, { archived: true });
+    setArchiving(false);
+    setArchiveOpen(false);
+    if (result.error) setSettingsError(result.error);
+    else router.push("/groups");
+  }
+
+  async function handleUnarchive() {
+    setSavingSettings(true);
+    setSettingsError(null);
+    const result = await updateGroupSettingsAction(group.id, { archived: false });
+    setSavingSettings(false);
+    if (result.error) setSettingsError(result.error);
+    else router.refresh();
+  }
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      {group.archived && (
+        <div className="rounded-lg border bg-muted/50 px-4 py-2.5 flex items-center gap-2 text-sm text-muted-foreground">
+          <Archive className="size-4 shrink-0" />
+          <span>This group is archived. It’s hidden from the directory but members can still view it.</span>
+        </div>
+      )}
+
       {/* Group info header */}
       <div className="flex flex-col gap-4">
         <GroupHeader
@@ -116,8 +174,8 @@ export function GroupHubClient({
           recentMembers={members.slice(0, 6)}
         />
 
-        {/* Leave button — only visible to non-admin members */}
-        {isMember && currentUserRole !== "admin" && (
+        {/* Leave button — visible to all members (last admin is blocked by the server) */}
+        {isMember && (
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
@@ -262,11 +320,64 @@ export function GroupHubClient({
               <div>
                 <h3 className="text-sm font-semibold text-foreground">Group Settings</h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Manage visibility and preferences for <strong>{group.name}</strong>.
+                  Rename, change visibility, or archive this group.
                 </p>
               </div>
 
-              {group.is_private && (
+              {/* Rename */}
+              <div className="rounded-lg border p-4 space-y-3">
+                <Label htmlFor="group-name" className="text-sm font-medium">Group name</Label>
+                <Input
+                  id="group-name"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  placeholder="Group name"
+                  maxLength={50}
+                  disabled={savingSettings}
+                  className="max-w-sm"
+                />
+                <div>
+                  <Label htmlFor="group-description" className="text-sm font-medium">Description</Label>
+                  <Textarea
+                    id="group-description"
+                    value={groupDescription}
+                    onChange={(e) => setGroupDescription(e.target.value)}
+                    placeholder="What is this group about?"
+                    rows={3}
+                    maxLength={300}
+                    disabled={savingSettings}
+                    className="mt-1.5"
+                  />
+                </div>
+                <Button size="sm" onClick={handleSaveNameDescription} disabled={savingSettings}>
+                  {savingSettings && <Loader2 className="mr-2 size-4 animate-spin" />}
+                  Save name & description
+                </Button>
+              </div>
+
+              {/* Public / Private */}
+              <div className="rounded-lg border p-4 space-y-1">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="private-toggle" className="text-sm font-medium">
+                      Private group
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {isPrivate
+                        ? "Only members and approved join requests can access."
+                        : "Anyone in the community can find and join."}
+                    </p>
+                  </div>
+                  <Switch
+                    id="private-toggle"
+                    checked={isPrivate}
+                    onCheckedChange={handleTogglePrivate}
+                    disabled={savingSettings}
+                  />
+                </div>
+              </div>
+
+              {isPrivate && (
                 <div className="rounded-lg border p-4 space-y-1">
                   <div className="flex items-center justify-between gap-4">
                     <div className="space-y-0.5">
@@ -275,8 +386,8 @@ export function GroupHubClient({
                       </Label>
                       <p className="text-xs text-muted-foreground">
                         {isDiscoverable
-                          ? "This group appears in the groups directory. Non-members can see it and request to join."
-                          : "This group is hidden from the directory. Only people with a direct link or an invitation can find it."}
+                          ? "Appears in the groups directory; people can request to join."
+                          : "Hidden from the directory; invite or direct link only."}
                       </p>
                     </div>
                     <Switch
@@ -286,20 +397,58 @@ export function GroupHubClient({
                       disabled={savingSettings}
                     />
                   </div>
-                  {settingsError && (
-                    <p className="text-xs text-destructive pt-1">{settingsError}</p>
-                  )}
                 </div>
               )}
 
-              {!group.is_private && (
-                <p className="text-sm text-muted-foreground">
-                  Public groups are always discoverable. Additional settings will appear here in future updates.
-                </p>
+              {settingsError && (
+                <p className="text-sm text-destructive">{settingsError}</p>
               )}
+
+              {/* Archive */}
+              <div className="rounded-lg border border-destructive/50 p-4 space-y-2">
+                <p className="text-sm font-medium">Archive group</p>
+                <p className="text-xs text-muted-foreground">
+                  Archived groups are hidden from the directory. Members can still open the group and view chat; you can unarchive later from the group page.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={group.archived ? undefined : "border-destructive/50 text-destructive hover:bg-destructive/10"}
+                  onClick={() => (group.archived ? handleUnarchive() : setArchiveOpen(true))}
+                  disabled={savingSettings}
+                >
+                  <Archive className="mr-2 size-4" />
+                  {group.archived ? "Unarchive group" : "Archive group"}
+                </Button>
+              </div>
             </div>
           </TabsContent>
         )}
+
+      {/* Archive confirmation */}
+      {currentUserRole === "admin" && (
+        <AlertDialog open={archiveOpen} onOpenChange={setArchiveOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Archive {group.name}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This group will be hidden from the groups directory. Current members can still open it and view the chat. You can unarchive it later from Settings.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={archiving}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleArchive}
+                disabled={archiving}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {archiving && <Loader2 className="mr-2 size-4 animate-spin" />}
+                Archive
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
       </Tabs>
 
       {/* Leave confirmation dialog */}

@@ -172,7 +172,7 @@ export default function OnboardingForm({
               htmlFor="open_to_referrals"
               className="cursor-pointer text-sm font-normal"
             >
-              Open to referrals
+              Open to Mock Interviews
             </Label>
           </div>
           <div className="space-y-2">

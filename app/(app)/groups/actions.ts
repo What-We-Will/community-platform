@@ -301,7 +301,13 @@ export async function inviteMemberAction(
 
 export async function updateGroupSettingsAction(
   groupId: string,
-  settings: { is_discoverable?: boolean; name?: string; description?: string | null }
+  settings: {
+    is_discoverable?: boolean;
+    is_private?: boolean;
+    name?: string;
+    description?: string | null;
+    archived?: boolean;
+  }
 ): Promise<{ error?: string }> {
   const supabase = await createClient();
   const {
@@ -309,9 +315,16 @@ export async function updateGroupSettingsAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (settings.name !== undefined) payload.name = settings.name;
+  if (settings.description !== undefined) payload.description = settings.description;
+  if (settings.is_private !== undefined) payload.is_private = settings.is_private;
+  if (settings.is_discoverable !== undefined) payload.is_discoverable = settings.is_discoverable;
+  if (settings.archived !== undefined) payload.archived = settings.archived;
+
   const { error } = await supabase
     .from("groups")
-    .update({ ...settings, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq("id", groupId);
 
   if (error) {

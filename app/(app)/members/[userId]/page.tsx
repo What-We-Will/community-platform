@@ -222,7 +222,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
           )}
           {typedProfile.open_to_referrals && (
             <Badge className="mt-2 bg-green-600 text-white hover:bg-green-600">
-              Open to Referrals
+              Open to Mock Interviews
             </Badge>
           )}
         </div>

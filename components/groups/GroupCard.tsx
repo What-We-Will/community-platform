@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, Lock } from "lucide-react";
+import { Users, Lock, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ export function GroupCard({ group, compact = false }: GroupCardProps) {
           <div className="flex items-center gap-1.5">
             <p className="text-sm font-medium truncate">{group.name}</p>
             {group.is_private && <Lock className="size-3 text-muted-foreground shrink-0" />}
+            {group.archived && <Archive className="size-3 text-muted-foreground shrink-0" title="Archived" />}
           </div>
           <p className="text-xs text-muted-foreground">
             {group.memberCount} member{group.memberCount !== 1 ? "s" : ""}
@@ -58,6 +59,12 @@ export function GroupCard({ group, compact = false }: GroupCardProps) {
               <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0 h-4">
                 <Lock className="size-2.5" />
                 Private
+              </Badge>
+            )}
+            {group.archived && (
+              <Badge variant="outline" className="gap-1 text-[10px] px-1.5 py-0 h-4">
+                <Archive className="size-2.5" />
+                Archived
               </Badge>
             )}
           </div>

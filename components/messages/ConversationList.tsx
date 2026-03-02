@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -37,6 +37,21 @@ export function ConversationList({
   const pathname = usePathname();
   const [conversations, setConversations] =
     useState<ConversationWithDetails[]>(initialConversations);
+  const prevInitialIdsRef = useRef(
+    initialConversations.map((c) => c.conversation.id).sort().join(",")
+  );
+
+  // Sync from server when initialConversations gains new conversations (e.g. after starting a new thread + refresh)
+  useEffect(() => {
+    const ids = initialConversations
+      .map((c) => c.conversation.id)
+      .sort()
+      .join(",");
+    if (prevInitialIdsRef.current !== ids) {
+      prevInitialIdsRef.current = ids;
+      setConversations(initialConversations);
+    }
+  }, [initialConversations]);
 
   // Reset unread count when a conversation becomes active
   useEffect(() => {

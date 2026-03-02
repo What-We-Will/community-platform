@@ -74,6 +74,7 @@ export async function createGroup(
     avatar_url: null,
     is_private: isPrivate,
     is_discoverable: isDiscoverable,
+    archived: false,
     max_members: null,
     created_by: createdBy,
     conversation_id: conversationId,
@@ -184,28 +185,42 @@ export async function leaveGroup(
 
   // Post system message before removal (while still a participant)
   if (group.conversation_id && profile) {
-    await supabase.from("messages").insert({
+    const { error: msgErr } = await supabase.from("messages").insert({
       conversation_id: group.conversation_id,
       sender_id: null,
       content: `${profile.display_name} left the group`,
       message_type: "system",
     });
+    if (msgErr) {
+      console.error("[leaveGroup] system message insert failed:", msgErr);
+      // Continue with leave; don't block on message failure
+    }
   }
 
-  // Remove from group_members
-  await supabase
+  // Remove from group_members (must succeed)
+  const { error: memberErr } = await supabase
     .from("group_members")
     .delete()
     .eq("group_id", groupId)
     .eq("user_id", userId);
 
+  if (memberErr) {
+    console.error("[leaveGroup] group_members delete failed:", memberErr);
+    return memberErr.message || "Failed to leave group.";
+  }
+
   // Remove from conversation_participants
   if (group.conversation_id) {
-    await supabase
+    const { error: partErr } = await supabase
       .from("conversation_participants")
       .delete()
       .eq("conversation_id", group.conversation_id)
       .eq("user_id", userId);
+
+    if (partErr) {
+      console.error("[leaveGroup] conversation_participants delete failed:", partErr);
+      return partErr.message || "Failed to leave conversation.";
+    }
   }
 
   return null;

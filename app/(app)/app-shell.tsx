@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
-  Users,
-  UsersRound,
+  UserSearch,
+  FolderUsers,
   MessageSquare,
   UserCircle,
   Menu,
@@ -20,8 +20,8 @@ import { UnreadBadge } from "@/components/messages/UnreadBadge";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/members", label: "Members", icon: Users },
-  { href: "/groups", label: "Groups", icon: UsersRound },
+  { href: "/members", label: "Members", icon: UserSearch },
+  { href: "/groups", label: "Groups", icon: FolderUsers },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];

@@ -118,7 +118,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           htmlFor="referrals"
           className="cursor-pointer text-sm font-normal"
         >
-          Open to referrals only
+          Open to Mock Interviews only
         </Label>
       </div>
     </div>

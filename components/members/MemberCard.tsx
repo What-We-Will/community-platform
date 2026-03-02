@@ -121,7 +121,7 @@ export default function MemberCard({ profile }: MemberCardProps) {
             )}
             {profile.open_to_referrals && (
               <Badge className="bg-green-600 text-white hover:bg-green-600">
-                Open to Referrals
+                Open to Mock Interviews
               </Badge>
             )}
           </div>

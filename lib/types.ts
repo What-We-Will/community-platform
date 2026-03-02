@@ -103,6 +103,7 @@ export interface Group {
   avatar_url: string | null;
   is_private: boolean;
   is_discoverable: boolean;
+  archived?: boolean;
   max_members: number | null;
   created_by: string | null;
   conversation_id: string | null;

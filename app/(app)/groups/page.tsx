@@ -93,7 +93,7 @@ export default async function GroupsPage() {
   enriched.sort((a, b) => b.memberCount - a.memberCount);
 
   const myGroups = enriched.filter((g) => g.isMember);
-  const discoverGroups = enriched.filter((g) => !g.isMember);
+  const discoverGroups = enriched.filter((g) => !g.isMember && !(g.archived === true));
 
   return (
     <div className="mx-auto max-w-4xl space-y-10">
