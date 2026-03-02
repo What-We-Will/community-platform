@@ -94,14 +94,9 @@ export function GroupHubClient({
           recentMembers={members.slice(0, 6)}
         />
 
-        {/* Join / Leave button */}
-        <div className="flex items-center gap-3">
-          {!isMember ? (
-            <Button onClick={handleJoin} disabled={joining || group.is_private}>
-              {joining && <Loader2 className="mr-2 size-4 animate-spin" />}
-              {group.is_private ? "Private Group" : "Join Group"}
-            </Button>
-          ) : currentUserRole !== "admin" ? (
+        {/* Leave button — only visible to non-admin members */}
+        {isMember && currentUserRole !== "admin" && (
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
@@ -110,12 +105,14 @@ export function GroupHubClient({
               <LogOut className="mr-2 size-4" />
               Leave Group
             </Button>
-          ) : null}
-
-          {actionError && (
-            <p className="text-sm text-destructive">{actionError}</p>
-          )}
-        </div>
+            {actionError && (
+              <p className="text-sm text-destructive">{actionError}</p>
+            )}
+          </div>
+        )}
+        {!isMember && actionError && (
+          <p className="text-sm text-destructive">{actionError}</p>
+        )}
       </div>
 
       {/* Tabs */}
@@ -131,7 +128,7 @@ export function GroupHubClient({
 
         {/* Chat */}
         <TabsContent value="chat" className="mt-0">
-          {isMember && group.conversation_id ? (
+          {group.conversation_id ? (
             <div className="h-[calc(100dvh-22rem)] min-h-80 rounded-lg border overflow-hidden">
               <ConversationView
                 conversationId={group.conversation_id}
@@ -142,13 +139,30 @@ export function GroupHubClient({
                 memberCount={members.length}
                 participants={members}
                 initialMessages={initialMessages}
+                readOnlyFooter={
+                  !isMember ? (
+                    <div className="flex items-center justify-between gap-3 border-t bg-muted/40 px-4 py-3">
+                      <p className="text-sm text-muted-foreground">
+                        Join this group to send messages
+                      </p>
+                      <Button
+                        size="sm"
+                        onClick={handleJoin}
+                        disabled={joining}
+                      >
+                        {joining && (
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                        )}
+                        Join Group
+                      </Button>
+                    </div>
+                  ) : undefined
+                }
               />
             </div>
           ) : (
             <div className="flex items-center justify-center rounded-lg border h-40 text-sm text-muted-foreground">
-              {group.is_private
-                ? "Join the group to access the chat."
-                : "Join the group to participate in the chat."}
+              Chat unavailable.
             </div>
           )}
         </TabsContent>

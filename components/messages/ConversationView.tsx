@@ -37,6 +37,8 @@ interface ConversationViewProps {
   groupSlug?: string;
   memberCount?: number;
   participants?: Profile[];
+  // When set, replaces the message input with this node (e.g. a join CTA)
+  readOnlyFooter?: React.ReactNode;
 }
 
 function buildSenderProfile(user: CurrentUser): Profile {
@@ -71,6 +73,7 @@ export function ConversationView({
   groupSlug,
   memberCount,
   participants = [],
+  readOnlyFooter,
 }: ConversationViewProps) {
   const supabase = createClient();
 
@@ -405,13 +408,15 @@ export function ConversationView({
         <div ref={bottomRef} className="h-1" />
       </div>
 
-      {/* Input */}
-      <MessageInput
-        value={inputValue}
-        onChange={handleInputChange}
-        onSend={handleSend}
-        disabled={isSending}
-      />
+      {/* Input or read-only footer */}
+      {readOnlyFooter ?? (
+        <MessageInput
+          value={inputValue}
+          onChange={handleInputChange}
+          onSend={handleSend}
+          disabled={isSending}
+        />
+      )}
     </div>
   );
 }
