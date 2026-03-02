@@ -51,3 +51,20 @@ export async function updateProfile(
 
   return {};
 }
+
+/**
+ * Updates the current user's last_seen_at so they show as online/away to others.
+ * Call periodically from the client (e.g. every 45s) while the app is open.
+ */
+export async function updateLastSeen(): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase
+    .from("profiles")
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq("id", user.id);
+}

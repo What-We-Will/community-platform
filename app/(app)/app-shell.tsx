@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { UnreadBadge } from "@/components/messages/UnreadBadge";
+import { updateLastSeen } from "@/app/(app)/profile/actions";
+
+const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -40,6 +43,15 @@ interface AppShellProps {
 export default function AppShell({ children, user }: AppShellProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Keep last_seen_at updated so other users see you as online while the app is open
+  useEffect(() => {
+    const interval = setInterval(() => {
+      updateLastSeen();
+    }, HEARTBEAT_INTERVAL_MS);
+    updateLastSeen(); // run once on mount
+    return () => clearInterval(interval);
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();
