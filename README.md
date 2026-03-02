@@ -150,11 +150,11 @@ Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow; 
 6. **Open a PR** against `main` with a short description of what you changed and why.
 
 ### Good first contributions
+Check the Github Issues in the repo to find some good first issues to tackle.
 
-- **Docs:** Improve this README or add inline comments in a tricky file.
-- **UI/UX:** Improve accessibility (labels, focus, contrast) or responsive behavior.
+- **UI/UX:** Improve accessibility (labels, focus, contrast) or responsive behavior. If you find a bug in the UI, please create an issue ticket, and propose a way to address it.
 - **Tests:** Add tests for utilities in `lib/` or key user flows (if a test setup is added).
-- **Small features:** E.g. “copy link” on events, better empty states, or clearer error messages.
+- **Docs:** Improve this README or add inline comments in a tricky file.
 
 ### Where to look for work
 
