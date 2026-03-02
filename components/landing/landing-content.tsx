@@ -35,15 +35,15 @@ const programs = [
 
 export function LandingContent() {
   return (
-    <section className="bg-muted/30 px-4 py-16 md:py-24">
+    <section className="bg-white px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
         <h2 className="text-center text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           Our Programs
         </h2>
         <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">
           We are a new organization, seeking funding to scale our capacity for
-          fostering mutual aid. The following programs are in development, and
-          we&apos;re looking for volunteers.
+          fostering mutual aid. The following programs are
+          seeking volunteers.
         </p>
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {programs.map((program) => {

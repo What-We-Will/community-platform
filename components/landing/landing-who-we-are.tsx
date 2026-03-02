@@ -1,4 +1,4 @@
-import { Leaf } from "lucide-react";
+import Link from "next/link";
 
 export function LandingWhoWeAre() {
   return (
@@ -11,7 +11,16 @@ export function LandingWhoWeAre() {
           <p className="mt-4 text-muted-foreground">
             What We Will is a worker center for workers across sectors impacted
             by rapid technological change. We started in response to mass layoffs
-            in 2025–2026, as part of the Tech Workers Coalition, a grassroots
+            in 2025–2026, as part of the{" "}
+            <Link
+              href="https://techworkerscoalition.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary-orange underline underline-offset-2 hover:opacity-90"
+            >
+              Tech Workers Coalition
+            </Link>
+            , a grassroots
             labor organization with local chapters all over the U.S. and Europe.
           </p>
           <p className="mt-4 text-muted-foreground">
@@ -25,8 +34,8 @@ export function LandingWhoWeAre() {
             other knowledge workers.
           </p>
           <p className="mt-4 text-muted-foreground">
-            We believe collective power—not individual resilience alone—is
-            necessary to navigate technological change. When workers organize
+            <strong>We believe collective power—not individual resilience alone—is
+            necessary to navigate technological change.</strong> When workers organize
             together across sectors, we can build support systems, win policy
             protections, and shape the future of work.
           </p>

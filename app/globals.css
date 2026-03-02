@@ -42,6 +42,7 @@
   --color-primary-orange: var(--primary-orange);
   --color-primary-orange-hover: var(--primary-orange-hover);
   --color-hero-dark: var(--hero-dark);
+  --color-hero-dark-green: var(--hero-dark-green);
   --color-light-green: #8B9B7E;
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -61,6 +62,7 @@
   --primary-orange: #b85c3e;
   --primary-orange-hover: #9d4a2f;
   --hero-dark: #1e2433;
+  --hero-dark-green: #2d4a3e;
   --light-green: #8B9B7E;
   --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
