@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowLeft, Video } from "lucide-react";
+import { ArrowLeft, Video, UsersRound } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { TypingIndicator } from "./TypingIndicator";
@@ -28,8 +28,15 @@ interface CurrentUser {
 interface ConversationViewProps {
   conversationId: string;
   currentUser: CurrentUser;
-  otherUser: Profile;
   initialMessages: MessageWithSender[];
+  // DM mode
+  otherUser?: Profile;
+  // Group mode
+  isGroup?: boolean;
+  groupName?: string;
+  groupSlug?: string;
+  memberCount?: number;
+  participants?: Profile[];
 }
 
 function buildSenderProfile(user: CurrentUser): Profile {
@@ -57,20 +64,36 @@ function buildSenderProfile(user: CurrentUser): Profile {
 export function ConversationView({
   conversationId,
   currentUser,
-  otherUser,
   initialMessages,
+  otherUser,
+  isGroup = false,
+  groupName,
+  groupSlug,
+  memberCount,
+  participants = [],
 }: ConversationViewProps) {
   const supabase = createClient();
+
+  // Build a lookup map from all known participants
+  const participantMap = useRef(
+    new Map<string, Profile>(participants.map((p) => [p.id, p]))
+  );
+
+  // Keep participant map in sync when prop changes
+  useEffect(() => {
+    participantMap.current = new Map(participants.map((p) => [p.id, p]));
+    if (otherUser) participantMap.current.set(otherUser.id, otherUser);
+    participantMap.current.set(currentUser.id, buildSenderProfile(currentUser));
+  }, [participants, otherUser, currentUser]);
+
   const [messages, setMessages] = useState<MessageWithSender[]>(initialMessages);
   const [inputValue, setInputValue] = useState("");
-  const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
+  const [typingNames, setTypingNames] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(
-    null
-  );
+  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const isTrackingRef = useRef(false);
   const isInitialRender = useRef(true);
 
@@ -82,7 +105,7 @@ export function ConversationView({
     } else {
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages.length, isOtherUserTyping]);
+  }, [messages.length, typingNames.length]);
 
   // Mark as read
   const markAsRead = useCallback(async () => {
@@ -113,20 +136,16 @@ export function ConversationView({
           const newMsg = payload.new as Message;
 
           setMessages((prev) => {
-            // Deduplicate: skip if already in list (optimistic insert)
             if (prev.some((m) => m.id === newMsg.id)) return prev;
 
-            const sender: Profile | null =
-              newMsg.sender_id === currentUser.id
-                ? buildSenderProfile(currentUser)
-                : newMsg.sender_id === otherUser.id
-                  ? otherUser
-                  : null;
+            let sender: Profile | null = null;
+            if (newMsg.sender_id) {
+              sender = participantMap.current.get(newMsg.sender_id) ?? null;
+            }
 
             return [...prev, { ...newMsg, sender }];
           });
 
-          // Mark as read since conversation is open
           markAsRead();
         }
       )
@@ -135,33 +154,38 @@ export function ConversationView({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, currentUser.id, otherUser.id, markAsRead]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [conversationId, currentUser.id, markAsRead]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Typing indicator with Realtime Presence
+  // Typing indicator via Realtime Presence
   useEffect(() => {
     const typingChannel = supabase.channel(`typing:${conversationId}`);
     typingChannelRef.current = typingChannel;
 
     typingChannel
-      .on("presence", { event: "sync" }, () => {
-        const state = typingChannel.presenceState<{
-          user_id: string;
-          typing: boolean;
-        }>();
-        const allPresences = Object.values(state).flat();
-        setIsOtherUserTyping(
-          allPresences.some((p) => p.user_id === otherUser.id && p.typing)
-        );
-      })
+      .on(
+        "presence",
+        { event: "sync" },
+        () => {
+          const state = typingChannel.presenceState<{
+            user_id: string;
+            display_name: string;
+            typing: boolean;
+          }>();
+          const allPresences = Object.values(state).flat();
+          const names = allPresences
+            .filter((p) => p.user_id !== currentUser.id && p.typing)
+            .map((p) => p.display_name);
+          setTypingNames(names);
+        }
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(typingChannel);
       typingChannelRef.current = null;
     };
-  }, [conversationId, otherUser.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [conversationId, currentUser.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Input change handler with typing presence tracking
   function handleInputChange(value: string) {
     setInputValue(value);
 
@@ -169,7 +193,11 @@ export function ConversationView({
     if (!channel) return;
 
     if (value.trim()) {
-      channel.track({ user_id: currentUser.id, typing: true });
+      channel.track({
+        user_id: currentUser.id,
+        display_name: currentUser.display_name,
+        typing: true,
+      });
 
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = setTimeout(() => {
@@ -186,7 +214,6 @@ export function ConversationView({
     }
   }
 
-  // Send message with optimistic UI
   async function handleSend() {
     const content = inputValue.trim();
     if (!content || isSending) return;
@@ -194,14 +221,12 @@ export function ConversationView({
     setInputValue("");
     setIsSending(true);
 
-    // Stop typing indicator
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     if (isTrackingRef.current && typingChannelRef.current) {
       typingChannelRef.current.untrack();
       isTrackingRef.current = false;
     }
 
-    // Optimistic message
     const optimisticId = crypto.randomUUID();
     const optimisticMsg: MessageWithSender = {
       id: optimisticId,
@@ -228,15 +253,11 @@ export function ConversationView({
       .single();
 
     if (error) {
-      // Revert optimistic message
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
     } else {
-      // Replace optimistic with real message (deduplicates Realtime callback)
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === optimisticId
-            ? { ...data, sender: optimisticMsg.sender }
-            : m
+          m.id === optimisticId ? { ...data, sender: optimisticMsg.sender } : m
         )
       );
     }
@@ -244,23 +265,64 @@ export function ConversationView({
     setIsSending(false);
   }
 
-  const onlineStatus = getOnlineStatus(otherUser.last_seen_at);
-  const statusLabel =
-    onlineStatus === "online"
-      ? "Online"
-      : onlineStatus === "away"
-        ? "Away"
-        : "Offline";
-  const statusColor =
-    onlineStatus === "online"
-      ? "text-emerald-500"
-      : onlineStatus === "away"
-        ? "text-amber-500"
-        : "text-muted-foreground";
+  // ── Header ──────────────────────────────────────────────────────────────────
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
+  const renderHeader = () => {
+    if (isGroup) {
+      return (
+        <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 bg-background">
+          <Link href="/messages">
+            <Button variant="ghost" size="icon" className="md:hidden -ml-1">
+              <ArrowLeft className="size-5" />
+            </Button>
+          </Link>
+
+          {groupSlug ? (
+            <Link
+              href={`/groups/${groupSlug}`}
+              className="flex items-center gap-3 flex-1 min-w-0 group rounded-lg px-2 py-1 hover:bg-accent transition-colors"
+            >
+              <GroupAvatar name={groupName ?? "Group"} />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate group-hover:underline">
+                  {groupName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {memberCount} member{memberCount !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3 flex-1 min-w-0 px-2 py-1">
+              <GroupAvatar name={groupName ?? "Group"} />
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate">{groupName}</p>
+                <p className="text-xs text-muted-foreground">
+                  {memberCount} member{memberCount !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // DM header
+    const onlineStatus = getOnlineStatus(otherUser?.last_seen_at ?? null);
+    const statusLabel =
+      onlineStatus === "online"
+        ? "Online"
+        : onlineStatus === "away"
+          ? "Away"
+          : "Offline";
+    const statusColor =
+      onlineStatus === "online"
+        ? "text-emerald-500"
+        : onlineStatus === "away"
+          ? "text-amber-500"
+          : "text-muted-foreground";
+
+    return (
       <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 bg-background">
         <Link href="/messages">
           <Button variant="ghost" size="icon" className="md:hidden -ml-1">
@@ -269,20 +331,20 @@ export function ConversationView({
         </Link>
 
         <Link
-          href={`/members/${otherUser.id}`}
+          href={`/members/${otherUser?.id}`}
           className="flex items-center gap-3 flex-1 min-w-0 group rounded-lg px-2 py-1 hover:bg-accent transition-colors"
         >
           <div
             className={cn(
               "flex size-9 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold",
-              getAvatarColor(otherUser.display_name)
+              getAvatarColor(otherUser?.display_name ?? "")
             )}
           >
-            {getInitials(otherUser.display_name)}
+            {getInitials(otherUser?.display_name ?? "?")}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate group-hover:underline">
-              {otherUser.display_name}
+              {otherUser?.display_name}
             </p>
             <p className={cn("text-xs", statusColor)}>{statusLabel}</p>
           </div>
@@ -299,21 +361,35 @@ export function ConversationView({
           </Tooltip>
         </TooltipProvider>
       </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {renderHeader()}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
         {messages.length === 0 && (
           <div className="flex items-center justify-center py-16">
             <p className="text-sm text-muted-foreground">
-              No messages yet — say hi! 👋
+              {isGroup
+                ? "No messages yet — start the conversation! 💬"
+                : "No messages yet — say hi! 👋"}
             </p>
           </div>
         )}
 
         {messages.map((msg, i) => {
           const prevMsg = messages[i - 1];
+          // For system messages, always treat as a new block
           const showSenderInfo =
-            !prevMsg || prevMsg.sender_id !== msg.sender_id;
+            msg.message_type === "system"
+              ? false
+              : !prevMsg ||
+                prevMsg.sender_id !== msg.sender_id ||
+                prevMsg.message_type === "system";
+
           return (
             <MessageBubble
               key={msg.id}
@@ -324,9 +400,7 @@ export function ConversationView({
           );
         })}
 
-        {isOtherUserTyping && (
-          <TypingIndicator name={otherUser.display_name} />
-        )}
+        <TypingIndicator names={typingNames} />
 
         <div ref={bottomRef} className="h-1" />
       </div>
@@ -338,6 +412,19 @@ export function ConversationView({
         onSend={handleSend}
         disabled={isSending}
       />
+    </div>
+  );
+}
+
+function GroupAvatar({ name }: { name: string }) {
+  return (
+    <div
+      className={cn(
+        "flex size-9 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold",
+        getAvatarColor(name)
+      )}
+    >
+      <UsersRound className="size-4" />
     </div>
   );
 }

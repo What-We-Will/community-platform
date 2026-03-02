@@ -9,6 +9,7 @@ import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
+import { UsersRound } from "lucide-react";
 import { NewMessageDialog } from "./NewMessageDialog";
 import type { ConversationWithDetails, Message } from "@/lib/types";
 
@@ -71,14 +72,11 @@ export function ConversationList({
             const conv = { ...updated[idx] };
             conv.lastMessage = newMsg;
 
-            // Increment unread if not ours and not currently viewing this conversation
-            const isViewing =
-              pathname === `/messages/${newMsg.conversation_id}`;
+            const isViewing = pathname === `/messages/${newMsg.conversation_id}`;
             if (newMsg.sender_id !== currentUserId && !isViewing) {
               conv.unreadCount = (conv.unreadCount ?? 0) + 1;
             }
 
-            // Move to top
             updated.splice(idx, 1);
             return [conv, ...updated];
           });
@@ -110,12 +108,90 @@ export function ConversationList({
           </div>
         ) : (
           conversations.map(
-            ({ conversation, participants, lastMessage, unreadCount }) => {
-              const otherUser = participants[0];
-              if (!otherUser) return null;
-
+            ({ conversation, participants, lastMessage, unreadCount, groupName, groupSlug }) => {
               const isActive = pathname === `/messages/${conversation.id}`;
               const hasUnread = unreadCount > 0;
+              const isGroupConv = conversation.type === "group";
+
+              if (isGroupConv) {
+                return (
+                  <Link
+                    key={conversation.id}
+                    href={`/messages/${conversation.id}`}
+                    className={cn(
+                      "flex items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent",
+                      isActive && "bg-accent"
+                    )}
+                  >
+                    {/* Group icon avatar */}
+                    <div className="relative shrink-0">
+                      <div
+                        className={cn(
+                          "flex size-10 items-center justify-center rounded-full text-white text-sm font-semibold",
+                          getAvatarColor(groupName ?? "Group")
+                        )}
+                      >
+                        <UsersRound className="size-4" />
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <p
+                            className={cn(
+                              "text-sm truncate",
+                              hasUnread ? "font-semibold" : "font-medium"
+                            )}
+                          >
+                            {groupName ?? "Group"}
+                          </p>
+                          <Badge
+                            variant="secondary"
+                            className="shrink-0 text-[10px] px-1.5 py-0 h-4"
+                          >
+                            Group
+                          </Badge>
+                        </div>
+                        {lastMessage && (
+                          <span className="text-[11px] text-muted-foreground shrink-0">
+                            {formatRelativeTime(lastMessage.created_at)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 mt-0.5">
+                        <p
+                          className={cn(
+                            "text-xs truncate",
+                            hasUnread
+                              ? "font-medium text-foreground"
+                              : "text-muted-foreground"
+                          )}
+                        >
+                          {lastMessage
+                            ? lastMessage.message_type === "system"
+                              ? lastMessage.content
+                              : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
+                            : "No messages yet"}
+                        </p>
+                        {hasUnread && (
+                          <Badge
+                            variant="destructive"
+                            className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
+                          >
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              }
+
+              // DM row
+              const otherUser = participants[0];
+              if (!otherUser) return null;
               const onlineStatus = getOnlineStatus(otherUser.last_seen_at);
 
               return (
@@ -140,7 +216,6 @@ export function ConversationList({
                     <OnlineDot status={onlineStatus} />
                   </div>
 
-                  {/* Name + last message */}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p

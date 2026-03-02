@@ -84,8 +84,41 @@ export interface ConversationWithDetails {
   participants: Profile[];
   lastMessage: Message | null;
   unreadCount: number;
+  // Populated for group conversations
+  groupName?: string;
+  groupSlug?: string;
 }
 
 export interface MessageWithSender extends Message {
   sender: Profile | null;
+}
+
+// ─── Groups ──────────────────────────────────────────────────────────────────
+
+export interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  avatar_url: string | null;
+  is_private: boolean;
+  max_members: number | null;
+  created_by: string | null;
+  conversation_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GroupMember {
+  group_id: string;
+  user_id: string;
+  role: "member" | "admin" | "moderator";
+  joined_at: string;
+}
+
+export interface GroupWithDetails extends Group {
+  memberCount: number;
+  isMember: boolean;
+  currentUserRole: "member" | "admin" | "moderator" | null;
+  recentMembers: Profile[];
 }

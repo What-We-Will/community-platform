@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { ConversationView } from "@/components/messages/ConversationView";
 import type { MessageWithSender, Profile } from "@/lib/types";
 
@@ -35,7 +35,98 @@ export default async function ConversationPage({
     redirect("/messages");
   }
 
-  // Fetch the other participant's profile
+  // Fetch the conversation to determine type
+  const { data: conversation } = await supabase
+    .from("conversations")
+    .select("id, type, group_id, created_at")
+    .eq("id", conversationId)
+    .single();
+
+  if (!conversation) redirect("/messages");
+
+  // Fetch current user's profile
+  const { data: currentUserProfile } = await supabase
+    .from("profiles")
+    .select("id, display_name, avatar_url")
+    .eq("id", user.id)
+    .single();
+
+  const currentUser = {
+    id: user.id,
+    display_name: currentUserProfile?.display_name ?? "You",
+    avatar_url: currentUserProfile?.avatar_url ?? null,
+  };
+
+  // ── Group conversation ────────────────────────────────────────────────────
+  if (conversation.type === "group") {
+    // Fetch group info
+    const { data: group } = await supabase
+      .from("groups")
+      .select("id, name, slug")
+      .eq("conversation_id", conversationId)
+      .single();
+
+    // Fetch all participants with profiles
+    const { data: allParticipants } = await supabase
+      .from("conversation_participants")
+      .select("user_id")
+      .eq("conversation_id", conversationId);
+
+    const participantIds = allParticipants?.map((p) => p.user_id) ?? [];
+    const memberCount = participantIds.length;
+
+    const { data: profilesData } = participantIds.length
+      ? await supabase.from("profiles").select("*").in("id", participantIds)
+      : { data: [] };
+
+    const participants = (profilesData ?? []) as Profile[];
+
+    // Build profile cache for messages
+    const profileCache = new Map<string, Profile>(
+      participants.map((p) => [p.id, p])
+    );
+
+    const { data: rawMessages } = await supabase
+      .from("messages")
+      .select(
+        "id, conversation_id, sender_id, content, message_type, metadata, edited_at, created_at"
+      )
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const messages: MessageWithSender[] = (rawMessages ?? [])
+      .reverse()
+      .map((msg) => ({
+        ...msg,
+        message_type: msg.message_type as MessageWithSender["message_type"],
+        metadata: (msg.metadata ?? {}) as Record<string, unknown>,
+        sender: msg.sender_id ? (profileCache.get(msg.sender_id) ?? null) : null,
+      }));
+
+    await supabase
+      .from("conversation_participants")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("conversation_id", conversationId)
+      .eq("user_id", user.id);
+
+    return (
+      <div className="fixed inset-0 z-40 flex flex-col bg-background md:static md:flex-1 md:z-auto">
+        <ConversationView
+          conversationId={conversationId}
+          currentUser={currentUser}
+          isGroup
+          groupName={group?.name ?? "Group"}
+          groupSlug={group?.slug}
+          memberCount={memberCount}
+          participants={participants}
+          initialMessages={messages}
+        />
+      </div>
+    );
+  }
+
+  // ── DM conversation ───────────────────────────────────────────────────────
   const { data: otherParticipant, error: otherParticipantError } = await supabase
     .from("conversation_participants")
     .select("user_id")
@@ -60,17 +151,9 @@ export default async function ConversationPage({
 
   if (!otherUserProfile) {
     console.error("[conversation] other user profile not found:", otherParticipant.user_id);
-    notFound();
+    redirect("/messages");
   }
 
-  // Fetch current user's profile (needed for message bubbles)
-  const { data: currentUserProfile } = await supabase
-    .from("profiles")
-    .select("id, display_name, avatar_url")
-    .eq("id", user.id)
-    .single();
-
-  // Fetch the 50 most recent messages with sender info
   const { data: rawMessages } = await supabase
     .from("messages")
     .select(
@@ -80,7 +163,6 @@ export default async function ConversationPage({
     .order("created_at", { ascending: false })
     .limit(50);
 
-  // Reverse to chronological order and enrich with sender profiles
   const profileCache = new Map<string, Profile>([
     [user.id, currentUserProfile as Profile],
     [otherParticipant.user_id, otherUserProfile as Profile],
@@ -95,24 +177,13 @@ export default async function ConversationPage({
       sender: msg.sender_id ? (profileCache.get(msg.sender_id) ?? null) : null,
     }));
 
-  // Mark as read
   await supabase
     .from("conversation_participants")
     .update({ last_read_at: new Date().toISOString() })
     .eq("conversation_id", conversationId)
     .eq("user_id", user.id);
 
-  const currentUser = {
-    id: user.id,
-    display_name: currentUserProfile?.display_name ?? "You",
-    avatar_url: currentUserProfile?.avatar_url ?? null,
-  };
-
   return (
-    /*
-     * On mobile: fixed full-screen overlay (z-40 sits above the mobile header at z-30).
-     * On md+: static, filling the right panel of the messages layout.
-     */
     <div className="fixed inset-0 z-40 flex flex-col bg-background md:static md:flex-1 md:z-auto">
       <ConversationView
         conversationId={conversationId}

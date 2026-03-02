@@ -14,6 +14,17 @@ export function MessageBubble({
   isOwn,
   showSenderInfo,
 }: MessageBubbleProps) {
+  // System messages: centered pill with muted text, no avatar
+  if (message.message_type === "system") {
+    return (
+      <div className="flex justify-center py-2">
+        <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+          {message.content}
+        </span>
+      </div>
+    );
+  }
+
   const senderName = message.sender?.display_name ?? "Unknown";
 
   return (

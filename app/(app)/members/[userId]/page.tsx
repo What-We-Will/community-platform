@@ -17,6 +17,82 @@ import { getOnlineStatus } from "@/lib/utils/status";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+// ─── Member Groups ────────────────────────────────────────────────────────────
+
+async function MemberGroups({
+  userId,
+  viewerId,
+}: {
+  userId: string;
+  viewerId: string | null;
+}) {
+  const supabase = await createClient();
+
+  // Get all groups this member belongs to
+  const { data: memberships } = await supabase
+    .from("group_members")
+    .select("group_id")
+    .eq("user_id", userId);
+
+  if (!memberships || memberships.length === 0) {
+    return (
+      <div>
+        <h2 className="text-sm font-medium">Groups</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Not a member of any groups yet.</p>
+      </div>
+    );
+  }
+
+  const groupIds = memberships.map((m) => m.group_id);
+
+  // Get viewer's groups to determine visibility of private groups
+  let viewerGroupIds: string[] = [];
+  if (viewerId) {
+    const { data: viewerMemberships } = await supabase
+      .from("group_members")
+      .select("group_id")
+      .eq("user_id", viewerId);
+    viewerGroupIds = (viewerMemberships ?? []).map((m) => m.group_id);
+  }
+
+  const { data: groups } = await supabase
+    .from("groups")
+    .select("id, name, slug, is_private")
+    .in("id", groupIds);
+
+  // Show: public groups + private groups where viewer is also a member
+  const visibleGroups = (groups ?? []).filter(
+    (g) => !g.is_private || viewerGroupIds.includes(g.id)
+  );
+
+  if (visibleGroups.length === 0) {
+    return (
+      <div>
+        <h2 className="text-sm font-medium">Groups</h2>
+        <p className="mt-2 text-sm text-muted-foreground">No shared or public groups.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-sm font-medium">Groups</h2>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {visibleGroups.map((group) => (
+          <Link key={group.id} href={`/groups/${group.slug}`}>
+            <Badge
+              variant="secondary"
+              className="cursor-pointer hover:bg-secondary/80 transition-colors"
+            >
+              {group.name}
+            </Badge>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const AVATAR_COLORS = [
   "bg-blue-500",
   "bg-emerald-500",
@@ -215,12 +291,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         </div>
       )}
 
-      <div>
-        <h2 className="text-sm font-medium">Working groups</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Working groups will appear here
-        </p>
-      </div>
+      <MemberGroups userId={userId} viewerId={currentUser?.id ?? null} />
 
       <p className="text-sm text-muted-foreground">
         Member since {formatMemberSince(typedProfile.created_at)}
