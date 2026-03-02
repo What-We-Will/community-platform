@@ -25,6 +25,11 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 820px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -34,6 +39,10 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-primary-orange: var(--primary-orange);
+  --color-primary-orange-hover: var(--primary-orange-hover);
+  --color-hero-dark: var(--hero-dark);
+  --color-light-green: #8B9B7E;
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -49,6 +58,10 @@
 
 :root {
   --radius: 0.625rem;
+  --primary-orange: #b85c3e;
+  --primary-orange-hover: #9d4a2f;
+  --hero-dark: #1e2433;
+  --light-green: #8B9B7E;
   --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
   --card: oklch(1 0 0);
