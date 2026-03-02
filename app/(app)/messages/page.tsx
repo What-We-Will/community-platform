@@ -46,9 +46,22 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
     }
 
     // Find or create DM
-    let conversationId = await findExistingDM(user.id, targetProfile.id);
-    if (!conversationId) {
-      conversationId = await createDMConversation(user.id, targetProfile.id);
+    let conversationId: string | null = null;
+    try {
+      conversationId = await findExistingDM(user.id, targetProfile.id);
+      if (!conversationId) {
+        conversationId = await createDMConversation(user.id, targetProfile.id);
+      }
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      console.error("[messages] find/create DM failed:", detail);
+      return (
+        <EmptyState
+          message={`Could not open this conversation. ${detail}`}
+          linkLabel="Back to Messages"
+          linkHref="/messages"
+        />
+      );
     }
 
     redirect(`/messages/${conversationId}`);

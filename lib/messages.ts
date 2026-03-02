@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -47,7 +48,7 @@ export async function findExistingDM(
 
 /**
  * Create a new DM conversation between two users.
- * Returns the new conversation ID.
+ * Returns the new conversation ID, or throws with the DB error message attached.
  */
 export async function createDMConversation(
   userId1: string,
@@ -55,24 +56,33 @@ export async function createDMConversation(
 ): Promise<string> {
   const supabase = await createClient();
 
-  const { data: conversation, error: convError } = await supabase
-    .from("conversations")
-    .insert({ type: "dm" })
-    .select()
-    .single();
+  // Generate the ID server-side so we never need to SELECT the conversation
+  // back after inserting — the SELECT policy requires at least one participant
+  // to exist, creating an RLS chicken-and-egg problem if we insert then select.
+  const conversationId = randomUUID();
 
-  if (convError || !conversation) {
-    throw new Error("Failed to create conversation");
+  const { error: convError } = await supabase
+    .from("conversations")
+    .insert({ id: conversationId, type: "dm" });
+
+  if (convError) {
+    throw new Error(
+      `Failed to create conversation: ${convError.message} (code: ${convError.code})`
+    );
   }
 
   const { error: partError } = await supabase
     .from("conversation_participants")
     .insert([
-      { conversation_id: conversation.id, user_id: userId1 },
-      { conversation_id: conversation.id, user_id: userId2 },
+      { conversation_id: conversationId, user_id: userId1 },
+      { conversation_id: conversationId, user_id: userId2 },
     ]);
 
-  if (partError) throw new Error("Failed to add participants");
+  if (partError) {
+    throw new Error(
+      `Failed to add participants: ${partError.message} (code: ${partError.code})`
+    );
+  }
 
-  return conversation.id;
+  return conversationId;
 }
