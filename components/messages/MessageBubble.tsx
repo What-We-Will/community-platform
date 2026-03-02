@@ -31,10 +31,15 @@ export function MessageBubble({
 
   // Video invite: card with Join Call button
   if (message.message_type === "video_invite") {
-    const metadata = (message.metadata ?? {}) as {
-      room_name?: string;
-      started_by?: string;
-    };
+    let meta = message.metadata;
+    if (typeof meta === "string") {
+      try {
+        meta = JSON.parse(meta) as Record<string, unknown>;
+      } catch {
+        meta = {};
+      }
+    }
+    const metadata = (meta ?? {}) as { room_name?: string; started_by?: string };
     const startedBy = metadata.started_by ?? message.sender?.display_name ?? "Someone";
     const roomName = metadata.room_name;
 

@@ -31,6 +31,8 @@ interface ConversationViewProps {
   conversationId: string;
   currentUser: CurrentUser;
   initialMessages: MessageWithSender[];
+  /** When set, open the video call modal immediately (e.g. from ?videoRoom= in URL) */
+  initialVideoRoom?: string | null;
   // DM mode
   otherUser?: Profile;
   // Group mode
@@ -69,6 +71,7 @@ export function ConversationView({
   conversationId,
   currentUser,
   initialMessages,
+  initialVideoRoom,
   otherUser,
   isGroup = false,
   groupName,
@@ -98,6 +101,19 @@ export function ConversationView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [videoCallOpen, setVideoCallOpen] = useState(false);
   const [videoRoomName, setVideoRoomName] = useState<string | null>(null);
+
+  // Open video modal when landing with ?videoRoom= (e.g. from "Join call" in list)
+  useEffect(() => {
+    if (initialVideoRoom) {
+      setVideoRoomName(initialVideoRoom);
+      setVideoCallOpen(true);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("videoRoom");
+        window.history.replaceState({}, "", url.pathname + url.search);
+      }
+    }
+  }, [initialVideoRoom]);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

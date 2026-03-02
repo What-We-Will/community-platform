@@ -5,12 +5,16 @@ import type { MessageWithSender, Profile } from "@/lib/types";
 
 interface ConversationPageProps {
   params: Promise<{ conversationId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function ConversationPage({
   params,
+  searchParams,
 }: ConversationPageProps) {
   const { conversationId } = await params;
+  const resolvedSearchParams = await searchParams;
+  const videoRoom = typeof resolvedSearchParams?.videoRoom === "string" ? resolvedSearchParams.videoRoom : null;
 
   const supabase = await createClient();
   const {
@@ -121,6 +125,7 @@ export default async function ConversationPage({
           memberCount={memberCount}
           participants={participants}
           initialMessages={messages}
+          initialVideoRoom={videoRoom}
         />
       </div>
     );
@@ -190,6 +195,7 @@ export default async function ConversationPage({
         currentUser={currentUser}
         otherUser={otherUserProfile as Profile}
         initialMessages={messages}
+        initialVideoRoom={videoRoom}
       />
     </div>
   );

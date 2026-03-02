@@ -2,14 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
-import { UsersRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { UsersRound, Video } from "lucide-react";
 import { NewMessageDialog } from "./NewMessageDialog";
 import type { ConversationWithDetails, Message } from "@/lib/types";
 
@@ -30,11 +31,26 @@ function OnlineDot({ status }: { status: "online" | "away" | "offline" }) {
   );
 }
 
+function getVideoRoomFromMessage(msg: Message | null): string | null {
+  if (!msg || msg.message_type !== "video_invite") return null;
+  let meta = msg.metadata;
+  if (typeof meta === "string") {
+    try {
+      meta = JSON.parse(meta) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  const room = (meta as Record<string, unknown>)?.room_name;
+  return typeof room === "string" ? room : null;
+}
+
 export function ConversationList({
   initialConversations,
   currentUserId,
 }: ConversationListProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [conversations, setConversations] =
     useState<ConversationWithDetails[]>(initialConversations);
   const prevInitialIdsRef = useRef(
@@ -129,10 +145,11 @@ export function ConversationList({
               const isGroupConv = conversation.type === "group";
 
               if (isGroupConv) {
+                const videoRoom = getVideoRoomFromMessage(lastMessage);
                 return (
                   <Link
                     key={conversation.id}
-                    href={`/messages/${conversation.id}`}
+                    href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
                     className={cn(
                       "flex items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent",
                       isActive && "bg-accent"
@@ -187,17 +204,34 @@ export function ConversationList({
                           {lastMessage
                             ? lastMessage.message_type === "system"
                               ? lastMessage.content
-                              : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
+                              : lastMessage.message_type === "video_invite"
+                                ? lastMessage.sender_id === currentUserId
+                                  ? "You started a video call"
+                                  : "Video call started"
+                                : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
                             : "No messages yet"}
                         </p>
-                        {hasUnread && (
+                        {videoRoom ? (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="shrink-0 h-6 gap-1 text-xs"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              router.push(`/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}`);
+                            }}
+                          >
+                            <Video className="size-3" />
+                            Join call
+                          </Button>
+                        ) : hasUnread ? (
                           <Badge
                             variant="destructive"
                             className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
                           >
                             {unreadCount > 99 ? "99+" : unreadCount}
                           </Badge>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </Link>
@@ -208,11 +242,12 @@ export function ConversationList({
               const otherUser = participants[0];
               if (!otherUser) return null;
               const onlineStatus = getOnlineStatus(otherUser.last_seen_at);
+              const videoRoom = getVideoRoomFromMessage(lastMessage);
 
               return (
                 <Link
                   key={conversation.id}
-                  href={`/messages/${conversation.id}`}
+                  href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
                   className={cn(
                     "flex items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent",
                     isActive && "bg-accent"
@@ -258,17 +293,34 @@ export function ConversationList({
                         )}
                       >
                         {lastMessage
-                          ? `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
+                          ? lastMessage.message_type === "video_invite"
+                            ? lastMessage.sender_id === currentUserId
+                              ? "You started a video call"
+                              : "Video call started"
+                            : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
                           : "No messages yet"}
                       </p>
-                      {hasUnread && (
+                      {videoRoom ? (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="shrink-0 h-6 gap-1 text-xs"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            router.push(`/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}`);
+                          }}
+                        >
+                          <Video className="size-3" />
+                          Join call
+                        </Button>
+                      ) : hasUnread ? (
                         <Badge
                           variant="destructive"
                           className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
                         >
                           {unreadCount > 99 ? "99+" : unreadCount}
                         </Badge>
-                      )}
+                      ) : null}
                     </div>
                   </div>
                 </Link>

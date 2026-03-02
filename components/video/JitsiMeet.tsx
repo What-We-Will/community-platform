@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 
+/** Community-run public Jitsi server (no login required). */
+const JITSI_SERVER = "jitsi.riot.im";
+
 interface JitsiMeetProps {
   roomName: string;
   displayName: string;
@@ -39,13 +42,13 @@ export default function JitsiMeet({
 
   useEffect(() => {
     const script = document.createElement("script");
-    script.src = "https://meet.jit.si/external_api.js";
+    script.src = `https://${JITSI_SERVER}/external_api.js`;
     script.async = true;
     script.onload = () => {
       if (!containerRef.current || typeof window.JitsiMeetExternalAPI !== "function")
         return;
 
-      const api = new window.JitsiMeetExternalAPI!("meet.jit.si", {
+      const api = new window.JitsiMeetExternalAPI!(JITSI_SERVER, {
         roomName,
         parentNode: containerRef.current,
         userInfo: { displayName },
