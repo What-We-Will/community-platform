@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 
 export function LandingJoinCommunity() {
   return (
-    <section className="bg-muted/30 px-4 py-16 md:py-24">
+    <section id="impact" className="scroll-mt-20 bg-warm-beige px-4 py-16 md:py-24">
       <div className="mx-auto max-w-2xl">
-        <div className="rounded-2xl border bg-card px-6 py-10 shadow-sm md:px-10 md:py-12">
+        <div className="px-6 py-10 md:px-10 md:py-12">
           <h2 className="text-center text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             Join Our Community
           </h2>
@@ -28,7 +28,7 @@ export function LandingJoinCommunity() {
               id="landing-email"
               type="email"
               placeholder="Enter your email"
-              className="min-h-10 flex-1"
+              className="min-h-10 flex-1 bg-white"
               autoComplete="email"
             />
             <Button
