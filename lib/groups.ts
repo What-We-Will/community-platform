@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import type { Group } from "@/lib/types";
 
@@ -32,13 +33,14 @@ export async function generateSlug(name: string): Promise<string> {
 
 /**
  * Creates a group with its own group conversation.
- * Order of operations avoids circular FK dependencies:
- *   1. Insert conversation (type='group', group_id=null)
- *   2. Insert group (conversation_id = that conversation)
- *   3. Update group.conversation_id on conversation row isn't needed —
- *      we look up the group via groups.conversation_id everywhere
- *   4. Add creator to group_members as admin
- *   5. Add creator to conversation_participants
+ *
+ * Pre-generates UUIDs for both the conversation and the group to avoid
+ * post-INSERT SELECT failures caused by RLS:
+ *   - The conversations SELECT policy requires the user to already be in
+ *     conversation_participants (they aren't yet when the row is first inserted).
+ *   - The groups SELECT policy for private groups requires the user to be in
+ *     group_members (same timing issue).
+ * By pre-generating IDs we never need to SELECT after INSERT.
  */
 export async function createGroup(
   name: string,
@@ -49,54 +51,69 @@ export async function createGroup(
 ): Promise<Group> {
   const supabase = await createClient();
 
-  // 1. Create the group conversation
-  const { data: conv, error: convErr } = await supabase
-    .from("conversations")
-    .insert({ type: "group" })
-    .select("id")
-    .single();
+  const conversationId = randomUUID();
+  const groupId = randomUUID();
 
-  if (convErr || !conv) {
-    throw new Error(`Failed to create conversation: ${convErr?.message}`);
+  // 1. Create the group conversation (no .select() to avoid RLS RETURNING block)
+  const { error: convErr } = await supabase
+    .from("conversations")
+    .insert({ id: conversationId, type: "group" });
+
+  if (convErr) {
+    throw new Error(`Failed to create conversation: ${convErr.message} (${convErr.code})`);
   }
 
-  // 2. Create the group
-  const { data: group, error: groupErr } = await supabase
+  // 2. Create the group (no .select() — private groups not yet visible via RLS)
+  const { error: groupErr } = await supabase
     .from("groups")
     .insert({
+      id: groupId,
       name,
       description: description || null,
       slug,
       is_private: isPrivate,
       created_by: createdBy,
-      conversation_id: conv.id,
-    })
-    .select("*")
-    .single();
+      conversation_id: conversationId,
+    });
 
-  if (groupErr || !group) {
-    throw new Error(`Failed to create group: ${groupErr?.message}`);
+  if (groupErr) {
+    throw new Error(`Failed to create group: ${groupErr.message} (${groupErr.code})`);
   }
 
   // 3. Add creator as admin member
   const { error: memberErr } = await supabase
     .from("group_members")
-    .insert({ group_id: group.id, user_id: createdBy, role: "admin" });
+    .insert({ group_id: groupId, user_id: createdBy, role: "admin" });
 
   if (memberErr) {
-    throw new Error(`Failed to add creator as member: ${memberErr.message}`);
+    throw new Error(`Failed to add creator as member: ${memberErr.message} (${memberErr.code})`);
   }
 
   // 4. Add creator to the conversation
   const { error: participantErr } = await supabase
     .from("conversation_participants")
-    .insert({ conversation_id: conv.id, user_id: createdBy });
+    .insert({ conversation_id: conversationId, user_id: createdBy });
 
   if (participantErr) {
-    throw new Error(`Failed to add participant: ${participantErr.message}`);
+    throw new Error(`Failed to add participant: ${participantErr.message} (${participantErr.code})`);
   }
 
-  return group as Group;
+  // 5. Return the group using the pre-known ID
+  const group: Group = {
+    id: groupId,
+    name,
+    description: description || null,
+    slug,
+    avatar_url: null,
+    is_private: isPrivate,
+    max_members: null,
+    created_by: createdBy,
+    conversation_id: conversationId,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  return group;
 }
 
 /**
