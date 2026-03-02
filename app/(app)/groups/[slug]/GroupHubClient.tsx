@@ -59,6 +59,7 @@ export function GroupHubClient({
   const [actionError, setActionError] = useState<string | null>(null);
   const [groupName, setGroupName] = useState(group.name);
   const [groupDescription, setGroupDescription] = useState(group.description ?? "");
+  const [groupSlug, setGroupSlug] = useState(group.slug);
   const [isPrivate, setIsPrivate] = useState(group.is_private);
   const [isDiscoverable, setIsDiscoverable] = useState(group.is_discoverable);
   const [savingSettings, setSavingSettings] = useState(false);
@@ -96,8 +97,13 @@ export function GroupHubClient({
   }
 
   async function handleRemoveMember(userId: string) {
-    await removeMemberAction(group.id, userId);
-    router.refresh();
+    setActionError(null);
+    const result = await removeMemberAction(group.id, userId);
+    if (result.error) {
+      setActionError(result.error);
+    } else {
+      router.refresh();
+    }
   }
 
   async function handleToggleDiscoverable(value: boolean) {
@@ -122,6 +128,20 @@ export function GroupHubClient({
     setSavingSettings(false);
     if (result.error) setSettingsError(result.error);
     else router.refresh();
+  }
+
+  async function handleSaveSlug() {
+    setSavingSettings(true);
+    setSettingsError(null);
+    const result = await updateGroupSettingsAction(group.id, { slug: groupSlug.trim() || group.slug });
+    setSavingSettings(false);
+    if (result.error) {
+      setSettingsError(result.error);
+    } else if (result.newSlug) {
+      router.push(`/groups/${result.newSlug}`);
+    } else {
+      router.refresh();
+    }
   }
 
   async function handleTogglePrivate(value: boolean) {
@@ -322,6 +342,30 @@ export function GroupHubClient({
                 <p className="mt-1 text-xs text-muted-foreground">
                   Rename, change visibility, or archive this group.
                 </p>
+              </div>
+
+              {/* Group URL slug */}
+              <div className="rounded-lg border p-4 space-y-3">
+                <Label htmlFor="group-slug" className="text-sm font-medium">Group URL</Label>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm text-muted-foreground">/groups/</span>
+                  <Input
+                    id="group-slug"
+                    value={groupSlug}
+                    onChange={(e) => setGroupSlug(e.target.value)}
+                    placeholder="your-group-slug"
+                    maxLength={60}
+                    disabled={savingSettings}
+                    className="max-w-xs font-mono text-sm"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Lowercase letters, numbers, and hyphens only. Changing this updates the group link.
+                </p>
+                <Button size="sm" variant="secondary" onClick={handleSaveSlug} disabled={savingSettings}>
+                  {savingSettings && <Loader2 className="mr-2 size-4 animate-spin" />}
+                  Save URL
+                </Button>
               </div>
 
               {/* Rename */}

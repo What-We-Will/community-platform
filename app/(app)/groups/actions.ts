@@ -7,6 +7,8 @@ import {
   joinGroup,
   leaveGroup,
   generateSlug,
+  normalizeSlug,
+  isSlugAvailable,
 } from "@/lib/groups";
 import type { GroupJoinRequest } from "@/lib/types";
 
@@ -307,8 +309,9 @@ export async function updateGroupSettingsAction(
     name?: string;
     description?: string | null;
     archived?: boolean;
+    slug?: string;
   }
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; newSlug?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -322,6 +325,21 @@ export async function updateGroupSettingsAction(
   if (settings.is_discoverable !== undefined) payload.is_discoverable = settings.is_discoverable;
   if (settings.archived !== undefined) payload.archived = settings.archived;
 
+  let newSlug: string | undefined;
+
+  if (settings.slug !== undefined) {
+    const normalized = normalizeSlug(settings.slug);
+    if (!normalized) {
+      return { error: "Slug can only use lowercase letters, numbers, and hyphens." };
+    }
+    const available = await isSlugAvailable(normalized, groupId);
+    if (!available) {
+      return { error: "This URL slug is already in use by another group." };
+    }
+    payload.slug = normalized;
+    newSlug = normalized;
+  }
+
   const { error } = await supabase
     .from("groups")
     .update(payload)
@@ -334,5 +352,5 @@ export async function updateGroupSettingsAction(
 
   revalidatePath("/groups");
   revalidatePath(`/groups/[slug]`, "page");
-  return {};
+  return newSlug !== undefined ? { newSlug } : {};
 }

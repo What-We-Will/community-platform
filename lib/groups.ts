@@ -2,18 +2,32 @@ import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import type { Group } from "@/lib/types";
 
+const SLUG_MAX_LENGTH = 60;
+const SLUG_REGEX = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 /**
- * Converts a group name to a URL-friendly slug.
- * Appends a short random suffix if the slug is already taken.
+ * Normalizes a string to a URL-safe slug (lowercase, hyphens, alphanumeric).
+ * Returns null if the result is empty or invalid.
  */
-export async function generateSlug(name: string): Promise<string> {
-  const base = name
+export function normalizeSlug(input: string): string | null {
+  const slug = input
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
-    .slice(0, 40);
+    .replace(/^-|-$/g, "")
+    .slice(0, SLUG_MAX_LENGTH);
+  if (!slug || !SLUG_REGEX.test(slug)) return null;
+  return slug;
+}
+
+/**
+ * Converts a group name to a URL-friendly slug.
+ * Appends a short random suffix if the slug is already taken.
+ */
+export async function generateSlug(name: string): Promise<string> {
+  const base = normalizeSlug(name) ?? "group";
 
   const supabase = await createClient();
 
@@ -29,6 +43,23 @@ export async function generateSlug(name: string): Promise<string> {
   // Append a short random suffix
   const suffix = Math.random().toString(36).slice(2, 6);
   return `${base}-${suffix}`;
+}
+
+/**
+ * Returns true if the slug is available (or belongs to the given groupId).
+ */
+export async function isSlugAvailable(
+  slug: string,
+  excludeGroupId?: string
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("groups")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!existing) return true;
+  return excludeGroupId !== undefined && existing.id === excludeGroupId;
 }
 
 /**
