@@ -51,6 +51,7 @@ function buildSenderProfile(user: CurrentUser): Profile {
     id: user.id,
     display_name: user.display_name,
     avatar_url: user.avatar_url,
+    resume_path: null,
     headline: null,
     bio: null,
     location: null,
