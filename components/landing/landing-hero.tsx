@@ -12,7 +12,7 @@ export function LandingHero() {
           </h1>
           <p className="mt-5 max-w-[85%] text-base leading-relaxed text-[#495057] sm:text-lg">
             We organize workers across multiple sectors affected by rapid
-            technological change to <strong>build collective power</strong>
+            technological change to <strong>build collective power </strong>
             and win <strong>shared prosperity</strong> in the age of AI.
           </p>
           <div className="mt-8">
@@ -21,7 +21,7 @@ export function LandingHero() {
               className="rounded-lg bg-[#BC5A3D] px-8 text-base font-semibold text-white shadow-md hover:bg-[#A34F32]"
               asChild
             >
-              <Link href="/signup">Get Involved</Link>
+              <Link href="/signup">Join the Community</Link>
             </Button>
           </div>
         </div>
