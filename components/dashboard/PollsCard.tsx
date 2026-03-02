@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,12 +18,20 @@ interface PollsCardProps {
 }
 
 export function PollsCard({ userId, initialPoll }: PollsCardProps) {
+  const router = useRouter();
   const [poll, setPoll] = useState<PollWithDetails | null>(initialPoll);
   const [selectedOptions, setSelectedOptions] = useState<string[]>(
     initialPoll?.userVotes ?? []
   );
   const [voting, setVoting] = useState(false);
   const [voted, setVoted] = useState((initialPoll?.userVotes?.length ?? 0) > 0);
+
+  // Sync from server when initialPoll changes (e.g. after router.refresh())
+  useEffect(() => {
+    setPoll(initialPoll);
+    setSelectedOptions(initialPoll?.userVotes ?? []);
+    setVoted((initialPoll?.userVotes?.length ?? 0) > 0);
+  }, [initialPoll?.id, initialPoll?.totalVotes, initialPoll?.userVotes?.length]);
 
   const hasSelection = selectedOptions.length > 0;
   const allowMultiple = poll?.allow_multiple ?? false;
@@ -66,6 +75,9 @@ export function PollsCard({ userId, initialPoll }: PollsCardProps) {
     });
     setVoted(true);
     setVoting(false);
+
+    // Refresh server data so the page shows latest results
+    router.refresh();
   };
 
   const toggleOption = (optionId: string) => {
