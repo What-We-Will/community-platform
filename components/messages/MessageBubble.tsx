@@ -1,18 +1,22 @@
+import { Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { Button } from "@/components/ui/button";
 import type { MessageWithSender } from "@/lib/types";
 
 interface MessageBubbleProps {
   message: MessageWithSender;
   isOwn: boolean;
   showSenderInfo: boolean;
+  onJoinVideoCall?: (roomName: string) => void;
 }
 
 export function MessageBubble({
   message,
   isOwn,
   showSenderInfo,
+  onJoinVideoCall,
 }: MessageBubbleProps) {
   // System messages: centered pill with muted text, no avatar
   if (message.message_type === "system") {
@@ -21,6 +25,36 @@ export function MessageBubble({
         <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
           {message.content}
         </span>
+      </div>
+    );
+  }
+
+  // Video invite: card with Join Call button
+  if (message.message_type === "video_invite") {
+    const metadata = (message.metadata ?? {}) as {
+      room_name?: string;
+      started_by?: string;
+    };
+    const startedBy = metadata.started_by ?? message.sender?.display_name ?? "Someone";
+    const roomName = metadata.room_name;
+
+    return (
+      <div className="flex justify-center py-2">
+        <div className="rounded-lg border bg-muted/40 px-4 py-3 max-w-[85%] text-center">
+          <p className="text-sm text-foreground mb-2">
+            📹 <strong>{startedBy}</strong> started a video call
+          </p>
+          {roomName && onJoinVideoCall && (
+            <Button
+              size="sm"
+              className="gap-1.5"
+              onClick={() => onJoinVideoCall(roomName)}
+            >
+              <Video className="size-4" />
+              Join Call
+            </Button>
+          )}
+        </div>
       </div>
     );
   }

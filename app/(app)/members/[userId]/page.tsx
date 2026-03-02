@@ -9,6 +9,7 @@ import {
   MessageSquare,
   UserCircle,
 } from "lucide-react";
+import { QuickCallButton } from "@/components/video/QuickCallButton";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -153,6 +154,17 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
   const typedProfile = profile as Profile;
   const isOwnProfile = currentUser?.id === userId;
+
+  let viewerDisplayName = "";
+  if (currentUser) {
+    const { data: viewerProfile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", currentUser.id)
+      .single();
+    viewerDisplayName = (viewerProfile?.display_name as string) ?? "Guest";
+  }
+
   const status = getOnlineStatus(typedProfile.last_seen_at);
   const initials = getInitials(typedProfile.display_name);
   const avatarColor = hashIdToColor(typedProfile.id);
@@ -244,6 +256,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 Send Message
               </Link>
             </Button>
+            <QuickCallButton
+              targetUserId={userId}
+              currentUserDisplayName={viewerDisplayName}
+            />
           </>
         )}
       </div>

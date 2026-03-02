@@ -14,6 +14,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ArrowLeft, Video, UsersRound } from "lucide-react";
+import { getVideoRoomName } from "@/lib/utils/video";
+import { VideoCallModal } from "@/components/video/VideoCallModal";
 import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { TypingIndicator } from "./TypingIndicator";
@@ -94,6 +96,8 @@ export function ConversationView({
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [videoCallOpen, setVideoCallOpen] = useState(false);
+  const [videoRoomName, setVideoRoomName] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -272,6 +276,42 @@ export function ConversationView({
     setIsSending(false);
   }
 
+  async function handleStartVideoCall() {
+    const type = isGroup ? "group" : "dm";
+    const roomName = getVideoRoomName({ type, id: conversationId });
+    const { error } = await supabase.from("messages").insert({
+      conversation_id: conversationId,
+      sender_id: currentUser.id,
+      content: `${currentUser.display_name} started a video call`,
+      message_type: "video_invite",
+      metadata: {
+        room_name: roomName,
+        started_by: currentUser.display_name,
+      },
+    });
+    if (error) return;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        conversation_id: conversationId,
+        sender_id: currentUser.id,
+        content: `${currentUser.display_name} started a video call`,
+        message_type: "video_invite" as const,
+        metadata: { room_name: roomName, started_by: currentUser.display_name },
+        edited_at: null,
+        created_at: new Date().toISOString(),
+        sender: buildSenderProfile(currentUser),
+      },
+    ]);
+    setVideoRoomName(roomName);
+    setVideoCallOpen(true);
+  }
+
+  const videoCallTitle = isGroup
+    ? `Video call — ${groupName ?? "Group"}`
+    : `Video call with ${otherUser?.display_name ?? "Unknown"}`;
+
   // ── Header ──────────────────────────────────────────────────────────────────
 
   const renderHeader = () => {
@@ -309,6 +349,23 @@ export function ConversationView({
                 </p>
               </div>
             </div>
+          )}
+
+          {!readOnlyFooter && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleStartVideoCall}
+                  >
+                    <Video className="size-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Start video call</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
       );
@@ -357,16 +414,22 @@ export function ConversationView({
           </div>
         </Link>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" disabled>
-                <Video className="size-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Coming soon</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {!readOnlyFooter && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleStartVideoCall}
+                >
+                  <Video className="size-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Start video call</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
     );
   };
@@ -391,11 +454,12 @@ export function ConversationView({
           const prevMsg = messages[i - 1];
           // For system messages, always treat as a new block
           const showSenderInfo =
-            msg.message_type === "system"
+            msg.message_type === "system" || msg.message_type === "video_invite"
               ? false
               : !prevMsg ||
                 prevMsg.sender_id !== msg.sender_id ||
-                prevMsg.message_type === "system";
+                prevMsg.message_type === "system" ||
+                prevMsg.message_type === "video_invite";
 
           return (
             <MessageBubble
@@ -403,6 +467,14 @@ export function ConversationView({
               message={msg}
               isOwn={msg.sender_id === currentUser.id}
               showSenderInfo={showSenderInfo}
+              onJoinVideoCall={
+                msg.message_type === "video_invite"
+                  ? (roomName) => {
+                      setVideoRoomName(roomName);
+                      setVideoCallOpen(true);
+                    }
+                  : undefined
+              }
             />
           );
         })}
@@ -427,6 +499,19 @@ export function ConversationView({
             disabled={isSending}
           />
         </>
+      )}
+
+      {videoRoomName && (
+        <VideoCallModal
+          roomName={videoRoomName}
+          displayName={currentUser.display_name}
+          title={videoCallTitle}
+          isOpen={videoCallOpen}
+          onClose={() => {
+            setVideoCallOpen(false);
+            setVideoRoomName(null);
+          }}
+        />
       )}
     </div>
   );
