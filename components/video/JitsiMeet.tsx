@@ -77,11 +77,9 @@ export default function JitsiMeet({
         onClose();
       });
 
-      api.addEventListener("videoConferenceJoined", () => {
-        setLoading(false);
-      });
-
       apiRef.current = api;
+      // Hide loading so the pre-join screen is visible; user must click "Join meeting" in Jitsi
+      setLoading(false);
     };
 
     document.body.appendChild(script);
