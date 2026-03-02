@@ -83,6 +83,58 @@ export async function createEventAction(formData: {
   redirect(`/events/${event.id}`);
 }
 
+export async function updateEventAction(
+  eventId: string,
+  formData: {
+    title: string;
+    description: string;
+    event_type: string;
+    starts_at: string;
+    ends_at: string;
+    location: string;
+    max_attendees: number | null;
+    group_id: string | null;
+  }
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: existing } = await supabase
+    .from("events")
+    .select("host_id")
+    .eq("id", eventId)
+    .single();
+
+  if (!existing || existing.host_id !== user.id) {
+    throw new Error("Only the host can edit this event");
+  }
+
+  const { error } = await supabase
+    .from("events")
+    .update({
+      title: formData.title.trim(),
+      description: formData.description.trim() || null,
+      event_type: formData.event_type,
+      starts_at: formData.starts_at,
+      ends_at: formData.ends_at,
+      location: formData.location.trim() || "Online",
+      max_attendees: formData.max_attendees,
+      group_id: formData.group_id,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", eventId)
+    .eq("host_id", user.id);
+
+  if (error) throw new Error(error.message);
+  revalidatePath("/events");
+  revalidatePath(`/events/${eventId}`);
+  revalidatePath("/dashboard");
+  redirect(`/events/${eventId}`);
+}
+
 export async function deleteEvent(eventId: string) {
   const supabase = await createClient();
   const {

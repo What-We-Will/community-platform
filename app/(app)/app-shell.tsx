@@ -25,10 +25,10 @@ const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so othe
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/members", label: "Members", icon: UserSearch },
-  { href: "/groups", label: "Groups", icon: UsersRound },
   { href: "/events", label: "Events", icon: Calendar },
+  { href: "/groups", label: "Groups", icon: UsersRound },
   { href: "/messages", label: "Messages", icon: MessageSquare },
+  { href: "/members", label: "Members", icon: UserSearch },
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
