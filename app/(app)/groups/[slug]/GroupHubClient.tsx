@@ -23,7 +23,7 @@ import {
   leaveGroupAction,
   updateMemberRoleAction,
   removeMemberAction,
-} from "./actions";
+} from "@/app/(app)/groups/actions";
 import type { Group, Profile, GroupMember, MessageWithSender } from "@/lib/types";
 
 interface GroupHubClientProps {
