@@ -35,7 +35,6 @@ export function CreateEventForm({
   groups,
   preselectedGroupId,
 }: CreateEventFormProps) {
-  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
