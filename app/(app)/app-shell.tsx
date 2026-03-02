@@ -15,6 +15,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { UnreadBadge } from "@/components/messages/UnreadBadge";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -30,6 +31,7 @@ interface AppShellProps {
     email: string;
     displayName: string;
     avatarUrl: string | null;
+    unreadCount: number;
   };
 }
 
@@ -92,6 +94,12 @@ export default function AppShell({ children, user }: AppShellProps) {
               >
                 <item.icon className="size-5 shrink-0" />
                 {item.label}
+                {item.href === "/messages" && (
+                  <UnreadBadge
+                    initialCount={user.unreadCount}
+                    userId={user.id}
+                  />
+                )}
               </Link>
             ))}
           </nav>
