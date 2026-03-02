@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,51 +9,10 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { getOnlineStatus, type OnlineStatus } from "@/lib/utils/status";
+import { UserAvatar } from "@/components/shared/UserAvatar";
+import { getOnlineStatus } from "@/lib/utils/status";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
-
-const AVATAR_COLORS = [
-  "bg-blue-500",
-  "bg-emerald-500",
-  "bg-violet-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-cyan-500",
-  "bg-indigo-500",
-  "bg-teal-500",
-];
-
-function hashIdToColor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash << 5) - hash + id.charCodeAt(i);
-    hash |= 0;
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-function getInitials(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return displayName.slice(0, 2).toUpperCase();
-}
-
-function StatusDot({ status }: { status: OnlineStatus }) {
-  return (
-    <span
-      className={cn(
-        "absolute right-1 top-1 size-2 rounded-full ring-2 ring-background",
-        status === "online" && "bg-green-500",
-        status === "away" && "bg-yellow-500",
-        status === "offline" && "bg-muted-foreground/50"
-      )}
-      title={status === "online" ? "Online" : status === "away" ? "Recently active" : "Offline"}
-    />
-  );
-}
 
 function isNewMember(createdAt: string): boolean {
   const created = new Date(createdAt).getTime();
@@ -72,8 +30,6 @@ export default function MemberCard({ profile, currentUserId }: MemberCardProps) 
   const status = getOnlineStatus(profile.last_seen_at, {
     isCurrentUser: currentUserId != null && profile.id === currentUserId,
   });
-  const initials = getInitials(profile.display_name);
-  const avatarColor = hashIdToColor(profile.id);
   const skills = profile.skills ?? [];
   const displaySkills = skills.slice(0, 4);
   const extraCount = skills.length - 4;
@@ -90,14 +46,13 @@ export default function MemberCard({ profile, currentUserId }: MemberCardProps) 
       )}
       <CardContent className="pt-6">
         <div className="flex items-start gap-4">
-          <div className="relative shrink-0">
-            <Avatar className={cn("size-12", avatarColor)}>
-              <AvatarFallback className={cn("text-white", avatarColor)}>
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <StatusDot status={status} />
-          </div>
+          <UserAvatar
+            avatarUrl={profile.avatar_url}
+            displayName={profile.display_name}
+            size="lg"
+            showStatus
+            status={status}
+          />
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-semibold">{profile.display_name}</h3>
             {profile.headline && (

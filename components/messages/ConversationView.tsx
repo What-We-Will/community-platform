@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,8 @@ export function ConversationView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [videoCallOpen, setVideoCallOpen] = useState(false);
   const [videoRoomName, setVideoRoomName] = useState<string | null>(null);
+  const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   // Poll other user's last_seen_at so status stays current while in chat
   const [otherUserLastSeenAt, setOtherUserLastSeenAt] = useState<string | null>(
     otherUser?.last_seen_at ?? null
@@ -263,10 +266,11 @@ export function ConversationView({
     }
   }
 
-  async function handleSend() {
-    const content = inputValue.trim();
-    if (!content || isSending) return;
+  async function handleSend(content: string, file?: File) {
+    if (!content && !file) return;
+    if (isSending) return;
 
+    const text = content.trim();
     setInputValue("");
     setSendError(null);
     setIsSending(true);
@@ -277,14 +281,45 @@ export function ConversationView({
       isTrackingRef.current = false;
     }
 
+    let metadata: Record<string, unknown> = {};
+    let messageType: "text" | "file" = "text";
+
+    if (file) {
+      const { uploadPrivateFile, validateFile } = await import("@/lib/storage");
+      const allowed = [
+        "image/png", "image/jpeg", "image/webp", "image/gif",
+        "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain",
+      ];
+      const err = validateFile(file, { maxSizeMB: 25, allowedTypes: allowed });
+      if (err) {
+        setSendError(err);
+        setIsSending(false);
+        return;
+      }
+      const path = `${conversationId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const result = await uploadPrivateFile("attachments", path, file);
+      if (result.error) {
+        setSendError(result.error);
+        setIsSending(false);
+        return;
+      }
+      metadata = {
+        file_name: file.name,
+        file_size: file.size,
+        file_type: file.type,
+        storage_path: result.path,
+      };
+      messageType = "file";
+    }
+
     const optimisticId = crypto.randomUUID();
     const optimisticMsg: MessageWithSender = {
       id: optimisticId,
       conversation_id: conversationId,
       sender_id: currentUser.id,
-      content,
-      message_type: "text",
-      metadata: {},
+      content: text,
+      message_type: messageType,
+      metadata,
       edited_at: null,
       created_at: new Date().toISOString(),
       sender: buildSenderProfile(currentUser),
@@ -296,8 +331,9 @@ export function ConversationView({
       .insert({
         conversation_id: conversationId,
         sender_id: currentUser.id,
-        content,
-        message_type: "text",
+        content: text,
+        message_type: messageType,
+        metadata,
       })
       .select()
       .single();
@@ -438,14 +474,13 @@ export function ConversationView({
           href={`/members/${otherUser?.id}`}
           className="flex items-center gap-3 flex-1 min-w-0 group rounded-lg px-2 py-1 hover:bg-accent transition-colors"
         >
-          <div
-            className={cn(
-              "flex size-9 shrink-0 items-center justify-center rounded-full text-white text-sm font-semibold",
-              getAvatarColor(otherUser?.display_name ?? "")
-            )}
-          >
-            {getInitials(otherUser?.display_name ?? "?")}
-          </div>
+          <UserAvatar
+            avatarUrl={otherUser?.avatar_url ?? null}
+            displayName={otherUser?.display_name ?? "?"}
+            size="md"
+            showStatus
+            status={onlineStatus}
+          />
           <div className="min-w-0">
             <p className="text-sm font-semibold truncate group-hover:underline">
               {otherUser?.display_name}
@@ -474,12 +509,49 @@ export function ConversationView({
     );
   };
 
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    const allowed = [
+      "image/png", "image/jpeg", "image/webp", "image/gif",
+      "application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain",
+    ];
+    if (file.size > 25 * 1024 * 1024) return;
+    if (!allowed.includes(file.type)) return;
+    setPendingAttachment(file);
+  }
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {renderHeader()}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 min-h-0">
+      {/* Messages with drag-drop zone */}
+      <div
+        className="flex-1 overflow-y-auto px-4 py-4 min-h-0 relative"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        {dragOver && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-primary/10 border-2 border-dashed border-primary">
+            <p className="text-sm font-medium text-primary">Drop to upload file</p>
+          </div>
+        )}
         {messages.length === 0 && (
           <div className="flex items-center justify-center py-16">
             <p className="text-sm text-muted-foreground">
@@ -537,6 +609,8 @@ export function ConversationView({
             onChange={handleInputChange}
             onSend={handleSend}
             disabled={isSending}
+            attachment={pendingAttachment}
+            onAttachmentChange={setPendingAttachment}
           />
         </>
       )}

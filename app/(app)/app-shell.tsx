@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { UnreadBadge } from "@/components/messages/UnreadBadge";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { updateLastSeen } from "@/app/(app)/profile/actions";
 
 const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
@@ -124,17 +125,11 @@ export default function AppShell({ children, user }: AppShellProps) {
 
           <div className="border-t p-4">
             <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted">
-                {user.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt=""
-                    className="size-9 rounded-full object-cover"
-                  />
-                ) : (
-                  <UserCircle className="size-5 text-muted-foreground" />
-                )}
-              </div>
+              <UserAvatar
+                avatarUrl={user.avatarUrl}
+                displayName={user.displayName}
+                size="md"
+              />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
                   {user.displayName}

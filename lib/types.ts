@@ -4,6 +4,7 @@ export interface Profile {
   id: string;
   display_name: string;
   avatar_url: string | null;
+  resume_path: string | null;
   headline: string | null;
   bio: string | null;
   location: string | null;
@@ -24,6 +25,7 @@ export interface ProfileInsert {
   id: string;
   display_name: string;
   avatar_url?: string | null;
+  resume_path?: string | null;
   headline?: string | null;
   bio?: string | null;
   location?: string | null;
@@ -40,6 +42,7 @@ export interface ProfileInsert {
 export interface ProfileUpdate {
   display_name?: string;
   avatar_url?: string | null;
+  resume_path?: string | null;
   headline?: string | null;
   bio?: string | null;
   location?: string | null;

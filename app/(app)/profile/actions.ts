@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type ProfileUpdateResult = { error?: string };
@@ -67,4 +68,55 @@ export async function updateLastSeen(): Promise<void> {
     .from("profiles")
     .update({ last_seen_at: new Date().toISOString() })
     .eq("id", user.id);
+}
+
+export async function updateAvatarUrl(avatarUrl: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: avatarUrl })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/profile");
+  revalidatePath("/members");
+  return {};
+}
+
+export async function updateResumePath(resumePath: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ resume_path: resumePath })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/profile");
+  return {};
+}
+
+export async function getResumeSignedUrl(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("resume_path")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.resume_path) return null;
+
+  const { data } = await supabase.storage
+    .from("resumes")
+    .createSignedUrl(profile.resume_path, 3600);
+
+  return data?.signedUrl ?? null;
 }

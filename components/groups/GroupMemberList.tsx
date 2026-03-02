@@ -9,7 +9,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -66,24 +66,6 @@ function RoleBadge({ role }: { role: GroupMember["role"] }) {
   return null;
 }
 
-function OnlineDot({
-  lastSeenAt,
-  isCurrentUser,
-}: {
-  lastSeenAt: string | null;
-  isCurrentUser?: boolean;
-}) {
-  const status = getOnlineStatus(lastSeenAt, { isCurrentUser });
-  if (status === "offline") return null;
-  return (
-    <span
-      className={cn(
-        "absolute bottom-0 right-0 size-2 rounded-full ring-1 ring-background",
-        status === "online" ? "bg-emerald-500" : "bg-amber-400"
-      )}
-    />
-  );
-}
 
 export function GroupMemberList({
   members,
@@ -121,19 +103,15 @@ export function GroupMemberList({
 
           return (
             <div key={member.id} className="flex items-center gap-3 py-3">
-              {/* Avatar */}
-              <Link href={`/members/${member.id}`} className="relative shrink-0">
-                <div
-                  className={cn(
-                    "flex size-9 items-center justify-center rounded-full text-white text-sm font-semibold",
-                    getAvatarColor(member.display_name)
-                  )}
-                >
-                  {getInitials(member.display_name)}
-                </div>
-                <OnlineDot
-                  lastSeenAt={member.last_seen_at}
-                  isCurrentUser={member.id === currentUserId}
+              <Link href={`/members/${member.id}`} className="shrink-0">
+                <UserAvatar
+                  avatarUrl={member.avatar_url ?? null}
+                  displayName={member.display_name}
+                  size="md"
+                  showStatus
+                  status={getOnlineStatus(member.last_seen_at, {
+                    isCurrentUser: member.id === currentUserId,
+                  })}
                 />
               </Link>
 

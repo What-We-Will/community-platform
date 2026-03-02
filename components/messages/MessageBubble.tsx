@@ -1,9 +1,150 @@
-import { Video } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Video, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils/time";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { getSignedUrl } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import type { MessageWithSender } from "@/lib/types";
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function FileMessageBubble({
+  isOwn,
+  showSenderInfo,
+  senderName,
+  senderAvatarUrl,
+  content,
+  createdAt,
+  storagePath,
+  fileName,
+  fileSize,
+  fileType,
+  isImage,
+}: {
+  isOwn: boolean;
+  showSenderInfo: boolean;
+  senderName: string;
+  senderAvatarUrl: string | null;
+  content: string;
+  createdAt: string;
+  storagePath?: string;
+  fileName: string;
+  fileSize?: number;
+  fileType: string;
+  isImage: boolean;
+}) {
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    if (!storagePath) return;
+    getSignedUrl("attachments", storagePath, 3600).then(setSignedUrl);
+  }, [storagePath]);
+
+  function handleOpenUrl() {
+    if (signedUrl) {
+      window.open(signedUrl, "_blank");
+    } else if (storagePath) {
+      getSignedUrl("attachments", storagePath, 3600).then((url) => {
+        if (url) window.open(url, "_blank");
+      });
+    }
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex gap-2 mb-0.5",
+        isOwn ? "flex-row-reverse" : "flex-row",
+        showSenderInfo && "mt-4"
+      )}
+    >
+      {!isOwn && (
+        <div className="w-7 shrink-0 self-end">
+          {showSenderInfo && (
+            <UserAvatar
+              avatarUrl={senderAvatarUrl}
+              displayName={senderName}
+              size="xs"
+            />
+          )}
+        </div>
+      )}
+      <div
+        className={cn(
+          "flex flex-col max-w-[75%]",
+          isOwn ? "items-end" : "items-start"
+        )}
+      >
+        {!isOwn && showSenderInfo && (
+          <span className="text-xs text-muted-foreground mb-1 ml-1">
+            {senderName}
+          </span>
+        )}
+        <div
+          className={cn(
+            "px-3 py-2 rounded-2xl text-sm break-words leading-relaxed",
+            isOwn
+              ? "bg-primary text-primary-foreground rounded-tr-sm"
+              : "bg-muted text-foreground rounded-tl-sm"
+          )}
+        >
+          {isImage && signedUrl && !loadFailed ? (
+            <button
+              type="button"
+              onClick={handleOpenUrl}
+              className="block max-w-full rounded overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <img
+                src={signedUrl}
+                alt={fileName}
+                className="max-w-[280px] max-h-[280px] object-contain"
+                onError={() => setLoadFailed(true)}
+              />
+            </button>
+          ) : !isImage && storagePath ? (
+            <div className="flex items-center gap-2">
+              <FileText className="size-5 shrink-0" />
+              <div className="min-w-0">
+                <p className="truncate font-medium">{fileName}</p>
+                {fileSize != null && (
+                  <p className="text-xs opacity-80">{formatFileSize(fileSize)}</p>
+                )}
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant={isOwn ? "secondary" : "outline"}
+                className="shrink-0"
+                onClick={handleOpenUrl}
+              >
+                Download
+              </Button>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">Unable to load file</span>
+          )}
+          {content && (
+            <p className={cn(isImage || !isImage ? "mt-2" : "", "whitespace-pre-wrap")}>
+              {content}
+            </p>
+          )}
+        </div>
+        {showSenderInfo && (
+          <span className="text-[11px] text-muted-foreground mt-1 px-1">
+            {formatRelativeTime(createdAt)}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface MessageBubbleProps {
   message: MessageWithSender;
@@ -64,6 +205,45 @@ export function MessageBubble({
     );
   }
 
+  // File attachment message
+  if (message.message_type === "file") {
+    let meta = message.metadata;
+    if (typeof meta === "string") {
+      try {
+        meta = JSON.parse(meta) as Record<string, unknown>;
+      } catch {
+        meta = {};
+      }
+    }
+    const fileMeta = (meta ?? {}) as {
+      file_name?: string;
+      file_size?: number;
+      file_type?: string;
+      storage_path?: string;
+    };
+    const storagePath = fileMeta.storage_path;
+    const fileName = fileMeta.file_name ?? "file";
+    const fileSize = fileMeta.file_size;
+    const fileType = fileMeta.file_type ?? "";
+    const isImage = fileType.startsWith("image/");
+
+    return (
+      <FileMessageBubble
+        isOwn={isOwn}
+        showSenderInfo={showSenderInfo}
+        senderName={message.sender?.display_name ?? "Unknown"}
+        senderAvatarUrl={message.sender?.avatar_url ?? null}
+        content={message.content}
+        createdAt={message.created_at}
+        storagePath={storagePath}
+        fileName={fileName}
+        fileSize={fileSize}
+        fileType={fileType}
+        isImage={isImage}
+      />
+    );
+  }
+
   const senderName = message.sender?.display_name ?? "Unknown";
 
   return (
@@ -74,18 +254,14 @@ export function MessageBubble({
         showSenderInfo && "mt-4"
       )}
     >
-      {/* Avatar placeholder — keeps alignment for grouped messages */}
       {!isOwn && (
         <div className="w-7 shrink-0 self-end">
           {showSenderInfo && (
-            <div
-              className={cn(
-                "flex size-7 items-center justify-center rounded-full text-white text-xs font-semibold",
-                getAvatarColor(senderName)
-              )}
-            >
-              {getInitials(senderName)}
-            </div>
+            <UserAvatar
+              avatarUrl={message.sender?.avatar_url ?? null}
+              displayName={senderName}
+              size="xs"
+            />
           )}
         </div>
       )}

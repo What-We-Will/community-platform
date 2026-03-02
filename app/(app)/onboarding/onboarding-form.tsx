@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { completeOnboarding } from "./actions";
+import { updateAvatarUrl } from "@/app/(app)/profile/actions";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,13 +28,15 @@ interface OnboardingFormProps {
     open_to_referrals: boolean;
     linkedin_url: string;
   };
-  userId?: string; // Kept for backwards compatibility, server action uses auth
+  userId: string;
 }
 
 export default function OnboardingForm({
   initialData,
+  userId,
 }: OnboardingFormProps) {
   const [displayName, setDisplayName] = useState(initialData.display_name);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [headline, setHeadline] = useState(initialData.headline);
   const [location, setLocation] = useState(initialData.location);
   const [bio, setBio] = useState(initialData.bio);
@@ -69,6 +73,7 @@ export default function OnboardingForm({
     try {
       const result = await completeOnboarding({
         display_name: displayName,
+        avatar_url: avatarUrl || null,
         headline: headline || null,
         location: location || null,
         bio: bio || null,
@@ -111,6 +116,18 @@ export default function OnboardingForm({
               {error}
             </div>
           )}
+          <div className="flex flex-col items-start gap-4">
+            <p className="text-sm text-muted-foreground">Optional: add a profile photo</p>
+            <AvatarUpload
+              userId={userId}
+              currentAvatarUrl={avatarUrl}
+              displayName={displayName || "You"}
+              onUploadComplete={(url) => {
+                setAvatarUrl(url);
+                updateAvatarUrl(url);
+              }}
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="display_name">Display name</Label>
             <Input

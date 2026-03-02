@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { UserAvatar } from "@/components/shared/UserAvatar";
+import { getAvatarColor } from "@/lib/utils/avatar";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
@@ -17,18 +18,6 @@ import type { ConversationWithDetails, Message } from "@/lib/types";
 interface ConversationListProps {
   initialConversations: ConversationWithDetails[];
   currentUserId: string;
-}
-
-function OnlineDot({ status }: { status: "online" | "away" | "offline" }) {
-  if (status === "offline") return null;
-  return (
-    <span
-      className={cn(
-        "absolute bottom-0 right-0 size-2.5 rounded-full ring-2 ring-background",
-        status === "online" ? "bg-emerald-500" : "bg-amber-400"
-      )}
-    />
-  );
 }
 
 function getVideoRoomFromMessage(msg: Message | null): string | null {
@@ -253,18 +242,13 @@ export function ConversationList({
                     isActive && "bg-accent"
                   )}
                 >
-                  {/* Avatar + status dot */}
-                  <div className="relative shrink-0">
-                    <div
-                      className={cn(
-                        "flex size-10 items-center justify-center rounded-full text-white text-sm font-semibold",
-                        getAvatarColor(otherUser.display_name)
-                      )}
-                    >
-                      {getInitials(otherUser.display_name)}
-                    </div>
-                    <OnlineDot status={onlineStatus} />
-                  </div>
+                  <UserAvatar
+                    avatarUrl={otherUser.avatar_url ?? null}
+                    displayName={otherUser.display_name}
+                    size="md"
+                    showStatus
+                    status={onlineStatus}
+                  />
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">

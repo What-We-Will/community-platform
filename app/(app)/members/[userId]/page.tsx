@@ -10,8 +10,8 @@ import {
   UserCircle,
 } from "lucide-react";
 import { QuickCallButton } from "@/components/video/QuickCallButton";
+import { UserAvatar } from "@/components/shared/UserAvatar";
 import { createClient } from "@/lib/supabase/server";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getOnlineStatus } from "@/lib/utils/status";
@@ -94,34 +94,6 @@ async function MemberGroups({
   );
 }
 
-const AVATAR_COLORS = [
-  "bg-blue-500",
-  "bg-emerald-500",
-  "bg-violet-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-cyan-500",
-  "bg-indigo-500",
-  "bg-teal-500",
-];
-
-function hashIdToColor(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = (hash << 5) - hash + id.charCodeAt(i);
-    hash |= 0;
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-function getInitials(displayName: string): string {
-  const parts = displayName.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return displayName.slice(0, 2).toUpperCase();
-}
-
 function formatMemberSince(createdAt: string): string {
   const date = new Date(createdAt);
   return date.toLocaleDateString("en-US", {
@@ -168,8 +140,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const status = getOnlineStatus(typedProfile.last_seen_at, {
     isCurrentUser: isOwnProfile,
   });
-  const initials = getInitials(typedProfile.display_name);
-  const avatarColor = hashIdToColor(typedProfile.id);
 
   const links = [
     {
@@ -192,33 +162,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <div className="relative shrink-0">
-          <Avatar
-            className={cn(
-              "size-20 ring-4 ring-background",
-              avatarColor
-            )}
-          >
-            <AvatarFallback className={cn("text-xl text-white", avatarColor)}>
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <span
-            className={cn(
-              "absolute bottom-0 right-0 size-3 rounded-full ring-2 ring-background",
-              status === "online" && "bg-green-500",
-              status === "away" && "bg-yellow-500",
-              status === "offline" && "bg-muted-foreground/50"
-            )}
-            title={
-              status === "online"
-                ? "Online"
-                : status === "away"
-                  ? "Recently active"
-                  : "Offline"
-            }
-          />
-        </div>
+        <UserAvatar
+          avatarUrl={typedProfile.avatar_url}
+          displayName={typedProfile.display_name}
+          size="xl"
+          showStatus
+          status={status}
+          className="ring-4 ring-background"
+        />
         <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-semibold tracking-tight">
             {typedProfile.display_name}

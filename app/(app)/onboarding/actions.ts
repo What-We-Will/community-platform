@@ -8,6 +8,7 @@ export type OnboardingResult = { error?: string };
 export async function completeOnboarding(
   data: {
     display_name: string;
+    avatar_url?: string | null;
     headline?: string | null;
     location?: string | null;
     bio?: string | null;
@@ -26,11 +27,11 @@ export async function completeOnboarding(
     return { error: "You must be signed in to complete onboarding." };
   }
 
-  // Upsert: insert if profile doesn't exist (e.g. trigger failed), otherwise update
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
       display_name: data.display_name,
+      avatar_url: data.avatar_url ?? null,
       headline: data.headline || null,
       location: data.location || null,
       bio: data.bio || null,

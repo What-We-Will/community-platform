@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { updateProfile } from "./actions";
+import { updateProfile, updateAvatarUrl, updateResumePath, getResumeSignedUrl } from "./actions";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { ResumeUpload } from "@/components/profile/ResumeUpload";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -118,6 +120,22 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               Profile updated successfully.
             </div>
           )}
+          <div className="flex flex-col sm:flex-row gap-6 items-start">
+            <AvatarUpload
+              userId={profile.id}
+              currentAvatarUrl={profile.avatar_url ?? null}
+              displayName={profile.display_name}
+              onUploadComplete={async (url) => {
+                const res = await updateAvatarUrl(url);
+                if (res.error) setError(res.error);
+                else {
+                  setSuccess(true);
+                  setTimeout(() => setSuccess(false), 3000);
+                  router.refresh();
+                }
+              }}
+            />
+            <div className="flex-1 space-y-4 w-full">
           <div className="space-y-2">
             <Label htmlFor="display_name">Display name</Label>
             <Input
@@ -211,6 +229,25 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               value={portfolioUrl}
               onChange={(e) => setPortfolioUrl(e.target.value)}
             />
+          </div>
+          <ResumeUpload
+            userId={profile.id}
+            resumePath={profile.resume_path ?? null}
+            onUploadComplete={async (path) => {
+              const res = await updateResumePath(path);
+              if (res.error) setError(res.error);
+              else {
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+                router.refresh();
+              }
+            }}
+            onViewClick={async () => {
+              const url = await getResumeSignedUrl();
+              if (url) window.open(url, "_blank");
+            }}
+          />
+            </div>
           </div>
         </CardContent>
         <CardFooter>
