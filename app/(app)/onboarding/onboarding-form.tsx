@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { completeOnboarding } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,12 +27,11 @@ interface OnboardingFormProps {
     open_to_referrals: boolean;
     linkedin_url: string;
   };
-  userId: string;
+  userId?: string; // Kept for backwards compatibility, server action uses auth
 }
 
 export default function OnboardingForm({
   initialData,
-  userId,
 }: OnboardingFormProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(initialData.display_name);
@@ -62,29 +61,23 @@ export default function OnboardingForm({
       .filter(Boolean);
 
     try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          display_name: displayName,
-          headline: headline || null,
-          location: location || null,
-          bio: bio || null,
-          skills,
-          open_to_referrals: openToReferrals,
-          linkedin_url: linkedinUrl || null,
-          is_onboarded: true,
-        })
-        .eq("id", userId);
+      const result = await completeOnboarding({
+        display_name: displayName,
+        headline: headline || null,
+        location: location || null,
+        bio: bio || null,
+        skills,
+        open_to_referrals: openToReferrals,
+        linkedin_url: linkedinUrl || null,
+      });
 
-      if (updateError) {
-        setError(updateError.message);
+      if (result.error) {
+        setError(result.error);
         setLoading(false);
         return;
       }
 
       router.push("/dashboard");
-      router.refresh();
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);

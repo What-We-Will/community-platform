@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import { updateProfile } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setPortfolioUrl(profile.portfolio_url ?? "");
   }, [profile]);
 
+  const router = useRouter();
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -67,25 +70,20 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       .filter(Boolean);
 
     try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          display_name: displayName,
-          headline: headline || null,
-          location: location || null,
-          bio: bio || null,
-          skills,
-          open_to_referrals: openToReferrals,
-          linkedin_url: linkedinUrl || null,
-          github_url: githubUrl || null,
-          portfolio_url: portfolioUrl || null,
-          is_onboarded: true,
-        })
-        .eq("id", profile.id);
+      const result = await updateProfile({
+        display_name: displayName,
+        headline: headline || null,
+        location: location || null,
+        bio: bio || null,
+        skills,
+        open_to_referrals: openToReferrals,
+        linkedin_url: linkedinUrl || null,
+        github_url: githubUrl || null,
+        portfolio_url: portfolioUrl || null,
+      });
 
-      if (updateError) {
-        setError(updateError.message);
+      if (result.error) {
+        setError(result.error);
         setLoading(false);
         return;
       }
@@ -93,6 +91,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       setSuccess(true);
       setLoading(false);
       setTimeout(() => setSuccess(false), 3000);
+      router.refresh();
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(false);
