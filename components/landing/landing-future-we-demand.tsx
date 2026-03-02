@@ -11,20 +11,28 @@ export function LandingFutureWeDemand() {
       <div className="mx-auto flex max-w-6xl flex-col gap-12 md:flex-row md:items-center">
         <div className="md:w-1/2">
           <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
-            The Future We Demand
+            Our Future
           </h2>
+          <blockquote className="mt-4 border-l-4 border-primary-orange pl-4 italic text-muted-foreground">
+            &ldquo;Eight hours for work, eight hours for rest, eight hours for
+            <strong> what we will</strong>.&rdquo; — Ira Steward (1863)
+          </blockquote>
           <p className="mt-4 text-muted-foreground">
-            The first industrial revolution brought immense wealth to a few and
-            hardship to many. Today, AI and automation are again reshaping work
-            at a dizzying pace—creating economic disruption, job loss, and
-            uncertainty for millions of workers.
+            The first industrial revolution gave birth to movements that secured
+            the labor laws and protections we know today. A five-day work week,
+            social security, abolition of child labor—these rights were not
+            freely given. They were fought for and won by workers who organized,
+            went on strike, marched, and refused to accept the way things were.
+            The AI revolution is compressing a similar scale of economic
+            disruption into a fraction of time. With less time to adjust, the
+            human toll of dislocation without a safety net could be worse. We
+            can&apos;t afford to wait for disaster before we mobilize.
           </p>
           <p className="mt-4 text-muted-foreground">
-            We believe this moment is also an opportunity. By building collective
-            power and demanding a seat at the table, we can shape a future of
-            work that prioritizes dignity, security, and shared prosperity. The
-            future we demand is one where technology serves people—not the other
-            way around.
+            But every great disruption is also an opening for building better.
+            The workers in the New Deal era didn&apos;t just survive
+            industrialization; they reimagined work itself. What can we
+            imagine—and build together—for the future of work?
           </p>
         </div>
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted md:w-1/2">

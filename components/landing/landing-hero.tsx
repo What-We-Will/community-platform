@@ -8,14 +8,12 @@ export function LandingHero() {
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 md:grid-cols-2 md:items-end md:gap-16">
         <div className="max-w-xl">
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-[#212529] sm:text-4xl md:text-5xl lg:text-6xl">
-            Workers United{" "}
-            <span className="italic font-bold">for Just Transitions</span>
+            What We Will
           </h1>
           <p className="mt-5 max-w-[85%] text-base leading-relaxed text-[#495057] sm:text-lg">
-            The future of work is changing faster than ever. We are here to
-            ensure no worker is left behind by providing the tools, legal
-            advocacy, and community support needed to thrive in an automated
-            world.
+            We organize workers across multiple sectors affected by rapid
+            technological change to <strong>build collective power</strong>
+            and win <strong>shared prosperity</strong> in the age of AI.
           </p>
           <div className="mt-8">
             <Button

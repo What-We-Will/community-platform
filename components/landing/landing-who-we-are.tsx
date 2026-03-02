@@ -9,20 +9,26 @@ export function LandingWhoWeAre() {
             Who We Are
           </h2>
           <p className="mt-4 text-muted-foreground">
-            We are a worker center for workers across sectors impacted by rapid
-            technology change. Formed in 2025–2026 as part of the TechWorkers
-            Coalition, we believe in collective power and individual resilience
-            to shape the future of work.
+            What We Will is a worker center for workers across sectors impacted
+            by rapid technological change. We started in response to mass layoffs
+            in 2025–2026, as part of the Tech Workers Coalition, a grassroots
+            labor organization with local chapters all over the U.S. and Europe.
           </p>
           <p className="mt-4 text-muted-foreground">
-            Our work is rooted in mutual aid, organizing, and advocacy. We bring
-            together people who have been laid off, are considering a career
-            change, or want to fight for a more equitable economy.
+            Through strategic coalition-building and mobilization, we fight for
+            policies that provide a social safety net for workers during an
+            unprecedented time of labor market disruption. Our initial focus is
+            to build resourceful community infrastructure for tech workers
+            through targeted skill-building and mutual aid, but we aim to expand
+            our membership to include workers in other sectors and professions,
+            including call center workers, journalists, creative workers, and
+            other knowledge workers.
           </p>
           <p className="mt-4 text-muted-foreground">
-            Together we are building the collective capacity and culture of care
-            needed to navigate technological disruption and demand a future that
-            works for everyone.
+            We believe collective power—not individual resilience alone—is
+            necessary to navigate technological change. When workers organize
+            together across sectors, we can build support systems, win policy
+            protections, and shape the future of work.
           </p>
         </div>
       </div>

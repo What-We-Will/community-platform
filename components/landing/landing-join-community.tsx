@@ -12,8 +12,9 @@ export function LandingJoinCommunity() {
             Join Our Community
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-center text-muted-foreground">
-            Whether you&apos;ve been laid off, are considering a career change,
-            or want to fight for a better future of work—join us in building the
+            Whether you&apos;ve been laid off, you&apos;re anxious about your
+            chosen profession, or you just want to fight for change—you can make
+            a difference. Come be part of the solution. Join us in building the
             collective power we need to win.
           </p>
           <form
