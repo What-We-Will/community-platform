@@ -29,26 +29,27 @@ export default async function DashboardPage() {
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <WelcomeBanner profile={profile ?? null} />
 
+      {/* First row: My Groups, Upcoming Events, Community Polls */}
       <Suspense fallback={<CardSkeleton />}>
-        <NewMembersCard />
+        <MyGroupsCard userId={user.id} />
       </Suspense>
-
-      <Suspense fallback={<CardSkeleton />}>
-        <ActiveChatsCard userId={user.id} />
-      </Suspense>
-
+      <UpcomingEventsCard />
       <Suspense fallback={<CardSkeleton />}>
         <PollsCardWrapper userId={user.id} />
       </Suspense>
 
-      <Suspense fallback={<CardSkeleton />}>
-        <MyGroupsCard userId={user.id} />
-      </Suspense>
-
-      <UpcomingEventsCard />
+      {/* Second row: Job Tracker, Learning, Recent Chats */}
       <JobTrackerCard />
       <LearningCard />
+      <Suspense fallback={<CardSkeleton />}>
+        <ActiveChatsCard userId={user.id} />
+      </Suspense>
+
+      {/* Bottom row: Recordings, New Members */}
       <RecordingsCard />
+      <Suspense fallback={<CardSkeleton />}>
+        <NewMembersCard />
+      </Suspense>
     </div>
   );
 }
