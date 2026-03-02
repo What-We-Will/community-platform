@@ -23,10 +23,11 @@ export default function OAuthButtons({ redirectTo = "/dashboard" }: OAuthButtons
       const supabase = createClient();
       const siteUrl =
         process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
-      const { error: signInError } = await supabase.auth.signInWithOAuth({
+      const { data, error: signInError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
           redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
+          skipBrowserRedirect: true, // we handle redirect manually below
         },
       });
 
@@ -35,7 +36,13 @@ export default function OAuthButtons({ redirectTo = "/dashboard" }: OAuthButtons
         setLoading(null);
         return;
       }
-      // signInWithOAuth redirects the user, so we don't need to do anything else
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setError("Could not start OAuth flow — no redirect URL returned. Make sure the GitHub provider is enabled in your Supabase dashboard.");
+        setLoading(null);
+      }
     } catch {
       setError("An unexpected error occurred. Please try again.");
       setLoading(null);
