@@ -64,10 +64,14 @@ function isNewMember(createdAt: string): boolean {
 
 interface MemberCardProps {
   profile: Profile;
+  /** When set, this profile is shown as online if profile.id === currentUserId */
+  currentUserId?: string | null;
 }
 
-export default function MemberCard({ profile }: MemberCardProps) {
-  const status = getOnlineStatus(profile.last_seen_at);
+export default function MemberCard({ profile, currentUserId }: MemberCardProps) {
+  const status = getOnlineStatus(profile.last_seen_at, {
+    isCurrentUser: currentUserId != null && profile.id === currentUserId,
+  });
   const initials = getInitials(profile.display_name);
   const avatarColor = hashIdToColor(profile.id);
   const skills = profile.skills ?? [];

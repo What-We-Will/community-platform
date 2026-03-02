@@ -16,6 +16,10 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
   const referralsOnly = params.referrals === "true";
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const currentUserId = user?.id ?? null;
 
   // Build query for profiles
   let query = supabase
@@ -94,7 +98,11 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {profiles.map((profile) => (
-            <MemberCard key={profile.id} profile={profile as Profile} />
+            <MemberCard
+              key={profile.id}
+              profile={profile as Profile}
+              currentUserId={currentUserId}
+            />
           ))}
         </div>
       )}

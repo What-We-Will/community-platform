@@ -101,6 +101,30 @@ export function ConversationView({
   const [sendError, setSendError] = useState<string | null>(null);
   const [videoCallOpen, setVideoCallOpen] = useState(false);
   const [videoRoomName, setVideoRoomName] = useState<string | null>(null);
+  // Poll other user's last_seen_at so status stays current while in chat
+  const [otherUserLastSeenAt, setOtherUserLastSeenAt] = useState<string | null>(
+    otherUser?.last_seen_at ?? null
+  );
+
+  // Sync initial otherUser last_seen_at and poll for updates (DM only)
+  useEffect(() => {
+    setOtherUserLastSeenAt(otherUser?.last_seen_at ?? null);
+  }, [otherUser?.id, otherUser?.last_seen_at]);
+
+  useEffect(() => {
+    if (!otherUser?.id) return;
+    const fetchLastSeen = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("last_seen_at")
+        .eq("id", otherUser.id)
+        .maybeSingle();
+      if (data?.last_seen_at) setOtherUserLastSeenAt(data.last_seen_at);
+    };
+    const interval = setInterval(fetchLastSeen, 30_000); // every 30s
+    fetchLastSeen(); // run once immediately
+    return () => clearInterval(interval);
+  }, [otherUser?.id]);
 
   // Open video modal when landing with ?videoRoom= (e.g. from "Join call" in list)
   useEffect(() => {
@@ -387,8 +411,8 @@ export function ConversationView({
       );
     }
 
-    // DM header
-    const onlineStatus = getOnlineStatus(otherUser?.last_seen_at ?? null);
+    // DM header — use polled last_seen_at so status updates while in chat
+    const onlineStatus = getOnlineStatus(otherUserLastSeenAt ?? otherUser?.last_seen_at ?? null);
     const statusLabel =
       onlineStatus === "online"
         ? "Online"

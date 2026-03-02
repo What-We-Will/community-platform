@@ -165,7 +165,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     viewerDisplayName = (viewerProfile?.display_name as string) ?? "Guest";
   }
 
-  const status = getOnlineStatus(typedProfile.last_seen_at);
+  const status = getOnlineStatus(typedProfile.last_seen_at, {
+    isCurrentUser: isOwnProfile,
+  });
   const initials = getInitials(typedProfile.display_name);
   const avatarColor = hashIdToColor(typedProfile.id);
 

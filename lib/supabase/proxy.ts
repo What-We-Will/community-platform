@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 const LAST_SEEN_COOKIE = "last_seen";
-const LAST_SEEN_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+const LAST_SEEN_THRESHOLD_MS = 1 * 60 * 1000; // 1 minute — keep status accurate for chat
 
 // Caches is_onboarded=true in a cookie so we don't query the DB on every request.
 // The middleware only does a DB lookup when this cookie is absent (first request

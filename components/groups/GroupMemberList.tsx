@@ -66,8 +66,14 @@ function RoleBadge({ role }: { role: GroupMember["role"] }) {
   return null;
 }
 
-function OnlineDot({ lastSeenAt }: { lastSeenAt: string | null }) {
-  const status = getOnlineStatus(lastSeenAt);
+function OnlineDot({
+  lastSeenAt,
+  isCurrentUser,
+}: {
+  lastSeenAt: string | null;
+  isCurrentUser?: boolean;
+}) {
+  const status = getOnlineStatus(lastSeenAt, { isCurrentUser });
   if (status === "offline") return null;
   return (
     <span
@@ -125,7 +131,10 @@ export function GroupMemberList({
                 >
                   {getInitials(member.display_name)}
                 </div>
-                <OnlineDot lastSeenAt={member.last_seen_at} />
+                <OnlineDot
+                  lastSeenAt={member.last_seen_at}
+                  isCurrentUser={member.id === currentUserId}
+                />
               </Link>
 
               {/* Info */}
