@@ -32,15 +32,12 @@ export async function generateSlug(name: string): Promise<string> {
 }
 
 /**
- * Creates a group with its own group conversation.
+ * Creates a group with its own group conversation atomically.
  *
- * Pre-generates UUIDs for both the conversation and the group to avoid
- * post-INSERT SELECT failures caused by RLS:
- *   - The conversations SELECT policy requires the user to already be in
- *     conversation_participants (they aren't yet when the row is first inserted).
- *   - The groups SELECT policy for private groups requires the user to be in
- *     group_members (same timing issue).
- * By pre-generating IDs we never need to SELECT after INSERT.
+ * Delegates to the `create_group_transactional` PostgreSQL function (SECURITY
+ * DEFINER) which runs all four inserts — conversation, group, group_members,
+ * conversation_participants — inside a single transaction.  This avoids both
+ * the RLS chicken-and-egg timing problems and orphaned rows from partial failures.
  */
 export async function createGroup(
   name: string,
@@ -54,52 +51,20 @@ export async function createGroup(
   const conversationId = randomUUID();
   const groupId = randomUUID();
 
-  // 1. Create the group conversation (no .select() to avoid RLS RETURNING block)
-  const { error: convErr } = await supabase
-    .from("conversations")
-    .insert({ id: conversationId, type: "group" });
+  const { error } = await supabase.rpc("create_group_transactional", {
+    p_group_id: groupId,
+    p_conversation_id: conversationId,
+    p_name: name,
+    p_description: description || null,
+    p_slug: slug,
+    p_is_private: isPrivate,
+  });
 
-  if (convErr) {
-    throw new Error(`Failed to create conversation: ${convErr.message} (${convErr.code})`);
+  if (error) {
+    throw new Error(`Failed to create group: ${error.message} (${error.code})`);
   }
 
-  // 2. Create the group (no .select() — private groups not yet visible via RLS)
-  const { error: groupErr } = await supabase
-    .from("groups")
-    .insert({
-      id: groupId,
-      name,
-      description: description || null,
-      slug,
-      is_private: isPrivate,
-      created_by: createdBy,
-      conversation_id: conversationId,
-    });
-
-  if (groupErr) {
-    throw new Error(`Failed to create group: ${groupErr.message} (${groupErr.code})`);
-  }
-
-  // 3. Add creator as admin member
-  const { error: memberErr } = await supabase
-    .from("group_members")
-    .insert({ group_id: groupId, user_id: createdBy, role: "admin" });
-
-  if (memberErr) {
-    throw new Error(`Failed to add creator as member: ${memberErr.message} (${memberErr.code})`);
-  }
-
-  // 4. Add creator to the conversation
-  const { error: participantErr } = await supabase
-    .from("conversation_participants")
-    .insert({ conversation_id: conversationId, user_id: createdBy });
-
-  if (participantErr) {
-    throw new Error(`Failed to add participant: ${participantErr.message} (${participantErr.code})`);
-  }
-
-  // 5. Return the group using the pre-known ID
-  const group: Group = {
+  return {
     id: groupId,
     name,
     description: description || null,
@@ -112,8 +77,6 @@ export async function createGroup(
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
-
-  return group;
 }
 
 /**
