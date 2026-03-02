@@ -6,10 +6,10 @@ export function OurMission() {
           Community Platform
         </h2>
         <p className="mx-auto mt-8 max-w-3xl text-center text-lg leading-relaxed text-white/95">
-          We mobilize people during a time of uncertainty and change, through
-          layoff crisis support, job search support, technical skillsharing,
-          project-based learning, participatory action research, and policy
-          advocacy.
+          Join our platform for access to community-built resources,
+          layoff crisis support, job search tools, technical skillsharing,
+          project-based learning, participatory action research, and advocacy for
+          structural policy change.
         </p>
       </div>
     </section>
