@@ -132,7 +132,7 @@ export default function MemberCard({ profile }: MemberCardProps) {
           <Link href={`/members/${profile.id}`}>View Profile</Link>
         </Button>
         <Button variant="outline" size="sm" asChild>
-          <Link href={`/messages?new=${profile.id}`}>Message</Link>
+          <Link href={`/messages?new=${profile.id}`} prefetch={false}>Message</Link>
         </Button>
       </CardFooter>
     </Card>

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ConversationView } from "@/components/messages/ConversationView";
 import type { MessageWithSender, Profile } from "@/lib/types";
 
@@ -16,27 +16,41 @@ export default async function ConversationPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) notFound();
+  if (!user) redirect("/login");
 
   // Verify current user is a participant
-  const { data: myParticipation } = await supabase
+  const { data: myParticipation, error: myParticipationError } = await supabase
     .from("conversation_participants")
     .select("last_read_at")
     .eq("conversation_id", conversationId)
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (!myParticipation) notFound();
+  if (myParticipationError) {
+    console.error("[conversation] myParticipation error:", myParticipationError);
+  }
+
+  if (!myParticipation) {
+    console.error("[conversation] user", user.id, "is not a participant in", conversationId);
+    redirect("/messages");
+  }
 
   // Fetch the other participant's profile
-  const { data: otherParticipant } = await supabase
+  const { data: otherParticipant, error: otherParticipantError } = await supabase
     .from("conversation_participants")
     .select("user_id")
     .eq("conversation_id", conversationId)
     .neq("user_id", user.id)
     .maybeSingle();
 
-  if (!otherParticipant) notFound();
+  if (otherParticipantError) {
+    console.error("[conversation] otherParticipant error:", otherParticipantError);
+  }
+
+  if (!otherParticipant) {
+    console.error("[conversation] no other participant found in", conversationId);
+    redirect("/messages");
+  }
 
   const { data: otherUserProfile } = await supabase
     .from("profiles")
@@ -44,7 +58,10 @@ export default async function ConversationPage({
     .eq("id", otherParticipant.user_id)
     .single();
 
-  if (!otherUserProfile) notFound();
+  if (!otherUserProfile) {
+    console.error("[conversation] other user profile not found:", otherParticipant.user_id);
+    notFound();
+  }
 
   // Fetch current user's profile (needed for message bubbles)
   const { data: currentUserProfile } = await supabase

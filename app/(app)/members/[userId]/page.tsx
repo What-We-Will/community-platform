@@ -7,7 +7,6 @@ import {
   Github,
   Globe,
   MessageSquare,
-  Calendar,
   UserCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
@@ -164,15 +163,9 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
         ) : (
           <>
             <Button asChild>
-              <Link href={`/messages?new=${userId}`}>
+              <Link href={`/messages?new=${userId}`} prefetch={false}>
                 <MessageSquare className="mr-2 size-4" />
                 Send Message
-              </Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href={`/schedule?with=${userId}`}>
-                <Calendar className="mr-2 size-4" />
-                Book 1:1
               </Link>
             </Button>
           </>
