@@ -2,7 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getAvatarColor } from "@/lib/utils/avatar";
 import { UsersRound } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface MyGroupsCardProps {
   userId: string;
@@ -12,7 +14,7 @@ export async function MyGroupsCard({ userId }: MyGroupsCardProps) {
   const supabase = await createClient();
   const { data: rows, error } = await supabase
     .from("group_members")
-    .select("group_id, role, groups(id, name, slug)")
+    .select("group_id, role, groups(id, name, slug, conversation_id)")
     .eq("user_id", userId)
     .limit(5);
 
@@ -51,20 +53,57 @@ export async function MyGroupsCard({ userId }: MyGroupsCardProps) {
     }
   }
 
+  // Unread counts per group conversation
+  const conversationIds = memberships
+    .map((row) => {
+      const r = row as unknown as { groups: { conversation_id: string | null } | null };
+      return r.groups?.conversation_id ?? null;
+    })
+    .filter((id): id is string => Boolean(id));
+
+  let unreadByConvId: Record<string, number> = {};
+  if (conversationIds.length > 0) {
+    const { data: participations } = await supabase
+      .from("conversation_participants")
+      .select("conversation_id, last_read_at")
+      .eq("user_id", userId)
+      .in("conversation_id", conversationIds);
+
+    const counts = await Promise.all(
+      (participations ?? []).map(async (p) => {
+        let query = supabase
+          .from("messages")
+          .select("*", { count: "exact", head: true })
+          .eq("conversation_id", p.conversation_id)
+          .neq("sender_id", userId);
+        if (p.last_read_at) {
+          query = query.gt("created_at", p.last_read_at);
+        }
+        const { count } = await query;
+        return { conversation_id: p.conversation_id, count: count ?? 0 };
+      })
+    );
+    for (const { conversation_id, count } of counts) {
+      unreadByConvId[conversation_id] = count;
+    }
+  }
+
   const groups = memberships
     .map((row) => {
       const r = row as unknown as {
         group_id: string;
         role: string;
-        groups: { id: string; name: string; slug: string } | null;
+        groups: { id: string; name: string; slug: string; conversation_id: string | null } | null;
       };
       const g = r.groups;
       if (!g) return null;
+      const conversationId = g.conversation_id;
       return {
         group_id: r.group_id,
         role: r.role,
-        group: g,
+        group: { id: g.id, name: g.name, slug: g.slug },
         memberCount: memberCounts[g.id] ?? 0,
+        unreadCount: conversationId ? unreadByConvId[conversationId] ?? 0 : 0,
       };
     })
     .filter(Boolean) as {
@@ -72,6 +111,7 @@ export async function MyGroupsCard({ userId }: MyGroupsCardProps) {
     role: string;
     group: { id: string; name: string; slug: string };
     memberCount: number;
+    unreadCount: number;
   }[];
 
   return (
@@ -100,15 +140,34 @@ export async function MyGroupsCard({ userId }: MyGroupsCardProps) {
                     href={`/groups/${g.slug}`}
                     className="flex items-center justify-between gap-2 rounded-lg p-2 -mx-2 hover:bg-accent/50 transition-colors"
                   >
-                    <span className="text-sm font-medium truncate">{g.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      {row.memberCount} member{row.memberCount !== 1 ? "s" : ""}
-                    </span>
-                    {(row.role === "admin" || row.role === "moderator") && (
-                      <Badge variant="secondary" className="text-[10px] shrink-0">
-                        {row.role}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={cn(
+                          "size-4 shrink-0 rounded-full ring-2 ring-background",
+                          getAvatarColor(g.name)
+                        )}
+                        aria-hidden
+                      />
+                      <span className="text-sm font-medium truncate">{g.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {row.unreadCount > 0 && (
+                        <Badge
+                          variant="destructive"
+                          className="text-[10px] h-5 min-w-5 px-1 flex items-center justify-center"
+                        >
+                          {row.unreadCount > 99 ? "99+" : row.unreadCount}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {row.memberCount} member{row.memberCount !== 1 ? "s" : ""}
+                      </span>
+                      {(row.role === "admin" || row.role === "moderator") && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {row.role}
+                        </Badge>
+                      )}
+                    </div>
                   </Link>
                 </li>
               );

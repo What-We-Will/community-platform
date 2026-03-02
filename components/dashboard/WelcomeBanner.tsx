@@ -11,11 +11,9 @@ import { Briefcase, Users, UsersRound, MessageSquare } from "lucide-react";
 import type { Profile } from "@/lib/types";
 
 const MOTIVATIONAL_LINES = [
-  "Every application is a step forward.",
-  "Your next opportunity could be one connection away.",
+  "Together, we can take steps forward.",
+  "We will win together.",
   "Consistency beats perfection. Keep going.",
-  "Small steps today lead to big wins tomorrow.",
-  "Your network is your net worth. Keep building it.",
   "Stay curious. Stay connected.",
 ];
 
