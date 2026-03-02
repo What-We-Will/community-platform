@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type OnboardingResult = { error?: string };
@@ -45,5 +46,6 @@ export async function completeOnboarding(
     return { error: error.message };
   }
 
+  revalidatePath("/", "layout");
   return {};
 }

@@ -18,9 +18,13 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, avatar_url")
+    .select("display_name, avatar_url, is_onboarded")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
+
+  if (!profile?.is_onboarded) {
+    redirect("/onboarding");
+  }
 
   // Compute initial unread message count for the sidebar badge
   let unreadCount = 0;

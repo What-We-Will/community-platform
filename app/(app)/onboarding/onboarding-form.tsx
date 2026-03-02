@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { completeOnboarding } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +32,6 @@ interface OnboardingFormProps {
 export default function OnboardingForm({
   initialData,
 }: OnboardingFormProps) {
-  const router = useRouter();
   const [displayName, setDisplayName] = useState(initialData.display_name);
   const [headline, setHeadline] = useState(initialData.headline);
   const [location, setLocation] = useState(initialData.location);
@@ -60,6 +58,14 @@ export default function OnboardingForm({
       .map((s) => s.trim())
       .filter(Boolean);
 
+    // Safety: if the server never responds (e.g. prod timeout), unlock the button
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      setError(
+        "Request is taking longer than usual. If you already see yourself in Members, your profile was saved — try opening Dashboard."
+      );
+    }, 15000);
+
     try {
       const result = await completeOnboarding({
         display_name: displayName,
@@ -71,15 +77,21 @@ export default function OnboardingForm({
         linkedin_url: linkedinUrl || null,
       });
 
+      clearTimeout(timeoutId);
+
       if (result.error) {
         setError(result.error);
-        setLoading(false);
         return;
       }
 
-      router.push("/dashboard");
+      // Full-page redirect so the next response sets the onboarded cookie and
+      // session is consistent (avoids stuck state when the action response is lost in prod).
+      window.location.href = "/dashboard";
+      return;
     } catch {
+      clearTimeout(timeoutId);
       setError("An unexpected error occurred. Please try again.");
+    } finally {
       setLoading(false);
     }
   }

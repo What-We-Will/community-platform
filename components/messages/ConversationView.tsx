@@ -93,6 +93,7 @@ export function ConversationView({
   const [inputValue, setInputValue] = useState("");
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -191,6 +192,7 @@ export function ConversationView({
 
   function handleInputChange(value: string) {
     setInputValue(value);
+    if (sendError) setSendError(null);
 
     const channel = typingChannelRef.current;
     if (!channel) return;
@@ -222,6 +224,7 @@ export function ConversationView({
     if (!content || isSending) return;
 
     setInputValue("");
+    setSendError(null);
     setIsSending(true);
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -257,6 +260,7 @@ export function ConversationView({
 
     if (error) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      setSendError(error.message || "Failed to send. Try again.");
     } else {
       setMessages((prev) =>
         prev.map((m) =>
@@ -410,12 +414,19 @@ export function ConversationView({
 
       {/* Input or read-only footer */}
       {readOnlyFooter ?? (
-        <MessageInput
-          value={inputValue}
-          onChange={handleInputChange}
-          onSend={handleSend}
-          disabled={isSending}
-        />
+        <>
+          {sendError && (
+            <p className="px-3 py-1.5 text-sm text-destructive bg-destructive/10 border-t">
+              {sendError}
+            </p>
+          )}
+          <MessageInput
+            value={inputValue}
+            onChange={handleInputChange}
+            onSend={handleSend}
+            disabled={isSending}
+          />
+        </>
       )}
     </div>
   );

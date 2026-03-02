@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         .from("profiles")
         .select("is_onboarded")
         .eq("id", data.user.id)
-        .single();
+        .maybeSingle();
 
       // Use "next" param if valid relative path, otherwise use onboarding/dashboard
       let redirectPath = profile?.is_onboarded ? "/dashboard" : "/onboarding";
