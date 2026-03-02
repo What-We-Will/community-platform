@@ -16,6 +16,7 @@ interface CreateGroupInput {
   name: string;
   description: string | null;
   isPrivate: boolean;
+  isDiscoverable: boolean;
 }
 
 export async function createGroupAction(
@@ -36,7 +37,8 @@ export async function createGroupAction(
       input.description,
       slug,
       input.isPrivate,
-      user.id
+      user.id,
+      input.isDiscoverable
     );
     revalidatePath("/groups");
     return { slug: group.slug };
@@ -260,6 +262,64 @@ export async function rejectJoinRequestAction(
     return { error: "Failed to reject request." };
   }
 
+  revalidatePath(`/groups/[slug]`, "page");
+  return {};
+}
+
+// ─── Invite member (admin directly adds a user) ───────────────────────────────
+
+export async function inviteMemberAction(
+  groupId: string,
+  userId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: adminCheck } = await supabase
+    .from("group_members")
+    .select("role")
+    .eq("group_id", groupId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (adminCheck?.role !== "admin") return { error: "Only admins can invite members" };
+
+  try {
+    await joinGroup(groupId, userId);
+    revalidatePath(`/groups/[slug]`, "page");
+    return {};
+  } catch (err) {
+    console.error("[inviteMemberAction]", err);
+    return { error: "Failed to invite member. They may already be in the group." };
+  }
+}
+
+// ─── Update group settings (admin) ───────────────────────────────────────────
+
+export async function updateGroupSettingsAction(
+  groupId: string,
+  settings: { is_discoverable?: boolean; name?: string; description?: string | null }
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("groups")
+    .update({ ...settings, updated_at: new Date().toISOString() })
+    .eq("id", groupId);
+
+  if (error) {
+    console.error("[updateGroupSettingsAction]", error);
+    return { error: "Failed to update settings." };
+  }
+
+  revalidatePath("/groups");
   revalidatePath(`/groups/[slug]`, "page");
   return {};
 }

@@ -23,6 +23,7 @@ export function CreateGroupDialog() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
+  const [isDiscoverable, setIsDiscoverable] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +38,7 @@ export function CreateGroupDialog() {
       name: name.trim(),
       description: description.trim() || null,
       isPrivate,
+      isDiscoverable: isPrivate ? isDiscoverable : true,
     });
 
     setLoading(false);
@@ -51,6 +53,7 @@ export function CreateGroupDialog() {
       setName("");
       setDescription("");
       setIsPrivate(false);
+      setIsDiscoverable(true);
       router.push(`/groups/${result.slug}`);
     }
   }
@@ -111,17 +114,41 @@ export function CreateGroupDialog() {
               </Label>
               <p className="text-xs text-muted-foreground">
                 {isPrivate
-                  ? "Only invited members can see and join this group"
+                  ? "Members must be invited or approved to join"
                   : "Anyone in the community can find and join"}
               </p>
             </div>
             <Switch
               id="group-private"
               checked={isPrivate}
-              onCheckedChange={setIsPrivate}
+              onCheckedChange={(v) => {
+                setIsPrivate(v);
+                if (!v) setIsDiscoverable(true);
+              }}
               disabled={loading}
             />
           </div>
+
+          {isPrivate && (
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="group-discoverable" className="text-sm font-medium cursor-pointer">
+                  Discoverable
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {isDiscoverable
+                    ? "Appears in the groups directory — people can request to join"
+                    : "Hidden from the directory — invite-only access"}
+                </p>
+              </div>
+              <Switch
+                id="group-discoverable"
+                checked={isDiscoverable}
+                onCheckedChange={setIsDiscoverable}
+                disabled={loading}
+              />
+            </div>
+          )}
 
           {error && (
             <p className="text-sm text-destructive">{error}</p>

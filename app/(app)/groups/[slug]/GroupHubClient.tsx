@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { NotebookPen, Video, Loader2, LogOut } from "lucide-react";
+import { NotebookPen, Video, Loader2, LogOut, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,11 +20,13 @@ import {
 import { ConversationView } from "@/components/messages/ConversationView";
 import { GroupHeader } from "@/components/groups/GroupHeader";
 import { GroupMemberList } from "@/components/groups/GroupMemberList";
+import { InviteMemberDialog } from "@/components/groups/InviteMemberDialog";
 import {
   joinGroupAction,
   leaveGroupAction,
   updateMemberRoleAction,
   removeMemberAction,
+  updateGroupSettingsAction,
 } from "@/app/(app)/groups/actions";
 import { JoinRequestsPanel } from "@/components/groups/JoinRequestsPanel";
 import type { Group, Profile, GroupMember, MessageWithSender, GroupJoinRequestWithProfile } from "@/lib/types";
@@ -51,6 +55,9 @@ export function GroupHubClient({
   const [leavingOpen, setLeavingOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [isDiscoverable, setIsDiscoverable] = useState(group.is_discoverable);
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
 
   async function handleJoin() {
     setJoining(true);
@@ -84,6 +91,18 @@ export function GroupHubClient({
   async function handleRemoveMember(userId: string) {
     await removeMemberAction(group.id, userId);
     router.refresh();
+  }
+
+  async function handleToggleDiscoverable(value: boolean) {
+    setSavingSettings(true);
+    setSettingsError(null);
+    setIsDiscoverable(value);
+    const result = await updateGroupSettingsAction(group.id, { is_discoverable: value });
+    setSavingSettings(false);
+    if (result.error) {
+      setIsDiscoverable(!value);
+      setSettingsError(result.error);
+    }
   }
 
   return (
@@ -132,6 +151,12 @@ export function GroupHubClient({
           </TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="recordings">Recordings</TabsTrigger>
+          {currentUserRole === "admin" && (
+            <TabsTrigger value="settings" className="gap-1.5">
+              <Settings className="size-3.5" />
+              Settings
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* Chat */}
@@ -176,13 +201,25 @@ export function GroupHubClient({
         </TabsContent>
 
         {/* Members */}
-        <TabsContent value="members" className="mt-4">
+        <TabsContent value="members" className="mt-4 space-y-4">
           {pendingRequests.length > 0 && (
             <JoinRequestsPanel
               requests={pendingRequests}
               onRefresh={() => router.refresh()}
             />
           )}
+
+          {/* Invite button for admins */}
+          {currentUserRole === "admin" && (
+            <div className="flex justify-end">
+              <InviteMemberDialog
+                groupId={group.id}
+                currentMemberIds={members.map((m) => m.id)}
+                onInvited={() => router.refresh()}
+              />
+            </div>
+          )}
+
           <GroupMemberList
             members={members}
             currentUserId={currentUser.id}
@@ -217,6 +254,52 @@ export function GroupHubClient({
             </p>
           </div>
         </TabsContent>
+
+        {/* Settings — admins only */}
+        {currentUserRole === "admin" && (
+          <TabsContent value="settings" className="mt-6">
+            <div className="max-w-lg space-y-6">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Group Settings</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Manage visibility and preferences for <strong>{group.name}</strong>.
+                </p>
+              </div>
+
+              {group.is_private && (
+                <div className="rounded-lg border p-4 space-y-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="discoverable-toggle" className="text-sm font-medium">
+                        Discoverable
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {isDiscoverable
+                          ? "This group appears in the groups directory. Non-members can see it and request to join."
+                          : "This group is hidden from the directory. Only people with a direct link or an invitation can find it."}
+                      </p>
+                    </div>
+                    <Switch
+                      id="discoverable-toggle"
+                      checked={isDiscoverable}
+                      onCheckedChange={handleToggleDiscoverable}
+                      disabled={savingSettings}
+                    />
+                  </div>
+                  {settingsError && (
+                    <p className="text-xs text-destructive pt-1">{settingsError}</p>
+                  )}
+                </div>
+              )}
+
+              {!group.is_private && (
+                <p className="text-sm text-muted-foreground">
+                  Public groups are always discoverable. Additional settings will appear here in future updates.
+                </p>
+              )}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Leave confirmation dialog */}

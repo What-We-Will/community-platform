@@ -102,6 +102,7 @@ export interface Group {
   slug: string;
   avatar_url: string | null;
   is_private: boolean;
+  is_discoverable: boolean;
   max_members: number | null;
   created_by: string | null;
   conversation_id: string | null;
