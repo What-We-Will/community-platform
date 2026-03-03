@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 
 export function LandingHero() {
   return (
-    <section className="bg-white px-4 py-12 md:py-16">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 md:grid-cols-2 md:items-end md:gap-14">
+    <section className="relative overflow-hidden bg-white">
+      <div className="relative z-10 mx-auto flex max-w-6xl items-center px-4 py-12 md:min-h-[520px] md:py-16 md:pr-[50%] lg:min-h-[620px] lg:px-8">
         <div className="max-w-xl">
           <h1 className="text-4xl font-bold leading-tight tracking-tight text-[#212529] sm:text-4xl md:text-5xl lg:text-6xl">
             What We Will
@@ -25,19 +25,32 @@ export function LandingHero() {
             </Button>
           </div>
         </div>
+      </div>
 
-        <div className="relative flex justify-end">
-          <div className="relative h-[280px] w-full min-w-[280px] max-w-[520px] md:h-[360px] md:max-w-[680px] lg:h-[400px] lg:max-w-[760px]">
-            <Image
-              src="/images/hero.webp"
-              alt="Diverse workers united for just transitions"
-              fill
-              className="object-cover object-right-bottom"
-              priority
-              sizes="(max-width: 768px) 100vw, 55vw"
-            />
-          </div>
+      {/* Desktop image: sticks to bottom of hero, full image visible */}
+      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 md:block">
+        <div className="relative h-full">
+          <Image
+            src="/images/hero.webp"
+            alt="Diverse workers united for just transitions"
+            fill
+            className="object-contain object-bottom"
+            priority
+            sizes="(min-width: 768px) 50vw, 100vw"
+          />
         </div>
+      </div>
+
+      {/* Mobile image: full-width below content */}
+      <div className="relative mt-8 h-72 w-full px-4 md:hidden">
+        <Image
+          src="/images/hero.webp"
+          alt="Diverse workers united for just transitions"
+          fill
+          className="rounded-xl object-cover object-center"
+          priority
+          sizes="100vw"
+        />
       </div>
     </section>
   );

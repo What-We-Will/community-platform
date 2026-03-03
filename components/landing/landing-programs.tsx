@@ -5,10 +5,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  LifeBuoy,
-  GraduationCap,
-  Newspaper,
-  Megaphone,
+  HandFist,
+  Handshake,
+  ThumbsUp,
+  HandHeart,
 } from "lucide-react";
 
 const programs = [
@@ -18,14 +18,14 @@ const programs = [
       "Crisis support for people facing layoffs: benefits and severance guidance, legal and immigration referrals, and peer support.",
       "We use WARN filings to reach workers early and connect them with job pipelines and collective action.",
     ],
-    icon: LifeBuoy,
+    icon: HandHeart,
     barClass: "bg-light-green",
   },
   {
     title: "Workforce Development",
     description:
       "Project-based learning that connects workers with local businesses and government to build community technology while practicing forward-deployed AI skills. We also provide evidence-based resources and counseling for moves into healthcare, social servics, and skilled trades.",
-    icon: GraduationCap,
+    icon: Handshake,
     barClass: "bg-accent-gold",
   },
   {
@@ -34,19 +34,19 @@ const programs = [
       "Participatory action research on changing work conditions and effective supports.",
       "We host discussion, evaluate policy proposals, and publish findings for broader public engagement.",
     ],
-    icon: Newspaper,
+    icon: ThumbsUp,
     barClass: "bg-[var(--hero-dark)]",
   },
   {
     title: "Organizing & Advocacy",
     description:
       "We track policy at state and federal levels and help members become informed organizers—advocating with officials, shaping media narratives, and organizing campaigns for stronger layoff protections, income stabilization, and worker voice in AI policy.",
-    icon: Megaphone,
+    icon: HandFist,
     barClass: "bg-primary-orange",
   },
 ];
 
-export function LandingContent() {
+export function Programs() {
   return (
     <section id="programs" className="scroll-mt-20 bg-warm-beige px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
