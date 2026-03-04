@@ -1,59 +1,60 @@
 import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const next = requestUrl.searchParams.get("next");
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+
+  // Use a response object as the cookie sink so session cookies are sent with the redirect.
+  // (next/headers cookies() may not be merged into a manual NextResponse.redirect() in some runtimes.)
+  const cookieSink = NextResponse.next({ request: request as NextRequest });
+
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          cookieSink.cookies.set(name, value, options ?? {});
+        });
+      },
+    },
+  });
+
   if (code) {
-    const cookieStore = await cookies();
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
-
-    const supabase = createServerClient(supabaseUrl, supabaseKey,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // Ignore in Server Component context
-            }
-          },
-        },
-      }
-    );
-
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error && data?.user) {
-      // Fetch profile to check onboarding status
       const { data: profile } = await supabase
         .from("profiles")
         .select("is_onboarded")
         .eq("id", data.user.id)
         .maybeSingle();
 
-      // Use "next" param if valid relative path, otherwise use onboarding/dashboard
       let redirectPath = profile?.is_onboarded ? "/dashboard" : "/onboarding";
       if (next && next.startsWith("/") && !next.startsWith("//")) {
         redirectPath = next;
       }
-      return NextResponse.redirect(new URL(redirectPath, requestUrl.origin));
+      const redirectUrl = new URL(redirectPath, requestUrl.origin);
+      const redirectResponse = NextResponse.redirect(redirectUrl);
+      cookieSink.cookies.getAll().forEach(({ name, value, options }) => {
+        redirectResponse.cookies.set(name, value, options ?? {});
+      });
+      return redirectResponse;
     }
   }
 
-  // Redirect to login on error; to dashboard if no code (e.g. already logged in)
   const fallbackPath = code ? "/login" : next && next.startsWith("/") ? next : "/dashboard";
-  return NextResponse.redirect(new URL(fallbackPath, requestUrl.origin));
+  const redirectResponse = NextResponse.redirect(new URL(fallbackPath, requestUrl.origin));
+  cookieSink.cookies.getAll().forEach(({ name, value, options }) => {
+    redirectResponse.cookies.set(name, value, options ?? {});
+  });
+  return redirectResponse;
 }
