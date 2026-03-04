@@ -43,9 +43,10 @@ Optional (for Jitsi JWT / 8x8 JaaS):
 NEXT_PUBLIC_JITSI_APP_ID=your-jaas-app-id
 ```
 
-Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard.
+Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If you have not created a blank new Supabase project for this repo please do so now. 
 
 ### 3. Database
+
 
 Apply migrations so the schema and RLS policies exist:
 
@@ -59,7 +60,19 @@ Or, if using Supabase CLI linked to your project:
 npx supabase migration up
 ```
 
-Migrations live in `supabase/migrations/` and run in order (e.g. `001_profiles.sql` → `014_events.sql`).
+**NOTE**: If the above command gives an error `Cannot find project ref. Have you run supabase link?` run these commands and then retry the above command:
+
+```bash
+npx supabase login
+```
+
+Link to your Supabase project, selecting the appropriate project:
+
+```bash
+npx supabase link
+```
+
+**NOTE**:Migrations live in `supabase/migrations/` and run in order (e.g. `001_profiles.sql` → `014_events.sql`).
 
 ### 4. Run the app
 
