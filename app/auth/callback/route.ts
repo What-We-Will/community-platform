@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
       }
       const redirectUrl = new URL(redirectPath, requestUrl.origin);
       const redirectResponse = NextResponse.redirect(redirectUrl);
-      cookieSink.cookies.getAll().forEach(({ name, value, options }) => {
-        redirectResponse.cookies.set(name, value, options ?? {});
+      cookieSink.cookies.getAll().forEach(({ name, value, ...rest }) => {
+        redirectResponse.cookies.set(name, value, rest);
       });
       return redirectResponse;
     }
@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
 
   const fallbackPath = code ? "/login" : next && next.startsWith("/") ? next : "/dashboard";
   const redirectResponse = NextResponse.redirect(new URL(fallbackPath, requestUrl.origin));
-  cookieSink.cookies.getAll().forEach(({ name, value, options }) => {
-    redirectResponse.cookies.set(name, value, options ?? {});
+  cookieSink.cookies.getAll().forEach(({ name, value, ...rest }) => {
+    redirectResponse.cookies.set(name, value, rest);
   });
   return redirectResponse;
 }
