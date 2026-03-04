@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import OnboardingForm from "./onboarding-form";
 
@@ -9,7 +8,7 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    return null;
   }
 
   const { data: profile } = await supabase
@@ -17,10 +16,6 @@ export default async function OnboardingPage() {
     .select("*")
     .eq("id", user.id)
     .single();
-
-  if (profile?.is_onboarded) {
-    redirect("/dashboard");
-  }
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
