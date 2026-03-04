@@ -3,7 +3,7 @@ import { LandingNav } from "./landing-nav";
 import { LandingHero } from "./landing-hero";
 import { OurMission } from "./landing-our-mission";
 import { LandingWhoWeAre } from "./landing-who-we-are";
-import { LandingContent } from "./landing-content";
+import { Programs } from "./landing-programs";
 import { LandingMutualAid } from "./landing-mutual-aid";
 import { LandingFutureWeDemand } from "./landing-future-we-demand";
 import { LandingJoinCommunity } from "./landing-join-community";
@@ -17,7 +17,7 @@ export function LandingPage({ user }: { user?: User | null }) {
         <LandingHero />
         <OurMission />
         <LandingWhoWeAre />
-        <LandingContent />
+        <Programs />
         <LandingMutualAid />
         <LandingFutureWeDemand />
         <LandingJoinCommunity />
