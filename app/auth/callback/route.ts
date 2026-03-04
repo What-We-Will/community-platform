@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const next = requestUrl.searchParams.get("next");
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   // Use a response object as the cookie sink so session cookies are sent with the redirect.
   // (next/headers cookies() may not be merged into a manual NextResponse.redirect() in some runtimes.)
-  const cookieSink = NextResponse.next({ request: request as NextRequest });
+  const cookieSink = NextResponse.next({ request });
 
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
