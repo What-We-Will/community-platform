@@ -44,5 +44,5 @@ next-env.d.ts
 # vscode
 .vscode/launch.json
 
-#pnpm lock files
+#pnpm lock file
 pnpm-lock.yaml
