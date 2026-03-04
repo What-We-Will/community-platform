@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:ci": "jest --runInBand --ci"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -25,11 +28,17 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^29.5.12",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "shadcn": "^3.8.5",
     "supabase": "^2.76.15",
     "tailwindcss": "^4",
