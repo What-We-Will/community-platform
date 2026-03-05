@@ -2,7 +2,7 @@ export function OurMission() {
   return (
     <section
       id="mission"
-      className="scroll-mt-20 bg-hero-dark px-4 py-16 text-white md:py-24"
+      className="scroll-mt-20 bg-dark-blue px-4 py-16 text-white md:py-24"
     >
       <div className="mx-auto max-w-5xl">
         <h2 className="text-center text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">

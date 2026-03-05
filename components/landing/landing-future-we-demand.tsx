@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 export function LandingFutureWeDemand() {
-  const [imageError, setImageError] = useState(false);
+  
 
   return (
     <section id="our-future" className="scroll-mt-20 bg-[#f5f5f5] px-4 py-16 md:py-24">

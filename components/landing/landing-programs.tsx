@@ -35,7 +35,7 @@ const programs = [
       "We host discussion, evaluate policy proposals, and publish findings for broader public engagement.",
     ],
     icon: ThumbsUp,
-    barClass: "bg-[var(--hero-dark)]",
+    barClass: "bg-[var(--dark-blue)]",
   },
   {
     title: "Organizing & Advocacy",
