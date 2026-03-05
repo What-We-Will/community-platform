@@ -5,10 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { UserAvatar } from "@/components/shared/UserAvatar";
+import { LiveStatusAvatar } from "@/components/shared/LiveStatusAvatar";
 import { getAvatarColor } from "@/lib/utils/avatar";
 import { formatRelativeTime } from "@/lib/utils/time";
-import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UsersRound, Archive, Video, BookMarked } from "lucide-react";
@@ -287,7 +286,6 @@ export function ConversationList({
               // DM row
               const otherUser = participants[0];
               if (!otherUser) return null;
-              const onlineStatus = getOnlineStatus(otherUser.last_seen_at);
 
               return (
                 <div
@@ -301,12 +299,11 @@ export function ConversationList({
                     href={`/messages/${conversation.id}`}
                     className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
                   >
-                    <UserAvatar
+                    <LiveStatusAvatar
                       avatarUrl={otherUser.avatar_url ?? null}
                       displayName={otherUser.display_name}
                       size="md"
-                      showStatus
-                      status={onlineStatus}
+                      lastSeenAt={otherUser.last_seen_at}
                     />
 
                     <div className="min-w-0 flex-1">

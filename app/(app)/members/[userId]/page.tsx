@@ -10,11 +10,10 @@ import {
   UserCircle,
 } from "lucide-react";
 import { QuickCallButton } from "@/components/video/QuickCallButton";
-import { UserAvatar } from "@/components/shared/UserAvatar";
+import { LiveStatusAvatar } from "@/components/shared/LiveStatusAvatar";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getOnlineStatus } from "@/lib/utils/status";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -137,10 +136,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     viewerDisplayName = (viewerProfile?.display_name as string) ?? "Guest";
   }
 
-  const status = getOnlineStatus(typedProfile.last_seen_at, {
-    isCurrentUser: isOwnProfile,
-  });
-
   const links = [
     {
       url: typedProfile.linkedin_url,
@@ -162,12 +157,12 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
-        <UserAvatar
+        <LiveStatusAvatar
           avatarUrl={typedProfile.avatar_url}
           displayName={typedProfile.display_name}
           size="xl"
-          showStatus
-          status={status}
+          lastSeenAt={typedProfile.last_seen_at}
+          isCurrentUser={isOwnProfile}
           className="ring-4 ring-background"
         />
         <div className="min-w-0 flex-1">

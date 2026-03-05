@@ -9,8 +9,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { UserAvatar } from "@/components/shared/UserAvatar";
-import { getOnlineStatus } from "@/lib/utils/status";
+import { LiveStatusAvatar } from "@/components/shared/LiveStatusAvatar";
 import type { Profile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -27,9 +26,6 @@ interface MemberCardProps {
 }
 
 export default function MemberCard({ profile, currentUserId }: MemberCardProps) {
-  const status = getOnlineStatus(profile.last_seen_at, {
-    isCurrentUser: currentUserId != null && profile.id === currentUserId,
-  });
   const skills = profile.skills ?? [];
   const displaySkills = skills.slice(0, 4);
   const extraCount = skills.length - 4;
@@ -46,12 +42,12 @@ export default function MemberCard({ profile, currentUserId }: MemberCardProps) 
       )}
       <CardContent className="pt-6">
         <div className="flex items-start gap-4">
-          <UserAvatar
+          <LiveStatusAvatar
             avatarUrl={profile.avatar_url}
             displayName={profile.display_name}
             size="lg"
-            showStatus
-            status={status}
+            lastSeenAt={profile.last_seen_at}
+            isCurrentUser={currentUserId != null && profile.id === currentUserId}
           />
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-semibold">{profile.display_name}</h3>
