@@ -15,7 +15,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 // ─── Member Groups ────────────────────────────────────────────────────────────
 
