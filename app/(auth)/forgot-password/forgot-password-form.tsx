@@ -33,8 +33,11 @@ export function ForgotPasswordForm({
 
     try {
       // The url which will be included in the email. This URL needs to be configured in your redirect URLs in the Supabase dashboard at https://supabase.com/dashboard/project/_/auth/url-configuration
+      const siteUrl = (
+        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin
+      ).replace(/\/$/, "");
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/update-password`,
+        redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/update-password")}`,
       });
       if (error) throw error;
       setSuccess(true);
@@ -55,8 +58,7 @@ export function ForgotPasswordForm({
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              If you registered using your email and password, you will receive
-              a password reset email.
+              If an account exists for that email address, a password reset link will be sent.
             </p>
           </CardContent>
         </Card>
