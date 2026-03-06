@@ -24,11 +24,15 @@ export function getAvatarColor(name: string): string {
   return AVATAR_COLORS[index];
 }
 
+
 export function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  const parts = name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean); // removes empty strings
+
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
