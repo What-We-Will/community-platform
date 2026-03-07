@@ -42,7 +42,6 @@ export function EventCard({
   event,
   rsvpCounts,
   currentUserRsvp,
-  currentUserId,
 }: EventCardProps) {
   const [status, setStatus] = useState<"going" | "maybe" | "declined" | null>(
     currentUserRsvp?.status ?? null

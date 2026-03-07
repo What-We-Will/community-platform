@@ -7,7 +7,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserAvatar } from "@/components/shared/UserAvatar";
 import { BarChart3 } from "lucide-react";
 import { CreatePollDialog } from "./CreatePollDialog";
 import type { PollWithDetails } from "@/lib/types";

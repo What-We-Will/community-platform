@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { LiveStatusAvatar } from "@/components/shared/LiveStatusAvatar";
 import type { Profile } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 function isNewMember(createdAt: string): boolean {
   const created = new Date(createdAt).getTime();

@@ -1,7 +1,6 @@
 import {
   deleteFile,
   getSignedUrl,
-  uploadPrivateFile,
   uploadPublicFile,
   validateFile,
 } from './storage';

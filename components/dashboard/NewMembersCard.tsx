@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Sparkles } from "lucide-react";
-import type { Profile } from "@/lib/types";
 
 const THIRTY_DAYS_AGO = new Date();
 THIRTY_DAYS_AGO.setDate(THIRTY_DAYS_AGO.getDate() - 30);

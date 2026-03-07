@@ -5,7 +5,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Calendar, Plus } from "lucide-react";
 import { fetchUpcomingEvents } from "@/lib/events";
-import { eventTypeConfig } from "@/lib/utils/events";
 
 export async function UpcomingEventsCard() {
   let events: Awaited<ReturnType<typeof fetchUpcomingEvents>> = [];
@@ -70,8 +69,6 @@ export async function UpcomingEventsCard() {
               const isLive =
                 startsAt <= now &&
                 now <= new Date((event as { ends_at: string }).ends_at);
-              const typeConfig =
-                eventTypeConfig[e.event_type] ?? eventTypeConfig.other;
               const dotClass =
                 isLive
                   ? "bg-red-500"

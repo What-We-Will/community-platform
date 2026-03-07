@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { getAvatarColor } from "@/lib/utils/avatar";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Button } from "@/components/ui/button";
 import {

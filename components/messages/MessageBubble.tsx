@@ -3,7 +3,6 @@ import { Video, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { getSignedUrl } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import type { MessageWithSender } from "@/lib/types";
@@ -24,7 +23,6 @@ function FileMessageBubble({
   storagePath,
   fileName,
   fileSize,
-  fileType,
   isImage,
 }: {
   isOwn: boolean;
@@ -36,7 +34,6 @@ function FileMessageBubble({
   storagePath?: string;
   fileName: string;
   fileSize?: number;
-  fileType: string;
   isImage: boolean;
 }) {
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
@@ -238,7 +235,6 @@ export function MessageBubble({
         storagePath={storagePath}
         fileName={fileName}
         fileSize={fileSize}
-        fileType={fileType}
         isImage={isImage}
       />
     );
