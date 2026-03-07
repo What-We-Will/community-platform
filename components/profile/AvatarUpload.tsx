@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
@@ -74,7 +75,7 @@ export function AvatarUpload({
           )}
         >
           {currentAvatarUrl && !uploading ? (
-            <img src={currentAvatarUrl} alt="" className="size-full object-cover" />
+            <Image src={currentAvatarUrl} alt="" width={96} height={96} className="size-full object-cover" />
           ) : (
             <span className="text-2xl">{initials}</span>
           )}

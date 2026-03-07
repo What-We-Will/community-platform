@@ -98,6 +98,7 @@ function FileMessageBubble({
               onClick={handleOpenUrl}
               className="block max-w-full rounded overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element -- dimensions unknown at render time; next/image requires explicit width/height */}
               <img
                 src={signedUrl}
                 alt={fileName}
