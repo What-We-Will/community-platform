@@ -27,10 +27,10 @@ export function PollsCard({ userId, initialPoll }: PollsCardProps) {
 
   // Sync from server when initialPoll changes (e.g. after router.refresh())
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPoll(initialPoll);
     setSelectedOptions(initialPoll?.userVotes ?? []);
     setVoted((initialPoll?.userVotes?.length ?? 0) > 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally use primitives to avoid re-running when object reference changes
   }, [initialPoll?.id, initialPoll?.totalVotes, initialPoll?.userVotes?.length]);
 
   const hasSelection = selectedOptions.length > 0;

@@ -73,6 +73,8 @@ function buildSenderProfile(user: CurrentUser): Profile {
   };
 }
 
+const supabase = createClient();
+
 export function ConversationView({
   conversationId,
   currentUser,
@@ -87,8 +89,8 @@ export function ConversationView({
   participants = [],
   readOnlyFooter,
 }: ConversationViewProps) {
-  const supabase = createClient();
   const router = useRouter();
+
 
   // Build a lookup map from all known participants
   const participantMap = useRef(
@@ -173,7 +175,7 @@ export function ConversationView({
       .update({ last_read_at: new Date().toISOString() })
       .eq("conversation_id", conversationId)
       .eq("user_id", currentUser.id);
-  }, [conversationId, currentUser.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [conversationId, currentUser.id]);
 
   useEffect(() => {
     markAsRead();
@@ -213,7 +215,7 @@ export function ConversationView({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, currentUser.id, markAsRead]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [conversationId, currentUser.id, markAsRead]);
 
   // Typing indicator via Realtime Presence
   useEffect(() => {
@@ -243,7 +245,7 @@ export function ConversationView({
       supabase.removeChannel(typingChannel);
       typingChannelRef.current = null;
     };
-  }, [conversationId, currentUser.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [conversationId, currentUser.id]);
 
   function handleInputChange(value: string) {
     setInputValue(value);
