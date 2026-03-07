@@ -73,8 +73,6 @@ function buildSenderProfile(user: CurrentUser): Profile {
   };
 }
 
-const supabase = createClient();
-
 export function ConversationView({
   conversationId,
   currentUser,
@@ -89,6 +87,8 @@ export function ConversationView({
   participants = [],
   readOnlyFooter,
 }: ConversationViewProps) {
+  // Stable client instance per component mount — avoids duplicate Realtime subscriptions on HMR
+  const supabase = useRef(createClient()).current;
   const router = useRouter();
 
 
@@ -137,7 +137,7 @@ export function ConversationView({
     const interval = setInterval(fetchLastSeen, 30_000); // every 30s
     fetchLastSeen(); // run once immediately
     return () => clearInterval(interval);
-  }, [otherUser?.id]);
+  }, [supabase, otherUser?.id]);
 
   // Open video modal when landing with ?videoRoom= (e.g. from "Join call" in list)
   useEffect(() => {
@@ -175,7 +175,7 @@ export function ConversationView({
       .update({ last_read_at: new Date().toISOString() })
       .eq("conversation_id", conversationId)
       .eq("user_id", currentUser.id);
-  }, [conversationId, currentUser.id]);
+  }, [supabase, conversationId, currentUser.id]);
 
   useEffect(() => {
     markAsRead();
@@ -215,7 +215,7 @@ export function ConversationView({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [conversationId, currentUser.id, markAsRead]);
+  }, [supabase, conversationId, currentUser.id, markAsRead]);
 
   // Typing indicator via Realtime Presence
   useEffect(() => {
@@ -245,7 +245,7 @@ export function ConversationView({
       supabase.removeChannel(typingChannel);
       typingChannelRef.current = null;
     };
-  }, [conversationId, currentUser.id]);
+  }, [supabase, conversationId, currentUser.id]);
 
   function handleInputChange(value: string) {
     setInputValue(value);
