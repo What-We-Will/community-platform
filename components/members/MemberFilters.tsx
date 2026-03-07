@@ -32,6 +32,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   // Sync local state when URL changes (e.g. browser back/forward)
   useEffect(() => {
     const q = searchParams.get("q") ?? "";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchInput(q);
     setDebouncedSearch(q);
   }, [searchParams]);

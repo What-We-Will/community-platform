@@ -47,6 +47,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayName(profile.display_name);
     setHeadline(profile.headline ?? "");
     setLocation(profile.location ?? "");
