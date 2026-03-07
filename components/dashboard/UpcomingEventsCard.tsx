@@ -17,7 +17,7 @@ export async function UpcomingEventsCard() {
 
   const now = new Date();
 
-  let goingByEventId: Record<string, number> = {};
+  const goingByEventId: Record<string, number> = {};
   if (events.length > 0) {
     const supabase = await createClient();
     const eventIds = events.map((e) => (e as { id: string }).id);
