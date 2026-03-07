@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./.env.local)",
+      "Read(./supabase/.temp/**)",
+      "Read(./.supabase/**)",
+      "Read(./.next/**)",
+      "Read(./node_modules/**)"
+    ]
+  }
+}

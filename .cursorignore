@@ -1,0 +1,15 @@
+# Secrets & env
+.env.local
+.env
+.env.*
+
+# Supabase
+supabase/.temp/
+.supabase/
+
+# Build & deps
+.next/
+node_modules/
+
+# TypeScript incremental build info (large, not useful for AI)
+tsconfig.tsbuildinfo
