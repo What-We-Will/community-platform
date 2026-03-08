@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +27,8 @@ function getGreeting(): string {
 }
 
 function getMotivationalLine(): string {
-  const dayIndex = new Date().getDay();
-  return MOTIVATIONAL_LINES[dayIndex % MOTIVATIONAL_LINES.length];
+  const dayOfMonth = new Date().getDate();
+  return MOTIVATIONAL_LINES[dayOfMonth % MOTIVATIONAL_LINES.length];
 }
 
 interface WelcomeBannerProps {
@@ -39,12 +41,12 @@ export function WelcomeBanner({ profile }: WelcomeBannerProps) {
   const subtitle = getMotivationalLine();
 
   return (
-    <Card className="col-span-full overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-background md:col-span-2 lg:col-span-3">
+    <Card className="col-span-full overflow-hidden border-l-4 border-l-primary-orange bg-card rounded-lg md:col-span-2 lg:col-span-3">
       <CardContent className="pt-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-semibold">
-              {greeting}, {displayName}
+              <span className="text-primary-orange">{greeting}</span>, {displayName}
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           </div>
