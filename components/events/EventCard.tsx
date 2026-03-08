@@ -119,7 +119,7 @@ export function EventCard({
               {(event.recurrence_rule || event.parent_event_id) && (
                 <Badge variant="secondary" className="text-[10px] border gap-0.5 text-muted-foreground">
                   <Repeat2 className="size-2.5" />
-                  {event.recurrence_rule === "daily" ? "Daily" : "Weekly"}
+                  {event.recurrence_rule === "daily" ? "Weekdays" : "Weekly"}
                 </Badge>
               )}
             </div>

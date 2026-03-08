@@ -274,7 +274,7 @@ export function CreateEventForm({
                   : "border-border bg-background hover:bg-accent"
               )}
             >
-              {rule === "none" ? "No repeat" : rule === "daily" ? "Every day" : "Every week"}
+              {rule === "none" ? "No repeat" : rule === "daily" ? "Every weekday" : "Every week"}
             </button>
           ))}
         </div>
@@ -288,13 +288,12 @@ export function CreateEventForm({
               value={recurrenceEndDate}
               onChange={(e) => setRecurrenceEndDate(e.target.value)}
               min={date ? (() => { const d = new Date(date); d.setDate(d.getDate() + (recurrenceRule === "daily" ? 1 : 7)); return d.toISOString().slice(0, 10); })() : undefined}
-              max={date ? (() => { const d = new Date(date); d.setMonth(d.getMonth() + (recurrenceRule === "daily" ? 3 : 12)); return d.toISOString().slice(0, 10); })() : undefined}
             />
             {recurrenceEndDate && date && (
               <p className="text-xs text-muted-foreground">
                 {recurrenceRule === "daily"
-                  ? `Creates ~${Math.min(90, Math.floor((new Date(recurrenceEndDate).getTime() - new Date(date).getTime()) / 86400000))} daily occurrences`
-                  : `Creates ~${Math.min(52, Math.floor((new Date(recurrenceEndDate).getTime() - new Date(date).getTime()) / (7 * 86400000)))} weekly occurrences`}
+                  ? `Creates ~${Math.min(1500, countWeekdays(date, recurrenceEndDate))} weekday occurrences`
+                  : `Creates ~${Math.min(260, Math.floor((new Date(recurrenceEndDate).getTime() - new Date(date).getTime()) / (7 * 86400000)))} weekly occurrences`}
               </p>
             )}
             {errors.recurrenceEndDate && (
@@ -352,4 +351,18 @@ function formatTimeLabel(t: string): string {
   const period = h >= 12 ? "PM" : "AM";
   const h12 = h % 12 || 12;
   return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
+/** Count weekday (Mon–Fri) days strictly between startDate and endDate (inclusive of end). */
+function countWeekdays(startDate: string, endDate: string): number {
+  let count = 0;
+  const cursor = new Date(startDate);
+  cursor.setDate(cursor.getDate() + 1); // first occurrence is the day after the parent
+  const end = new Date(endDate);
+  while (cursor <= end) {
+    const d = cursor.getDay();
+    if (d !== 0 && d !== 6) count++;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return count;
 }
