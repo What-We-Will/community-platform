@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import MemberCard from "@/components/members/MemberCard";
 import MemberFilters from "@/components/members/MemberFilters";
+import { getOnlineStatus } from "@/lib/utils/status";
 import type { Profile } from "@/lib/types";
 
 type MembersPageProps = {
@@ -70,6 +71,14 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
   const isEmpty = !profiles || profiles.length === 0;
   const isFilteredEmpty = hasFilters && isEmpty;
 
+  // Sort: online first, then away, then offline (same order as getOnlineStatus)
+  const statusOrder = { online: 0, away: 1, offline: 2 };
+  const sortedProfiles = (profiles ?? []).slice().sort((a, b) => {
+    const aStatus = getOnlineStatus(a.last_seen_at ?? null);
+    const bStatus = getOnlineStatus(b.last_seen_at ?? null);
+    return statusOrder[aStatus] - statusOrder[bStatus];
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -97,7 +106,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {profiles.map((profile) => (
+          {sortedProfiles.map((profile) => (
             <MemberCard
               key={profile.id}
               profile={profile as Profile}
