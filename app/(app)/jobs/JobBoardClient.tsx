@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Link from "next/link";
 import {
   MapPin,
   Clock,
@@ -309,7 +310,22 @@ export function JobBoardClient({
                         <Clock className="size-3.5" /> {formatRelativeTime(selectedJob.created_at)}
                       </span>
                       {selectedPoster && (
-                        <span className="text-xs">Posted by {selectedPoster.display_name}</span>
+                        <span className="flex items-center gap-1.5 text-xs">
+                          <span className="text-muted-foreground">Posted by</span>
+                          <Link
+                            href={`/members/${selectedPoster.id}`}
+                            className="font-medium text-foreground hover:underline underline-offset-2"
+                          >
+                            {selectedPoster.display_name}
+                          </Link>
+                          {selectedJob.offers_referral && selectedJob.posted_by !== currentUserId && (
+                            <MessagePosterButton
+                              posterId={selectedJob.posted_by!}
+                              posterName={selectedPoster.display_name}
+                              compact
+                            />
+                          )}
+                        </span>
                       )}
                     </div>
                   </div>
