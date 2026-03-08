@@ -1,6 +1,22 @@
-import { Clock } from "lucide-react";
+"use client";
+
+import { Clock, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function PendingApprovalPage() {
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    document.cookie = "profile_onboarded=; path=/; max-age=0; samesite=lax";
+    document.cookie = "profile_approved=; path=/; max-age=0; samesite=lax";
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-white px-4">
       <div className="w-full max-w-md text-center">
@@ -29,6 +45,15 @@ export default function PendingApprovalPage() {
             info@wwwrise.org
           </a>
         </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-8 gap-2 text-muted-foreground"
+          onClick={handleSignOut}
+        >
+          <LogOut className="size-4" />
+          Sign out
+        </Button>
       </div>
     </div>
   );
