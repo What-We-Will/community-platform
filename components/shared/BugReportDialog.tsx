@@ -77,13 +77,6 @@ export function BugReportDialog({ reporterEmail }: BugReportDialogProps) {
         </button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Report a bug</DialogTitle>
-          <DialogDescription>
-            Describe what went wrong and we&apos;ll look into it.
-          </DialogDescription>
-        </DialogHeader>
-
         {status === "success" ? (
           <div className="py-6 text-center">
             <p className="font-medium">Thanks for the report!</p>
@@ -103,6 +96,12 @@ export function BugReportDialog({ reporterEmail }: BugReportDialogProps) {
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
+            <DialogHeader>
+              <DialogTitle>Report a bug</DialogTitle>
+              <DialogDescription>
+                Describe what went wrong and we&apos;ll look into it.
+              </DialogDescription>
+            </DialogHeader>
             <div className="space-y-4 py-2">
               {errorMsg && (
                 <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
