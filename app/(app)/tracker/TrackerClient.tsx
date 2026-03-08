@@ -234,14 +234,14 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                     : a.status === col.value
                 );
                 return (
-                  <div key={col.value} className="flex flex-col gap-2 w-52 shrink-0">
+                  <div key={col.value} className={cn("flex flex-col gap-2 w-52 shrink-0 rounded-xl p-3", col.columnBg)}>
                     <div className="flex items-center justify-between gap-1">
                       <span className={cn("text-xs font-semibold", col.color)}>{col.label}</span>
-                      <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-1.5 py-0.5">
+                      <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
                         {colApps.length}
                       </span>
                     </div>
-                    <div className={cn("h-1 w-full rounded-full mb-1", col.bg.split(" ")[0])} />
+                    <div className={cn("h-0.5 w-full rounded-full", col.bg.split(" ")[0])} />
                     <div className="space-y-2 min-h-[60px]">
                       {colApps.map((app) => (
                         <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact />
@@ -250,7 +250,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                     <ApplicationForm
                       defaultStatus={col.value as ApplicationStatus}
                       trigger={
-                        <Button variant="ghost" size="sm" className="w-full h-7 text-xs text-muted-foreground border border-dashed mt-1">
+                        <Button variant="ghost" size="sm" className="w-full h-7 text-xs text-muted-foreground border border-dashed bg-white/50 hover:bg-white/80 mt-1">
                           + Add
                         </Button>
                       }
@@ -276,14 +276,14 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                   );
                   if (colApps.length === 0) return null;
                   return (
-                    <div key={col.value} className="flex flex-col gap-2 w-52 shrink-0">
+                    <div key={col.value} className={cn("flex flex-col gap-2 w-52 shrink-0 rounded-xl p-3", col.columnBg)}>
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn("text-xs font-semibold", col.color)}>{col.label}</span>
-                        <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-1.5 py-0.5">
+                        <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
                           {colApps.length}
                         </span>
                       </div>
-                      <div className={cn("h-1 w-full rounded-full mb-1", col.bg.split(" ")[0])} />
+                      <div className={cn("h-0.5 w-full rounded-full", col.bg.split(" ")[0])} />
                       <div className="space-y-2">
                         {colApps.map((app) => (
                           <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact />
