@@ -66,6 +66,7 @@ interface Props {
   activeRoleFilter: string | null;
   activeReferralFilter: boolean;
   activeCommunityFilter: boolean;
+  activeNotesFilter: boolean;
 }
 
 // ── Resize hook ──────────────────────────────────────────────────────────────
@@ -138,6 +139,7 @@ export function JobBoardClient({
   activeRoleFilter,
   activeReferralFilter,
   activeCommunityFilter,
+  activeNotesFilter,
 }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(jobs[0]?.id ?? null);
   const selectedJob = jobs.find((j) => j.id === selectedId) ?? null;
@@ -185,6 +187,7 @@ export function JobBoardClient({
               activeRole={activeRoleFilter}
               activeReferral={activeReferralFilter}
               activeCommunity={activeCommunityFilter}
+              activeNotes={activeNotesFilter}
             />
           </div>
 
@@ -194,7 +197,7 @@ export function JobBoardClient({
               <div className="flex flex-col items-center justify-center gap-2 py-16 px-4 text-center">
                 <Briefcase className="size-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  {activeRoleFilter || activeReferralFilter || activeCommunityFilter
+                  {activeRoleFilter || activeReferralFilter || activeCommunityFilter || activeNotesFilter
                     ? "No jobs match the current filters."
                     : "No jobs posted yet."}
                 </p>
@@ -230,6 +233,11 @@ export function JobBoardClient({
                     {job.offers_referral && (
                       <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full border bg-emerald-100 text-emerald-700 border-emerald-200">
                         <Handshake className="size-2.5" /> Referral
+                      </span>
+                    )}
+                    {(commentsByJob[job.id] ?? []).some((c) => !c.source_job_id) && (
+                      <span className="flex items-center gap-0.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full border bg-amber-100 text-amber-700 border-amber-200">
+                        <MessageSquare className="size-2.5" /> Notes
                       </span>
                     )}
                     {job.roles.slice(0, 2).map((r) => (
@@ -420,6 +428,7 @@ export function JobBoardClient({
                     currentUserId={currentUserId}
                     isPlatformAdmin={isPlatformAdmin}
                     alwaysOpen
+                    onSelectJob={setSelectedId}
                   />
                 </div>
               </div>

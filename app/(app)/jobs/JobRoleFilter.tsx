@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
-import { Handshake, Network, X } from "lucide-react";
+import { Handshake, Network, MessageSquare, X } from "lucide-react";
 import { JOB_ROLES, type JobRole } from "./job-roles";
 import { cn } from "@/lib/utils";
 
@@ -10,9 +10,10 @@ interface Props {
   activeRole: string | null;
   activeReferral: boolean;
   activeCommunity: boolean;
+  activeNotes: boolean;
 }
 
-export function JobRoleFilter({ activeRole, activeReferral, activeCommunity }: Props) {
+export function JobRoleFilter({ activeRole, activeReferral, activeCommunity, activeNotes }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,9 +42,12 @@ export function JobRoleFilter({ activeRole, activeReferral, activeCommunity }: P
   const toggleCommunity = () =>
     update({ community: activeCommunity ? null : "true" });
 
-  const hasAnyFilter = activeRole || activeReferral || activeCommunity;
+  const toggleNotes = () =>
+    update({ notes: activeNotes ? null : "true" });
 
-  const clearAll = () => update({ role: null, referral: null, community: null });
+  const hasAnyFilter = activeRole || activeReferral || activeCommunity || activeNotes;
+
+  const clearAll = () => update({ role: null, referral: null, community: null, notes: null });
 
   return (
     <div className="flex flex-col gap-2">
@@ -61,6 +65,20 @@ export function JobRoleFilter({ activeRole, activeReferral, activeCommunity }: P
           <Handshake className="size-3" />
           Referral Available
           {activeReferral && <X className="size-3 ml-0.5" />}
+        </button>
+
+        <button
+          onClick={toggleNotes}
+          className={cn(
+            "flex items-center gap-1 rounded-full border px-3 py-0.5 text-xs font-medium transition-colors",
+            activeNotes
+              ? "bg-amber-600 text-white border-amber-600"
+              : "border-amber-300 text-amber-700 hover:bg-amber-50"
+          )}
+        >
+          <MessageSquare className="size-3" />
+          Has Notes
+          {activeNotes && <X className="size-3 ml-0.5" />}
         </button>
 
         <button

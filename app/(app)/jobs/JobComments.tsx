@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { MessageSquare, ChevronDown, ChevronUp, Trash2, Loader2, Send } from "lucide-react";
+import { MessageSquare, ChevronDown, ChevronUp, Trash2, Loader2, Send, ArrowUpRight } from "lucide-react";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { addJobComment, deleteJobComment } from "./community-actions";
 
@@ -15,6 +15,9 @@ export interface Comment {
   created_at: string;
   user_id: string;
   author: { id: string; display_name: string; avatar_url: string | null } | null;
+  /** Set when this comment was written for a sibling posting at the same company */
+  source_job_id?: string;
+  source_job_title?: string;
 }
 
 interface Props {
@@ -23,9 +26,10 @@ interface Props {
   currentUserId: string;
   isPlatformAdmin: boolean;
   alwaysOpen?: boolean;
+  onSelectJob?: (jobId: string) => void;
 }
 
-export function JobComments({ jobPostingId, comments, currentUserId, isPlatformAdmin, alwaysOpen = false }: Props) {
+export function JobComments({ jobPostingId, comments, currentUserId, isPlatformAdmin, alwaysOpen = false, onSelectJob }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(alwaysOpen);
   const [text, setText] = useState("");
@@ -74,38 +78,62 @@ export function JobComments({ jobPostingId, comments, currentUserId, isPlatformA
               No notes yet. Be the first to share your experience.
             </p>
           )}
-          {comments.map((c) => (
-            <div key={c.id} className="flex gap-2.5">
-              <UserAvatar
-                avatarUrl={c.author?.avatar_url ?? null}
-                displayName={c.author?.display_name ?? "?"}
-                size="xs"
-              />
-              <div className="flex-1 min-w-0 rounded-lg bg-muted/50 px-3 py-2">
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <span className="text-xs font-medium">{c.author?.display_name ?? "Member"}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-muted-foreground">
-                      {formatRelativeTime(c.created_at)}
-                    </span>
-                    {(c.user_id === currentUserId || isPlatformAdmin) && (
-                      <Button
-                        variant="ghost" size="icon"
-                        className="size-5 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDelete(c.id)}
-                        disabled={deletingId === c.id}
-                      >
-                        {deletingId === c.id
-                          ? <Loader2 className="size-3 animate-spin" />
-                          : <Trash2 className="size-3" />}
-                      </Button>
-                    )}
+          {comments.map((c) => {
+            const isCrossCompany = !!c.source_job_id;
+            const canDelete = !isCrossCompany && (c.user_id === currentUserId || isPlatformAdmin);
+            return (
+              <div key={`${c.id}-${c.source_job_id ?? "direct"}`} className="flex gap-2.5">
+                <UserAvatar
+                  avatarUrl={c.author?.avatar_url ?? null}
+                  displayName={c.author?.display_name ?? "?"}
+                  size="xs"
+                />
+                <div className={`flex-1 min-w-0 rounded-lg px-3 py-2 ${isCrossCompany ? "bg-muted/30 border border-dashed" : "bg-muted/50"}`}>
+                  {/* Source attribution for cross-company notes */}
+                  {isCrossCompany && c.source_job_title && (
+                    <div className="flex items-center gap-1 mb-1.5">
+                      <ArrowUpRight className="size-3 text-muted-foreground shrink-0" />
+                      <span className="text-[10px] text-muted-foreground italic">From posting: </span>
+                      {onSelectJob && c.source_job_id ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelectJob(c.source_job_id!)}
+                          className="text-[10px] font-medium text-primary underline underline-offset-2 hover:opacity-80 transition-opacity truncate"
+                        >
+                          {c.source_job_title}
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-medium text-foreground truncate">
+                          {c.source_job_title}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="text-xs font-medium">{c.author?.display_name ?? "Member"}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground">
+                        {formatRelativeTime(c.created_at)}
+                      </span>
+                      {canDelete && (
+                        <Button
+                          variant="ghost" size="icon"
+                          className="size-5 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleDelete(c.id)}
+                          disabled={deletingId === c.id}
+                        >
+                          {deletingId === c.id
+                            ? <Loader2 className="size-3 animate-spin" />
+                            : <Trash2 className="size-3" />}
+                        </Button>
+                      )}
+                    </div>
                   </div>
+                  <p className="text-xs text-foreground leading-relaxed">{c.content}</p>
                 </div>
-                <p className="text-xs text-foreground leading-relaxed">{c.content}</p>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Add note form */}
           <form onSubmit={handleSubmit} className="flex gap-2 items-start">
