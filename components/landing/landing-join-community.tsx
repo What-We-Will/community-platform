@@ -6,7 +6,7 @@ const ACTION_NETWORK_SIGNUP_URL = "https://actionnetwork.org/forms/what-we-will"
 
 export function LandingJoinCommunity() {
   return (
-    <section id="impact" className="scroll-mt-20 bg-muted px-4 py-16 md:py-24">
+    <section id="newsletter" className="scroll-mt-20 bg-muted px-4 py-16 md:py-24">
       <div className="mx-auto max-w-2xl">
         <div className="px-6 py-10 md:px-10 md:py-12">
           <h2 className="text-center text-5xl font-bebas">
