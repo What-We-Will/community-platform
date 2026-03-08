@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import nodemailer from "nodemailer";
@@ -50,7 +50,7 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
     await sendApprovalEmail(targetUser.email);
   }
 
-  revalidatePath("/admin/approvals");
+  redirect("/admin/approvals");
 }
 
 async function sendApprovalEmail(toEmail: string) {
