@@ -57,7 +57,7 @@ export default async function CommunityLinksPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Community Links</h1>
+          <h1 className="text-2xl font-bold">Resource Hub</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Shared resources — organizations, learning materials, tools, and more.
           </p>
