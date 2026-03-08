@@ -1,12 +1,46 @@
 "use client";
 
+import { useEffect } from "react";
 import { Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+const CHECK_INTERVAL_MS = 30_000; // check every 30 seconds
+
 export default function PendingApprovalPage() {
   const router = useRouter();
+
+  async function checkApprovalStatus() {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("approval_status")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.approval_status === "approved") {
+      // Clear stale cookies so middleware re-evaluates on next request
+      document.cookie = "profile_onboarded=; path=/; max-age=0; samesite=lax";
+      document.cookie = "profile_approved=; path=/; max-age=0; samesite=lax";
+      router.push("/dashboard");
+      router.refresh();
+    }
+  }
+
+  // Poll for approval every 30 seconds
+  useEffect(() => {
+    checkApprovalStatus();
+    const interval = setInterval(checkApprovalStatus, CHECK_INTERVAL_MS);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();
