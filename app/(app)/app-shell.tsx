@@ -15,6 +15,8 @@ import {
   LogOut,
   ShieldCheck,
   Briefcase,
+  ClipboardList,
+  Link2,
 } from "lucide-react";
 import { BugReportDialog } from "@/components/shared/BugReportDialog";
 import { createClient } from "@/lib/supabase/client";
@@ -35,8 +37,13 @@ const mainNavItems = [
   { href: "/members", label: "Members", icon: UserSearch },
 ];
 
+const myToolsNavItems = [
+  { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList },
+];
+
 const resourcesNavItems = [
-  { href: "/jobs", label: "Job Board", icon: Briefcase },
+  { href: "/jobs",   label: "Job Board",        icon: Briefcase },
+  { href: "/links",  label: "Community Links",  icon: Link2 },
 ];
 
 const profileNavItems = [
@@ -140,6 +147,22 @@ export default function AppShell({ children, user }: AppShellProps) {
                     userId={user.id}
                   />
                 )}
+              </Link>
+            ))}
+
+            <Separator className="my-2" />
+            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+              My Tools
+            </p>
+            {myToolsNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                <item.icon className="size-5 shrink-0" />
+                {item.label}
               </Link>
             ))}
 
