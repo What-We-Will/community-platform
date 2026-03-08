@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ConversationView } from "@/components/messages/ConversationView";
+import { selfNotesConversationId, getOrCreateSelfNotes } from "@/lib/messages";
 import type { MessageWithSender, Profile } from "@/lib/types";
 
 interface ConversationPageProps {
@@ -35,8 +36,13 @@ export default async function ConversationPage({
   }
 
   if (!myParticipation) {
-    console.error("[conversation] user", user.id, "is not a participant in", conversationId);
-    redirect("/messages");
+    // First visit to self-notes: auto-create the conversation and continue
+    if (conversationId === selfNotesConversationId(user.id)) {
+      await getOrCreateSelfNotes(user.id);
+    } else {
+      console.error("[conversation] user", user.id, "is not a participant in", conversationId);
+      redirect("/messages");
+    }
   }
 
   // Fetch the conversation to determine type
@@ -143,19 +149,11 @@ export default async function ConversationPage({
     console.error("[conversation] otherParticipant error:", otherParticipantError);
   }
 
-  if (!otherParticipant) {
+  // Self-notes conversation: no other participant expected
+  const isSelfNotes = !otherParticipant && conversationId === selfNotesConversationId(user.id);
+
+  if (!otherParticipant && !isSelfNotes) {
     console.error("[conversation] no other participant found in", conversationId);
-    redirect("/messages");
-  }
-
-  const { data: otherUserProfile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", otherParticipant.user_id)
-    .single();
-
-  if (!otherUserProfile) {
-    console.error("[conversation] other user profile not found:", otherParticipant.user_id);
     redirect("/messages");
   }
 
@@ -170,7 +168,16 @@ export default async function ConversationPage({
 
   const profileCache = new Map<string, Profile>([
     [user.id, currentUserProfile as Profile],
-    [otherParticipant.user_id, otherUserProfile as Profile],
+    ...(otherParticipant
+      ? await (async () => {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", otherParticipant.user_id)
+            .single();
+          return p ? [[otherParticipant.user_id, p as Profile] as [string, Profile]] : [];
+        })()
+      : []),
   ]);
 
   const messages: MessageWithSender[] = (rawMessages ?? [])
@@ -187,6 +194,26 @@ export default async function ConversationPage({
     .update({ last_read_at: new Date().toISOString() })
     .eq("conversation_id", conversationId)
     .eq("user_id", user.id);
+
+  if (isSelfNotes) {
+    return (
+      <div className="fixed inset-0 z-40 flex flex-col bg-background md:static md:flex-1 md:z-auto">
+        <ConversationView
+          conversationId={conversationId}
+          currentUser={currentUser}
+          isSelfNotes
+          initialMessages={messages}
+          initialVideoRoom={videoRoom}
+        />
+      </div>
+    );
+  }
+
+  const otherUserProfile = profileCache.get(otherParticipant!.user_id);
+  if (!otherUserProfile) {
+    console.error("[conversation] other user profile not found:", otherParticipant!.user_id);
+    redirect("/messages");
+  }
 
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-background md:static md:flex-1 md:z-auto">

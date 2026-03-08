@@ -20,6 +20,49 @@ function dmConversationId(userId1: string, userId2: string): string {
 }
 
 /**
+ * Generates a stable UUID for a user's self-notes conversation.
+ * Uses a different namespace than DMs so it never collides.
+ */
+export function selfNotesConversationId(userId: string): string {
+  const hash = createHash("sha256").update(`notes:${userId}`).digest("hex");
+  return [
+    hash.slice(0, 8),
+    hash.slice(8, 12),
+    "5" + hash.slice(13, 16),
+    (parseInt(hash.slice(16, 18), 16) & 0x3f | 0x80).toString(16).padStart(2, "0") + hash.slice(18, 20),
+    hash.slice(20, 32),
+  ].join("-");
+}
+
+/**
+ * Find or create a user's self-notes conversation.
+ * Returns the conversation ID.
+ */
+export async function getOrCreateSelfNotes(userId: string): Promise<string> {
+  const supabase = await createClient();
+  const conversationId = selfNotesConversationId(userId);
+
+  const { error: convError } = await supabase
+    .from("conversations")
+    .insert({ id: conversationId, type: "dm" });
+
+  if (convError && convError.code !== "23505") {
+    throw new Error(`Failed to create notes conversation: ${convError.message}`);
+  }
+
+  // Only one participant — the user themselves
+  const { error: partError } = await supabase
+    .from("conversation_participants")
+    .insert({ conversation_id: conversationId, user_id: userId });
+
+  if (partError && partError.code !== "23505") {
+    throw new Error(`Failed to add participant: ${partError.message}`);
+  }
+
+  return conversationId;
+}
+
+/**
  * Find an existing DM conversation between two users.
  * Returns the conversation ID or null if none exists.
  */

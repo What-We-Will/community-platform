@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowLeft, Video, UsersRound, Archive } from "lucide-react";
+import { ArrowLeft, Video, UsersRound, Archive, BookMarked } from "lucide-react";
 import { getVideoRoomName } from "@/lib/utils/video";
 import { VideoCallModal } from "@/components/video/VideoCallModal";
 import { MessageBubble } from "./MessageBubble";
@@ -37,6 +37,8 @@ interface ConversationViewProps {
   initialVideoRoom?: string | null;
   // DM mode
   otherUser?: Profile;
+  // Self-notes mode
+  isSelfNotes?: boolean;
   // Group mode
   isGroup?: boolean;
   groupName?: string;
@@ -77,6 +79,7 @@ export function ConversationView({
   initialMessages,
   initialVideoRoom,
   otherUser,
+  isSelfNotes = false,
   isGroup = false,
   groupName,
   groupSlug,
@@ -419,6 +422,27 @@ export function ConversationView({
   // ── Header ──────────────────────────────────────────────────────────────────
 
   const renderHeader = () => {
+    if (isSelfNotes) {
+      return (
+        <div className="flex items-center gap-3 border-b px-3 py-2.5 shrink-0 bg-background">
+          <Link href="/messages">
+            <Button variant="ghost" size="icon" className="md:hidden -ml-1">
+              <ArrowLeft className="size-5" />
+            </Button>
+          </Link>
+          <div className="flex items-center gap-3 flex-1 min-w-0 px-2 py-1">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <BookMarked className="size-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">My Notes</p>
+              <p className="text-xs text-muted-foreground">Only visible to you</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (isGroup) {
       return (
         <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 bg-background">

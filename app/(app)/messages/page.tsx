@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { findExistingDM, createDMConversation } from "@/lib/messages";
+import { findExistingDM, createDMConversation, getOrCreateSelfNotes } from "@/lib/messages";
 import { MessageSquare } from "lucide-react";
 
 interface MessagesPageProps {
@@ -35,14 +35,10 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
       );
     }
 
+    // Self → open notes conversation
     if (targetProfile.id === user.id) {
-      return (
-        <EmptyState
-          message="You can't message yourself."
-          linkLabel="Back to Messages"
-          linkHref="/messages"
-        />
-      );
+      const notesId = await getOrCreateSelfNotes(user.id);
+      redirect(`/messages/${notesId}`);
     }
 
     // Find or create DM

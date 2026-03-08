@@ -22,11 +22,12 @@ interface Props {
   comments: Comment[];
   currentUserId: string;
   isPlatformAdmin: boolean;
+  alwaysOpen?: boolean;
 }
 
-export function JobComments({ jobPostingId, comments, currentUserId, isPlatformAdmin }: Props) {
+export function JobComments({ jobPostingId, comments, currentUserId, isPlatformAdmin, alwaysOpen = false }: Props) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(alwaysOpen);
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -52,16 +53,18 @@ export function JobComments({ jobPostingId, comments, currentUserId, isPlatformA
   }
 
   return (
-    <div className="mt-3 border-t pt-3">
-      <button
-        type="button"
-        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        onClick={() => setOpen((o) => !o)}
-      >
-        <MessageSquare className="size-3.5" />
-        <span>Community Notes ({comments.length})</span>
-        {open ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
-      </button>
+    <div className={alwaysOpen ? "" : "mt-3 border-t pt-3"}>
+      {!alwaysOpen && (
+        <button
+          type="button"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setOpen((o) => !o)}
+        >
+          <MessageSquare className="size-3.5" />
+          <span>Community Notes ({comments.length})</span>
+          {open ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+        </button>
+      )}
 
       {open && (
         <div className="mt-3 space-y-3">

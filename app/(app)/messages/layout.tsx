@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ConversationList } from "@/components/messages/ConversationList";
 import { fetchRecentConversations } from "@/lib/conversations";
+import { selfNotesConversationId } from "@/lib/messages";
 
 export default async function MessagesLayout({
   children,
@@ -15,6 +16,7 @@ export default async function MessagesLayout({
   if (!user) redirect("/login");
 
   const conversations = await fetchRecentConversations(user.id, 500);
+  const notesId = selfNotesConversationId(user.id);
 
   return (
     <div className="-m-4 lg:-m-6 flex h-[calc(100dvh-3.5rem)] overflow-hidden lg:h-dvh">
@@ -22,6 +24,7 @@ export default async function MessagesLayout({
         <ConversationList
           initialConversations={conversations}
           currentUserId={user.id}
+          selfNotesId={notesId}
         />
       </div>
       <div className="hidden flex-1 flex-col min-w-0 md:flex">{children}</div>

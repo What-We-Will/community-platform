@@ -11,7 +11,7 @@ import { formatRelativeTime } from "@/lib/utils/time";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UsersRound, Archive, Video } from "lucide-react";
+import { UsersRound, Archive, Video, BookMarked } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -24,11 +24,13 @@ import type { ConversationWithDetails, Message } from "@/lib/types";
 interface ConversationListProps {
   initialConversations: ConversationWithDetails[];
   currentUserId: string;
+  selfNotesId: string;
 }
 
 export function ConversationList({
   initialConversations,
   currentUserId,
+  selfNotesId,
 }: ConversationListProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -127,7 +129,40 @@ export function ConversationList({
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
-        {conversations.length === 0 ? (
+        {/* My Notes — always pinned at top */}
+        {(() => {
+          const isNotesActive = pathname === `/messages/${selfNotesId}`;
+          const notesConv = conversations.find((c) => c.conversation.id === selfNotesId);
+          const lastNoteMsg = notesConv?.lastMessage;
+          return (
+            <Link
+              href={`/messages/${selfNotesId}`}
+              className={cn(
+                "flex items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent",
+                isNotesActive && "bg-accent"
+              )}
+            >
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <BookMarked className="size-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium truncate">My Notes</p>
+                  {lastNoteMsg && (
+                    <span className="text-[11px] text-muted-foreground shrink-0">
+                      {formatRelativeTime(lastNoteMsg.created_at)}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  {lastNoteMsg ? lastNoteMsg.content : "Save notes to yourself"}
+                </p>
+              </div>
+            </Link>
+          );
+        })()}
+
+        {conversations.filter((c) => c.conversation.id !== selfNotesId).length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-center px-6">
             <p className="text-sm text-muted-foreground">No conversations yet.</p>
             <p className="text-xs text-muted-foreground mt-1">
@@ -135,7 +170,7 @@ export function ConversationList({
             </p>
           </div>
         ) : (
-          conversations.map(
+          conversations.filter((c) => c.conversation.id !== selfNotesId).map(
             ({ conversation, participants, lastMessage, unreadCount, groupName, groupSlug }) => {
               const isActive = pathname === `/messages/${conversation.id}`;
               const hasUnread = unreadCount > 0;

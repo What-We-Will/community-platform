@@ -34,6 +34,42 @@ export async function createJobPosting(input: JobPostingInput): Promise<{ error?
   return {};
 }
 
+export async function updateJobPosting(
+  id: string,
+  input: Partial<JobPostingInput>
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Verify ownership or admin — mirrors the RLS policy
+  const { data: posting } = await supabase
+    .from("job_postings")
+    .select("posted_by")
+    .eq("id", id)
+    .single();
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const isAdmin = profile?.role === "admin";
+  const isPoster = posting?.posted_by === user.id;
+
+  if (!isAdmin && !isPoster) return { error: "Not authorized" };
+
+  const { error } = await supabase
+    .from("job_postings")
+    .update({ ...input, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/jobs");
+  return {};
+}
+
 export async function messageJobPoster(posterId: string): Promise<never> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
