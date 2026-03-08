@@ -469,7 +469,7 @@ function PathsTab({ paths, itemsByPath, currentUserId, isPlatformAdmin }: PathsT
             onClick={() => toggle(path.id)}
             className="mt-0.5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
           >
-            {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRightIcon className="size-4" />}
+            {isExpanded ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
           </button>
 
           <div className="flex-1 min-w-0">
