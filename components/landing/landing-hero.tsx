@@ -27,7 +27,7 @@ export function LandingHero() {
         <div className="max-w-xl">
           <h1 className="text-4xl text-dark-blue font-bold uppercase tracking-tight text-center md:text-left sm:text-4xl md:text-5xl lg:text-6xl">
             <span
-              className="font-bold text-white px-2"
+              className="font-bold text-white px-2 tracking-normal"
               style={{ backgroundColor: ROTATING_WORDS[index].bg }}
             >
               {ROTATING_WORDS[index].word}

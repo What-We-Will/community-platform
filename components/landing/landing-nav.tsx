@@ -39,6 +39,13 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
 
             <Link
+              href="/#mission"
+              className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
+            >
+              Mission
+            </Link>
+
+            <Link
               href="/#programs"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
