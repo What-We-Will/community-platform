@@ -29,8 +29,9 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
     return;
   }
 
-  // Approve the user
-  const { error } = await supabase
+  // Use service role for the update to bypass RLS — admins updating other users' rows
+  const serviceClient = createServiceClient();
+  const { error } = await serviceClient
     .from("profiles")
     .update({ approval_status: "approved" })
     .eq("id", userId);
@@ -41,7 +42,6 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
   }
 
   // Look up the user's email via service role (bypasses RLS on auth.users)
-  const serviceClient = createServiceClient();
   const {
     data: { user: targetUser },
   } = await serviceClient.auth.admin.getUserById(userId);
