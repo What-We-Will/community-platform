@@ -67,15 +67,12 @@ function ApplicationCard({
   return (
     <div
       onClick={() => onOpen(app)}
-      className={cn(
-        "rounded-lg border bg-card p-3 space-y-2 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer",
-        compact && "p-2.5 space-y-1.5"
-      )}
+      className="rounded-lg border bg-card p-3 space-y-2 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-semibold truncate">{app.position}</p>
-          <p className="text-xs text-muted-foreground truncate">{app.company}</p>
+          <p className="text-sm font-semibold leading-snug">{app.position}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{app.company}</p>
         </div>
         {!compact && isOwn && (
           <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -128,29 +125,57 @@ function ApplicationCard({
       )}
 
       {compact && (
-        <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
+        <>
+          {/* Applied date */}
           {app.applied_date && (
-            <span className="text-[10px] text-muted-foreground">
-              {new Date(app.applied_date).toLocaleDateString()}
-            </span>
+            <p className="text-[11px] text-muted-foreground">
+              Applied {new Date(app.applied_date).toLocaleDateString()}
+            </p>
           )}
-          {isOwn && (
-            <div className="flex gap-0.5">
-              <ApplicationForm
-                mode="edit"
-                initialValues={{ ...app, applied_date: app.applied_date ?? "", notes: app.notes ?? "", community_notes: app.community_notes ?? "", url: app.url ?? "", is_shared: app.is_shared }}
-                trigger={
-                  <Button variant="ghost" size="icon" className="size-6">
-                    <Pencil className="size-3" />
-                  </Button>
-                }
-              />
-              <Button variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-destructive" onClick={handleDelete} disabled={deleting}>
-                {deleting ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
-              </Button>
+
+          {/* Notes preview */}
+          {app.notes && (
+            <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">{app.notes}</p>
+          )}
+
+          {/* Footer: shared badge + actions */}
+          <div className="flex items-center justify-between gap-2 pt-0.5" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-1.5">
+              {app.is_shared && (
+                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                  <Users className="size-3" /> Shared
+                </span>
+              )}
+              {app.url && (
+                <a
+                  href={app.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="size-2.5" /> Posting
+                </a>
+              )}
             </div>
-          )}
-        </div>
+            {isOwn && (
+              <div className="flex gap-0.5">
+                <ApplicationForm
+                  mode="edit"
+                  initialValues={{ ...app, applied_date: app.applied_date ?? "", notes: app.notes ?? "", community_notes: app.community_notes ?? "", url: app.url ?? "", is_shared: app.is_shared }}
+                  trigger={
+                    <Button variant="ghost" size="icon" className="size-6">
+                      <Pencil className="size-3" />
+                    </Button>
+                  }
+                />
+                <Button variant="ghost" size="icon" className="size-6 text-muted-foreground hover:text-destructive" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? <Loader2 className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+                </Button>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
@@ -252,7 +277,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                     : a.status === col.value
                 );
                 return (
-                  <div key={col.value} className={cn("flex flex-col gap-2 w-52 shrink-0 rounded-xl p-3", col.columnBg)}>
+                  <div key={col.value} className={cn("flex flex-col gap-2 w-64 shrink-0 rounded-xl p-3", col.columnBg)}>
                     <div className="flex items-center justify-between gap-1">
                       <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
                       <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
@@ -294,7 +319,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                   );
                   if (colApps.length === 0) return null;
                   return (
-                    <div key={col.value} className={cn("flex flex-col gap-2 w-52 shrink-0 rounded-xl p-3", col.columnBg)}>
+                    <div key={col.value} className={cn("flex flex-col gap-2 w-64 shrink-0 rounded-xl p-3", col.columnBg)}>
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
                         <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
