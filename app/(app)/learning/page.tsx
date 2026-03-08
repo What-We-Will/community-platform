@@ -140,7 +140,6 @@ export default async function GroupLearningPage() {
       resources={normalizedResources}
       currentUserId={user.id}
       isPlatformAdmin={isPlatformAdmin}
-      trackerItems={trackerItems}
       trackerByResource={trackerByResource}
       studyGroupsByResource={studyGroupsByResource}
     />

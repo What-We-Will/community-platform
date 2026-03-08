@@ -18,6 +18,7 @@ import {
   ClipboardList,
   Link2,
   BookMarked,
+  ListTodo,
 } from "lucide-react";
 import { BugReportDialog } from "@/components/shared/BugReportDialog";
 import { createClient } from "@/lib/supabase/client";
@@ -39,7 +40,8 @@ const mainNavItems = [
 ];
 
 const myToolsNavItems = [
-  { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList },
+  { href: "/tracker",          label: "Job Application Tracker", icon: ClipboardList },
+  { href: "/learning/tracker", label: "Learning Tracker",        icon: ListTodo },
 ];
 
 const resourcesNavItems = [
