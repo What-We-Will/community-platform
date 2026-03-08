@@ -97,7 +97,7 @@ export default function AppShell({ children, user }: AppShellProps) {
               onClick={() => setSidebarOpen(false)}
             >
               <Image
-                src="/images/logo-mark.webp"
+                src="/images/logo-mark.svg"
                 alt="What We Will logo"
                 width={28}
                 height={28}
@@ -198,7 +198,7 @@ export default function AppShell({ children, user }: AppShellProps) {
             className="flex items-center gap-2 font-bold uppercase tracking-tight text-primary-orange"
           >
             <Image
-              src="/images/logo-mark.webp"
+              src="/images/logo-mark.svg"
               alt="What We Will logo"
               width={28}
               height={28}

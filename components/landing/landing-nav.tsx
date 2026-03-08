@@ -23,7 +23,7 @@ export function LandingNav({ user }: { user?: User | null }) {
             height={40}
             priority
           />
-          <span className="font-bebas text-2xl md:text-3xl">
+          <span className="font-bebas text-2xl md:text-3xl uppercase tracking-tight">
             What We Will
           </span>
         </Link>
