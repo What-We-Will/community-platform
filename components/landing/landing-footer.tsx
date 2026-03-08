@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BugReportDialog } from "@/components/shared/BugReportDialog";
 
 export function LandingFooter() {
   const year = new Date().getFullYear();
@@ -10,6 +11,7 @@ export function LandingFooter() {
           © {year} What We Will
         </span>
         <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+          <BugReportDialog />
           <Link
             href="/login"
             className="hover:text-foreground transition-colors"

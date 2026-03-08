@@ -14,6 +14,7 @@ import {
   Menu,
   LogOut,
 } from "lucide-react";
+import { BugReportDialog } from "@/components/shared/BugReportDialog";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -150,6 +151,9 @@ export default function AppShell({ children, user }: AppShellProps) {
               </div>
             </div>
             <Separator className="my-3" />
+            <div className="px-3 pb-1">
+              <BugReportDialog reporterEmail={user.email} />
+            </div>
             <Button
               variant="ghost"
               size="sm"
