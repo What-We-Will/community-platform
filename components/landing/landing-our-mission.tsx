@@ -6,7 +6,7 @@ export function OurMission() {
     >
       <div className="mx-auto max-w-5xl">
         <h2 className="text-center text-3xl font-sans font-semibold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-          Our mission is to <span className="text-primary-orange">center humans</span> 
+          Our mission is to <span className="text-primary-orange">center humans</span>
           <br />
           in the future of work
         </h2>
@@ -16,18 +16,18 @@ export function OurMission() {
               Advocacy &amp; Policy
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">
-              We work to advance &quot;Human-First&quot; AI practices in
-              government and workplaces to empower workers' voices in decision-making, and fight for bold policies that ensure
+              We organize to advance &quot;Human-First&quot; AI practices
+              to empower workers' voices in decision-making, strengthen our social safety net, and fight for bold policies that ensure equitable access to quality jobs for a dignified future of
               shared prosperity.
             </p>
           </div>
           <div className="flex-1 md:pl-8">
             <h3 className="border-l-4 border-accent-green pl-4 text-lg font-semibold text-accent-green">
-              Worker Support
+              Community Support
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">
-              We provide resources to help workers navigate a changing job
-              landscape including layoff support, job search tools, skill sharing, project-based learning, and mutual aid.
+              As a tech cooperative, we provide resources to help entry-level and laid-off workers navigate a changing job
+              landscape including layoff crisis support, shared job search tools, upskilling and skill sharing, project-based learning in civic tech, and mutual aid.
             </p>
           </div>
         </div>
