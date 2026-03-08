@@ -52,7 +52,7 @@ export async function JobTrackerCard({ userId }: Props) {
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
           <Briefcase className="size-4" />
-          Job Tracker
+          My Job Tracker
           {total > 0 && (
             <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
               {total}

@@ -16,6 +16,7 @@ import { Repeat2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createEventAction } from "@/app/(app)/events/actions";
 import { eventTypeOptions } from "@/lib/utils/events";
+import { formatTimeLabel, countWeekdays } from "@/lib/utils/format";
 import type { Group } from "@/lib/types";
 
 type RecurrenceRule = "none" | "daily" | "weekly";
@@ -346,23 +347,3 @@ export function CreateEventForm({
   );
 }
 
-function formatTimeLabel(t: string): string {
-  const [h, m] = t.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 || 12;
-  return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
-}
-
-/** Count weekday (Mon–Fri) days strictly between startDate and endDate (inclusive of end). */
-function countWeekdays(startDate: string, endDate: string): number {
-  let count = 0;
-  const cursor = new Date(startDate);
-  cursor.setDate(cursor.getDate() + 1); // first occurrence is the day after the parent
-  const end = new Date(endDate);
-  while (cursor <= end) {
-    const d = cursor.getDay();
-    if (d !== 0 && d !== 6) count++;
-    cursor.setDate(cursor.getDate() + 1);
-  }
-  return count;
-}

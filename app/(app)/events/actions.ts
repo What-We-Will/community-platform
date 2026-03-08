@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createEvent } from "@/lib/events";
 import { getVideoRoomName } from "@/lib/utils/video";
+import { buildRecurrenceDates } from "@/lib/utils/recurrence";
 
 export async function updateRsvp(
   eventId: string,
@@ -90,47 +91,31 @@ export async function createEventAction(formData: {
 
   // Generate recurring instances if requested
   if (recurrence_rule && recurrence_end_date) {
-    const maxInstances = recurrence_rule === "daily" ? 1500 : 260;
-    const durationMs =
-      new Date(formData.ends_at).getTime() - new Date(formData.starts_at).getTime();
-    const endDate = new Date(recurrence_end_date + "T23:59:59Z");
+    const datePairs = buildRecurrenceDates(
+      formData.starts_at,
+      formData.ends_at,
+      recurrence_rule,
+      recurrence_end_date,
+    );
 
-    // Advance from the parent's date to generate subsequent occurrences
-    const cursor = new Date(formData.starts_at);
-    cursor.setUTCDate(cursor.getUTCDate() + 1);
-
-    const instances: object[] = [];
-
-    while (cursor <= endDate && instances.length < maxInstances) {
-      const day = cursor.getUTCDay(); // 0 = Sun, 6 = Sat
-      const isWeekend = day === 0 || day === 6;
-
-      // For weekly: only the same weekday as the original. For daily: skip weekends.
-      const skip =
-        recurrence_rule === "weekly"
-          ? day !== new Date(formData.starts_at).getUTCDay()
-          : isWeekend;
-
-      if (!skip) {
-        const id = crypto.randomUUID();
-        instances.push({
-          id,
-          title: formData.title,
-          description: formData.description || null,
-          event_type: formData.event_type,
-          host_id: user.id,
-          group_id: formData.group_id,
-          location: formData.location || "Online",
-          max_attendees: formData.max_attendees,
-          starts_at: new Date(cursor).toISOString(),
-          ends_at: new Date(cursor.getTime() + durationMs).toISOString(),
-          video_room_name: getVideoRoomName({ type: "event", id }),
-          recurrence_rule,
-          parent_event_id: event.id,
-        });
-      }
-      cursor.setUTCDate(cursor.getUTCDate() + 1);
-    }
+    const instances = datePairs.map(({ starts_at, ends_at }) => {
+      const id = crypto.randomUUID();
+      return {
+        id,
+        title: formData.title,
+        description: formData.description || null,
+        event_type: formData.event_type,
+        host_id: user.id,
+        group_id: formData.group_id,
+        location: formData.location || "Online",
+        max_attendees: formData.max_attendees,
+        starts_at,
+        ends_at,
+        video_room_name: getVideoRoomName({ type: "event", id }),
+        recurrence_rule,
+        parent_event_id: event.id,
+      };
+    });
 
     if (instances.length > 0) {
       const { data: inserted, error } = await supabase
