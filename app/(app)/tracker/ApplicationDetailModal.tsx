@@ -435,7 +435,7 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                             return (
                               <div key={iv.id} className="space-y-1.5">
                                 <div
-                                  className={`flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 ${
+                                  className={`flex items-start justify-between gap-3 rounded-lg px-3 py-2.5 ${
                                     isToday ? "bg-emerald-50 border border-emerald-200" : "bg-muted/40"
                                   }`}
                                 >
@@ -452,41 +452,41 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                                       {iv.interview_time && <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>}
                                     </p>
                                     {iv.notes && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>}
-                                    {/* Ask for Help */}
-                                    <div className="mt-1.5">
-                                      {existingHelp ? (
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
-                                            <HeartHandshake className="size-3" /> Help Requested
-                                          </span>
-                                          <button
-                                            type="button"
-                                            className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
-                                            onClick={() => handleCancelHelp(existingHelp.id)}
-                                            disabled={cancelingHelpId === existingHelp.id}
-                                          >
-                                            {cancelingHelpId === existingHelp.id ? "Canceling…" : "Cancel request"}
-                                          </button>
-                                        </div>
-                                      ) : isAskingThis ? null : (
+                                  </div>
+                                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                    {existingHelp ? (
+                                      <div className="flex flex-col items-end gap-1">
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                          <HeartHandshake className="size-3" /> Help Requested
+                                        </span>
                                         <button
                                           type="button"
-                                          onClick={() => { setAskingHelpFor(iv.id); setHelpMessage(""); }}
-                                          className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-700 hover:text-violet-900 transition-colors"
+                                          className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
+                                          onClick={() => handleCancelHelp(existingHelp.id)}
+                                          disabled={cancelingHelpId === existingHelp.id}
                                         >
-                                          <HeartHandshake className="size-3" /> Ask for Help
+                                          {cancelingHelpId === existingHelp.id ? "Canceling…" : "Cancel"}
                                         </button>
-                                      )}
-                                    </div>
+                                      </div>
+                                    ) : !isAskingThis && (
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                                        onClick={() => { setAskingHelpFor(iv.id); setHelpMessage(""); }}
+                                      >
+                                        <HeartHandshake className="size-3.5" /> Ask for Help
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="ghost" size="icon"
+                                      className="size-7 text-muted-foreground hover:text-destructive"
+                                      onClick={() => handleDeleteInterview(iv.id)}
+                                      disabled={deletingInterviewId === iv.id}
+                                    >
+                                      {deletingInterviewId === iv.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                                    </Button>
                                   </div>
-                                  <Button
-                                    variant="ghost" size="icon"
-                                    className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
-                                    onClick={() => handleDeleteInterview(iv.id)}
-                                    disabled={deletingInterviewId === iv.id}
-                                  >
-                                    {deletingInterviewId === iv.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-                                  </Button>
                                 </div>
                                 {/* Inline help request form */}
                                 {isAskingThis && (
@@ -529,7 +529,7 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                           return (
                             <div key={`stage-${item.statusKey}`} className="space-y-1.5">
                               <div
-                                className={`flex items-start gap-2 rounded-lg px-3 py-2.5 border border-dashed ${
+                                className={`flex items-start justify-between gap-3 rounded-lg px-3 py-2.5 border border-dashed ${
                                   isToday ? "bg-emerald-50 border-emerald-200" : "bg-muted/20"
                                 }`}
                               >
@@ -547,32 +547,32 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                                     <CalendarDays className="size-3 shrink-0" />
                                     {formatDate(item.date)}
                                   </p>
-                                  {/* Ask for Help */}
-                                  <div className="mt-1.5">
-                                    {existingHelp ? (
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
-                                          <HeartHandshake className="size-3" /> Help Requested
-                                        </span>
-                                        <button
-                                          type="button"
-                                          className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
-                                          onClick={() => handleCancelHelp(existingHelp.id)}
-                                          disabled={cancelingHelpId === existingHelp.id}
-                                        >
-                                          {cancelingHelpId === existingHelp.id ? "Canceling…" : "Cancel request"}
-                                        </button>
-                                      </div>
-                                    ) : isAskingThis ? null : (
+                                </div>
+                                <div className="shrink-0">
+                                  {existingHelp ? (
+                                    <div className="flex flex-col items-end gap-1">
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                                        <HeartHandshake className="size-3" /> Help Requested
+                                      </span>
                                       <button
                                         type="button"
-                                        onClick={() => { setAskingHelpFor(`stage-${item.statusKey}`); setHelpMessage(""); }}
-                                        className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-700 hover:text-violet-900 transition-colors"
+                                        className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
+                                        onClick={() => handleCancelHelp(existingHelp.id)}
+                                        disabled={cancelingHelpId === existingHelp.id}
                                       >
-                                        <HeartHandshake className="size-3" /> Ask for Help
+                                        {cancelingHelpId === existingHelp.id ? "Canceling…" : "Cancel"}
                                       </button>
-                                    )}
-                                  </div>
+                                    </div>
+                                  ) : !isAskingThis && (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                                      onClick={() => { setAskingHelpFor(`stage-${item.statusKey}`); setHelpMessage(""); }}
+                                    >
+                                      <HeartHandshake className="size-3.5" /> Ask for Help
+                                    </Button>
+                                  )}
                                 </div>
                               </div>
                               {/* Inline help request form */}

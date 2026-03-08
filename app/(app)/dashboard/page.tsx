@@ -10,7 +10,6 @@ import { JobTrackerCard } from "@/components/dashboard/JobTrackerCard";
 import { MyGroupsCard } from "@/components/dashboard/MyGroupsCard";
 import { LearningCard } from "@/components/dashboard/LearningCard";
 import { LeetcodeCard } from "@/components/dashboard/LeetcodeCard";
-import { RecordingsCard } from "@/components/dashboard/RecordingsCard";
 import { WeeklyScheduleCard } from "@/components/dashboard/WeeklyScheduleCard";
 import { AnnouncementsCard } from "@/components/dashboard/AnnouncementsCard";
 import { CardSkeleton } from "@/components/dashboard/CardSkeleton";
@@ -36,13 +35,13 @@ export default async function DashboardPage() {
       <AnnouncementsCard />
       <WeeklyScheduleCard rows={scheduleRows ?? []} isPlatformAdmin={isPlatformAdmin} />
 
-      {/* First row: My Groups, Upcoming Events, Community Polls */}
+      {/* First row: My Groups, Upcoming Events, Help Requests */}
       <Suspense fallback={<CardSkeleton />}>
         <MyGroupsCard userId={user.id} />
       </Suspense>
       <UpcomingEventsCard />
       <Suspense fallback={<CardSkeleton />}>
-        <PollsCardWrapper userId={user.id} />
+        <InterviewHelpCard currentUserId={user.id} />
       </Suspense>
 
       {/* Second row: Job Tracker, LeetCode, Learning */}
@@ -53,13 +52,12 @@ export default async function DashboardPage() {
         <ActiveChatsCard userId={user.id} />
       </Suspense>
 
-      {/* Help Requests */}
+      {/* Community Polls */}
       <Suspense fallback={<CardSkeleton />}>
-        <InterviewHelpCard currentUserId={user.id} />
+        <PollsCardWrapper userId={user.id} />
       </Suspense>
 
-      {/* Bottom row: Recordings, New Members */}
-      <RecordingsCard />
+      {/* New Members */}
       <Suspense fallback={<CardSkeleton />}>
         <NewMembersCard />
       </Suspense>
