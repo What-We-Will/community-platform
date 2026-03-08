@@ -25,7 +25,7 @@ export default async function GroupsPage() {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Groups</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Find your community within the community
+              Find your community.
             </p>
           </div>
           <CreateGroupDialog />
@@ -104,9 +104,6 @@ export default async function GroupsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Groups</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Find your community within the community
-          </p>
         </div>
         <CreateGroupDialog />
       </div>
@@ -115,11 +112,8 @@ export default async function GroupsPage() {
       {workingGroups.length > 0 && (
         <section>
           <h2 className="text-base font-semibold mb-4">
-            Community Working Groups
+            What We Will - Working Groups
           </h2>
-          <p className="text-sm text-muted-foreground mb-4">
-            Official working groups driving community initiatives.
-          </p>
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 md:grid md:grid-cols-2 lg:grid-cols-3 md:overflow-visible">
             {workingGroups.map((group) => (
               <div key={group.id} className="w-72 shrink-0 md:w-auto">

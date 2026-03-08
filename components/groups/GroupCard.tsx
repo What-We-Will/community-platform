@@ -14,18 +14,18 @@ interface GroupCardProps {
 export function GroupCard({ group, compact = false }: GroupCardProps) {
   if (compact) {
     return (
-      <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+      <div className="flex items-center gap-3 rounded-lg border bg-card p-4">
         <div
           className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-full text-white font-semibold text-sm",
+            "flex size-11 shrink-0 items-center justify-center rounded-full text-white font-semibold text-sm",
             getAvatarColor(group.name)
           )}
         >
           {getInitials(group.name)}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-medium truncate">{group.name}</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="text-sm font-medium leading-snug">{group.name}</p>
             {group.is_working_group && <Star className="size-3 text-amber-500 shrink-0 fill-amber-500" aria-label="Working Group" />}
             {group.is_private && <Lock className="size-3 text-muted-foreground shrink-0" />}
             {group.archived && <Archive className="size-3 text-muted-foreground shrink-0" aria-label="Archived" />}

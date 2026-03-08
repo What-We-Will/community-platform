@@ -25,7 +25,7 @@ export function LandingHero() {
     <section className="relative overflow-hidden bg-white">
       <div className="relative z-10 mx-auto flex max-w-6xl items-center px-4 pt-12 md:min-h-[520px] md:py-16 md:pr-[50%] lg:min-h-[620px] lg:px-8">
         <div className="max-w-xl">
-          <h1 className="text-4xl text-dark-blue font-bold uppercase tracking-tight text-center md:text-left sm:text-4xl md:text-5xl lg:text-6xl">
+          <h1 className="font-bebas text-4xl text-dark-blue font-bold uppercase tracking-tight text-center md:text-left sm:text-4xl md:text-5xl lg:text-6xl">
             <span
               className="font-bold text-white px-2 tracking-normal"
               style={{ backgroundColor: ROTATING_WORDS[index].bg }}

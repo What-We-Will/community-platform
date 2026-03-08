@@ -143,7 +143,4 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
-  h1 {
-    font-family: var(--font-bebas-neue), var(--font-montserrat), sans-serif;
-  }
 }
