@@ -97,12 +97,7 @@ export default async function ApprovalsPage() {
                   <span className="text-xs text-muted-foreground">
                     Applied {new Date(profile.created_at).toLocaleDateString()}
                   </span>
-                  <form
-                    action={async () => {
-                      "use server";
-                      await approveUser(profile.id);
-                    }}
-                  >
+                  <form action={approveUser.bind(null, profile.id)}>
                     <Button type="submit" size="sm">
                       Approve
                     </Button>

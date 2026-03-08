@@ -7,7 +7,7 @@ import nodemailer from "nodemailer";
 
 export type ApprovalResult = { error?: string };
 
-export async function approveUser(userId: string): Promise<ApprovalResult> {
+export async function approveUser(userId: string, _formData?: FormData): Promise<ApprovalResult> {
   const supabase = await createClient();
 
   // Verify the caller is an admin
