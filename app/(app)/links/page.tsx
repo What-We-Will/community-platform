@@ -91,7 +91,8 @@ export default async function CommunityLinksPage() {
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {items.map((link) => {
-                const poster = link.poster as Pick<Profile, "id" | "display_name"> | null;
+                const posterRaw = Array.isArray(link.poster) ? (link.poster[0] ?? null) : link.poster;
+                const poster = posterRaw as Pick<Profile, "id" | "display_name"> | null;
                 const canDelete = isPlatformAdmin || link.posted_by === user.id;
 
                 return (
