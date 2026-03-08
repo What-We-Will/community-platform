@@ -109,6 +109,7 @@ export interface Group {
   is_private: boolean;
   is_discoverable: boolean;
   archived?: boolean;
+  is_working_group?: boolean;
   max_members: number | null;
   created_by: string | null;
   conversation_id: string | null;

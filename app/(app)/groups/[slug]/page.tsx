@@ -100,10 +100,10 @@ export default async function GroupHubPage({ params }: Props) {
     }
   }
 
-  // Current user's profile
+  // Current user's profile (include role for platform admin features)
   const { data: currentUserProfile } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_url")
+    .select("id, display_name, avatar_url, role")
     .eq("id", user.id)
     .single();
 
@@ -169,12 +169,15 @@ export default async function GroupHubPage({ params }: Props) {
     // leave upcomingEvents empty
   }
 
+  const isPlatformAdmin = currentUserProfile?.role === "admin";
+
   return (
     <GroupHubClient
       group={group}
       currentUser={currentUser}
       currentUserRole={currentUserRole}
       isMember={isMember}
+      isPlatformAdmin={isPlatformAdmin}
       members={membersWithRole}
       initialMessages={messages}
       pendingRequests={pendingRequests}

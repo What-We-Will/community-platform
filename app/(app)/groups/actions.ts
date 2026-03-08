@@ -309,6 +309,7 @@ export async function updateGroupSettingsAction(
     name?: string;
     description?: string | null;
     archived?: boolean;
+    is_working_group?: boolean;
     slug?: string;
   }
 ): Promise<{ error?: string; newSlug?: string }> {
@@ -324,6 +325,18 @@ export async function updateGroupSettingsAction(
   if (settings.is_private !== undefined) payload.is_private = settings.is_private;
   if (settings.is_discoverable !== undefined) payload.is_discoverable = settings.is_discoverable;
   if (settings.archived !== undefined) payload.archived = settings.archived;
+
+  // Only platform admins can set is_working_group
+  if (settings.is_working_group !== undefined) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (profile?.role === "admin") {
+      payload.is_working_group = settings.is_working_group;
+    }
+  }
 
   let newSlug: string | undefined;
 

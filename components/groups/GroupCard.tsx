@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, Lock, Archive } from "lucide-react";
+import { Users, Lock, Archive, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ export function GroupCard({ group, compact = false }: GroupCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <p className="text-sm font-medium truncate">{group.name}</p>
+            {group.is_working_group && <Star className="size-3 text-amber-500 shrink-0 fill-amber-500" aria-label="Working Group" />}
             {group.is_private && <Lock className="size-3 text-muted-foreground shrink-0" />}
             {group.archived && <Archive className="size-3 text-muted-foreground shrink-0" aria-label="Archived" />}
           </div>
@@ -55,6 +56,12 @@ export function GroupCard({ group, compact = false }: GroupCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="font-semibold text-sm leading-tight">{group.name}</h3>
+            {group.is_working_group && (
+              <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0 h-4">
+                <Star className="size-2.5 fill-current" />
+                Working Group
+              </Badge>
+            )}
             {group.is_private && (
               <Badge variant="secondary" className="gap-1 text-[10px] px-1.5 py-0 h-4">
                 <Lock className="size-2.5" />

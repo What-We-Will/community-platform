@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { NotebookPen, Video, Loader2, LogOut, Settings, Archive, Calendar, Plus } from "lucide-react";
+import { NotebookPen, Video, Loader2, LogOut, Settings, Archive, Calendar, Plus, Star } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,7 @@ interface GroupHubClientProps {
   currentUser: { id: string; display_name: string; avatar_url: string | null };
   currentUserRole: GroupMember["role"] | null;
   isMember: boolean;
+  isPlatformAdmin?: boolean;
   members: Array<Profile & { role: GroupMember["role"] }>;
   initialMessages: MessageWithSender[];
   pendingRequests: GroupJoinRequestWithProfile[];
@@ -53,6 +54,7 @@ export function GroupHubClient({
   currentUser,
   currentUserRole,
   isMember,
+  isPlatformAdmin = false,
   members,
   initialMessages,
   pendingRequests,
@@ -74,6 +76,7 @@ export function GroupHubClient({
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [isWorkingGroup, setIsWorkingGroup] = useState(group.is_working_group ?? false);
 
   async function handleJoin() {
     setJoining(true);
@@ -182,6 +185,18 @@ export function GroupHubClient({
     setSavingSettings(false);
     if (result.error) setSettingsError(result.error);
     else router.refresh();
+  }
+
+  async function handleToggleWorkingGroup(value: boolean) {
+    setSavingSettings(true);
+    setSettingsError(null);
+    const result = await updateGroupSettingsAction(group.id, { is_working_group: value });
+    setSavingSettings(false);
+    if (result.error) setSettingsError(result.error);
+    else {
+      setIsWorkingGroup(value);
+      router.refresh();
+    }
   }
 
   return (
@@ -502,6 +517,28 @@ export function GroupHubClient({
                       id="discoverable-toggle"
                       checked={isDiscoverable}
                       onCheckedChange={handleToggleDiscoverable}
+                      disabled={savingSettings}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {isPlatformAdmin && (
+                <div className="rounded-lg border p-4 space-y-1">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="working-group-toggle" className="text-sm font-medium flex items-center gap-1.5">
+                        <Star className="size-4" />
+                        Official Working Group
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Star this group to show it in the &quot;What We Will Working Groups&quot; section at the top of the groups page.
+                      </p>
+                    </div>
+                    <Switch
+                      id="working-group-toggle"
+                      checked={isWorkingGroup}
+                      onCheckedChange={handleToggleWorkingGroup}
                       disabled={savingSettings}
                     />
                   </div>
