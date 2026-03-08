@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { Check, HelpCircle, X, Users, Video } from "lucide-react";
+import { Check, HelpCircle, X, Users, Video, Repeat2 } from "lucide-react";
 import { eventTypeConfig } from "@/lib/utils/events";
 import { updateRsvp } from "@/app/(app)/events/actions";
 import type { EventRsvp } from "@/lib/types";
@@ -27,6 +27,8 @@ interface EventCardProps {
     max_attendees: number | null;
     created_at: string;
     updated_at: string;
+    recurrence_rule?: string | null;
+    parent_event_id?: string | null;
     host: { id: string; display_name: string; avatar_url: string | null } | null;
   };
   rsvpCounts: { going: number; maybe: number; declined: number };
@@ -107,12 +109,20 @@ export function EventCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <Badge
-              variant="secondary"
-              className={`text-[10px] border ${typeConfig.color} mb-1.5`}
-            >
-              {typeConfig.label}
-            </Badge>
+            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+              <Badge
+                variant="secondary"
+                className={`text-[10px] border ${typeConfig.color}`}
+              >
+                {typeConfig.label}
+              </Badge>
+              {(event.recurrence_rule || event.parent_event_id) && (
+                <Badge variant="secondary" className="text-[10px] border gap-0.5 text-muted-foreground">
+                  <Repeat2 className="size-2.5" />
+                  {event.recurrence_rule === "daily" ? "Daily" : "Weekly"}
+                </Badge>
+              )}
+            </div>
             <Link
               href={`/events/${event.id}`}
               className="font-semibold text-foreground hover:underline line-clamp-1"

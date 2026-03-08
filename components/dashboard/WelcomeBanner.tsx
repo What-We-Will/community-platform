@@ -3,12 +3,6 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { Briefcase, Users, UsersRound, MessageSquare } from "lucide-react";
 import type { Profile } from "@/lib/types";
 
@@ -51,20 +45,12 @@ export function WelcomeBanner({ profile }: WelcomeBannerProps) {
             <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button variant="secondary" size="sm" asChild disabled>
-                      <Link href="/jobs" className="pointer-events-none">
-                        <Briefcase className="size-4" />
-                        Browse Jobs
-                      </Link>
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>Coming soon</TooltipContent>
-              </Tooltip>
+              <Button variant="secondary" size="sm" asChild>
+                <Link href="/jobs">
+                  <Briefcase className="size-4" />
+                  Browse Jobs
+                </Link>
+              </Button>
               <Button variant="secondary" size="sm" asChild>
                 <Link href="/members">
                   <Users className="size-4" />
@@ -83,7 +69,6 @@ export function WelcomeBanner({ profile }: WelcomeBannerProps) {
                   New Message
                 </Link>
               </Button>
-            </TooltipProvider>
           </div>
         </div>
       </CardContent>

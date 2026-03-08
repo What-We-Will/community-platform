@@ -12,9 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Repeat2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { createEventAction } from "@/app/(app)/events/actions";
 import { eventTypeOptions } from "@/lib/utils/events";
 import type { Group } from "@/lib/types";
+
+type RecurrenceRule = "none" | "daily" | "weekly";
 
 const TIME_OPTIONS: string[] = [];
 for (let h = 6; h <= 23; h++) {
@@ -47,6 +51,8 @@ export function CreateEventForm({
   const [location, setLocation] = useState("Online");
   const [maxAttendees, setMaxAttendees] = useState<string>("");
   const [groupId, setGroupId] = useState<string>(preselectedGroupId ?? "none");
+  const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule>("none");
+  const [recurrenceEndDate, setRecurrenceEndDate] = useState<string>("");
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -87,6 +93,13 @@ export function CreateEventForm({
       if (isNaN(max) || max < 1)
         next.max_attendees = "Max attendees must be a positive number";
     }
+    if (recurrenceRule !== "none") {
+      if (!recurrenceEndDate) {
+        next.recurrenceEndDate = "Repeat until date is required";
+      } else if (date && recurrenceEndDate <= date) {
+        next.recurrenceEndDate = "Repeat until must be after the event date";
+      }
+    }
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -111,6 +124,8 @@ export function CreateEventForm({
           location: location.trim() || "Online",
           max_attendees: maxAttendees ? parseInt(maxAttendees, 10) : null,
           group_id: groupId === "none" ? null : groupId,
+          recurrence_rule: recurrenceRule === "none" ? null : recurrenceRule,
+          recurrence_end_date: recurrenceRule !== "none" ? recurrenceEndDate : null,
         });
       } catch (err) {
         setErrors({
@@ -238,6 +253,55 @@ export function CreateEventForm({
           onChange={(e) => setLocation(e.target.value)}
           placeholder="Online"
         />
+      </div>
+
+      {/* Recurrence */}
+      <div className="space-y-3">
+        <Label className="flex items-center gap-1.5">
+          <Repeat2 className="size-3.5" />
+          Repeat
+        </Label>
+        <div className="flex gap-2">
+          {(["none", "daily", "weekly"] as RecurrenceRule[]).map((rule) => (
+            <button
+              key={rule}
+              type="button"
+              onClick={() => setRecurrenceRule(rule)}
+              className={cn(
+                "rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors capitalize",
+                recurrenceRule === rule
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border bg-background hover:bg-accent"
+              )}
+            >
+              {rule === "none" ? "No repeat" : rule === "daily" ? "Every day" : "Every week"}
+            </button>
+          ))}
+        </div>
+
+        {recurrenceRule !== "none" && (
+          <div className="space-y-1.5">
+            <Label htmlFor="recurrenceEndDate">Repeat until *</Label>
+            <Input
+              id="recurrenceEndDate"
+              type="date"
+              value={recurrenceEndDate}
+              onChange={(e) => setRecurrenceEndDate(e.target.value)}
+              min={date ? (() => { const d = new Date(date); d.setDate(d.getDate() + (recurrenceRule === "daily" ? 1 : 7)); return d.toISOString().slice(0, 10); })() : undefined}
+              max={date ? (() => { const d = new Date(date); d.setMonth(d.getMonth() + (recurrenceRule === "daily" ? 3 : 12)); return d.toISOString().slice(0, 10); })() : undefined}
+            />
+            {recurrenceEndDate && date && (
+              <p className="text-xs text-muted-foreground">
+                {recurrenceRule === "daily"
+                  ? `Creates ~${Math.min(90, Math.floor((new Date(recurrenceEndDate).getTime() - new Date(date).getTime()) / 86400000))} daily occurrences`
+                  : `Creates ~${Math.min(52, Math.floor((new Date(recurrenceEndDate).getTime() - new Date(date).getTime()) / (7 * 86400000)))} weekly occurrences`}
+              </p>
+            )}
+            {errors.recurrenceEndDate && (
+              <p className="text-sm text-destructive">{errors.recurrenceEndDate}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createEvent } from "@/lib/events";
+import { getVideoRoomName } from "@/lib/utils/video";
 
 export async function updateRsvp(
   eventId: string,
@@ -68,6 +69,8 @@ export async function createEventAction(formData: {
   location: string;
   max_attendees: number | null;
   group_id: string | null;
+  recurrence_rule?: "daily" | "weekly" | null;
+  recurrence_end_date?: string | null;
 }) {
   const supabase = await createClient();
   const {
@@ -75,10 +78,65 @@ export async function createEventAction(formData: {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  const { recurrence_rule, recurrence_end_date, ...baseData } = formData;
+
+  // Create the parent (first) event
   const event = await createEvent({
-    ...formData,
+    ...baseData,
     host_id: user.id,
+    recurrence_rule: recurrence_rule ?? null,
+    recurrence_end_date: recurrence_end_date ?? null,
   });
+
+  // Generate recurring instances if requested
+  if (recurrence_rule && recurrence_end_date) {
+    const stepDays = recurrence_rule === "daily" ? 1 : 7;
+    const maxInstances = recurrence_rule === "daily" ? 90 : 52;
+    const durationMs =
+      new Date(formData.ends_at).getTime() - new Date(formData.starts_at).getTime();
+    const endDate = new Date(recurrence_end_date + "T23:59:59Z");
+
+    // Advance from the parent's date to generate subsequent occurrences
+    const cursor = new Date(formData.starts_at);
+    cursor.setUTCDate(cursor.getUTCDate() + stepDays);
+
+    const instances: object[] = [];
+
+    while (cursor <= endDate && instances.length < maxInstances) {
+      const id = crypto.randomUUID();
+      instances.push({
+        id,
+        title: formData.title,
+        description: formData.description || null,
+        event_type: formData.event_type,
+        host_id: user.id,
+        group_id: formData.group_id,
+        location: formData.location || "Online",
+        max_attendees: formData.max_attendees,
+        starts_at: new Date(cursor).toISOString(),
+        ends_at: new Date(cursor.getTime() + durationMs).toISOString(),
+        video_room_name: getVideoRoomName({ type: "event", id }),
+        recurrence_rule,
+        parent_event_id: event.id,
+      });
+      cursor.setUTCDate(cursor.getUTCDate() + stepDays);
+    }
+
+    if (instances.length > 0) {
+      const { data: inserted, error } = await supabase
+        .from("events")
+        .insert(instances)
+        .select("id");
+      if (error) throw new Error(error.message);
+
+      // Auto-RSVP the host to every instance
+      if (inserted && inserted.length > 0) {
+        await supabase.from("event_rsvps").insert(
+          inserted.map((e) => ({ event_id: e.id, user_id: user.id, status: "going" }))
+        );
+      }
+    }
+  }
 
   redirect(`/events/${event.id}`);
 }
