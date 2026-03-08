@@ -7,8 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
+  --font-bebas: var(--font-bebas-neue);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -42,10 +43,10 @@
   --color-primary-orange: var(--primary-orange);
   --color-primary-orange-hover: var(--primary-orange-hover);
   --color-dark-blue: var(--dark-blue);
-  --color-hero-dark-green: var(--hero-dark-green);
   --color-accent-gold: var(--accent-gold);
   --color-warm-beige: var(--warm-beige);
-  --color-light-green: var(--accent-green);
+  --color-accent-green: var(--accent-green);
+  --color-accent-blue: var(--accent-blue);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -64,11 +65,10 @@
   --primary-orange: #b85c3e;
   --primary-orange-hover: #9d4a2f;
   --dark-blue: #1e2433;
-  --hero-dark-green: #2d4a3e;
-  --accent-gold: #b8960c;
+  --accent-gold: #e8b260;
   --accent-green: #8B9B7E;
+  --accent-blue: #364958;
   --warm-beige: #ebe5dc;
-  --light-green: #8B9B7E;
   --background: oklch(1 0 0);
   --foreground: oklch(0.147 0.004 49.25);
   --card: oklch(1 0 0);
@@ -141,6 +141,9 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+  h1 {
+    font-family: var(--font-bebas-neue), var(--font-montserrat), sans-serif;
   }
 }

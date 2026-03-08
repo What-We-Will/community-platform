@@ -5,13 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 
 export function LandingFutureWeDemand() {
-  
 
   return (
-    <section id="our-future" className="scroll-mt-20 bg-[#f5f5f5] px-4 py-16 md:py-24">
+    <section id="our-future" className="scroll-mt-20 bg-white px-4 py-16 md:py-24">
       <div className="mx-auto flex max-w-6xl flex-col gap-12 md:flex-row md:items-center">
         <div className="md:w-1/2">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          <h2 className="text-5xl font-bebas text-dark-blue">
             Our Future
           </h2>
           <blockquote className="mt-4 border-l-4 border-primary-orange pl-4 italic text-muted-foreground">
@@ -28,19 +27,20 @@ export function LandingFutureWeDemand() {
             social security, abolition of child labor—these rights were not
             freely given. They were fought for and won by workers who organized,
             went on strike, marched, and refused to accept the way things were.
-            <br/><br/>The AI revolution is compressing a similar scale of economic
-            disruption into a fraction of time. With less time to adjust, the
-            human toll of dislocation without a safety net could be worse. We
-            can&apos;t afford to wait for disaster before we mobilize.
+            <br/><br/>The pace of AI development poses a similar scale of economic
+            change into a fraction of the time — change whose consequences are still contested
+            and unevenly distributed. Some workers face displacement; others face surveillance,
+            eroded autonomy, or layoffs driven more by investor pressure than productivity.
+            
           </p>
           <p className="mt-4 text-muted-foreground">
-            But every great disruption is also an opening for building better.
+            But every disruption is also an opening for building better.
             The workers in the New Deal era didn&apos;t just survive
             industrialization; they reimagined work itself. <br/><br/><strong>What can we
-            imagine<span className="text-primary-orange">—and build together—</span>for the future of work?</strong>
+            imagine<span className="text-primary-orange"> — and build together — </span>for the future of work?</strong>
           </p>
         </div>
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted md:w-1/2">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg  md:w-1/2">
             <Image
               src="/images/future-we-demand.webp"
               alt="Workers with signs in industrial revolution era illustration"

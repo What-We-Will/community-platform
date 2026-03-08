@@ -5,16 +5,15 @@ export function LandingMutualAid() {
   return (
     <section className="bg-primary-orange px-4 py-10 text-white md:py-12">
       <div className="mx-auto max-w-6xl">
-        <h2 className="text-xl font-bold tracking-tight md:text-2xl">
+        <h2 className="text-4xl font-bebas">
           Mutual Aid
         </h2>
         <p className="mt-4 text-sm leading-relaxed opacity-95 md:text-base">
           We are building a
           culture of sharing and reciprocity between members. The framework is
-          solidarity, not charity. In a moment of crisis, white collar workers
+          solidarity, not charity. In a moment of uncertainty, white collar workers
           historically excluded from traditional union representation are
-          recognizing our shared vulnerability as
-          workers.
+          recognizing our shared strength as workers.
         </p>
         <p className="mt-4 text-sm leading-relaxed opacity-95 md:text-base">
           The charity-based model assumes a one-directional flow of resources, but we are also powerful resources for one another. Mutual aid is a system of giving and receiving that builds meaningful
