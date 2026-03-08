@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { approveUser, rejectUser } from "./actions";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -51,11 +52,19 @@ export default async function ApprovalsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-10">
-      <div>
-        <h1 className="text-2xl font-semibold">Pending Approvals</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Review LinkedIn profiles and approve tech workers to join the platform.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Pending Approvals</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Review LinkedIn profiles and approve tech workers to join the platform.
+          </p>
+        </div>
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+            <ArrowLeft className="size-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
       </div>
 
       {profiles.length === 0 ? (
@@ -98,7 +107,12 @@ export default async function ApprovalsPage() {
                     Applied {new Date(profile.created_at).toLocaleDateString()}
                   </span>
                   <form action={rejectUser.bind(null, profile.id)}>
-                    <Button type="submit" size="sm" variant="destructive">
+                    <Button
+                      type="submit"
+                      size="sm"
+                      style={{ backgroundColor: "#690212" }}
+                      className="text-white hover:opacity-90"
+                    >
                       Reject
                     </Button>
                   </form>
