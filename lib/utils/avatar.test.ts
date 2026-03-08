@@ -23,8 +23,16 @@ describe('getInitials', () => {
     expect(getInitials('Alice')).toBe('A');
   });
 
-  it('limits to two characters', () => {
-    expect(getInitials('Alice Bob Carol')).toBe('AB');
+  it('limits 3 part names to two characters with first and last', () => {
+    expect(getInitials('Alice Bob Carol')).toBe('AC');
+  });
+
+  it('Handles empty string ', () => {
+    expect(getInitials('   ')).toBe('');
+  });
+
+  it('Handles spaces characters', () => {
+    expect(getInitials(' A n o t h e r  test  ')).toBe('AT');
   });
 });
 
