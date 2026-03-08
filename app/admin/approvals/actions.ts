@@ -53,6 +53,54 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
   redirect("/admin/approvals");
 }
 
+export async function rejectUser(userId: string, _formData?: FormData): Promise<void> {
+  const supabase = await createClient();
+
+  // Verify the caller is an admin
+  const {
+    data: { user: callerUser },
+  } = await supabase.auth.getUser();
+
+  if (!callerUser) {
+    console.error("[approvals] Not authenticated.");
+    return;
+  }
+
+  const { data: callerProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", callerUser.id)
+    .single();
+
+  if (callerProfile?.role !== "admin") {
+    console.error("[approvals] Not authorized.");
+    return;
+  }
+
+  const serviceClient = createServiceClient();
+
+  // Delete the profile row
+  const { error: profileError } = await serviceClient
+    .from("profiles")
+    .delete()
+    .eq("id", userId);
+
+  if (profileError) {
+    console.error("[approvals] Failed to delete profile:", profileError.message);
+    return;
+  }
+
+  // Delete the auth user
+  const { error: authError } = await serviceClient.auth.admin.deleteUser(userId);
+
+  if (authError) {
+    console.error("[approvals] Failed to delete auth user:", authError.message);
+    return;
+  }
+
+  redirect("/admin/approvals");
+}
+
 async function sendApprovalEmail(toEmail: string) {
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;

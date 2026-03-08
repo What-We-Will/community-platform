@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { approveUser } from "./actions";
+import { approveUser, rejectUser } from "./actions";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -97,6 +97,11 @@ export default async function ApprovalsPage() {
                   <span className="text-xs text-muted-foreground">
                     Applied {new Date(profile.created_at).toLocaleDateString()}
                   </span>
+                  <form action={rejectUser.bind(null, profile.id)}>
+                    <Button type="submit" size="sm" variant="destructive">
+                      Reject
+                    </Button>
+                  </form>
                   <form action={approveUser.bind(null, profile.id)}>
                     <Button type="submit" size="sm">
                       Approve
