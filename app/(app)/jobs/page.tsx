@@ -56,7 +56,7 @@ export default async function JobBoardPage({
       content: c.content,
       created_at: c.created_at,
       user_id: c.user_id,
-      author: c.author as Comment["author"],
+      author: (Array.isArray(c.author) ? c.author[0] : c.author) as Comment["author"],
     });
   }
 
