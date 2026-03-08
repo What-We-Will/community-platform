@@ -45,12 +45,14 @@ function InlineEdit({
   placeholder?: string;
 }) {
   const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(value);
   const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
 
   async function save() {
     setSaving(true);
     await onSave(draft);
+    setSaved(draft);
     setSaving(false);
     setEditing(false);
   }
@@ -58,13 +60,13 @@ function InlineEdit({
   if (!editing) {
     return (
       <button
-        onClick={() => { setDraft(value); setEditing(true); }}
+        onClick={() => { setDraft(saved); setEditing(true); }}
         className={cn(
-          "w-full text-left text-sm rounded-lg px-3 py-2 border border-transparent hover:border-border hover:bg-muted/40 transition-colors group",
-          !value && "text-muted-foreground italic"
+          "w-full text-left text-sm rounded-lg px-3 py-2 border border-transparent hover:border-border hover:bg-muted/40 transition-colors group whitespace-pre-wrap",
+          !saved && "text-muted-foreground italic"
         )}
       >
-        {value || placeholder || "Click to add…"}
+        {saved || placeholder || "Click to add…"}
         <Pencil className="inline-block size-3 ml-1.5 opacity-0 group-hover:opacity-50 transition-opacity" />
       </button>
     );
