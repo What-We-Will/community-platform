@@ -1,17 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TrackerClient, type Application } from "./TrackerClient";
+import type { Interview } from "./actions";
 
 export default async function TrackerPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // Fetch own applications + shared applications from others
-  const { data: rawApplications } = await supabase
-    .from("job_applications")
-    .select("id, company, position, applied_date, status, notes, community_notes, status_dates, url, is_shared, job_posting_id, created_at, user_id, poster:user_id(id, display_name)")
-    .order("created_at", { ascending: false });
+  const [{ data: rawApplications }, { data: rawInterviews }] = await Promise.all([
+    supabase
+      .from("job_applications")
+      .select("id, company, position, applied_date, status, notes, community_notes, status_dates, url, is_shared, job_posting_id, created_at, user_id, poster:user_id(id, display_name)")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("job_application_interviews")
+      .select("id, application_id, user_id, title, interview_date, interview_time, notes, created_at")
+      .eq("user_id", user.id)
+      .order("interview_date", { ascending: true }),
+  ]);
 
   const applications: Application[] = (rawApplications ?? []).map((a) => ({
     ...a,
@@ -20,16 +27,23 @@ export default async function TrackerPage() {
     job_posting_id: a.job_posting_id ?? null,
   }));
 
+  const interviews: Interview[] = (rawInterviews ?? []).map((iv) => ({
+    ...iv,
+    interview_time: iv.interview_time ?? null,
+    notes: iv.notes ?? null,
+  }));
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Job Application Tracker</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track your applications and optionally share progress with the community.
+          Track your applications, schedule interviews, and stay organized.
         </p>
       </div>
       <TrackerClient
         applications={applications}
+        interviews={interviews}
         currentUserId={user.id}
       />
     </div>

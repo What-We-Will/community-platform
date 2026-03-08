@@ -4,11 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LayoutList, Kanban, ExternalLink, Trash2, Pencil, Loader2, Users } from "lucide-react";
+import { LayoutList, Kanban, CalendarDays, ExternalLink, Trash2, Pencil, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { deleteApplication, type ApplicationStatus } from "./actions";
+import { deleteApplication, type ApplicationStatus, type Interview } from "./actions";
 import { ApplicationForm } from "./ApplicationForm";
 import { ApplicationDetailModal } from "./ApplicationDetailModal";
+import { CalendarView } from "./CalendarView";
 import { STATUSES, STATUS_MAP } from "./constants";
 
 export interface Application {
@@ -30,6 +31,7 @@ export interface Application {
 
 interface Props {
   applications: Application[];
+  interviews: Interview[];
   currentUserId: string;
 }
 
@@ -181,10 +183,11 @@ function ApplicationCard({
   );
 }
 
-export function TrackerClient({ applications, currentUserId }: Props) {
-  const [view, setView] = useState<"list" | "kanban">("kanban");
+export function TrackerClient({ applications, interviews, currentUserId }: Props) {
+  const [view, setView] = useState<"list" | "kanban" | "calendar">("kanban");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const myApps = applications.filter((a) => a.user_id === currentUserId);
+  const myInterviews = interviews.filter((iv) => iv.user_id === currentUserId);
 
   return (
     <>
@@ -194,6 +197,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
         open={!!selectedApp}
         onClose={() => setSelectedApp(null)}
         currentUserId={currentUserId}
+        interviews={myInterviews.filter((iv) => iv.application_id === selectedApp.id)}
       />
     )}
     <div className="space-y-6">
@@ -217,6 +221,15 @@ export function TrackerClient({ applications, currentUserId }: Props) {
           >
             <Kanban className="size-3.5" />
             Board
+          </Button>
+          <Button
+            variant={view === "calendar" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-7 gap-1.5"
+            onClick={() => setView("calendar")}
+          >
+            <CalendarDays className="size-3.5" />
+            Calendar
           </Button>
         </div>
         <ApplicationForm />
@@ -283,6 +296,14 @@ export function TrackerClient({ applications, currentUserId }: Props) {
             </div>
           </section>
         </div>
+      )}
+      {/* ── CALENDAR VIEW ─────────────────────────────────────────── */}
+      {view === "calendar" && (
+        <CalendarView
+          applications={myApps}
+          interviews={myInterviews}
+          onOpenApp={setSelectedApp}
+        />
       )}
     </div>
     </>

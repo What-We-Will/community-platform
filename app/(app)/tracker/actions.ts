@@ -158,6 +158,58 @@ export async function syncCommunityNote(
   return {};
 }
 
+// ── Interviews ────────────────────────────────────────────────────────────────
+
+export interface Interview {
+  id: string;
+  application_id: string;
+  user_id: string;
+  title: string;
+  interview_date: string; // YYYY-MM-DD
+  interview_time: string | null; // HH:MM or null
+  notes: string | null;
+  created_at: string;
+}
+
+export async function addInterview(
+  applicationId: string,
+  title: string,
+  date: string,
+  time: string,
+  notes: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase.from("job_application_interviews").insert({
+    application_id: applicationId,
+    user_id: user.id,
+    title: title.trim(),
+    interview_date: date,
+    interview_time: time.trim() || null,
+    notes: notes.trim() || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/tracker");
+  return {};
+}
+
+export async function deleteInterview(id: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("job_application_interviews")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/tracker");
+  return {};
+}
+
 export async function deleteApplication(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

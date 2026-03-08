@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/select";
 import {
   ExternalLink, Pencil, Trash2, Loader2, Check, X, Lock, Users,
+  CalendarDays, Plus, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateApplication, updateStatusDate, deleteApplication, syncCommunityNote, type ApplicationStatus } from "./actions";
+import { updateApplication, updateStatusDate, deleteApplication, syncCommunityNote, addInterview, deleteInterview, type ApplicationStatus, type Interview } from "./actions";
 import { STATUSES, STATUS_MAP } from "./constants";
 import type { Application } from "./TrackerClient";
 
@@ -25,12 +26,18 @@ interface Props {
   open: boolean;
   onClose: () => void;
   currentUserId: string;
+  interviews: Interview[];
 }
 
 function formatDate(iso: string): string {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric",
   });
+}
+
+function fmt12h(time: string): string {
+  const [h, m] = time.split(":").map(Number);
+  return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
 }
 
 function InlineEdit({
@@ -104,7 +111,7 @@ function InlineEdit({
   );
 }
 
-export function ApplicationDetailModal({ app, open, onClose, currentUserId }: Props) {
+export function ApplicationDetailModal({ app, open, onClose, currentUserId, interviews }: Props) {
   const router = useRouter();
   const isOwn = app.user_id === currentUserId;
   const [deleting, setDeleting] = useState(false);
@@ -113,6 +120,15 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId }: Pr
   );
   const [currentStatus, setCurrentStatus] = useState<ApplicationStatus>(app.status);
   const [savingStatus, setSavingStatus] = useState(false);
+
+  // Interview scheduling state
+  const [addingInterview, setAddingInterview] = useState(false);
+  const [ivTitle, setIvTitle] = useState("");
+  const [ivDate, setIvDate] = useState("");
+  const [ivTime, setIvTime] = useState("");
+  const [ivNotes, setIvNotes] = useState("");
+  const [savingInterview, setSavingInterview] = useState(false);
+  const [deletingInterviewId, setDeletingInterviewId] = useState<string | null>(null);
 
   async function handleStatusChange(newStatus: ApplicationStatus) {
     setSavingStatus(true);
@@ -139,6 +155,23 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId }: Pr
     setDeleting(true);
     await deleteApplication(app.id);
     onClose();
+    router.refresh();
+  }
+
+  async function handleAddInterview(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingInterview(true);
+    await addInterview(app.id, ivTitle, ivDate, ivTime, ivNotes);
+    setSavingInterview(false);
+    setIvTitle(""); setIvDate(""); setIvTime(""); setIvNotes("");
+    setAddingInterview(false);
+    router.refresh();
+  }
+
+  async function handleDeleteInterview(id: string) {
+    setDeletingInterviewId(id);
+    await deleteInterview(id);
+    setDeletingInterviewId(null);
     router.refresh();
   }
 
@@ -253,6 +286,123 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId }: Pr
               })}
             </div>
           </div>
+
+          {/* Upcoming Interviews */}
+          {isOwn && (
+            <div className="space-y-3 rounded-xl border p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-sm font-semibold">
+                  <CalendarDays className="size-3.5 text-muted-foreground" />
+                  Upcoming Interviews
+                </div>
+                {!addingInterview && (
+                  <Button
+                    variant="ghost" size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={() => setAddingInterview(true)}
+                  >
+                    <Plus className="size-3.5" /> Schedule
+                  </Button>
+                )}
+              </div>
+
+              {/* Existing interviews */}
+              {interviews.length === 0 && !addingInterview && (
+                <p className="text-xs text-muted-foreground italic">
+                  No interviews scheduled. Click Schedule to add one.
+                </p>
+              )}
+              {[...interviews]
+                .sort((a, b) => a.interview_date.localeCompare(b.interview_date) || (a.interview_time ?? "").localeCompare(b.interview_time ?? ""))
+                .map((iv) => (
+                  <div key={iv.id} className="flex items-start justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium leading-snug">{iv.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                        <CalendarDays className="size-3 shrink-0" />
+                        {formatDate(iv.interview_date)}
+                        {iv.interview_time && (
+                          <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>
+                        )}
+                      </p>
+                      {iv.notes && (
+                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost" size="icon"
+                      className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => handleDeleteInterview(iv.id)}
+                      disabled={deletingInterviewId === iv.id}
+                    >
+                      {deletingInterviewId === iv.id
+                        ? <Loader2 className="size-3.5 animate-spin" />
+                        : <Trash2 className="size-3.5" />}
+                    </Button>
+                  </div>
+                ))}
+
+              {/* Add interview form */}
+              {addingInterview && (
+                <form onSubmit={handleAddInterview} className="space-y-2.5 rounded-lg border bg-muted/20 p-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Interview title</Label>
+                      <Input
+                        placeholder="e.g. Technical Screen"
+                        value={ivTitle}
+                        onChange={(e) => setIvTitle(e.target.value)}
+                        className="h-8 text-xs"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Date</Label>
+                      <Input
+                        type="date"
+                        value={ivDate}
+                        onChange={(e) => setIvDate(e.target.value)}
+                        className="h-8 text-xs"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Time <span className="text-muted-foreground">(optional)</span></Label>
+                      <Input
+                        type="time"
+                        value={ivTime}
+                        onChange={(e) => setIvTime(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Notes <span className="text-muted-foreground">(optional)</span></Label>
+                      <Input
+                        placeholder="Interviewer name, format…"
+                        value={ivNotes}
+                        onChange={(e) => setIvNotes(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" size="sm" className="h-7 text-xs" disabled={savingInterview}>
+                      {savingInterview && <Loader2 className="size-3 animate-spin mr-1" />}
+                      Add Interview
+                    </Button>
+                    <Button
+                      type="button" variant="ghost" size="sm" className="h-7 text-xs"
+                      onClick={() => { setAddingInterview(false); setIvTitle(""); setIvDate(""); setIvTime(""); setIvNotes(""); }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+          )}
 
           {/* Personal Notes — always private */}
           <div className="space-y-2 rounded-xl border p-4">
