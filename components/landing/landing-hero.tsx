@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const ROTATING_WORDS = [
@@ -50,7 +49,7 @@ export function LandingHero() {
               className="rounded-lg bg-primary-orange px-8 text-base font-semibold text-white shadow-md hover:bg-primary-orange-hover"
               asChild
             >
-              <Link href="/signup">Join the Community</Link>
+              <a href="#newsletter">Join the Community</a>
             </Button>
           </div>
         </div>
