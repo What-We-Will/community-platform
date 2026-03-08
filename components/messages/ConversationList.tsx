@@ -11,7 +11,7 @@ import { formatRelativeTime } from "@/lib/utils/time";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UsersRound, Video, Archive } from "lucide-react";
+import { UsersRound, Archive } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -24,20 +24,6 @@ import type { ConversationWithDetails, Message } from "@/lib/types";
 interface ConversationListProps {
   initialConversations: ConversationWithDetails[];
   currentUserId: string;
-}
-
-function getVideoRoomFromMessage(msg: Message | null): string | null {
-  if (!msg || msg.message_type !== "video_invite") return null;
-  let meta = msg.metadata;
-  if (typeof meta === "string") {
-    try {
-      meta = JSON.parse(meta) as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }
-  const room = (meta as Record<string, unknown>)?.room_name;
-  return typeof room === "string" ? room : null;
 }
 
 export function ConversationList({
@@ -156,7 +142,6 @@ export function ConversationList({
               const isGroupConv = conversation.type === "group";
 
               if (isGroupConv) {
-                const videoRoom = getVideoRoomFromMessage(lastMessage);
                 return (
                   <div
                     key={conversation.id}
@@ -166,7 +151,7 @@ export function ConversationList({
                     )}
                   >
                     <Link
-                      href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
+                      href={`/messages/${conversation.id}`}
                       className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
                     >
                       {/* Group icon avatar */}
@@ -225,20 +210,7 @@ export function ConversationList({
                                   : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
                               : "No messages yet"}
                           </p>
-                          {videoRoom ? (
-                            <Button
-                              size="sm"
-                              variant="default"
-                              className="shrink-0 h-6 gap-1 text-xs"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                router.push(`/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}`);
-                              }}
-                            >
-                              <Video className="size-3" />
-                              Join call
-                            </Button>
-                          ) : hasUnread ? (
+                          {hasUnread ? (
                             <Badge
                               variant="destructive"
                               className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
@@ -272,7 +244,6 @@ export function ConversationList({
               const otherUser = participants[0];
               if (!otherUser) return null;
               const onlineStatus = getOnlineStatus(otherUser.last_seen_at);
-              const videoRoom = getVideoRoomFromMessage(lastMessage);
 
               return (
                 <div
@@ -283,7 +254,7 @@ export function ConversationList({
                   )}
                 >
                   <Link
-                    href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
+                    href={`/messages/${conversation.id}`}
                     className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
                   >
                     <UserAvatar
@@ -328,20 +299,7 @@ export function ConversationList({
                               : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
                             : "No messages yet"}
                         </p>
-                        {videoRoom ? (
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="shrink-0 h-6 gap-1 text-xs"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              router.push(`/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}`);
-                            }}
-                          >
-                            <Video className="size-3" />
-                            Join call
-                          </Button>
-                        ) : hasUnread ? (
+                        {hasUnread ? (
                           <Badge
                             variant="destructive"
                             className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
