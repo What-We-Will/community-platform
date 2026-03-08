@@ -39,7 +39,7 @@ export async function ActiveChatsCard({ userId }: ActiveChatsCardProps) {
           Recent Chats
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="h-64 overflow-y-auto">
         {conversations.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Start a conversation from the{" "}

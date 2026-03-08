@@ -47,32 +47,30 @@ export async function NewMembersCard() {
           New Members
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="h-64 overflow-y-auto">
         {recent.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Invite friends to grow the community!
           </p>
         ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2 -mx-1">
+          <div className="flex flex-col divide-y">
             {recent.map((member) => (
               <Link
                 key={member.id}
                 href={`/members/${member.id}`}
-                className="flex flex-shrink-0 flex-col items-center gap-1.5 min-w-[72px] rounded-lg p-1 hover:bg-accent/50 transition-colors"
+                className="flex items-center gap-3 py-2 rounded-lg px-1 hover:bg-accent/50 transition-colors"
               >
                 <UserAvatar
                   avatarUrl={member.avatar_url}
                   displayName={member.display_name}
                   size="sm"
                 />
-                <span className="text-xs font-medium truncate w-full text-center max-w-[72px]">
-                  {member.display_name}
-                </span>
-                {member.headline && (
-                  <span className="text-[10px] text-muted-foreground truncate w-full text-center max-w-[72px]">
-                    {member.headline}
-                  </span>
-                )}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{member.display_name}</p>
+                  {member.headline && (
+                    <p className="text-xs text-muted-foreground truncate">{member.headline}</p>
+                  )}
+                </div>
               </Link>
             ))}
           </div>

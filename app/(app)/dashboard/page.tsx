@@ -9,6 +9,7 @@ import { UpcomingEventsCard } from "@/components/dashboard/UpcomingEventsCard";
 import { JobTrackerCard } from "@/components/dashboard/JobTrackerCard";
 import { MyGroupsCard } from "@/components/dashboard/MyGroupsCard";
 import { LearningCard } from "@/components/dashboard/LearningCard";
+import { LeetcodeCard } from "@/components/dashboard/LeetcodeCard";
 import { RecordingsCard } from "@/components/dashboard/RecordingsCard";
 import { WeeklyScheduleCard } from "@/components/dashboard/WeeklyScheduleCard";
 import { AnnouncementsCard } from "@/components/dashboard/AnnouncementsCard";
@@ -43,9 +44,10 @@ export default async function DashboardPage() {
         <PollsCardWrapper userId={user.id} />
       </Suspense>
 
-      {/* Second row: Job Tracker, Learning, Recent Chats */}
+      {/* Second row: Job Tracker, LeetCode, Learning */}
       <JobTrackerCard />
       <LearningCard />
+      <LeetcodeCard />
       <Suspense fallback={<CardSkeleton />}>
         <ActiveChatsCard userId={user.id} />
       </Suspense>
