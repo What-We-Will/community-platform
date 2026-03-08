@@ -107,6 +107,13 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
             >
               Sign up
             </Link>
+            <br/>
+            <Link
+              href="/forgot-password"
+              className="underline-offset-4 hover:underline"
+            >
+              Forgot your password?
+            </Link>
           </p>
         </CardFooter>
       </form>

@@ -28,6 +28,12 @@ export async function GET(request: NextRequest) {
     },
   });
 
+  if (next === "/update-password" && code) {
+    const updatePasswordURL = new URL("/update-password", requestUrl.origin);
+    updatePasswordURL.searchParams.set("code", code);
+    return NextResponse.redirect(updatePasswordURL);
+  }
+
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
