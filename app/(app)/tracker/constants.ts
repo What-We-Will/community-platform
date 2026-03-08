@@ -7,19 +7,19 @@ export const STATUSES: {
   bg: string;
   columnBg: string;
 }[] = [
-  { value: "wishlist",         label: "Wishlist",             color: "text-rose-600",    bg: "bg-rose-100 border-rose-200",     columnBg: "bg-rose-50" },
-  { value: "applied",          label: "Applied",              color: "text-orange-600",  bg: "bg-orange-100 border-orange-200", columnBg: "bg-orange-50" },
-  { value: "phone_screen",     label: "Phone Screen",         color: "text-yellow-600",  bg: "bg-yellow-100 border-yellow-200", columnBg: "bg-yellow-50" },
-  { value: "first_interview",  label: "First Interview",      color: "text-green-700",   bg: "bg-green-100 border-green-200",   columnBg: "bg-green-50" },
-  { value: "second_interview", label: "Second Interview",     color: "text-teal-700",    bg: "bg-teal-100 border-teal-200",     columnBg: "bg-teal-50" },
-  { value: "third_interview",  label: "Third Interview",      color: "text-blue-700",    bg: "bg-blue-100 border-blue-200",     columnBg: "bg-blue-50" },
-  { value: "offer",            label: "Offer",                color: "text-indigo-700",  bg: "bg-indigo-100 border-indigo-200", columnBg: "bg-indigo-50" },
-  { value: "rejected",         label: "Rejected / Withdrawn", color: "text-violet-700",  bg: "bg-violet-100 border-violet-200", columnBg: "bg-violet-50" },
+  { value: "wishlist",         label: "Wishlist",             color: "text-red-700",     bg: "bg-red-200 border-red-300",       columnBg: "bg-red-100" },
+  { value: "applied",          label: "Applied",              color: "text-orange-700",  bg: "bg-orange-200 border-orange-300", columnBg: "bg-orange-100" },
+  { value: "phone_screen",     label: "Phone Screen",         color: "text-yellow-700",  bg: "bg-yellow-200 border-yellow-300", columnBg: "bg-yellow-100" },
+  { value: "first_interview",  label: "First Interview",      color: "text-green-700",   bg: "bg-green-200 border-green-300",   columnBg: "bg-green-100" },
+  { value: "second_interview", label: "Second Interview",     color: "text-blue-700",    bg: "bg-blue-200 border-blue-300",     columnBg: "bg-blue-100" },
+  { value: "third_interview",  label: "Third Interview",      color: "text-indigo-700",  bg: "bg-indigo-200 border-indigo-300", columnBg: "bg-indigo-100" },
+  { value: "offer",            label: "Offer",                color: "text-violet-700",  bg: "bg-violet-200 border-violet-300", columnBg: "bg-violet-100" },
+  { value: "rejected",         label: "Rejected / Withdrawn", color: "text-gray-500",    bg: "bg-gray-200 border-gray-300",     columnBg: "bg-gray-100" },
 ];
 
 export const STATUS_MAP: Record<string, (typeof STATUSES)[number]> = {
   ...Object.fromEntries(STATUSES.map((s) => [s.value, s])),
   // Map legacy values to their display equivalents
-  withdrawn: { value: "rejected",        label: "Rejected / Withdrawn", color: "text-violet-700", bg: "bg-violet-100 border-violet-200", columnBg: "bg-violet-50" },
-  interview: { value: "first_interview", label: "First Interview",      color: "text-green-700",  bg: "bg-green-100 border-green-200",   columnBg: "bg-green-50" },
+  withdrawn: { value: "rejected",        label: "Rejected / Withdrawn", color: "text-gray-500",  bg: "bg-gray-200 border-gray-300",   columnBg: "bg-gray-100" },
+  interview: { value: "first_interview", label: "First Interview",      color: "text-green-700", bg: "bg-green-200 border-green-300",  columnBg: "bg-green-100" },
 };
