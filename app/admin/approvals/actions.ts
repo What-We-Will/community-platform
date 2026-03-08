@@ -51,7 +51,6 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
   }
 
   revalidatePath("/admin/approvals");
-  return {};
 }
 
 async function sendApprovalEmail(toEmail: string) {
