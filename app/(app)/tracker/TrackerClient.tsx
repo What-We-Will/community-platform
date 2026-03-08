@@ -236,7 +236,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                 return (
                   <div key={col.value} className={cn("flex flex-col gap-2 w-52 shrink-0 rounded-xl p-3", col.columnBg)}>
                     <div className="flex items-center justify-between gap-1">
-                      <span className={cn("text-xs font-semibold", col.color)}>{col.label}</span>
+                      <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
                       <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
                         {colApps.length}
                       </span>
@@ -278,7 +278,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                   return (
                     <div key={col.value} className={cn("flex flex-col gap-2 w-52 shrink-0 rounded-xl p-3", col.columnBg)}>
                       <div className="flex items-center justify-between gap-1">
-                        <span className={cn("text-xs font-semibold", col.color)}>{col.label}</span>
+                        <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
                         <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
                           {colApps.length}
                         </span>
