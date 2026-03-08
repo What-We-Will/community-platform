@@ -253,7 +253,7 @@ export function GroupHubClient({
           <TabsTrigger value="events">Events</TabsTrigger>
           <TabsTrigger value="notes">Notes</TabsTrigger>
           <TabsTrigger value="recordings">Recordings</TabsTrigger>
-          {currentUserRole === "admin" && (
+          {(currentUserRole === "admin" || isPlatformAdmin) && (
             <TabsTrigger value="settings" className="gap-1.5">
               <Settings className="size-3.5" />
               Settings
@@ -412,8 +412,8 @@ export function GroupHubClient({
           </div>
         </TabsContent>
 
-        {/* Settings — admins only */}
-        {currentUserRole === "admin" && (
+        {/* Settings — group admins and platform admins */}
+        {(currentUserRole === "admin" || isPlatformAdmin) && (
           <TabsContent value="settings" className="mt-6">
             <div className="max-w-lg space-y-6">
               <div>
