@@ -206,7 +206,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <Button asChild>
               <Link href={`/messages?new=${userId}`} prefetch={false}>
                 <MessageSquare className="mr-2 size-4" />
-                Send Message
+                Message Member
               </Link>
             </Button>
             <QuickCallButton
