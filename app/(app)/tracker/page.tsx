@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { TrackerClient, type Application } from "./TrackerClient";
+import { TrackerClient, type Application, type CommunityNote } from "./TrackerClient";
 import type { Interview, HelpRequest } from "./actions";
 
 export default async function TrackerPage() {
@@ -45,6 +45,49 @@ export default async function TrackerPage() {
     message: h.message ?? null,
   }));
 
+  // ── Community notes for companies the user has applied to ──────────────────
+  const myApplications = (rawApplications ?? []).filter((a) => a.user_id === user.id);
+  const myCompanies = [...new Set(myApplications.map((a) => a.company))];
+  const directPostingIds = [...new Set(
+    myApplications.filter((a) => a.job_posting_id).map((a) => a.job_posting_id as string)
+  )];
+
+  let communityNotes: CommunityNote[] = [];
+
+  if (myCompanies.length > 0) {
+    // Find job postings that match any of the user's applied companies (case-insensitive)
+    const orFilter = myCompanies.map((c) => `company.ilike.${c}`).join(",");
+    const { data: matchedPostings } = await supabase
+      .from("job_postings")
+      .select("id, company")
+      .or(orFilter);
+
+    const postingIds = [...new Set([
+      ...directPostingIds,
+      ...(matchedPostings ?? []).map((p) => p.id),
+    ])];
+
+    if (postingIds.length > 0) {
+      const { data: rawNotes } = await supabase
+        .from("job_posting_comments")
+        .select("id, job_posting_id, user_id, content, created_at, author:user_id(id, display_name), posting:job_posting_id(company, title, url)")
+        .in("job_posting_id", postingIds)
+        .neq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      communityNotes = (rawNotes ?? []).map((n) => ({
+        id: n.id,
+        job_posting_id: n.job_posting_id,
+        user_id: n.user_id,
+        content: n.content,
+        created_at: n.created_at,
+        author: Array.isArray(n.author) ? (n.author[0] ?? null) : (n.author as CommunityNote["author"]),
+        posting: Array.isArray(n.posting) ? (n.posting[0] ?? null) : (n.posting as CommunityNote["posting"]),
+      }));
+    }
+  }
+
   return (
     <div className="mx-auto max-w-7xl space-y-6">
       <div>
@@ -58,6 +101,7 @@ export default async function TrackerPage() {
         interviews={interviews}
         helpRequests={helpRequests}
         currentUserId={user.id}
+        communityNotes={communityNotes}
       />
     </div>
   );

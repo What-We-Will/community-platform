@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { LearningClient } from "./LearningClient";
+import { LearningClientRoot } from "./LearningClientRoot";
 import type { LearningPath, LearningPathItem, LearningResource } from "./types";
 import type { TrackerStatus } from "./learning-tracker-actions";
 
@@ -140,7 +140,7 @@ export default async function GroupLearningPage() {
   }
 
   return (
-    <LearningClient
+    <LearningClientRoot
       paths={normalizedPaths}
       itemsByPath={itemsByPath}
       resources={normalizedResources}

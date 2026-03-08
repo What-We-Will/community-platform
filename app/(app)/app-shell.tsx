@@ -20,7 +20,12 @@ import {
   BookMarked,
   ListTodo,
 } from "lucide-react";
-import { BugReportDialog } from "@/components/shared/BugReportDialog";
+import dynamic from "next/dynamic";
+
+const BugReportDialog = dynamic(
+  () => import("@/components/shared/BugReportDialog").then((m) => ({ default: m.BugReportDialog })),
+  { ssr: false },
+);
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

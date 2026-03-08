@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { LayoutList, Kanban, CalendarDays, ExternalLink, Trash2, Pencil, Loader2, Users } from "lucide-react";
+import { LayoutList, Kanban, CalendarDays, ExternalLink, Trash2, Pencil, Loader2, Users, MessageSquare, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   DndContext, DragOverlay, closestCenter,
@@ -35,11 +35,22 @@ export interface Application {
   poster?: { id: string; display_name: string } | null;
 }
 
+export interface CommunityNote {
+  id: string;
+  job_posting_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  author: { id: string; display_name: string } | null;
+  posting: { company: string; title: string; url: string | null } | null;
+}
+
 interface Props {
   applications: Application[];
   interviews: Interview[];
   helpRequests: HelpRequest[];
   currentUserId: string;
+  communityNotes?: CommunityNote[];
 }
 
 function StatusBadge({ status }: { status: ApplicationStatus }) {
@@ -245,9 +256,117 @@ function DraggableCard({
   );
 }
 
+// ── Community Notes section ────────────────────────────────────────────────────
+
+function CommunityNotesSection({ notes = [] }: { notes?: CommunityNote[] }) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  if (notes.length === 0) {
+    return (
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Community Notes
+          </h2>
+        </div>
+        <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-5 text-center">
+          No community notes yet for the companies you've applied to.
+        </p>
+      </section>
+    );
+  }
+
+  // Group by company name
+  const grouped: Record<string, CommunityNote[]> = {};
+  for (const note of notes) {
+    const company = note.posting?.company ?? "Other";
+    if (!grouped[company]) grouped[company] = [];
+    grouped[company].push(note);
+  }
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center gap-2">
+        <MessageSquare className="size-4 text-muted-foreground" />
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Community Notes
+        </h2>
+        <span className="text-[10px] font-medium bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">
+          {notes.length}
+        </span>
+      </div>
+
+      <div className="space-y-5">
+        {Object.entries(grouped).map(([company, companyNotes]) => (
+          <div key={company} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-foreground">{company}</span>
+              <span className="text-[10px] text-muted-foreground">
+                {companyNotes.length} {companyNotes.length === 1 ? "note" : "notes"}
+              </span>
+            </div>
+            <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}>
+              {companyNotes.map((note) => {
+                const isExpanded = expanded[note.id];
+                const needsTruncation = note.content.length > 180;
+                return (
+                  <div
+                    key={note.id}
+                    className="rounded-lg border bg-card p-3 space-y-2 hover:border-primary/30 hover:shadow-sm transition-all"
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        {note.posting?.title && (
+                          <p className="text-xs font-medium text-foreground leading-snug truncate">
+                            {note.posting.title}
+                          </p>
+                        )}
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {note.author?.display_name ?? "Community member"} ·{" "}
+                          {new Date(note.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                      </div>
+                      {note.posting?.url && (
+                        <a
+                          href={note.posting.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                          title="View job posting"
+                        >
+                          <ArrowUpRight className="size-3.5" />
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <p className={cn("text-xs text-muted-foreground leading-relaxed", !isExpanded && needsTruncation && "line-clamp-3")}>
+                      {note.content}
+                    </p>
+                    {needsTruncation && (
+                      <button
+                        onClick={() => setExpanded((prev) => ({ ...prev, [note.id]: !prev[note.id] }))}
+                        className="text-[11px] text-primary hover:underline"
+                      >
+                        {isExpanded ? "Show less" : "Show more"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function TrackerClient({ applications, interviews, helpRequests, currentUserId }: Props) {
+export function TrackerClient({ applications, interviews, helpRequests, currentUserId, communityNotes }: Props) {
   const router = useRouter();
   const [view, setView] = useState<"list" | "kanban" | "calendar">("kanban");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
@@ -434,6 +553,11 @@ export function TrackerClient({ applications, interviews, helpRequests, currentU
           onOpenApp={setSelectedApp}
         />
       )}
+
+      {/* ── COMMUNITY NOTES ───────────────────────────────────────── */}
+      <div className="pt-2 border-t">
+        <CommunityNotesSection notes={communityNotes} />
+      </div>
     </div>
     </>
   );
