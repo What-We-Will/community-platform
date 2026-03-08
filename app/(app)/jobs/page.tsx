@@ -60,10 +60,15 @@ export default async function JobBoardPage({
     });
   }
 
+  const normalizedJobs: JobPosting[] = (jobs ?? []).map((j) => ({
+    ...j,
+    poster: Array.isArray(j.poster) ? (j.poster[0] ?? null) : j.poster,
+  }));
+
   return (
     <Suspense>
       <JobBoardClient
-        jobs={(jobs ?? []) as JobPosting[]}
+        jobs={normalizedJobs}
         currentUserId={user.id}
         isPlatformAdmin={isPlatformAdmin}
         wishlistedIds={wishlistedIds}
