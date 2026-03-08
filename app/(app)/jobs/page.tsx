@@ -7,9 +7,11 @@ import type { Comment } from "./JobComments";
 export default async function JobBoardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ role?: string }>;
+  searchParams: Promise<{ role?: string; referral?: string; community?: string }>;
 }) {
-  const { role: roleFilter } = await searchParams;
+  const { role: roleFilter, referral, community } = await searchParams;
+  const referralFilter = referral === "true";
+  const communityFilter = community === "true";
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,6 +24,12 @@ export default async function JobBoardPage({
 
   if (roleFilter) {
     jobQuery = jobQuery.contains("roles", [roleFilter]);
+  }
+  if (referralFilter) {
+    jobQuery = jobQuery.eq("offers_referral", true);
+  }
+  if (communityFilter) {
+    jobQuery = jobQuery.eq("is_community_network", true);
   }
 
   const [
@@ -74,6 +82,8 @@ export default async function JobBoardPage({
         wishlistedIds={wishlistedIds}
         commentsByJob={commentsByJob}
         activeRoleFilter={roleFilter ?? null}
+        activeReferralFilter={referralFilter}
+        activeCommunityFilter={communityFilter}
       />
     </Suspense>
   );

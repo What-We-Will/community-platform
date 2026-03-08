@@ -63,6 +63,8 @@ interface Props {
   wishlistedIds: string[];
   commentsByJob: Record<string, Comment[]>;
   activeRoleFilter: string | null;
+  activeReferralFilter: boolean;
+  activeCommunityFilter: boolean;
 }
 
 // ── Resize hook ──────────────────────────────────────────────────────────────
@@ -133,6 +135,8 @@ export function JobBoardClient({
   wishlistedIds,
   commentsByJob,
   activeRoleFilter,
+  activeReferralFilter,
+  activeCommunityFilter,
 }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(jobs[0]?.id ?? null);
   const selectedJob = jobs.find((j) => j.id === selectedId) ?? null;
@@ -175,8 +179,12 @@ export function JobBoardClient({
           style={{ width: leftWidth }}
         >
           {/* Filter */}
-          <div className="shrink-0 overflow-x-auto border-b px-3 py-2.5">
-            <JobRoleFilter activeRole={activeRoleFilter} />
+          <div className="shrink-0 border-b px-3 py-2.5">
+            <JobRoleFilter
+              activeRole={activeRoleFilter}
+              activeReferral={activeReferralFilter}
+              activeCommunity={activeCommunityFilter}
+            />
           </div>
 
           {/* Job list */}
@@ -185,8 +193,8 @@ export function JobBoardClient({
               <div className="flex flex-col items-center justify-center gap-2 py-16 px-4 text-center">
                 <Briefcase className="size-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  {activeRoleFilter
-                    ? `No ${JOB_ROLE_MAP[activeRoleFilter as JobRole] ?? activeRoleFilter} jobs yet.`
+                  {activeRoleFilter || activeReferralFilter || activeCommunityFilter
+                    ? "No jobs match the current filters."
                     : "No jobs posted yet."}
                 </p>
               </div>

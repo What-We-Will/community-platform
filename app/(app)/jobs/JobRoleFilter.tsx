@@ -2,43 +2,92 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
-import { X } from "lucide-react";
+import { Handshake, Network, X } from "lucide-react";
 import { JOB_ROLES, type JobRole } from "./job-roles";
 import { cn } from "@/lib/utils";
 
-export function JobRoleFilter({ activeRole }: { activeRole: string | null }) {
+interface Props {
+  activeRole: string | null;
+  activeReferral: boolean;
+  activeCommunity: boolean;
+}
+
+export function JobRoleFilter({ activeRole, activeReferral, activeCommunity }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const setRole = useCallback(
-    (role: JobRole | null) => {
+  const update = useCallback(
+    (changes: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (role) {
-        params.set("role", role);
-      } else {
-        params.delete("role");
+      for (const [key, val] of Object.entries(changes)) {
+        if (val === null) {
+          params.delete(key);
+        } else {
+          params.set(key, val);
+        }
       }
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [router, pathname, searchParams]
   );
 
+  const setRole = (role: JobRole | null) =>
+    update({ role: role });
+
+  const toggleReferral = () =>
+    update({ referral: activeReferral ? null : "true" });
+
+  const toggleCommunity = () =>
+    update({ community: activeCommunity ? null : "true" });
+
+  const hasAnyFilter = activeRole || activeReferral || activeCommunity;
+
+  const clearAll = () => update({ role: null, referral: null, community: null });
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-medium text-muted-foreground shrink-0">Filter:</span>
-      {activeRole && (
+    <div className="flex flex-col gap-2">
+      {/* Special filters row */}
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
-          onClick={() => setRole(null)}
-          className="flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-medium"
+          onClick={toggleReferral}
+          className={cn(
+            "flex items-center gap-1 rounded-full border px-3 py-0.5 text-xs font-medium transition-colors",
+            activeReferral
+              ? "bg-emerald-600 text-white border-emerald-600"
+              : "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+          )}
         >
-          {JOB_ROLES.find((r) => r.value === activeRole)?.label ?? activeRole}
-          <X className="size-3" />
+          <Handshake className="size-3" />
+          Referral Available
+          {activeReferral && <X className="size-3 ml-0.5" />}
         </button>
-      )}
-      {!activeRole && (
-        <span className="text-xs text-muted-foreground italic">All roles</span>
-      )}
+
+        <button
+          onClick={toggleCommunity}
+          className={cn(
+            "flex items-center gap-1 rounded-full border px-3 py-0.5 text-xs font-medium transition-colors",
+            activeCommunity
+              ? "bg-indigo-600 text-white border-indigo-600"
+              : "border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+          )}
+        >
+          <Network className="size-3" />
+          Community Network
+          {activeCommunity && <X className="size-3 ml-0.5" />}
+        </button>
+
+        {hasAnyFilter && (
+          <button
+            onClick={clearAll}
+            className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="size-3" /> Clear all
+          </button>
+        )}
+      </div>
+
+      {/* Role filter row */}
       <div className="flex flex-wrap gap-1.5">
         {JOB_ROLES.map((role) => (
           <button
