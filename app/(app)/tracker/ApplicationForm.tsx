@@ -35,6 +35,7 @@ export function ApplicationForm({ mode = "create", initialValues, trigger, defau
   const [appliedDate, setAppliedDate] = useState(initialValues?.applied_date ?? "");
   const [status, setStatus] = useState<ApplicationStatus>(initialValues?.status ?? defaultStatus);
   const [notes, setNotes] = useState(initialValues?.notes ?? "");
+  const [communityNotes, setCommunityNotes] = useState(initialValues?.community_notes ?? "");
   const [url, setUrl] = useState(initialValues?.url ?? "");
   const [isShared, setIsShared] = useState(initialValues?.is_shared ?? false);
 
@@ -48,6 +49,7 @@ export function ApplicationForm({ mode = "create", initialValues, trigger, defau
       applied_date: appliedDate || undefined,
       status,
       notes: notes.trim() || undefined,
+      community_notes: communityNotes.trim() || undefined,
       url: url.trim() || undefined,
       is_shared: isShared,
     };
@@ -58,7 +60,7 @@ export function ApplicationForm({ mode = "create", initialValues, trigger, defau
     if (res.error) { setError(res.error); return; }
     setOpen(false);
     if (mode === "create") {
-      setCompany(""); setPosition(""); setAppliedDate(""); setNotes(""); setUrl(""); setIsShared(false);
+      setCompany(""); setPosition(""); setAppliedDate(""); setNotes(""); setCommunityNotes(""); setUrl(""); setIsShared(false);
       setStatus(defaultStatus);
     }
     router.refresh();
@@ -113,15 +115,21 @@ export function ApplicationForm({ mode = "create", initialValues, trigger, defau
             <Input id="url" type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Interview tips, contacts, key info…" className="min-h-[80px]" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="notes">Personal Notes</Label>
+              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Private notes for yourself…" className="min-h-[80px]" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="community_notes">Community Notes</Label>
+              <Textarea id="community_notes" value={communityNotes} onChange={(e) => setCommunityNotes(e.target.value)} placeholder="Tips for others applying here…" className="min-h-[80px]" />
+            </div>
           </div>
 
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>
               <p className="text-sm font-medium">Share with community</p>
-              <p className="text-xs text-muted-foreground">Others can see this application and your notes</p>
+              <p className="text-xs text-muted-foreground">Others can see this application and community notes</p>
             </div>
             <Switch checked={isShared} onCheckedChange={setIsShared} />
           </div>

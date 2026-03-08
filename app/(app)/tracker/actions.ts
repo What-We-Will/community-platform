@@ -14,6 +14,7 @@ export interface JobApplicationInput {
   applied_date?: string;
   status: ApplicationStatus;
   notes?: string;
+  community_notes?: string;
   url?: string;
   is_shared?: boolean;
 }
@@ -22,7 +23,17 @@ export async function createApplication(input: JobApplicationInput): Promise<{ e
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
-  const { error } = await supabase.from("job_applications").insert({ ...input, user_id: user.id });
+
+  // Seed status_dates with today for the initial status
+  const today = new Date().toISOString().split("T")[0];
+  const status_dates: Record<string, string> = { [input.status]: today };
+  if (input.applied_date) status_dates["applied"] = input.applied_date;
+
+  const { error } = await supabase.from("job_applications").insert({
+    ...input,
+    user_id: user.id,
+    status_dates,
+  });
   if (error) return { error: error.message };
   revalidatePath("/tracker");
   return {};
@@ -35,9 +46,64 @@ export async function updateApplication(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+
+  // If status is changing, auto-record today's date for the new status
+  // (only if the caller hasn't explicitly provided status_dates)
+  let extra: Record<string, unknown> = {};
+  if (input.status) {
+    const { data: existing } = await supabase
+      .from("job_applications")
+      .select("status, status_dates")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (existing && existing.status !== input.status) {
+      const currentDates = (existing.status_dates ?? {}) as Record<string, string>;
+      if (!currentDates[input.status]) {
+        const today = new Date().toISOString().split("T")[0];
+        extra = { status_dates: { ...currentDates, [input.status]: today } };
+      }
+    }
+  }
+
   const { error } = await supabase
     .from("job_applications")
-    .update({ ...input, updated_at: new Date().toISOString() })
+    .update({ ...input, ...extra, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/tracker");
+  return {};
+}
+
+/** Saves the date recorded for a specific status stage */
+export async function updateStatusDate(
+  id: string,
+  status: ApplicationStatus,
+  date: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: existing } = await supabase
+    .from("job_applications")
+    .select("status_dates")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single();
+
+  if (!existing) return { error: "Not found" };
+
+  const currentDates = (existing.status_dates ?? {}) as Record<string, string>;
+  const updated = date
+    ? { ...currentDates, [status]: date }
+    : Object.fromEntries(Object.entries(currentDates).filter(([k]) => k !== status));
+
+  const { error } = await supabase
+    .from("job_applications")
+    .update({ status_dates: updated, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", user.id);
   if (error) return { error: error.message };

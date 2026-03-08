@@ -9,6 +9,7 @@ import { LayoutList, Kanban, ExternalLink, Trash2, Pencil, Loader2, Users } from
 import { cn } from "@/lib/utils";
 import { deleteApplication, type ApplicationStatus } from "./actions";
 import { ApplicationForm } from "./ApplicationForm";
+import { ApplicationDetailModal } from "./ApplicationDetailModal";
 import { STATUSES, STATUS_MAP } from "./constants";
 
 export interface Application {
@@ -18,6 +19,8 @@ export interface Application {
   applied_date: string | null;
   status: ApplicationStatus;
   notes: string | null;
+  community_notes: string | null;
+  status_dates: Record<string, string>;
   url: string | null;
   is_shared: boolean;
   created_at: string;
@@ -43,10 +46,12 @@ function ApplicationCard({
   app,
   currentUserId,
   compact = false,
+  onOpen,
 }: {
   app: Application;
   currentUserId: string;
   compact?: boolean;
+  onOpen: (app: Application) => void;
 }) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -60,20 +65,23 @@ function ApplicationCard({
   }
 
   return (
-    <div className={cn(
-      "rounded-lg border bg-card p-3 space-y-2 hover:border-primary/30 transition-colors",
-      compact && "p-2.5 space-y-1.5"
-    )}>
+    <div
+      onClick={() => onOpen(app)}
+      className={cn(
+        "rounded-lg border bg-card p-3 space-y-2 hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer",
+        compact && "p-2.5 space-y-1.5"
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-semibold truncate">{app.position}</p>
           <p className="text-xs text-muted-foreground truncate">{app.company}</p>
         </div>
         {!compact && isOwn && (
-          <div className="flex gap-1 shrink-0">
+          <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
             <ApplicationForm
               mode="edit"
-              initialValues={{ ...app, applied_date: app.applied_date ?? "", notes: app.notes ?? "", url: app.url ?? "", is_shared: app.is_shared }}
+              initialValues={{ ...app, applied_date: app.applied_date ?? "", notes: app.notes ?? "", community_notes: app.community_notes ?? "", url: app.url ?? "", is_shared: app.is_shared }}
               trigger={
                 <Button variant="ghost" size="icon" className="size-7">
                   <Pencil className="size-3.5" />
@@ -120,7 +128,7 @@ function ApplicationCard({
       )}
 
       {compact && (
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
           {app.applied_date && (
             <span className="text-[10px] text-muted-foreground">
               {new Date(app.applied_date).toLocaleDateString()}
@@ -130,7 +138,7 @@ function ApplicationCard({
             <div className="flex gap-0.5">
               <ApplicationForm
                 mode="edit"
-                initialValues={{ ...app, applied_date: app.applied_date ?? "", notes: app.notes ?? "", url: app.url ?? "", is_shared: app.is_shared }}
+                initialValues={{ ...app, applied_date: app.applied_date ?? "", notes: app.notes ?? "", community_notes: app.community_notes ?? "", url: app.url ?? "", is_shared: app.is_shared }}
                 trigger={
                   <Button variant="ghost" size="icon" className="size-6">
                     <Pencil className="size-3" />
@@ -150,10 +158,20 @@ function ApplicationCard({
 
 export function TrackerClient({ applications, currentUserId }: Props) {
   const [view, setView] = useState<"list" | "kanban">("kanban");
+  const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const myApps = applications.filter((a) => a.user_id === currentUserId);
   const sharedApps = applications.filter((a) => a.user_id !== currentUserId && a.is_shared);
 
   return (
+    <>
+    {selectedApp && (
+      <ApplicationDetailModal
+        app={selectedApp}
+        open={!!selectedApp}
+        onClose={() => setSelectedApp(null)}
+        currentUserId={currentUserId}
+      />
+    )}
     <div className="space-y-6">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3">
@@ -195,7 +213,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
             ) : (
               <div className="space-y-2">
                 {myApps.map((app) => (
-                  <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} />
+                  <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} onOpen={setSelectedApp} />
                 ))}
               </div>
             )}
@@ -209,7 +227,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
               </h2>
               <div className="space-y-2">
                 {sharedApps.map((app) => (
-                  <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} />
+                  <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} onOpen={setSelectedApp} />
                 ))}
               </div>
             </section>
@@ -244,7 +262,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                     <div className={cn("h-0.5 w-full rounded-full", col.bg.split(" ")[0])} />
                     <div className="space-y-2 min-h-[60px]">
                       {colApps.map((app) => (
-                        <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact />
+                        <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact onOpen={setSelectedApp} />
                       ))}
                     </div>
                     <ApplicationForm
@@ -286,7 +304,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                       <div className={cn("h-0.5 w-full rounded-full", col.bg.split(" ")[0])} />
                       <div className="space-y-2">
                         {colApps.map((app) => (
-                          <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact />
+                          <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact onOpen={setSelectedApp} />
                         ))}
                       </div>
                     </div>
@@ -298,5 +316,6 @@ export function TrackerClient({ applications, currentUserId }: Props) {
         </div>
       )}
     </div>
+    </>
   );
 }
