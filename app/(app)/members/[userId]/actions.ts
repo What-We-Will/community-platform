@@ -51,3 +51,18 @@ export async function startQuickCall(targetUserId: string): Promise<{
     };
   }
 }
+
+export async function endQuickCall(conversationId: string): Promise<void> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  await supabase.from("messages").insert({
+    conversation_id: conversationId,
+    sender_id: null,
+    content: "Video call ended",
+    message_type: "system",
+  });
+}

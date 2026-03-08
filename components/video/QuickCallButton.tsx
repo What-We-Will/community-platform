@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Video, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoCallModal } from "./VideoCallModal";
-import { startQuickCall } from "@/app/(app)/members/[userId]/actions";
+import { startQuickCall, endQuickCall } from "@/app/(app)/members/[userId]/actions";
 
 interface QuickCallButtonProps {
   targetUserId: string;
@@ -20,6 +20,7 @@ export function QuickCallButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [roomName, setRoomName] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   async function handleClick() {
@@ -31,15 +32,20 @@ export function QuickCallButton({
       setError(result.error);
       return;
     }
-    if (result.roomName) {
+    if (result.roomName && result.conversationId) {
       setRoomName(result.roomName);
+      setConversationId(result.conversationId);
       setModalOpen(true);
     }
   }
 
-  function handleClose() {
+  async function handleClose() {
     setModalOpen(false);
     setRoomName(null);
+    if (conversationId) {
+      await endQuickCall(conversationId);
+    }
+    setConversationId(null);
     router.refresh();
   }
 

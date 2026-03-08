@@ -368,6 +368,18 @@ export function ConversationView({
     router.refresh();
   }
 
+  async function handleVideoCallEnd() {
+    setVideoCallOpen(false);
+    setVideoRoomName(null);
+    await supabase.from("messages").insert({
+      conversation_id: conversationId,
+      sender_id: null,
+      content: "Video call ended",
+      message_type: "system",
+    });
+    // Message will appear via Realtime subscription (avoids duplicate if we added optimistically)
+  }
+
   async function handleStartVideoCall() {
     const type = isGroup ? "group" : "dm";
     const roomName = getVideoRoomName({ type, id: conversationId });
@@ -667,10 +679,7 @@ export function ConversationView({
           displayName={currentUser.display_name}
           title={videoCallTitle}
           isOpen={videoCallOpen}
-          onClose={() => {
-            setVideoCallOpen(false);
-            setVideoRoomName(null);
-          }}
+          onClose={handleVideoCallEnd}
         />
       )}
     </div>

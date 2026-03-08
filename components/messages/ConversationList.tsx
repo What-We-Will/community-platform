@@ -11,7 +11,7 @@ import { formatRelativeTime } from "@/lib/utils/time";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UsersRound, Archive } from "lucide-react";
+import { UsersRound, Archive, Video } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -141,6 +141,10 @@ export function ConversationList({
               const hasUnread = unreadCount > 0;
               const isGroupConv = conversation.type === "group";
 
+              const isPendingCall =
+                lastMessage?.message_type === "video_invite" &&
+                lastMessage.sender_id !== currentUserId;
+
               if (isGroupConv) {
                 return (
                   <div
@@ -206,11 +210,16 @@ export function ConversationList({
                                 : lastMessage.message_type === "video_invite"
                                   ? lastMessage.sender_id === currentUserId
                                     ? "You started a video call"
-                                    : "Video call started"
+                                    : "Incoming video call"
                                   : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
                               : "No messages yet"}
                           </p>
-                          {hasUnread ? (
+                          {isPendingCall ? (
+                            <span className="shrink-0 flex items-center gap-1 rounded-full bg-green-500 text-white px-2 py-0.5 text-[10px] font-semibold animate-pulse">
+                              <Video className="size-3" />
+                              Incoming call
+                            </span>
+                          ) : hasUnread ? (
                             <Badge
                               variant="destructive"
                               className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
@@ -292,14 +301,21 @@ export function ConversationList({
                           )}
                         >
                           {lastMessage
-                            ? lastMessage.message_type === "video_invite"
-                              ? lastMessage.sender_id === currentUserId
-                                ? "You started a video call"
-                                : "Video call started"
-                              : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
+                            ? lastMessage.message_type === "system"
+                              ? lastMessage.content
+                              : lastMessage.message_type === "video_invite"
+                                ? lastMessage.sender_id === currentUserId
+                                  ? "You started a video call"
+                                  : "Incoming video call"
+                                : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
                             : "No messages yet"}
                         </p>
-                        {hasUnread ? (
+                        {isPendingCall ? (
+                          <span className="shrink-0 flex items-center gap-1 rounded-full bg-green-500 text-white px-2 py-0.5 text-[10px] font-semibold animate-pulse">
+                            <Video className="size-3" />
+                            Incoming call
+                          </span>
+                        ) : hasUnread ? (
                           <Badge
                             variant="destructive"
                             className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
