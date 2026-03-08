@@ -15,6 +15,8 @@ const PROTECTED_ROUTES = [
   "/recordings",
   "/schedule",
   "/onboarding",
+  "/pending-approval",
+  "/admin",
 ];
 
 const AUTH_ROUTES = ["/login", "/signup"];
@@ -35,16 +37,22 @@ function isOnboardingPath(pathname: string): boolean {
   return pathname === "/onboarding" || pathname.startsWith("/onboarding/");
 }
 
+function isPendingApprovalPath(pathname: string): boolean {
+  return pathname === "/pending-approval" || pathname.startsWith("/pending-approval/");
+}
+
 export async function proxy(request: NextRequest) {
   let response: NextResponse;
   let user: { id: string } | null = null;
   let isOnboarded = false;
+  let isApproved = false;
 
   try {
     const result = await updateSession(request);
     response = result.supabaseResponse;
     user = result.user;
     isOnboarded = result.isOnboarded;
+    isApproved = result.isApproved;
   } catch (err) {
     console.error("[proxy] Error:", err);
     return NextResponse.next({ request });
@@ -65,23 +73,42 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated users on auth pages → dashboard
+  // Authenticated users on auth pages → appropriate destination
   if (isAuthPath(pathname) && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    if (!isOnboarded) {
+      url.pathname = "/onboarding";
+    } else if (!isApproved) {
+      url.pathname = "/pending-approval";
+    } else {
+      url.pathname = "/dashboard";
+    }
     return NextResponse.redirect(url);
   }
 
   // Authenticated but not yet onboarded → force onboarding
-  // Allow /onboarding itself through to prevent an infinite redirect loop.
   if (user && !isOnboarded && isProtectedPath(pathname) && !isOnboardingPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/onboarding";
     return NextResponse.redirect(url);
   }
 
-  // Onboarded users who navigate to /onboarding → send to dashboard
+  // Onboarded but pending approval → hold at /pending-approval
+  if (user && isOnboarded && !isApproved && isProtectedPath(pathname) && !isPendingApprovalPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/pending-approval";
+    return NextResponse.redirect(url);
+  }
+
+  // Onboarded users who navigate to /onboarding → send to appropriate destination
   if (user && isOnboarded && isOnboardingPath(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = isApproved ? "/dashboard" : "/pending-approval";
+    return NextResponse.redirect(url);
+  }
+
+  // Approved users who navigate to /pending-approval → send to dashboard
+  if (user && isOnboarded && isApproved && isPendingApprovalPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

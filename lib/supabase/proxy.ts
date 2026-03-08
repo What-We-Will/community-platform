@@ -9,6 +9,11 @@ const LAST_SEEN_THRESHOLD_MS = 1 * 60 * 1000; // 1 minute — keep status accura
 // per browser session, or after cookie expiry).
 export const ONBOARDED_COOKIE = "profile_onboarded";
 
+// Caches approval_status=approved in a short-lived cookie (5 min TTL).
+// Short TTL ensures approval takes effect within 5 minutes of admin action.
+export const APPROVED_COOKIE = "profile_approved";
+const APPROVED_COOKIE_TTL = 5 * 60; // 5 minutes
+
 export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey =
@@ -20,6 +25,7 @@ export async function updateSession(request: NextRequest) {
       supabaseResponse: NextResponse.next({ request }),
       user: null,
       isOnboarded: false,
+      isApproved: false,
     };
   }
 
@@ -55,26 +61,39 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   let isOnboarded = false;
+  let isApproved = false;
 
   if (user) {
-    // ── Onboarding status ──────────────────────────────────────────────────
-    // Check the cookie cache first to avoid a DB round-trip on every request.
-    if (request.cookies.get(ONBOARDED_COOKIE)?.value === "1") {
+    // ── Onboarding + approval status ──────────────────────────────────────────
+    // Fast path: both cookies present — skip DB round-trip.
+    const onboardedCookie = request.cookies.get(ONBOARDED_COOKIE)?.value;
+    const approvedCookie = request.cookies.get(APPROVED_COOKIE)?.value;
+
+    if (onboardedCookie === "1" && approvedCookie === "1") {
       isOnboarded = true;
+      isApproved = true;
     } else {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("is_onboarded, last_seen_at")
+        .select("is_onboarded, last_seen_at, approval_status")
         .eq("id", user.id)
         .maybeSingle();
 
       isOnboarded = profile?.is_onboarded ?? false;
+      isApproved = profile?.approval_status === "approved";
 
       if (isOnboarded) {
-        // Cache so future requests skip the DB query (30-day TTL)
         supabaseResponse.cookies.set(ONBOARDED_COOKIE, "1", {
           path: "/",
           maxAge: 60 * 60 * 24 * 30,
+          sameSite: "lax",
+        });
+      }
+
+      if (isApproved) {
+        supabaseResponse.cookies.set(APPROVED_COOKIE, "1", {
+          path: "/",
+          maxAge: APPROVED_COOKIE_TTL,
           sameSite: "lax",
         });
       }
@@ -88,7 +107,7 @@ export async function updateSession(request: NextRequest) {
       now - parseInt(lastSeenCookie, 10) > LAST_SEEN_THRESHOLD_MS;
 
     if (shouldUpdate) {
-      void supabase
+      await supabase
         .from("profiles")
         .update({ last_seen_at: new Date().toISOString() })
         .eq("id", user.id);
@@ -100,5 +119,5 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  return { supabaseResponse, user, isOnboarded };
+  return { supabaseResponse, user, isOnboarded, isApproved };
 }

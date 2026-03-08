@@ -91,7 +91,7 @@ export default function OnboardingForm({
 
       // Full-page redirect so the next response sets the onboarded cookie and
       // session is consistent (avoids stuck state when the action response is lost in prod).
-      window.location.href = "/dashboard";
+      window.location.href = "/pending-approval";
       return;
     } catch {
       clearTimeout(timeoutId);
@@ -193,14 +193,20 @@ export default function OnboardingForm({
             </Label>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+            <Label htmlFor="linkedin_url">
+              LinkedIn URL <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="linkedin_url"
               type="url"
               placeholder="https://linkedin.com/in/username"
               value={linkedinUrl}
               onChange={(e) => setLinkedinUrl(e.target.value)}
+              required
             />
+            <p className="text-xs text-muted-foreground">
+              Required to verify your background as a tech worker
+            </p>
           </div>
         </CardContent>
         <CardFooter>

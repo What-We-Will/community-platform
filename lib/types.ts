@@ -1,4 +1,5 @@
 export type ProfileRole = "member" | "admin" | "moderator";
+export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface Profile {
   id: string;
@@ -15,6 +16,7 @@ export interface Profile {
   portfolio_url: string | null;
   timezone: string;
   is_onboarded: boolean;
+  approval_status: ApprovalStatus;
   role: ProfileRole;
   last_seen_at: string | null;
   created_at: string;

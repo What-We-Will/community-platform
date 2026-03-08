@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import nodemailer from "nodemailer";
 
 export type OnboardingResult = { error?: string };
 
@@ -27,6 +28,10 @@ export async function completeOnboarding(
     return { error: "You must be signed in to complete onboarding." };
   }
 
+  if (!data.linkedin_url?.trim()) {
+    return { error: "LinkedIn URL is required to verify your background." };
+  }
+
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
@@ -39,6 +44,7 @@ export async function completeOnboarding(
       open_to_referrals: data.open_to_referrals,
       linkedin_url: data.linkedin_url || null,
       is_onboarded: true,
+      approval_status: "pending",
     },
     { onConflict: "id" }
   );
@@ -47,6 +53,57 @@ export async function completeOnboarding(
     return { error: error.message };
   }
 
+  // Notify admin that a new account needs review
+  await notifyAdminOfNewApplication({
+    displayName: data.display_name,
+    linkedinUrl: data.linkedin_url,
+    userEmail: user.email ?? "unknown",
+  });
+
   revalidatePath("/", "layout");
   return {};
+}
+
+async function notifyAdminOfNewApplication({
+  displayName,
+  linkedinUrl,
+  userEmail,
+}: {
+  displayName: string;
+  linkedinUrl: string;
+  userEmail: string;
+}) {
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
+  const adminEmail = process.env.ADMIN_EMAIL ?? gmailUser;
+
+  if (!gmailUser || !gmailPass || !adminEmail) return;
+
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: gmailUser, pass: gmailPass },
+    });
+
+    const approvalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://community-platform-x74m.vercel.app"}/admin/approvals`;
+
+    await transporter.sendMail({
+      from: `What We Will <${gmailUser}>`,
+      to: adminEmail,
+      subject: `[New Application] ${displayName} is requesting membership`,
+      html: `
+        <h2>New Membership Application</h2>
+        <p><strong>Name:</strong> ${displayName}</p>
+        <p><strong>Email:</strong> ${userEmail}</p>
+        <p><strong>LinkedIn:</strong> <a href="${linkedinUrl}">${linkedinUrl}</a></p>
+        <br />
+        <a href="${approvalUrl}" style="background:#000;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
+          Review in Admin Panel
+        </a>
+      `,
+    });
+  } catch (err) {
+    // Non-critical — log but don't fail the onboarding
+    console.error("[onboarding] Failed to notify admin:", err);
+  }
 }
