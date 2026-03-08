@@ -287,60 +287,118 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
             </div>
           </div>
 
-          {/* Upcoming Interviews */}
+          {/* Interviews */}
           {isOwn && (
             <div className="space-y-3 rounded-xl border p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-sm font-semibold">
-                  <CalendarDays className="size-3.5 text-muted-foreground" />
-                  Upcoming Interviews
-                </div>
-                {!addingInterview && (
-                  <Button
-                    variant="ghost" size="sm"
-                    className="h-7 gap-1 text-xs"
-                    onClick={() => setAddingInterview(true)}
-                  >
-                    <Plus className="size-3.5" /> Schedule
-                  </Button>
-                )}
-              </div>
+              {/* Header */}
+              {(() => {
+                const todayStr = new Date().toISOString().split("T")[0];
+                const sorted = [...interviews].sort(
+                  (a, b) =>
+                    a.interview_date.localeCompare(b.interview_date) ||
+                    (a.interview_time ?? "").localeCompare(b.interview_time ?? "")
+                );
+                const upcomingIvs = sorted.filter((iv) => iv.interview_date >= todayStr);
+                const pastIvs = sorted.filter((iv) => iv.interview_date < todayStr);
 
-              {/* Existing interviews */}
-              {interviews.length === 0 && !addingInterview && (
-                <p className="text-xs text-muted-foreground italic">
-                  No interviews scheduled. Click Schedule to add one.
-                </p>
-              )}
-              {[...interviews]
-                .sort((a, b) => a.interview_date.localeCompare(b.interview_date) || (a.interview_time ?? "").localeCompare(b.interview_time ?? ""))
-                .map((iv) => (
-                  <div key={iv.id} className="flex items-start justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2.5">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium leading-snug">{iv.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <CalendarDays className="size-3 shrink-0" />
-                        {formatDate(iv.interview_date)}
-                        {iv.interview_time && (
-                          <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>
+                function renderInterview(iv: (typeof interviews)[number], isPast: boolean) {
+                  const isToday = iv.interview_date === todayStr;
+                  return (
+                    <div
+                      key={iv.id}
+                      className={`flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 ${
+                        isToday
+                          ? "bg-emerald-50 border border-emerald-200"
+                          : isPast
+                          ? "bg-muted/20"
+                          : "bg-muted/40"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className={`text-sm font-medium leading-snug ${isPast && !isToday ? "text-muted-foreground" : ""}`}>
+                            {iv.title}
+                          </p>
+                          {isToday && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+                              Today
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                          <CalendarDays className="size-3 shrink-0" />
+                          {formatDate(iv.interview_date)}
+                          {iv.interview_time && (
+                            <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>
+                          )}
+                        </p>
+                        {iv.notes && (
+                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>
                         )}
-                      </p>
-                      {iv.notes && (
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>
+                      </div>
+                      <Button
+                        variant="ghost" size="icon"
+                        className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteInterview(iv.id)}
+                        disabled={deletingInterviewId === iv.id}
+                      >
+                        {deletingInterviewId === iv.id
+                          ? <Loader2 className="size-3.5 animate-spin" />
+                          : <Trash2 className="size-3.5" />}
+                      </Button>
+                    </div>
+                  );
+                }
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold">
+                        <CalendarDays className="size-3.5 text-muted-foreground" />
+                        Interviews
+                        {upcomingIvs.length > 0 && (
+                          <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+                            {upcomingIvs.length} upcoming
+                          </span>
+                        )}
+                      </div>
+                      {!addingInterview && (
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-7 gap-1 text-xs"
+                          onClick={() => setAddingInterview(true)}
+                        >
+                          <Plus className="size-3.5" /> Schedule
+                        </Button>
                       )}
                     </div>
-                    <Button
-                      variant="ghost" size="icon"
-                      className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDeleteInterview(iv.id)}
-                      disabled={deletingInterviewId === iv.id}
-                    >
-                      {deletingInterviewId === iv.id
-                        ? <Loader2 className="size-3.5 animate-spin" />
-                        : <Trash2 className="size-3.5" />}
-                    </Button>
-                  </div>
-                ))}
+
+                    {interviews.length === 0 && !addingInterview && (
+                      <p className="text-xs text-muted-foreground italic">
+                        No interviews scheduled. Click Schedule to add one.
+                      </p>
+                    )}
+
+                    {/* Upcoming */}
+                    {upcomingIvs.length > 0 && (
+                      <div className="space-y-1.5">
+                        {pastIvs.length > 0 && (
+                          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Upcoming</p>
+                        )}
+                        {upcomingIvs.map((iv) => renderInterview(iv, false))}
+                      </div>
+                    )}
+
+                    {/* Past */}
+                    {pastIvs.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Past</p>
+                        {pastIvs.map((iv) => renderInterview(iv, true))}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
 
               {/* Add interview form */}
               {addingInterview && (
