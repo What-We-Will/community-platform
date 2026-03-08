@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -14,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowLeft, Video, UsersRound } from "lucide-react";
+import { ArrowLeft, Video, UsersRound, Archive } from "lucide-react";
 import { getVideoRoomName } from "@/lib/utils/video";
 import { VideoCallModal } from "@/components/video/VideoCallModal";
 import { MessageBubble } from "./MessageBubble";
@@ -84,6 +85,7 @@ export function ConversationView({
   readOnlyFooter,
 }: ConversationViewProps) {
   const supabase = createClient();
+  const router = useRouter();
 
   // Build a lookup map from all known participants
   const participantMap = useRef(
@@ -106,6 +108,7 @@ export function ConversationView({
   const [videoRoomName, setVideoRoomName] = useState<string | null>(null);
   const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
   // Poll other user's last_seen_at so status stays current while in chat
   const [otherUserLastSeenAt, setOtherUserLastSeenAt] = useState<string | null>(
     otherUser?.last_seen_at ?? null
@@ -354,6 +357,17 @@ export function ConversationView({
     setIsSending(false);
   }
 
+  async function handleArchive() {
+    setIsArchiving(true);
+    await supabase
+      .from("conversation_participants")
+      .update({ archived: true })
+      .eq("conversation_id", conversationId)
+      .eq("user_id", currentUser.id);
+    router.push("/messages");
+    router.refresh();
+  }
+
   async function handleStartVideoCall() {
     const type = isGroup ? "group" : "dm";
     const roomName = getVideoRoomName({ type, id: conversationId });
@@ -445,6 +459,21 @@ export function ConversationView({
               </Tooltip>
             </TooltipProvider>
           )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleArchive}
+                  disabled={isArchiving}
+                >
+                  <Archive className="size-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Archive conversation</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       );
     }
@@ -507,6 +536,21 @@ export function ConversationView({
             </Tooltip>
           </TooltipProvider>
         )}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleArchive}
+                disabled={isArchiving}
+              >
+                <Archive className="size-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Archive conversation</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
     );
   };

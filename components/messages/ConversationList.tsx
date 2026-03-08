@@ -11,7 +11,13 @@ import { formatRelativeTime } from "@/lib/utils/time";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UsersRound, Video } from "lucide-react";
+import { UsersRound, Video, Archive } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { NewMessageDialog } from "./NewMessageDialog";
 import type { ConversationWithDetails, Message } from "@/lib/types";
 
@@ -109,6 +115,22 @@ export function ConversationList({
     };
   }, [currentUserId, pathname]);
 
+  async function handleArchive(e: React.MouseEvent, conversationId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    const supabase = createClient();
+    await supabase
+      .from("conversation_participants")
+      .update({ archived: true })
+      .eq("conversation_id", conversationId)
+      .eq("user_id", currentUserId);
+    setConversations((prev) => prev.filter((c) => c.conversation.id !== conversationId));
+    if (pathname === `/messages/${conversationId}`) {
+      router.push("/messages");
+    }
+    router.refresh();
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -136,44 +158,152 @@ export function ConversationList({
               if (isGroupConv) {
                 const videoRoom = getVideoRoomFromMessage(lastMessage);
                 return (
-                  <Link
+                  <div
                     key={conversation.id}
-                    href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
                     className={cn(
-                      "flex items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent",
+                      "flex items-center gap-1 border-b px-4 py-3 transition-colors hover:bg-accent",
                       isActive && "bg-accent"
                     )}
                   >
-                    {/* Group icon avatar */}
-                    <div className="relative shrink-0">
-                      <div
-                        className={cn(
-                          "flex size-10 items-center justify-center rounded-full text-white text-sm font-semibold",
-                          getAvatarColor(groupName ?? "Group")
-                        )}
-                      >
-                        <UsersRound className="size-4" />
+                    <Link
+                      href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
+                      className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
+                    >
+                      {/* Group icon avatar */}
+                      <div className="relative shrink-0">
+                        <div
+                          className={cn(
+                            "flex size-10 items-center justify-center rounded-full text-white text-sm font-semibold",
+                            getAvatarColor(groupName ?? "Group")
+                          )}
+                        >
+                          <UsersRound className="size-4" />
+                        </div>
                       </div>
-                    </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <p
+                              className={cn(
+                                "text-sm truncate",
+                                hasUnread ? "font-semibold" : "font-medium"
+                              )}
+                            >
+                              {groupName ?? "Group"}
+                            </p>
+                            <Badge
+                              variant="secondary"
+                              className="shrink-0 text-[10px] px-1.5 py-0 h-4"
+                            >
+                              Group
+                            </Badge>
+                          </div>
+                          {lastMessage && (
+                            <span className="text-[11px] text-muted-foreground shrink-0">
+                              {formatRelativeTime(lastMessage.created_at)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 mt-0.5">
+                          <p
+                            className={cn(
+                              "text-xs truncate",
+                              hasUnread
+                                ? "font-medium text-foreground"
+                                : "text-muted-foreground"
+                            )}
+                          >
+                            {lastMessage
+                              ? lastMessage.message_type === "system"
+                                ? lastMessage.content
+                                : lastMessage.message_type === "video_invite"
+                                  ? lastMessage.sender_id === currentUserId
+                                    ? "You started a video call"
+                                    : "Video call started"
+                                  : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
+                              : "No messages yet"}
+                          </p>
+                          {videoRoom ? (
+                            <Button
+                              size="sm"
+                              variant="default"
+                              className="shrink-0 h-6 gap-1 text-xs"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                router.push(`/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}`);
+                              }}
+                            >
+                              <Video className="size-3" />
+                              Join call
+                            </Button>
+                          ) : hasUnread ? (
+                            <Badge
+                              variant="destructive"
+                              className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
+                            >
+                              {unreadCount > 99 ? "99+" : unreadCount}
+                            </Badge>
+                          ) : null}
+                        </div>
+                      </div>
+                    </Link>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            onClick={(e) => handleArchive(e, conversation.id)}
+                          >
+                            <Archive className="size-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Archive conversation</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                );
+              }
+
+              // DM row
+              const otherUser = participants[0];
+              if (!otherUser) return null;
+              const onlineStatus = getOnlineStatus(otherUser.last_seen_at);
+              const videoRoom = getVideoRoomFromMessage(lastMessage);
+
+              return (
+                <div
+                  key={conversation.id}
+                  className={cn(
+                    "flex items-center gap-1 border-b px-4 py-3 transition-colors hover:bg-accent",
+                    isActive && "bg-accent"
+                  )}
+                >
+                  <Link
+                    href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
+                    className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
+                  >
+                    <UserAvatar
+                      avatarUrl={otherUser.avatar_url ?? null}
+                      displayName={otherUser.display_name}
+                      size="md"
+                      showStatus
+                      status={onlineStatus}
+                    />
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <p
-                            className={cn(
-                              "text-sm truncate",
-                              hasUnread ? "font-semibold" : "font-medium"
-                            )}
-                          >
-                            {groupName ?? "Group"}
-                          </p>
-                          <Badge
-                            variant="secondary"
-                            className="shrink-0 text-[10px] px-1.5 py-0 h-4"
-                          >
-                            Group
-                          </Badge>
-                        </div>
+                        <p
+                          className={cn(
+                            "text-sm truncate",
+                            hasUnread ? "font-semibold" : "font-medium"
+                          )}
+                        >
+                          {otherUser.display_name}
+                        </p>
                         {lastMessage && (
                           <span className="text-[11px] text-muted-foreground shrink-0">
                             {formatRelativeTime(lastMessage.created_at)}
@@ -191,13 +321,11 @@ export function ConversationList({
                           )}
                         >
                           {lastMessage
-                            ? lastMessage.message_type === "system"
-                              ? lastMessage.content
-                              : lastMessage.message_type === "video_invite"
-                                ? lastMessage.sender_id === currentUserId
-                                  ? "You started a video call"
-                                  : "Video call started"
-                                : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
+                            ? lastMessage.message_type === "video_invite"
+                              ? lastMessage.sender_id === currentUserId
+                                ? "You started a video call"
+                                : "Video call started"
+                              : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
                             : "No messages yet"}
                         </p>
                         {videoRoom ? (
@@ -224,90 +352,22 @@ export function ConversationList({
                       </div>
                     </div>
                   </Link>
-                );
-              }
-
-              // DM row
-              const otherUser = participants[0];
-              if (!otherUser) return null;
-              const onlineStatus = getOnlineStatus(otherUser.last_seen_at);
-              const videoRoom = getVideoRoomFromMessage(lastMessage);
-
-              return (
-                <Link
-                  key={conversation.id}
-                  href={videoRoom ? `/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}` : `/messages/${conversation.id}`}
-                  className={cn(
-                    "flex items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent",
-                    isActive && "bg-accent"
-                  )}
-                >
-                  <UserAvatar
-                    avatarUrl={otherUser.avatar_url ?? null}
-                    displayName={otherUser.display_name}
-                    size="md"
-                    showStatus
-                    status={onlineStatus}
-                  />
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p
-                        className={cn(
-                          "text-sm truncate",
-                          hasUnread ? "font-semibold" : "font-medium"
-                        )}
-                      >
-                        {otherUser.display_name}
-                      </p>
-                      {lastMessage && (
-                        <span className="text-[11px] text-muted-foreground shrink-0">
-                          {formatRelativeTime(lastMessage.created_at)}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2 mt-0.5">
-                      <p
-                        className={cn(
-                          "text-xs truncate",
-                          hasUnread
-                            ? "font-medium text-foreground"
-                            : "text-muted-foreground"
-                        )}
-                      >
-                        {lastMessage
-                          ? lastMessage.message_type === "video_invite"
-                            ? lastMessage.sender_id === currentUserId
-                              ? "You started a video call"
-                              : "Video call started"
-                            : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
-                          : "No messages yet"}
-                      </p>
-                      {videoRoom ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
                         <Button
-                          size="sm"
-                          variant="default"
-                          className="shrink-0 h-6 gap-1 text-xs"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            router.push(`/messages/${conversation.id}?videoRoom=${encodeURIComponent(videoRoom)}`);
-                          }}
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 shrink-0"
+                          onClick={(e) => handleArchive(e, conversation.id)}
                         >
-                          <Video className="size-3" />
-                          Join call
+                          <Archive className="size-4" />
                         </Button>
-                      ) : hasUnread ? (
-                        <Badge
-                          variant="destructive"
-                          className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
-                        >
-                          {unreadCount > 99 ? "99+" : unreadCount}
-                        </Badge>
-                      ) : null}
-                    </div>
-                  </div>
-                </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>Archive conversation</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               );
             }
           )

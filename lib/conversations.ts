@@ -19,7 +19,8 @@ export async function fetchRecentConversations(
   const { data: participations } = await supabase
     .from("conversation_participants")
     .select("conversation_id, last_read_at")
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .eq("archived", false);
 
   const conversations: ConversationWithDetails[] = [];
 
