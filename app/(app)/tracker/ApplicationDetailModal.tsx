@@ -290,75 +290,56 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
           {/* Interviews */}
           {isOwn && (
             <div className="space-y-3 rounded-xl border p-4">
-              {/* Header */}
               {(() => {
                 const todayStr = new Date().toISOString().split("T")[0];
-                const sorted = [...interviews].sort(
+
+                // Manually scheduled interviews
+                const sortedIvs = [...interviews].sort(
                   (a, b) =>
                     a.interview_date.localeCompare(b.interview_date) ||
                     (a.interview_time ?? "").localeCompare(b.interview_time ?? "")
                 );
-                const upcomingIvs = sorted.filter((iv) => iv.interview_date >= todayStr);
-                const pastIvs = sorted.filter((iv) => iv.interview_date < todayStr);
+                const upcomingIvs = sortedIvs.filter((iv) => iv.interview_date >= todayStr);
+                const pastIvs = sortedIvs.filter((iv) => iv.interview_date < todayStr);
 
-                function renderInterview(iv: (typeof interviews)[number], isPast: boolean) {
-                  const isToday = iv.interview_date === todayStr;
-                  return (
-                    <div
-                      key={iv.id}
-                      className={`flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 ${
-                        isToday
-                          ? "bg-emerald-50 border border-emerald-200"
-                          : isPast
-                          ? "bg-muted/20"
-                          : "bg-muted/40"
-                      }`}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className={`text-sm font-medium leading-snug ${isPast && !isToday ? "text-muted-foreground" : ""}`}>
-                            {iv.title}
-                          </p>
-                          {isToday && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
-                              Today
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                          <CalendarDays className="size-3 shrink-0" />
-                          {formatDate(iv.interview_date)}
-                          {iv.interview_time && (
-                            <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>
-                          )}
-                        </p>
-                        {iv.notes && (
-                          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost" size="icon"
-                        className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleDeleteInterview(iv.id)}
-                        disabled={deletingInterviewId === iv.id}
-                      >
-                        {deletingInterviewId === iv.id
-                          ? <Loader2 className="size-3.5 animate-spin" />
-                          : <Trash2 className="size-3.5" />}
-                      </Button>
-                    </div>
-                  );
-                }
+                // Auto-detected upcoming dates from the Stage Timeline
+                // (any status_date set to today or future that isn't already covered by a
+                //  manual interview on the same date with the same label)
+                const autoDetected = Object.entries(app.status_dates ?? {})
+                  .filter(([, date]) => date && date >= todayStr)
+                  .map(([statusKey, date]) => {
+                    const info = STATUS_MAP[statusKey];
+                    return info ? { statusKey, date, label: info.label } : null;
+                  })
+                  .filter((s): s is { statusKey: string; date: string; label: string } => s !== null)
+                  .sort((a, b) => a.date.localeCompare(b.date));
+
+                // Merge upcoming manual + auto-detected, sorted by date
+                type UpcomingItem =
+                  | { kind: "interview"; iv: (typeof interviews)[number] }
+                  | { kind: "stage"; statusKey: string; date: string; label: string };
+
+                const upcomingAll: UpcomingItem[] = [
+                  ...upcomingIvs.map((iv) => ({ kind: "interview" as const, iv })),
+                  ...autoDetected.map((s) => ({ kind: "stage" as const, ...s })),
+                ].sort((a, b) => {
+                  const da = a.kind === "interview" ? a.iv.interview_date : a.date;
+                  const db = b.kind === "interview" ? b.iv.interview_date : b.date;
+                  return da.localeCompare(db);
+                });
+
+                const totalUpcoming = upcomingAll.length;
 
                 return (
                   <>
+                    {/* Section header */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 text-sm font-semibold">
                         <CalendarDays className="size-3.5 text-muted-foreground" />
                         Interviews
-                        {upcomingIvs.length > 0 && (
+                        {totalUpcoming > 0 && (
                           <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                            {upcomingIvs.length} upcoming
+                            {totalUpcoming} upcoming
                           </span>
                         )}
                       </div>
@@ -373,27 +354,114 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                       )}
                     </div>
 
-                    {interviews.length === 0 && !addingInterview && (
+                    {interviews.length === 0 && autoDetected.length === 0 && !addingInterview && (
                       <p className="text-xs text-muted-foreground italic">
                         No interviews scheduled. Click Schedule to add one.
                       </p>
                     )}
 
-                    {/* Upcoming */}
-                    {upcomingIvs.length > 0 && (
+                    {/* Upcoming (manual + auto-detected from timeline) */}
+                    {upcomingAll.length > 0 && (
                       <div className="space-y-1.5">
                         {pastIvs.length > 0 && (
                           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Upcoming</p>
                         )}
-                        {upcomingIvs.map((iv) => renderInterview(iv, false))}
+                        {upcomingAll.map((item) => {
+                          if (item.kind === "interview") {
+                            const iv = item.iv;
+                            const isToday = iv.interview_date === todayStr;
+                            return (
+                              <div
+                                key={iv.id}
+                                className={`flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 ${
+                                  isToday ? "bg-emerald-50 border border-emerald-200" : "bg-muted/40"
+                                }`}
+                              >
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <p className="text-sm font-medium leading-snug">{iv.title}</p>
+                                    {isToday && (
+                                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Today</span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                    <CalendarDays className="size-3 shrink-0" />
+                                    {formatDate(iv.interview_date)}
+                                    {iv.interview_time && <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>}
+                                  </p>
+                                  {iv.notes && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>}
+                                </div>
+                                <Button
+                                  variant="ghost" size="icon"
+                                  className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                  onClick={() => handleDeleteInterview(iv.id)}
+                                  disabled={deletingInterviewId === iv.id}
+                                >
+                                  {deletingInterviewId === iv.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                                </Button>
+                              </div>
+                            );
+                          }
+
+                          // Auto-detected stage entry
+                          const stageInfo = STATUS_MAP[item.statusKey];
+                          const isToday = item.date === todayStr;
+                          return (
+                            <div
+                              key={`stage-${item.statusKey}`}
+                              className={`flex items-center gap-2 rounded-lg px-3 py-2.5 border border-dashed ${
+                                isToday ? "bg-emerald-50 border-emerald-200" : "bg-muted/20"
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <p className="text-sm font-medium leading-snug">{item.label}</p>
+                                  {isToday && (
+                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Today</span>
+                                  )}
+                                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${stageInfo?.bg ?? "bg-muted"}`}>
+                                    From timeline
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                  <CalendarDays className="size-3 shrink-0" />
+                                  {formatDate(item.date)}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
 
-                    {/* Past */}
+                    {/* Past manually scheduled interviews */}
                     {pastIvs.length > 0 && (
                       <div className="space-y-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Past</p>
-                        {pastIvs.map((iv) => renderInterview(iv, true))}
+                        {pastIvs.map((iv) => {
+                          const isToday = iv.interview_date === todayStr;
+                          return (
+                            <div key={iv.id} className="flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 bg-muted/20">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium leading-snug text-muted-foreground">{iv.title}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                  <CalendarDays className="size-3 shrink-0" />
+                                  {formatDate(iv.interview_date)}
+                                  {iv.interview_time && <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>}
+                                </p>
+                                {iv.notes && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>}
+                              </div>
+                              <Button
+                                variant="ghost" size="icon"
+                                className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteInterview(iv.id)}
+                                disabled={deletingInterviewId === iv.id}
+                              >
+                                {deletingInterviewId === iv.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                              </Button>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </>
