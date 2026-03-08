@@ -5,7 +5,7 @@ export function OurMission() {
       className="scroll-mt-20 bg-dark-blue px-4 py-16 text-white md:py-24"
     >
       <div className="mx-auto max-w-5xl">
-        <h2 className="text-center text-3xl font-sans leading-tight tracking-tight sm:text-4xl md:text-5xl">
+        <h2 className="text-center text-3xl font-sans font-semibold leading-tight tracking-tight sm:text-4xl md:text-5xl">
           Our mission is to <span className="text-primary-orange">center humans</span> 
           <br />
           in the future of work
