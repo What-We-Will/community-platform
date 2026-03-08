@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Star, ChevronDown, ChevronRight, Trash2, Plus, ExternalLink,
   Loader2, GraduationCap, PlaySquare, BookOpen, Route, BookMarked,
-  ListTodo, Users2, X,
+  ListTodo, Users2, X, ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,12 @@ const TRACKER_STATUSES: { value: TrackerStatus; label: string; color: string; bg
   { value: "in_progress",  label: "In Progress",   color: "text-amber-700", bg: "bg-amber-100 border-amber-200", colBg: "bg-amber-50/60" },
   { value: "completed",    label: "Completed",     color: "text-emerald-700", bg: "bg-emerald-100 border-emerald-200", colBg: "bg-emerald-50/60" },
 ];
+
+const STATUS_IDX: Record<TrackerStatus, number> = {
+  want_to_take: 0,
+  in_progress: 1,
+  completed: 2,
+};
 
 // ── YouTube helper ────────────────────────────────────────────────────────────
 
@@ -204,45 +211,67 @@ function ResourceTrackerFooter({
           )}
 
           {studyGroups.map((g) => (
-            <div key={g.id} className="flex items-center justify-between gap-2 rounded-md border bg-card px-2.5 py-1.5">
-              <div className="min-w-0">
-                <p className="text-xs font-medium truncate">{g.name}</p>
+            <div key={g.id} className="rounded-md border bg-card px-2.5 py-2 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium truncate">{g.name}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {g.member_count} member{g.member_count !== 1 ? "s" : ""}
+                    {g.creator && ` · by ${g.creator.display_name}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {g.group_slug && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 text-[11px] px-2 gap-1"
+                      asChild
+                    >
+                      <Link href={`/groups/${g.group_slug}`}>
+                        <ArrowUpRight className="size-3" /> Open
+                      </Link>
+                    </Button>
+                  )}
+                  {!g.is_member ? (
+                    <Button
+                      size="sm"
+                      className="h-6 text-[11px] px-2"
+                      onClick={() => handleJoin(g.id)}
+                      disabled={joiningId === g.id}
+                    >
+                      {joiningId === g.id ? <Loader2 className="size-3 animate-spin" /> : "Join"}
+                    </Button>
+                  ) : (
+                    <button
+                      onClick={() => handleLeave(g.id)}
+                      disabled={leavingId === g.id}
+                      className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
+                    >
+                      {leavingId === g.id ? "Leaving…" : "Leave"}
+                    </button>
+                  )}
+                  {(isPlatformAdmin || g.created_by === currentUserId) && (
+                    <button
+                      onClick={() => handleDeleteGroup(g.id)}
+                      disabled={deletingGroupId === g.id}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      {deletingGroupId === g.id
+                        ? <Loader2 className="size-3 animate-spin" />
+                        : <X className="size-3" />}
+                    </button>
+                  )}
+                </div>
+              </div>
+              {g.group_slug && g.is_member && (
                 <p className="text-[10px] text-muted-foreground">
-                  {g.member_count} member{g.member_count !== 1 ? "s" : ""}
-                  {g.creator && ` · by ${g.creator.display_name}`}
+                  Chat, schedule meetings, and share notes in the group →{" "}
+                  <Link href={`/groups/${g.group_slug}`} className="text-primary underline underline-offset-2 hover:text-primary/80">
+                    /groups/{g.group_slug}
+                  </Link>
                 </p>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                {g.is_member ? (
-                  <button
-                    onClick={() => handleLeave(g.id)}
-                    disabled={leavingId === g.id}
-                    className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
-                  >
-                    {leavingId === g.id ? "Leaving…" : "Leave"}
-                  </button>
-                ) : (
-                  <Button
-                    size="sm"
-                    className="h-6 text-[11px] px-2"
-                    onClick={() => handleJoin(g.id)}
-                    disabled={joiningId === g.id}
-                  >
-                    {joiningId === g.id ? <Loader2 className="size-3 animate-spin" /> : "Join"}
-                  </Button>
-                )}
-                {(isPlatformAdmin || g.created_by === currentUserId) && (
-                  <button
-                    onClick={() => handleDeleteGroup(g.id)}
-                    disabled={deletingGroupId === g.id}
-                    className="text-muted-foreground hover:text-destructive transition-colors"
-                  >
-                    {deletingGroupId === g.id
-                      ? <Loader2 className="size-3 animate-spin" />
-                      : <X className="size-3" />}
-                  </button>
-                )}
-              </div>
+              )}
             </div>
           ))}
 

@@ -299,6 +299,61 @@ export async function inviteMemberAction(
   }
 }
 
+// ─── Group Notes ──────────────────────────────────────────────────────────────
+
+export async function addGroupNoteAction(
+  groupId: string,
+  title: string,
+  content: string,
+): Promise<{ error?: string; noteId?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data, error } = await supabase
+    .from("group_notes")
+    .insert({ group_id: groupId, created_by: user.id, title: title.trim() || "Untitled Note", content })
+    .select("id")
+    .single();
+  if (error) return { error: error.message };
+  revalidatePath(`/groups/[slug]`, "page");
+  return { noteId: data.id };
+}
+
+export async function updateGroupNoteAction(
+  noteId: string,
+  title: string,
+  content: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("group_notes")
+    .update({ title: title.trim() || "Untitled Note", content, updated_at: new Date().toISOString() })
+    .eq("id", noteId);
+  if (error) return { error: error.message };
+  revalidatePath(`/groups/[slug]`, "page");
+  return {};
+}
+
+export async function deleteGroupNoteAction(
+  noteId: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("group_notes")
+    .delete()
+    .eq("id", noteId);
+  if (error) return { error: error.message };
+  revalidatePath(`/groups/[slug]`, "page");
+  return {};
+}
+
 // ─── Update group settings (admin) ───────────────────────────────────────────
 
 export async function updateGroupSettingsAction(

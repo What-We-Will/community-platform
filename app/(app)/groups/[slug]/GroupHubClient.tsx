@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { NotebookPen, Video, Loader2, LogOut, Settings, Archive, Calendar, Plus, Star } from "lucide-react";
+import { NotebookPen, Video, Loader2, LogOut, Settings, Archive, Calendar, Plus, Star, Pencil, Trash2, Check, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,10 +30,13 @@ import {
   updateMemberRoleAction,
   removeMemberAction,
   updateGroupSettingsAction,
+  addGroupNoteAction,
+  updateGroupNoteAction,
+  deleteGroupNoteAction,
 } from "@/app/(app)/groups/actions";
 import { JoinRequestsPanel } from "@/components/groups/JoinRequestsPanel";
 import { EventCard } from "@/components/events/EventCard";
-import type { Group, Profile, GroupMember, MessageWithSender, GroupJoinRequestWithProfile } from "@/lib/types";
+import type { Group, Profile, GroupMember, MessageWithSender, GroupJoinRequestWithProfile, GroupNote } from "@/lib/types";
 
 interface GroupHubClientProps {
   group: Group;
@@ -47,6 +50,7 @@ interface GroupHubClientProps {
   upcomingEvents: Array<Record<string, unknown>>;
   eventRsvpCounts: Record<string, { going: number; maybe: number; declined: number }>;
   eventUserRsvp: Record<string, { status: string }>;
+  initialNotes: GroupNote[];
 }
 
 export function GroupHubClient({
@@ -61,12 +65,25 @@ export function GroupHubClient({
   upcomingEvents,
   eventRsvpCounts,
   eventUserRsvp,
+  initialNotes,
 }: GroupHubClientProps) {
   const router = useRouter();
   const [joining, setJoining] = useState(false);
   const [leavingOpen, setLeavingOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Notes state
+  const [notes, setNotes] = useState<GroupNote[]>(initialNotes);
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
+  const [deletingNoteId, setDeletingNoteId] = useState<string | null>(null);
+  const [addingNote, setAddingNote] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState("");
+  const [newNoteContent, setNewNoteContent] = useState("");
   const [groupName, setGroupName] = useState(group.name);
   const [groupDescription, setGroupDescription] = useState(group.description ?? "");
   const [groupSlug, setGroupSlug] = useState(group.slug);
@@ -185,6 +202,50 @@ export function GroupHubClient({
     setSavingSettings(false);
     if (result.error) setSettingsError(result.error);
     else router.refresh();
+  }
+
+  async function handleAddNote(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingNote(true);
+    const result = await addGroupNoteAction(group.id, newNoteTitle, newNoteContent);
+    setSavingNote(false);
+    if (!result.error) {
+      setNewNoteTitle("");
+      setNewNoteContent("");
+      setAddingNote(false);
+      router.refresh();
+    }
+  }
+
+  function startEditNote(note: GroupNote) {
+    setEditingNoteId(note.id);
+    setEditTitle(note.title);
+    setEditContent(note.content);
+    setExpandedNoteId(note.id);
+  }
+
+  async function handleSaveNote(noteId: string) {
+    setSavingNote(true);
+    const result = await updateGroupNoteAction(noteId, editTitle, editContent);
+    setSavingNote(false);
+    if (!result.error) {
+      setNotes((prev) =>
+        prev.map((n) =>
+          n.id === noteId
+            ? { ...n, title: editTitle.trim() || "Untitled Note", content: editContent, updated_at: new Date().toISOString() }
+            : n
+        )
+      );
+      setEditingNoteId(null);
+    }
+  }
+
+  async function handleDeleteNote(noteId: string) {
+    setDeletingNoteId(noteId);
+    await deleteGroupNoteAction(noteId);
+    setDeletingNoteId(null);
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    if (expandedNoteId === noteId) setExpandedNoteId(null);
   }
 
   async function handleToggleWorkingGroup(value: boolean) {
@@ -388,16 +449,171 @@ export function GroupHubClient({
           )}
         </TabsContent>
 
-        {/* Notes placeholder */}
-        <TabsContent value="notes" className="mt-4">
-          <div className="flex flex-col items-center justify-center gap-3 py-20 text-center text-muted-foreground">
-            <NotebookPen className="size-10 opacity-40" />
-            <p className="font-medium">Shared notes coming soon</p>
-            <p className="text-sm max-w-xs">
-              Collaborate on notes with your group members. This feature is
-              coming in a future update.
+        {/* Notes */}
+        <TabsContent value="notes" className="mt-4 space-y-4">
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {notes.length === 0 ? "No notes yet." : `${notes.length} note${notes.length !== 1 ? "s" : ""}`}
             </p>
+            {isMember && !addingNote && (
+              <Button size="sm" onClick={() => setAddingNote(true)} className="gap-1.5">
+                <Plus className="size-4" /> New Note
+              </Button>
+            )}
           </div>
+
+          {/* New note form */}
+          {addingNote && (
+            <form
+              onSubmit={handleAddNote}
+              className="rounded-lg border bg-card p-4 space-y-3"
+            >
+              <input
+                autoFocus
+                value={newNoteTitle}
+                onChange={(e) => setNewNoteTitle(e.target.value)}
+                placeholder="Note title…"
+                className="w-full text-sm font-medium bg-transparent border-0 border-b pb-1 focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+              />
+              <textarea
+                value={newNoteContent}
+                onChange={(e) => setNewNoteContent(e.target.value)}
+                placeholder="Write your note here…"
+                rows={5}
+                className="w-full text-sm bg-transparent resize-none focus:outline-none placeholder:text-muted-foreground"
+              />
+              <div className="flex items-center gap-2">
+                <Button type="submit" size="sm" disabled={savingNote || !newNoteContent.trim()}>
+                  {savingNote && <Loader2 className="mr-2 size-4 animate-spin" />}
+                  Save Note
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setAddingNote(false); setNewNoteTitle(""); setNewNoteContent(""); }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Empty state */}
+          {notes.length === 0 && !addingNote && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center text-muted-foreground">
+              <NotebookPen className="size-10 opacity-40" />
+              <p className="font-medium">No shared notes yet</p>
+              {isMember && (
+                <p className="text-sm max-w-xs">
+                  Create the first note for your group — meeting agendas, resources, action items, anything.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Notes list */}
+          <ul className="space-y-3">
+            {notes.map((note) => {
+              const isExpanded = expandedNoteId === note.id;
+              const isEditing = editingNoteId === note.id;
+              const canEdit = note.created_by === currentUser.id || isPlatformAdmin;
+
+              return (
+                <li key={note.id} className="rounded-lg border bg-card overflow-hidden">
+                  {/* Note header */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isEditing) setExpandedNoteId(isExpanded ? null : note.id);
+                    }}
+                    className="w-full flex items-start justify-between gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium leading-snug truncate">{note.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {note.author?.display_name ?? "A member"}
+                        {" · "}
+                        {new Date(note.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0 mt-0.5">
+                      {canEdit && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); startEditNote(note); }}
+                            className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteNote(note.id); }}
+                            disabled={deletingNoteId === note.id}
+                            className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            {deletingNoteId === note.id
+                              ? <Loader2 className="size-3.5 animate-spin" />
+                              : <Trash2 className="size-3.5" />}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Expanded content / editor */}
+                  {isExpanded && (
+                    <div className="border-t px-4 py-3 bg-muted/20">
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <input
+                            autoFocus
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder="Note title…"
+                            className="w-full text-sm font-medium bg-transparent border-0 border-b pb-1 focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+                          />
+                          <textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            rows={6}
+                            className="w-full text-sm bg-transparent resize-none focus:outline-none placeholder:text-muted-foreground"
+                          />
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveNote(note.id)}
+                              disabled={savingNote}
+                              className="gap-1.5"
+                            >
+                              {savingNote
+                                ? <Loader2 className="size-4 animate-spin" />
+                                : <Check className="size-4" />}
+                              Save
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setEditingNoteId(null)}
+                            >
+                              <X className="size-4 mr-1" /> Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                          {note.content || <span className="text-muted-foreground italic">No content.</span>}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </TabsContent>
 
         {/* Recordings placeholder */}

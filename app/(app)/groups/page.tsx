@@ -13,9 +13,11 @@ export default async function GroupsPage() {
   if (!user) redirect("/login");
 
   // ── Fetch all public groups sorted by member count ────────────────────────
+  // Exclude study groups (is_study_group = true) — those live in Learning.
   const { data: allGroups } = await supabase
     .from("groups")
     .select("*")
+    .neq("is_study_group", true)
     .order("created_at", { ascending: false });
 
   if (!allGroups || allGroups.length === 0) {

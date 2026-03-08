@@ -24,6 +24,8 @@ export interface StudyGroupRow {
   name: string;
   description: string | null;
   created_by: string;
+  group_id: string | null;
+  group_slug: string | null;
   member_count: number;
   is_member: boolean;
   creator: { id: string; display_name: string } | null;
@@ -63,7 +65,7 @@ export default async function GroupLearningPage() {
       .eq("user_id", user.id),
     supabase
       .from("learning_study_groups")
-      .select("id, resource_id, name, description, created_by, created_at, creator:created_by(id, display_name)")
+      .select("id, resource_id, name, description, created_by, created_at, group_id, group:group_id(id, slug), creator:created_by(id, display_name)")
       .order("created_at", { ascending: false }),
     supabase
       .from("learning_study_group_members")
@@ -119,12 +121,15 @@ export default async function GroupLearningPage() {
   // Normalize study groups
   const studyGroupsByResource: Record<string, StudyGroupRow[]> = {};
   for (const g of rawStudyGroups ?? []) {
+    const groupRaw = Array.isArray(g.group) ? (g.group[0] ?? null) : g.group;
     const row: StudyGroupRow = {
       id: g.id,
       resource_id: g.resource_id,
       name: g.name,
       description: g.description ?? null,
       created_by: g.created_by,
+      group_id: (groupRaw as { id: string; slug: string } | null)?.id ?? null,
+      group_slug: (groupRaw as { id: string; slug: string } | null)?.slug ?? null,
       member_count: membersByGroup[g.id]?.length ?? 0,
       is_member: myGroupIds.has(g.id),
       creator: (Array.isArray(g.creator) ? (g.creator[0] ?? null) : g.creator) as StudyGroupRow["creator"],

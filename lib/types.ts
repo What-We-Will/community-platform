@@ -110,11 +110,23 @@ export interface Group {
   is_discoverable: boolean;
   archived?: boolean;
   is_working_group?: boolean;
+  is_study_group?: boolean;
   max_members: number | null;
   created_by: string | null;
   conversation_id: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface GroupNote {
+  id: string;
+  group_id: string;
+  created_by: string;
+  title: string;
+  content: string;
+  updated_at: string;
+  created_at: string;
+  author: { id: string; display_name: string } | null;
 }
 
 export interface GroupMember {

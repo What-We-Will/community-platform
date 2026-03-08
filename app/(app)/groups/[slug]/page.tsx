@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { GroupHubClient } from "./GroupHubClient";
 import { PrivateGroupGate } from "./PrivateGroupGate";
 import { fetchUpcomingEvents } from "@/lib/events";
-import type { Profile, GroupMember, GroupJoinRequest, GroupJoinRequestWithProfile } from "@/lib/types";
+import type { Profile, GroupMember, GroupJoinRequest, GroupJoinRequestWithProfile, GroupNote } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -141,6 +141,21 @@ export default async function GroupHubPage({ params }: Props) {
     avatar_url: currentUserProfile?.avatar_url ?? null,
   };
 
+  // Fetch group notes (only for members)
+  let notes: GroupNote[] = [];
+  if (isMember) {
+    const { data: rawNotes } = await supabase
+      .from("group_notes")
+      .select("id, group_id, created_by, title, content, updated_at, created_at, author:created_by(id, display_name)")
+      .eq("group_id", group.id)
+      .order("updated_at", { ascending: false });
+
+    notes = (rawNotes ?? []).map((n) => ({
+      ...n,
+      author: (Array.isArray(n.author) ? (n.author[0] ?? null) : n.author) as GroupNote["author"],
+    }));
+  }
+
   let upcomingEvents: Awaited<ReturnType<typeof fetchUpcomingEvents>> = [];
   let eventRsvpCounts: Record<string, { going: number; maybe: number; declined: number }> = {};
   let eventUserRsvp: Record<string, { status: string }> = {};
@@ -184,6 +199,7 @@ export default async function GroupHubPage({ params }: Props) {
       upcomingEvents={upcomingEvents}
       eventRsvpCounts={eventRsvpCounts}
       eventUserRsvp={eventUserRsvp}
+      initialNotes={notes}
     />
   );
 }

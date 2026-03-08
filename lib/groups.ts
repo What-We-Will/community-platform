@@ -76,7 +76,8 @@ export async function createGroup(
   slug: string,
   isPrivate: boolean,
   createdBy: string,
-  isDiscoverable = true
+  isDiscoverable = true,
+  isStudyGroup = false
 ): Promise<Group> {
   const supabase = await createClient();
 
@@ -91,6 +92,7 @@ export async function createGroup(
     p_slug: slug,
     p_is_private: isPrivate,
     p_is_discoverable: isDiscoverable,
+    p_is_study_group: isStudyGroup,
   });
 
   if (error) {
@@ -105,6 +107,7 @@ export async function createGroup(
     avatar_url: null,
     is_private: isPrivate,
     is_discoverable: isDiscoverable,
+    is_study_group: isStudyGroup,
     archived: false,
     max_members: null,
     created_by: createdBy,
