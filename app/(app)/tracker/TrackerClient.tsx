@@ -225,7 +225,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               My Applications
             </h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+            <div className="flex gap-3 overflow-x-auto pb-3">
               {STATUSES.map((col) => {
                 // 'rejected' column also captures legacy 'withdrawn' entries
                 const colApps = myApps.filter((a) =>
@@ -234,7 +234,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                     : a.status === col.value
                 );
                 return (
-                  <div key={col.value} className="flex flex-col gap-2 min-w-0">
+                  <div key={col.value} className="flex flex-col gap-2 w-52 shrink-0">
                     <div className="flex items-center justify-between gap-1">
                       <span className={cn("text-xs font-semibold", col.color)}>{col.label}</span>
                       <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-1.5 py-0.5">
@@ -267,7 +267,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Shared by Community
               </h2>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+              <div className="flex gap-3 overflow-x-auto pb-3">
                 {STATUSES.map((col) => {
                   const colApps = sharedApps.filter((a) =>
                     col.value === "rejected"
@@ -276,7 +276,7 @@ export function TrackerClient({ applications, currentUserId }: Props) {
                   );
                   if (colApps.length === 0) return null;
                   return (
-                    <div key={col.value} className="flex flex-col gap-2 min-w-0">
+                    <div key={col.value} className="flex flex-col gap-2 w-52 shrink-0">
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn("text-xs font-semibold", col.color)}>{col.label}</span>
                         <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-1.5 py-0.5">
