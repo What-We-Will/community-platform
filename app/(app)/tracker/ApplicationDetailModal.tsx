@@ -554,12 +554,12 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
 
           {/* Community Notes — only available when linked to a job posting */}
           {isOwn && app.job_posting_id && (
-            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
-              <div className="flex items-center gap-1.5 text-sm font-semibold">
-                <Users className="size-3.5 text-primary" />
+            <div className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-800">
+                <Users className="size-3.5 text-emerald-600" />
                 Community Notes
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-emerald-700/70">
                 Saved here and posted on the job board listing for others to see.
               </p>
               <InlineEdit
