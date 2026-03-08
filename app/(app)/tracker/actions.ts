@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 
 export type ApplicationStatus =
   | "wishlist" | "applied" | "phone_screen"
-  | "interview" | "offer" | "rejected" | "withdrawn";
+  | "first_interview" | "second_interview" | "third_interview"
+  | "offer" | "rejected" | "withdrawn" | "interview";
 
 export interface JobApplicationInput {
   company: string;

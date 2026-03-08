@@ -149,7 +149,7 @@ function ApplicationCard({
 }
 
 export function TrackerClient({ applications, currentUserId }: Props) {
-  const [view, setView] = useState<"list" | "kanban">("list");
+  const [view, setView] = useState<"list" | "kanban">("kanban");
   const myApps = applications.filter((a) => a.user_id === currentUserId);
   const sharedApps = applications.filter((a) => a.user_id !== currentUserId && a.is_shared);
 
@@ -225,9 +225,14 @@ export function TrackerClient({ applications, currentUserId }: Props) {
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
               My Applications
             </h2>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
               {STATUSES.map((col) => {
-                const colApps = myApps.filter((a) => a.status === col.value);
+                // 'rejected' column also captures legacy 'withdrawn' entries
+                const colApps = myApps.filter((a) =>
+                  col.value === "rejected"
+                    ? a.status === "rejected" || a.status === "withdrawn"
+                    : a.status === col.value
+                );
                 return (
                   <div key={col.value} className="flex flex-col gap-2 min-w-0">
                     <div className="flex items-center justify-between gap-1">
@@ -262,9 +267,13 @@ export function TrackerClient({ applications, currentUserId }: Props) {
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 Shared by Community
               </h2>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
                 {STATUSES.map((col) => {
-                  const colApps = sharedApps.filter((a) => a.status === col.value);
+                  const colApps = sharedApps.filter((a) =>
+                    col.value === "rejected"
+                      ? a.status === "rejected" || a.status === "withdrawn"
+                      : a.status === col.value
+                  );
                   if (colApps.length === 0) return null;
                   return (
                     <div key={col.value} className="flex flex-col gap-2 min-w-0">
