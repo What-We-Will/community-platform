@@ -22,7 +22,7 @@ export function OurMission() {
             </p>
           </div>
           <div className="flex-1 md:pl-8">
-            <h3 className="border-l-4 border-light-green pl-4 text-lg font-semibold text-light-green">
+            <h3 className="border-l-4 border-accent-green pl-4 text-lg font-semibold text-accent-green">
               Worker Support
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">

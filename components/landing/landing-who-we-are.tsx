@@ -38,7 +38,7 @@ export function LandingWhoWeAre() {
             U.S. and Europe.
           </p>
           <p className="mt-5 max-w-3xl text-muted-foreground">
-            We believe collective power—not individual resilience alone—is
+            We believe collective power — not individual resilience alone — is
             necessary to navigate technological change. When workers organize
             together across sectors, we can build support systems, win policy
             protections, and shape the future of work.

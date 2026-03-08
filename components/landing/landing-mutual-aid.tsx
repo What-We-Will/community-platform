@@ -11,10 +11,9 @@ export function LandingMutualAid() {
         <p className="mt-4 text-sm leading-relaxed opacity-95 md:text-base">
           We are building a
           culture of sharing and reciprocity between members. The framework is
-          solidarity, not charity. In a moment of crisis, white collar workers
+          solidarity, not charity. In a moment of uncertainty, white collar workers
           historically excluded from traditional union representation are
-          recognizing our shared vulnerability as
-          workers.
+          recognizing our shared strength as workers.
         </p>
         <p className="mt-4 text-sm leading-relaxed opacity-95 md:text-base">
           The charity-based model assumes a one-directional flow of resources, but we are also powerful resources for one another. Mutual aid is a system of giving and receiving that builds meaningful

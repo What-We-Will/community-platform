@@ -19,14 +19,14 @@ const programs = [
       "We use WARN filings to reach workers early and connect them with job pipelines and collective action.",
     ],
     icon: HandHeart,
-    barClass: "bg-light-green",
+    barClass: "bg-accent-blue",
   },
   {
     title: "Workforce Development",
     description:
       "Project-based learning that connects workers with local businesses and government to build community technology while practicing forward-deployed AI skills. We also provide evidence-based resources and counseling for moves into healthcare, social servics, and skilled trades.",
     icon: Handshake,
-    barClass: "bg-accent-gold",
+    barClass: "bg-accent-green",
   },
   {
     title: "Research & Media",
@@ -35,7 +35,7 @@ const programs = [
       "We host discussion, evaluate policy proposals, and publish findings for broader public engagement.",
     ],
     icon: ThumbsUp,
-    barClass: "bg-[var(--dark-blue)]",
+    barClass: "bg-accent-gold",
   },
   {
     title: "Organizing & Advocacy",
@@ -48,7 +48,7 @@ const programs = [
 
 export function Programs() {
   return (
-    <section id="programs" className="scroll-mt-20 bg-warm-beige px-4 py-16 md:py-24">
+    <section id="programs" className="scroll-mt-20 bg-muted px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
         <h2 className="text-center text-dark-blue font-bebas text-5xl">
           Our Core Programs

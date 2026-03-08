@@ -19,9 +19,8 @@ export function LandingNav({ user }: { user?: User | null }) {
           <Image
             src="/images/logo-mark.svg"
             alt="What We Will logo"
-            width={50}
-            height={50}
-            className="w-12"
+            width={40}
+            height={40}
             priority
           />
           <span className="font-bebas text-2xl md:text-3xl">
@@ -32,24 +31,25 @@ export function LandingNav({ user }: { user?: User | null }) {
         <div className="flex items-center gap-4">
           {/* Desktop nav links */}
           <nav className="hidden items-center gap-8 md:flex md:order-1">
-            <a
-              href="#mission"
+            <Link
+              href="/about"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
-              Mission
-            </a>
-            <a
-              href="#programs"
+              About Us
+            </Link>
+
+            <Link
+              href="/#programs"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
               Programs
-            </a>
-            <a
-              href="#our-future"
+            </Link>
+            <Link
+              href="/#our-future"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
               Our Future
-            </a>
+            </Link>
           </nav>
 
           {/* Mobile hamburger */}
@@ -95,27 +95,34 @@ export function LandingNav({ user }: { user?: User | null }) {
       {isMobileMenuOpen && (
         <div className="border-t border-border/40 bg-white px-4 md:hidden">
           <nav className="ml-auto flex w-40 flex-col gap-2 py-3 text-right">
-            <a
-              href="#mission"
+            <Link
+              href="/about"
+              className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              href="/#mission"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Mission
-            </a>
-            <a
-              href="#programs"
+            </Link>
+            <Link
+              href="/#programs"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Programs
-            </a>
-            <a
-              href="#our-future"
+            </Link>
+            <Link
+              href="/#our-future"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Our Future
-            </a>
+            </Link>
           </nav>
         </div>
       )}
