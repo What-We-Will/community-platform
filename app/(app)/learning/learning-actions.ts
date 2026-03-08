@@ -117,6 +117,7 @@ export async function addResource(
   title: string,
   url: string,
   description: string,
+  tags: string[] = [],
 ) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -127,6 +128,7 @@ export async function addResource(
     title: title.trim(),
     url: url.trim(),
     description: description.trim() || null,
+    tags,
     added_by: user.id,
   });
   if (error) return { error: error.message };

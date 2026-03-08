@@ -56,7 +56,7 @@ export default async function GroupLearningPage() {
       .order("position", { ascending: true }),
     supabase
       .from("learning_resources")
-      .select("id, type, title, url, description, added_by, created_at, adder:added_by(id, display_name)")
+      .select("id, type, title, url, description, tags, added_by, created_at, adder:added_by(id, display_name)")
       .order("created_at", { ascending: false }),
     supabase.from("profiles").select("role").eq("id", user.id).single(),
     supabase
@@ -84,6 +84,7 @@ export default async function GroupLearningPage() {
   const normalizedResources: LearningResource[] = (resources ?? []).map((r) => ({
     ...r,
     type: r.type as LearningResource["type"],
+    tags: (r.tags ?? []) as string[],
     adder: (Array.isArray(r.adder) ? (r.adder[0] ?? null) : r.adder) as LearningResource["adder"],
   }));
 

@@ -30,6 +30,7 @@ export interface LearningResource {
   title: string;
   url: string;
   description: string | null;
+  tags: string[];
   added_by: string;
   created_at: string;
   adder: LearningCreator | null;

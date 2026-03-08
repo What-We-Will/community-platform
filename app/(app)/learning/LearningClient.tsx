@@ -46,6 +46,69 @@ const STATUS_IDX: Record<TrackerStatus, number> = {
   completed: 2,
 };
 
+// ── Topic tags ────────────────────────────────────────────────────────────────
+
+export const TOPIC_TAGS: { value: string; label: string }[] = [
+  { value: "llms",       label: "LLMs & AI"       },
+  { value: "ai-tools",   label: "AI Coding Tools"  },
+  { value: "agents",     label: "Agents"            },
+  { value: "security",   label: "Security"          },
+  { value: "local-ai",   label: "Local AI"          },
+  { value: "privacy",    label: "Privacy & Ethics"  },
+  { value: "prompting",  label: "Prompting"         },
+];
+
+const TAG_LABEL: Record<string, string> = Object.fromEntries(
+  TOPIC_TAGS.map((t) => [t.value, t.label])
+);
+
+interface TopicFilterBarProps {
+  availableTags: string[];
+  selected: string | null;
+  onChange: (tag: string | null) => void;
+  total: number;
+  filtered: number;
+}
+
+function TopicFilterBar({ availableTags, selected, onChange, total, filtered }: TopicFilterBarProps) {
+  if (availableTags.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <button
+        onClick={() => onChange(null)}
+        className={cn(
+          "rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+          selected === null
+            ? "bg-primary text-primary-foreground border-primary"
+            : "bg-muted text-muted-foreground border-transparent hover:border-muted-foreground/30 hover:text-foreground",
+        )}
+      >
+        All
+        <span className="ml-1.5 opacity-70">{total}</span>
+      </button>
+      {TOPIC_TAGS.filter((t) => availableTags.includes(t.value)).map((t) => (
+        <button
+          key={t.value}
+          onClick={() => onChange(selected === t.value ? null : t.value)}
+          className={cn(
+            "rounded-full px-3 py-1 text-xs font-medium transition-colors border",
+            selected === t.value
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-muted text-muted-foreground border-transparent hover:border-muted-foreground/30 hover:text-foreground",
+          )}
+        >
+          {t.label}
+        </button>
+      ))}
+      {selected && filtered < total && (
+        <span className="text-xs text-muted-foreground ml-1">
+          {filtered} of {total}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ── YouTube helper ────────────────────────────────────────────────────────────
 
 function extractYouTubeId(url: string): string | null {
@@ -331,17 +394,24 @@ function AddResourceDialog({ type, label, urlPlaceholder }: AddResourceDialogPro
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [desc, setDesc] = useState("");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function toggleTag(tag: string) {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const res = await addResource(type, title, url, desc);
+    const res = await addResource(type, title, url, desc, selectedTags);
     setSaving(false);
     if (res.error) { setError(res.error); return; }
-    setTitle(""); setUrl(""); setDesc("");
+    setTitle(""); setUrl(""); setDesc(""); setSelectedTags([]);
     setOpen(false);
     router.refresh();
   }
@@ -385,6 +455,26 @@ function AddResourceDialog({ type, label, urlPlaceholder }: AddResourceDialogPro
               onChange={(e) => setDesc(e.target.value)}
               className="min-h-[72px]"
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Topics <span className="text-muted-foreground text-xs">(optional)</span></Label>
+            <div className="flex flex-wrap gap-1.5">
+              {TOPIC_TAGS.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => toggleTag(t.value)}
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-medium border transition-colors",
+                    selectedTags.includes(t.value)
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted text-muted-foreground border-transparent hover:border-muted-foreground/30",
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end gap-2">
@@ -774,6 +864,15 @@ function ResourceCard({ resource, currentUserId, isPlatformAdmin, onDelete, dele
       {resource.description && (
         <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{resource.description}</p>
       )}
+      {resource.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-0.5">
+          {resource.tags.map((tag) => (
+            <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {TAG_LABEL[tag] ?? tag}
+            </span>
+          ))}
+        </div>
+      )}
       <p className="text-[11px] text-muted-foreground/60 truncate mt-auto">{resource.url}</p>
       {resource.adder && (
         <p className="text-[11px] text-muted-foreground">
@@ -806,6 +905,10 @@ interface ResourceTabProps {
 function CoursesTab({ resources, currentUserId, isPlatformAdmin, trackerByResource, studyGroupsByResource }: ResourceTabProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const availableTags = [...new Set(resources.flatMap((r) => r.tags))];
+  const filtered = selectedTag ? resources.filter((r) => r.tags.includes(selectedTag)) : resources;
 
   async function handleDelete(id: string) {
     setDeletingId(id);
@@ -816,25 +919,31 @@ function CoursesTab({ resources, currentUserId, isPlatformAdmin, trackerByResour
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{resources.length} course{resources.length !== 1 ? "s" : ""}</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <TopicFilterBar
+          availableTags={availableTags}
+          selected={selectedTag}
+          onChange={setSelectedTag}
+          total={resources.length}
+          filtered={filtered.length}
+        />
         <AddResourceDialog type="course" label="Course" urlPlaceholder="https://www.coursera.org/…" />
       </div>
 
-      {resources.length === 0 && (
+      {filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
             <GraduationCap className="size-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold">No courses yet</h2>
+          <h2 className="text-lg font-semibold">{resources.length === 0 ? "No courses yet" : "No courses match this topic"}</h2>
           <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-            Share a MOOC or online course you found valuable.
+            {resources.length === 0 ? "Share a MOOC or online course you found valuable." : "Try a different filter or clear it to see all."}
           </p>
         </div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {resources.map((r) => (
+        {filtered.map((r) => (
           <ResourceCard
             key={r.id}
             resource={r}
@@ -856,6 +965,10 @@ function CoursesTab({ resources, currentUserId, isPlatformAdmin, trackerByResour
 function VideosTab({ resources, currentUserId, isPlatformAdmin, trackerByResource, studyGroupsByResource }: ResourceTabProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const availableTags = [...new Set(resources.flatMap((r) => r.tags))];
+  const filtered = selectedTag ? resources.filter((r) => r.tags.includes(selectedTag)) : resources;
 
   async function handleDelete(id: string) {
     setDeletingId(id);
@@ -866,25 +979,31 @@ function VideosTab({ resources, currentUserId, isPlatformAdmin, trackerByResourc
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{resources.length} video{resources.length !== 1 ? "s" : ""}</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <TopicFilterBar
+          availableTags={availableTags}
+          selected={selectedTag}
+          onChange={setSelectedTag}
+          total={resources.length}
+          filtered={filtered.length}
+        />
         <AddResourceDialog type="video" label="Video" urlPlaceholder="https://www.youtube.com/watch?v=…" />
       </div>
 
-      {resources.length === 0 && (
+      {filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
             <PlaySquare className="size-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold">No videos yet</h2>
+          <h2 className="text-lg font-semibold">{resources.length === 0 ? "No videos yet" : "No videos match this topic"}</h2>
           <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-            Share a helpful YouTube video with the community.
+            {resources.length === 0 ? "Share a helpful YouTube video with the community." : "Try a different filter or clear it to see all."}
           </p>
         </div>
       )}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {resources.map((r) => {
+        {filtered.map((r) => {
           const ytId = extractYouTubeId(r.url);
           const canDelete = isPlatformAdmin || r.added_by === currentUserId;
           return (
@@ -910,10 +1029,19 @@ function VideosTab({ resources, currentUserId, isPlatformAdmin, trackerByResourc
                 </a>
               )}
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm text-foreground leading-snug truncate">{r.title}</p>
                   {r.description && (
                     <p className="text-xs text-muted-foreground leading-relaxed mt-0.5 line-clamp-2">{r.description}</p>
+                  )}
+                  {r.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {r.tags.map((tag) => (
+                        <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {TAG_LABEL[tag] ?? tag}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   {r.adder && (
                     <p className="text-[11px] text-muted-foreground mt-1">
@@ -952,6 +1080,10 @@ function VideosTab({ resources, currentUserId, isPlatformAdmin, trackerByResourc
 function TutorialsTab({ resources, currentUserId, isPlatformAdmin, trackerByResource, studyGroupsByResource }: ResourceTabProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const availableTags = [...new Set(resources.flatMap((r) => r.tags))];
+  const filtered = selectedTag ? resources.filter((r) => r.tags.includes(selectedTag)) : resources;
 
   async function handleDelete(id: string) {
     setDeletingId(id);
@@ -962,25 +1094,31 @@ function TutorialsTab({ resources, currentUserId, isPlatformAdmin, trackerByReso
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">{resources.length} tutorial{resources.length !== 1 ? "s" : ""}</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <TopicFilterBar
+          availableTags={availableTags}
+          selected={selectedTag}
+          onChange={setSelectedTag}
+          total={resources.length}
+          filtered={filtered.length}
+        />
         <AddResourceDialog type="tutorial" label="Tutorial" urlPlaceholder="https://docs.python.org/…" />
       </div>
 
-      {resources.length === 0 && (
+      {filtered.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
             <BookOpen className="size-8 text-muted-foreground" />
           </div>
-          <h2 className="text-lg font-semibold">No tutorials yet</h2>
+          <h2 className="text-lg font-semibold">{resources.length === 0 ? "No tutorials yet" : "No tutorials match this topic"}</h2>
           <p className="mt-1 text-sm text-muted-foreground max-w-xs">
-            Share a written tutorial, guide, or article you found useful.
+            {resources.length === 0 ? "Share a written tutorial, guide, or article you found useful." : "Try a different filter or clear it to see all."}
           </p>
         </div>
       )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {resources.map((r) => (
+        {filtered.map((r) => (
           <ResourceCard
             key={r.id}
             resource={r}
