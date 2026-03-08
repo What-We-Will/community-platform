@@ -1,7 +1,14 @@
 import Image from "next/image";
 import { User } from "lucide-react";
 
-const TEAM = [
+type TeamMember = {
+  name: string;
+  role: string;
+  bio: string;
+  image?: string;
+};
+
+const TEAM: TeamMember[] = [
   {
     name: "Jordan Rivera",
     role: "Executive Director",
