@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GroupCard } from "@/components/groups/GroupCard";
 import { CreateGroupDialog } from "@/components/groups/CreateGroupDialog";
-import { UsersRound } from "lucide-react";
+import { UsersRound, GraduationCap } from "lucide-react";
 import type { GroupWithDetails, Profile } from "@/lib/types";
 
 export default async function GroupsPage() {
@@ -12,12 +12,10 @@ export default async function GroupsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // ── Fetch all public groups sorted by member count ────────────────────────
-  // Exclude study groups (is_study_group = true) — those live in Learning.
+  // ── Fetch all groups (including study groups) ─────────────────────────────
   const { data: allGroups } = await supabase
     .from("groups")
     .select("*")
-    .neq("is_study_group", true)
     .order("created_at", { ascending: false });
 
   if (!allGroups || allGroups.length === 0) {
@@ -32,7 +30,6 @@ export default async function GroupsPage() {
           </div>
           <CreateGroupDialog />
         </div>
-
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
             <UsersRound className="size-8 text-muted-foreground" />
@@ -48,6 +45,7 @@ export default async function GroupsPage() {
 
   // ── Fetch all group members to determine counts, membership, recent members ─
   const groupIds = allGroups.map((g) => g.id);
+  if (groupIds.length === 0) groupIds.push("00000000-0000-0000-0000-000000000000");
 
   const { data: allMembers } = await supabase
     .from("group_members")
@@ -94,11 +92,17 @@ export default async function GroupsPage() {
   // Sort by member count descending
   enriched.sort((a, b) => b.memberCount - a.memberCount);
 
-  const workingGroups = enriched.filter(
-    (g) => g.is_working_group === true && !(g.archived === true)
-  );
-  const myGroups = enriched.filter((g) => g.isMember && !(g.archived === true));
-  const discoverGroups = enriched.filter((g) => !g.isMember && !(g.archived === true));
+  const active = enriched.filter((g) => !(g.archived === true));
+
+  const workingGroups = active.filter((g) => g.is_working_group === true && !g.is_study_group);
+  const studyGroups   = active.filter((g) => g.is_study_group === true);
+  const regularActive = active.filter((g) => !g.is_working_group && !g.is_study_group);
+
+  const myGroups      = regularActive.filter((g) => g.isMember);
+  const discoverGroups = regularActive.filter((g) => !g.isMember);
+
+  const myStudyGroups      = studyGroups.filter((g) => g.isMember);
+  const discoverStudyGroups = studyGroups.filter((g) => !g.isMember);
 
   return (
     <div className="mx-auto max-w-4xl space-y-10">
@@ -156,10 +160,47 @@ export default async function GroupsPage() {
         </section>
       )}
 
-      {discoverGroups.length === 0 && myGroups.length > 0 && (
+      {discoverGroups.length === 0 && myGroups.length > 0 && studyGroups.length === 0 && (
         <p className="text-sm text-muted-foreground text-center py-6">
           You&apos;re a member of all available groups!
         </p>
+      )}
+
+      {/* Study Groups */}
+      {studyGroups.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <GraduationCap className="size-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Study Groups</h2>
+            <span className="text-xs text-muted-foreground">
+              — formed around courses, videos &amp; tutorials in Group Learning
+            </span>
+          </div>
+
+          {myStudyGroups.length > 0 && (
+            <div className="mb-6">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Joined</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {myStudyGroups.map((group) => (
+                  <GroupCard key={group.id} group={group} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {discoverStudyGroups.length > 0 && (
+            <div>
+              {myStudyGroups.length > 0 && (
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">Open to Join</p>
+              )}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {discoverStudyGroups.map((group) => (
+                  <GroupCard key={group.id} group={group} />
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
       )}
     </div>
   );
