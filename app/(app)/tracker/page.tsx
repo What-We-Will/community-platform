@@ -38,7 +38,7 @@ export default async function TrackerPage() {
       <div>
         <h1 className="text-2xl font-bold">Job Application Tracker</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track your applications, schedule interviews, and stay organized.
+          Track your applications and stay organized. Ask for help with mock interviews. Share notes and tips with the community.
         </p>
       </div>
       <TrackerClient

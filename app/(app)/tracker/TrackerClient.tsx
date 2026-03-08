@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LayoutList, Kanban, CalendarDays, ExternalLink, Trash2, Pencil, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { deleteApplication, type ApplicationStatus, type Interview } from "./actions";
+import {
+  DndContext, DragOverlay, closestCenter,
+  PointerSensor, KeyboardSensor, useSensor, useSensors,
+  useDroppable, useDraggable,
+  type DragStartEvent, type DragEndEvent,
+} from "@dnd-kit/core";
+import { deleteApplication, updateApplication, type ApplicationStatus, type Interview } from "./actions";
 import { ApplicationForm } from "./ApplicationForm";
 import { ApplicationDetailModal } from "./ApplicationDetailModal";
 import { CalendarView } from "./CalendarView";
@@ -183,11 +189,102 @@ function ApplicationCard({
   );
 }
 
+// ── Droppable column wrapper ───────────────────────────────────────────────────
+
+function DroppableColumn({
+  id,
+  children,
+  className,
+}: {
+  id: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(className, isOver && "ring-2 ring-primary/40 ring-inset")}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── Draggable card wrapper ─────────────────────────────────────────────────────
+
+function DraggableCard({
+  app,
+  currentUserId,
+  onOpen,
+}: {
+  app: Application;
+  currentUserId: string;
+  onOpen: (a: Application) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: app.id,
+    data: { app },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={
+        transform
+          ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+          : undefined
+      }
+      className={cn("touch-none", isDragging && "opacity-40")}
+      {...attributes}
+      {...listeners}
+    >
+      <ApplicationCard app={app} currentUserId={currentUserId} compact onOpen={onOpen} />
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
 export function TrackerClient({ applications, interviews, currentUserId }: Props) {
+  const router = useRouter();
   const [view, setView] = useState<"list" | "kanban" | "calendar">("kanban");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
-  const myApps = applications.filter((a) => a.user_id === currentUserId);
+  const [localApps, setLocalApps] = useState(applications);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  // Sync local state when server data refreshes
+  useEffect(() => { setLocalApps(applications); }, [applications]);
+
+  const myApps = localApps.filter((a) => a.user_id === currentUserId);
+  const activeApp = myApps.find((a) => a.id === activeId) ?? null;
   const myInterviews = interviews.filter((iv) => iv.user_id === currentUserId);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
+
+  function handleDragStart({ active }: DragStartEvent) {
+    setActiveId(active.id as string);
+  }
+
+  async function handleDragEnd({ active, over }: DragEndEvent) {
+    setActiveId(null);
+    if (!over) return;
+
+    const appId = active.id as string;
+    const newStatus = over.id as ApplicationStatus;
+    const app = myApps.find((a) => a.id === appId);
+    if (!app || app.status === newStatus) return;
+
+    // Optimistic update
+    setLocalApps((prev) =>
+      prev.map((a) => (a.id === appId ? { ...a, status: newStatus } : a))
+    );
+    await updateApplication(appId, { status: newStatus });
+    router.refresh();
+  }
 
   return (
     <>
@@ -254,48 +351,78 @@ export function TrackerClient({ applications, interviews, currentUserId }: Props
 
       {/* ── KANBAN VIEW ───────────────────────────────────────────── */}
       {view === "kanban" && (
-        <div className="space-y-8">
-          {/* My Board */}
-          <section>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              My Applications
-            </h2>
-            <div className="flex gap-3 overflow-x-auto pb-3">
-              {STATUSES.map((col) => {
-                // 'rejected' column also captures legacy 'withdrawn' entries
-                const colApps = myApps.filter((a) =>
-                  col.value === "rejected"
-                    ? a.status === "rejected" || a.status === "withdrawn"
-                    : a.status === col.value
-                );
-                return (
-                  <div key={col.value} className={cn("flex flex-col gap-2 w-64 shrink-0 rounded-xl p-3", col.columnBg)}>
-                    <div className="flex items-center justify-between gap-1">
-                      <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
-                      <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
-                        {colApps.length}
-                      </span>
-                    </div>
-                    <div className={cn("h-0.5 w-full rounded-full", col.bg.split(" ")[0])} />
-                    <div className="space-y-2 min-h-[60px]">
-                      {colApps.map((app) => (
-                        <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact onOpen={setSelectedApp} />
-                      ))}
-                    </div>
-                    <ApplicationForm
-                      defaultStatus={col.value as ApplicationStatus}
-                      trigger={
-                        <Button variant="ghost" size="sm" className="w-full h-7 text-xs text-muted-foreground border border-dashed bg-white/50 hover:bg-white/80 mt-1">
-                          + Add
-                        </Button>
-                      }
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="space-y-8">
+            <section>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                My Applications
+              </h2>
+              <div className="flex gap-3 overflow-x-auto pb-3">
+                {STATUSES.map((col) => {
+                  const colApps = myApps.filter((a) =>
+                    col.value === "rejected"
+                      ? a.status === "rejected" || a.status === "withdrawn"
+                      : a.status === col.value
+                  );
+                  return (
+                    <DroppableColumn
+                      key={col.value}
+                      id={col.value}
+                      className={cn("flex flex-col gap-2 w-64 shrink-0 rounded-xl p-3", col.columnBg)}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
+                        <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
+                          {colApps.length}
+                        </span>
+                      </div>
+                      <div className={cn("h-0.5 w-full rounded-full", col.bg.split(" ")[0])} />
+                      <div className="space-y-2 min-h-[60px]">
+                        {colApps.map((app) => (
+                          <DraggableCard
+                            key={app.id}
+                            app={app}
+                            currentUserId={currentUserId}
+                            onOpen={setSelectedApp}
+                          />
+                        ))}
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <ApplicationForm
+                          defaultStatus={col.value as ApplicationStatus}
+                          trigger={
+                            <Button variant="ghost" size="sm" className="w-full h-7 text-xs text-muted-foreground border border-dashed bg-white/50 hover:bg-white/80 mt-1">
+                              + Add
+                            </Button>
+                          }
+                        />
+                      </div>
+                    </DroppableColumn>
+                  );
+                })}
+              </div>
+            </section>
+          </div>
+
+          {/* Floating card shown while dragging */}
+          <DragOverlay dropAnimation={null}>
+            {activeApp && (
+              <div className="rotate-1 scale-105 opacity-95 shadow-xl pointer-events-none">
+                <ApplicationCard
+                  app={activeApp}
+                  currentUserId={currentUserId}
+                  compact
+                  onOpen={() => {}}
+                />
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
       )}
       {/* ── CALENDAR VIEW ─────────────────────────────────────────── */}
       {view === "calendar" && (
