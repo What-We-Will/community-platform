@@ -299,7 +299,7 @@ export function TrackerClient({ applications, interviews, helpRequests, currentU
         helpRequests={helpRequests.filter((h) => h.application_id === selectedApp.id)}
       />
     )}
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex rounded-lg border p-0.5 gap-0.5">
@@ -364,7 +364,7 @@ export function TrackerClient({ applications, interviews, helpRequests, currentU
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
                 My Applications
               </h2>
-              <div className="flex gap-3 overflow-x-auto pb-3">
+              <div className="grid gap-3 pb-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))" }}>
                 {STATUSES.map((col) => {
                   const colApps = myApps.filter((a) =>
                     col.value === "rejected"
@@ -375,7 +375,7 @@ export function TrackerClient({ applications, interviews, helpRequests, currentU
                     <DroppableColumn
                       key={col.value}
                       id={col.value}
-                      className={cn("flex flex-col gap-2 w-64 shrink-0 rounded-xl p-3", col.columnBg)}
+                      className={cn("flex flex-col gap-2 min-w-0 rounded-xl p-3", col.columnBg)}
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
