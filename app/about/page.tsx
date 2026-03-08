@@ -26,8 +26,8 @@ export default async function AboutPage() {
         <AboutHero />
         <AboutOrganization />
         <AboutTeam />
-        <AboutAdvisoryBoard />
         <AboutVolunteers />
+        <AboutAdvisoryBoard />
       </main>
       <LandingFooter />
     </div>
