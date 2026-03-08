@@ -14,6 +14,7 @@ import {
   Menu,
   LogOut,
   ShieldCheck,
+  Briefcase,
 } from "lucide-react";
 import { BugReportDialog } from "@/components/shared/BugReportDialog";
 import { createClient } from "@/lib/supabase/client";
@@ -26,12 +27,19 @@ import { updateLastSeen } from "@/app/(app)/profile/actions";
 
 const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
 
-const navItems = [
+const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/groups", label: "Groups", icon: UsersRound },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/members", label: "Members", icon: UserSearch },
+];
+
+const resourcesNavItems = [
+  { href: "/jobs", label: "Job Board", icon: Briefcase },
+];
+
+const profileNavItems = [
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
@@ -116,8 +124,8 @@ export default function AppShell({ children, user }: AppShellProps) {
             </Button>
           </div>
 
-          <nav className="flex-1 space-y-1 p-4">
-            {navItems.map((item) => (
+          <nav className="flex-1 space-y-1 overflow-y-auto p-4">
+            {mainNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -134,6 +142,36 @@ export default function AppShell({ children, user }: AppShellProps) {
                 )}
               </Link>
             ))}
+
+            <Separator className="my-2" />
+            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+              Resources
+            </p>
+            {resourcesNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                <item.icon className="size-5 shrink-0" />
+                {item.label}
+              </Link>
+            ))}
+
+            <Separator className="my-2" />
+            {profileNavItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                <item.icon className="size-5 shrink-0" />
+                {item.label}
+              </Link>
+            ))}
+
             {user.isAdmin && (
               <>
                 <Separator className="my-2" />
