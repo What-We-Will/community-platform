@@ -13,6 +13,7 @@ import {
   UserCircle,
   Menu,
   LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { BugReportDialog } from "@/components/shared/BugReportDialog";
 import { createClient } from "@/lib/supabase/client";
@@ -42,6 +43,7 @@ interface AppShellProps {
     displayName: string;
     avatarUrl: string | null;
     unreadCount: number;
+    isAdmin?: boolean;
   };
 }
 
@@ -132,6 +134,19 @@ export default function AppShell({ children, user }: AppShellProps) {
                 )}
               </Link>
             ))}
+            {user.isAdmin && (
+              <>
+                <Separator className="my-2" />
+                <Link
+                  href="/admin/approvals"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <ShieldCheck className="size-5 shrink-0" />
+                  Approvals
+                </Link>
+              </>
+            )}
           </nav>
 
           <div className="border-t p-4">
