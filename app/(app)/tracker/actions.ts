@@ -210,6 +210,70 @@ export async function deleteInterview(id: string): Promise<{ error?: string }> {
   return {};
 }
 
+// ── Interview Help Requests ───────────────────────────────────────────────────
+
+export interface HelpRequest {
+  id: string;
+  user_id: string;
+  application_id: string;
+  title: string;
+  company: string;
+  position: string;
+  interview_date: string;
+  stage_key: string | null;
+  interview_id: string | null;
+  message: string | null;
+  is_open: boolean;
+  created_at: string;
+}
+
+export async function requestHelp(
+  applicationId: string,
+  title: string,
+  company: string,
+  position: string,
+  interviewDate: string,
+  stageKey: string | null,
+  interviewId: string | null,
+  message: string,
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase.from("interview_help_requests").insert({
+    user_id: user.id,
+    application_id: applicationId,
+    title,
+    company,
+    position,
+    interview_date: interviewDate,
+    stage_key: stageKey,
+    interview_id: interviewId,
+    message: message.trim() || null,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/tracker");
+  revalidatePath("/dashboard");
+  return {};
+}
+
+export async function cancelHelp(id: string): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("interview_help_requests")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { error: error.message };
+  revalidatePath("/tracker");
+  revalidatePath("/dashboard");
+  return {};
+}
+
 export async function deleteApplication(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

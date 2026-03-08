@@ -14,6 +14,7 @@ import { RecordingsCard } from "@/components/dashboard/RecordingsCard";
 import { WeeklyScheduleCard } from "@/components/dashboard/WeeklyScheduleCard";
 import { AnnouncementsCard } from "@/components/dashboard/AnnouncementsCard";
 import { CardSkeleton } from "@/components/dashboard/CardSkeleton";
+import { InterviewHelpCard } from "@/components/dashboard/InterviewHelpCard";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -50,6 +51,11 @@ export default async function DashboardPage() {
       <LeetcodeCard />
       <Suspense fallback={<CardSkeleton />}>
         <ActiveChatsCard userId={user.id} />
+      </Suspense>
+
+      {/* Help Requests */}
+      <Suspense fallback={<CardSkeleton />}>
+        <InterviewHelpCard currentUserId={user.id} />
       </Suspense>
 
       {/* Bottom row: Recordings, New Members */}

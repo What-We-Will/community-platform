@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/select";
 import {
   ExternalLink, Pencil, Trash2, Loader2, Check, X, Lock, Users,
-  CalendarDays, Plus, Clock,
+  CalendarDays, Plus, Clock, HeartHandshake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateApplication, updateStatusDate, deleteApplication, syncCommunityNote, addInterview, deleteInterview, type ApplicationStatus, type Interview } from "./actions";
+import { updateApplication, updateStatusDate, deleteApplication, syncCommunityNote, addInterview, deleteInterview, requestHelp, cancelHelp, type ApplicationStatus, type Interview, type HelpRequest } from "./actions";
 import { STATUSES, STATUS_MAP } from "./constants";
 import type { Application } from "./TrackerClient";
 
@@ -27,6 +27,7 @@ interface Props {
   onClose: () => void;
   currentUserId: string;
   interviews: Interview[];
+  helpRequests: HelpRequest[];
 }
 
 function formatDate(iso: string): string {
@@ -111,7 +112,7 @@ function InlineEdit({
   );
 }
 
-export function ApplicationDetailModal({ app, open, onClose, currentUserId, interviews }: Props) {
+export function ApplicationDetailModal({ app, open, onClose, currentUserId, interviews, helpRequests }: Props) {
   const router = useRouter();
   const isOwn = app.user_id === currentUserId;
   const [deleting, setDeleting] = useState(false);
@@ -129,6 +130,13 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
   const [ivNotes, setIvNotes] = useState("");
   const [savingInterview, setSavingInterview] = useState(false);
   const [deletingInterviewId, setDeletingInterviewId] = useState<string | null>(null);
+
+  // Help request state
+  const [localHelp, setLocalHelp] = useState<HelpRequest[]>(helpRequests);
+  const [askingHelpFor, setAskingHelpFor] = useState<string | null>(null); // iv.id or stage key
+  const [helpMessage, setHelpMessage] = useState("");
+  const [savingHelp, setSavingHelp] = useState(false);
+  const [cancelingHelpId, setCancelingHelpId] = useState<string | null>(null);
 
   async function handleStatusChange(newStatus: ApplicationStatus) {
     setSavingStatus(true);
@@ -172,6 +180,58 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
     setDeletingInterviewId(id);
     await deleteInterview(id);
     setDeletingInterviewId(null);
+    router.refresh();
+  }
+
+  async function handleRequestHelp(
+    key: string, // interview id or stage statusKey
+    title: string,
+    interviewDate: string,
+    stageKey: string | null,
+    interviewId: string | null,
+  ) {
+    setSavingHelp(true);
+    const res = await requestHelp(
+      app.id,
+      title,
+      app.company,
+      app.position,
+      interviewDate,
+      stageKey,
+      interviewId,
+      helpMessage,
+    );
+    setSavingHelp(false);
+    if (!res.error) {
+      // Optimistic: add a placeholder so UI updates immediately
+      setLocalHelp((prev) => [
+        ...prev,
+        {
+          id: `optimistic-${key}`,
+          user_id: currentUserId,
+          application_id: app.id,
+          title,
+          company: app.company,
+          position: app.position,
+          interview_date: interviewDate,
+          stage_key: stageKey,
+          interview_id: interviewId,
+          message: helpMessage.trim() || null,
+          is_open: true,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      setAskingHelpFor(null);
+      setHelpMessage("");
+      router.refresh();
+    }
+  }
+
+  async function handleCancelHelp(helpId: string) {
+    setCancelingHelpId(helpId);
+    await cancelHelp(helpId);
+    setLocalHelp((prev) => prev.filter((h) => h.id !== helpId));
+    setCancelingHelpId(null);
     router.refresh();
   }
 
@@ -370,35 +430,93 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                           if (item.kind === "interview") {
                             const iv = item.iv;
                             const isToday = iv.interview_date === todayStr;
+                            const existingHelp = localHelp.find((h) => h.interview_id === iv.id);
+                            const isAskingThis = askingHelpFor === iv.id;
                             return (
-                              <div
-                                key={iv.id}
-                                className={`flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 ${
-                                  isToday ? "bg-emerald-50 border border-emerald-200" : "bg-muted/40"
-                                }`}
-                              >
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <p className="text-sm font-medium leading-snug">{iv.title}</p>
-                                    {isToday && (
-                                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Today</span>
-                                    )}
-                                  </div>
-                                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                                    <CalendarDays className="size-3 shrink-0" />
-                                    {formatDate(iv.interview_date)}
-                                    {iv.interview_time && <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>}
-                                  </p>
-                                  {iv.notes && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>}
-                                </div>
-                                <Button
-                                  variant="ghost" size="icon"
-                                  className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
-                                  onClick={() => handleDeleteInterview(iv.id)}
-                                  disabled={deletingInterviewId === iv.id}
+                              <div key={iv.id} className="space-y-1.5">
+                                <div
+                                  className={`flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 ${
+                                    isToday ? "bg-emerald-50 border border-emerald-200" : "bg-muted/40"
+                                  }`}
                                 >
-                                  {deletingInterviewId === iv.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
-                                </Button>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="text-sm font-medium leading-snug">{iv.title}</p>
+                                      {isToday && (
+                                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Today</span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                      <CalendarDays className="size-3 shrink-0" />
+                                      {formatDate(iv.interview_date)}
+                                      {iv.interview_time && <><Clock className="size-3 shrink-0 ml-1" />{fmt12h(iv.interview_time)}</>}
+                                    </p>
+                                    {iv.notes && <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{iv.notes}</p>}
+                                    {/* Ask for Help */}
+                                    <div className="mt-1.5">
+                                      {existingHelp ? (
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
+                                            <HeartHandshake className="size-3" /> Help Requested
+                                          </span>
+                                          <button
+                                            type="button"
+                                            className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
+                                            onClick={() => handleCancelHelp(existingHelp.id)}
+                                            disabled={cancelingHelpId === existingHelp.id}
+                                          >
+                                            {cancelingHelpId === existingHelp.id ? "Canceling…" : "Cancel request"}
+                                          </button>
+                                        </div>
+                                      ) : isAskingThis ? null : (
+                                        <button
+                                          type="button"
+                                          onClick={() => { setAskingHelpFor(iv.id); setHelpMessage(""); }}
+                                          className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-700 hover:text-violet-900 transition-colors"
+                                        >
+                                          <HeartHandshake className="size-3" /> Ask for Help
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost" size="icon"
+                                    className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                                    onClick={() => handleDeleteInterview(iv.id)}
+                                    disabled={deletingInterviewId === iv.id}
+                                  >
+                                    {deletingInterviewId === iv.id ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                                  </Button>
+                                </div>
+                                {/* Inline help request form */}
+                                {isAskingThis && (
+                                  <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2.5 space-y-2">
+                                    <p className="text-xs font-medium text-violet-800">Ask the community for help with this interview</p>
+                                    <textarea
+                                      className="w-full rounded-md border border-violet-200 bg-white px-2.5 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none"
+                                      rows={2}
+                                      placeholder="Optional message — e.g. looking for a mock interview partner or tips on the process…"
+                                      value={helpMessage}
+                                      onChange={(e) => setHelpMessage(e.target.value)}
+                                    />
+                                    <div className="flex gap-2">
+                                      <Button
+                                        size="sm" className="h-6 text-[11px] bg-violet-600 hover:bg-violet-700 text-white"
+                                        onClick={() => handleRequestHelp(iv.id, iv.title, iv.interview_date, null, iv.id)}
+                                        disabled={savingHelp}
+                                      >
+                                        {savingHelp ? <Loader2 className="size-3 animate-spin mr-1" /> : <HeartHandshake className="size-3 mr-1" />}
+                                        Post to Community
+                                      </Button>
+                                      <Button
+                                        type="button" variant="ghost" size="sm" className="h-6 text-[11px]"
+                                        onClick={() => { setAskingHelpFor(null); setHelpMessage(""); }}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             );
                           }
@@ -406,28 +524,86 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                           // Auto-detected stage entry
                           const stageInfo = STATUS_MAP[item.statusKey];
                           const isToday = item.date === todayStr;
+                          const existingHelp = localHelp.find((h) => h.stage_key === item.statusKey);
+                          const isAskingThis = askingHelpFor === `stage-${item.statusKey}`;
                           return (
-                            <div
-                              key={`stage-${item.statusKey}`}
-                              className={`flex items-center gap-2 rounded-lg px-3 py-2.5 border border-dashed ${
-                                isToday ? "bg-emerald-50 border-emerald-200" : "bg-muted/20"
-                              }`}
-                            >
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className="text-sm font-medium leading-snug">{item.label}</p>
-                                  {isToday && (
-                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Today</span>
-                                  )}
-                                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${stageInfo?.bg ?? "bg-muted"}`}>
-                                    From timeline
-                                  </span>
+                            <div key={`stage-${item.statusKey}`} className="space-y-1.5">
+                              <div
+                                className={`flex items-start gap-2 rounded-lg px-3 py-2.5 border border-dashed ${
+                                  isToday ? "bg-emerald-50 border-emerald-200" : "bg-muted/20"
+                                }`}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <p className="text-sm font-medium leading-snug">{item.label}</p>
+                                    {isToday && (
+                                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">Today</span>
+                                    )}
+                                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${stageInfo?.bg ?? "bg-muted"}`}>
+                                      From timeline
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                                    <CalendarDays className="size-3 shrink-0" />
+                                    {formatDate(item.date)}
+                                  </p>
+                                  {/* Ask for Help */}
+                                  <div className="mt-1.5">
+                                    {existingHelp ? (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
+                                          <HeartHandshake className="size-3" /> Help Requested
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="text-[10px] text-muted-foreground hover:text-destructive underline underline-offset-2"
+                                          onClick={() => handleCancelHelp(existingHelp.id)}
+                                          disabled={cancelingHelpId === existingHelp.id}
+                                        >
+                                          {cancelingHelpId === existingHelp.id ? "Canceling…" : "Cancel request"}
+                                        </button>
+                                      </div>
+                                    ) : isAskingThis ? null : (
+                                      <button
+                                        type="button"
+                                        onClick={() => { setAskingHelpFor(`stage-${item.statusKey}`); setHelpMessage(""); }}
+                                        className="inline-flex items-center gap-1 text-[10px] font-medium text-violet-700 hover:text-violet-900 transition-colors"
+                                      >
+                                        <HeartHandshake className="size-3" /> Ask for Help
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                                  <CalendarDays className="size-3 shrink-0" />
-                                  {formatDate(item.date)}
-                                </p>
                               </div>
+                              {/* Inline help request form */}
+                              {isAskingThis && (
+                                <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2.5 space-y-2">
+                                  <p className="text-xs font-medium text-violet-800">Ask the community for help with this stage</p>
+                                  <textarea
+                                    className="w-full rounded-md border border-violet-200 bg-white px-2.5 py-1.5 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-violet-400 resize-none"
+                                    rows={2}
+                                    placeholder="Optional message — e.g. looking for a mock interview partner or tips on the process…"
+                                    value={helpMessage}
+                                    onChange={(e) => setHelpMessage(e.target.value)}
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm" className="h-6 text-[11px] bg-violet-600 hover:bg-violet-700 text-white"
+                                      onClick={() => handleRequestHelp(`stage-${item.statusKey}`, item.label, item.date, item.statusKey, null)}
+                                      disabled={savingHelp}
+                                    >
+                                      {savingHelp ? <Loader2 className="size-3 animate-spin mr-1" /> : <HeartHandshake className="size-3 mr-1" />}
+                                      Post to Community
+                                    </Button>
+                                    <Button
+                                      type="button" variant="ghost" size="sm" className="h-6 text-[11px]"
+                                      onClick={() => { setAskingHelpFor(null); setHelpMessage(""); }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           );
                         })}

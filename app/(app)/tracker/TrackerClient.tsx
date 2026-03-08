@@ -12,7 +12,7 @@ import {
   useDroppable, useDraggable,
   type DragStartEvent, type DragEndEvent,
 } from "@dnd-kit/core";
-import { deleteApplication, updateApplication, type ApplicationStatus, type Interview } from "./actions";
+import { deleteApplication, updateApplication, type ApplicationStatus, type Interview, type HelpRequest } from "./actions";
 import { ApplicationForm } from "./ApplicationForm";
 import { ApplicationDetailModal } from "./ApplicationDetailModal";
 import { CalendarView } from "./CalendarView";
@@ -38,6 +38,7 @@ export interface Application {
 interface Props {
   applications: Application[];
   interviews: Interview[];
+  helpRequests: HelpRequest[];
   currentUserId: string;
 }
 
@@ -246,7 +247,7 @@ function DraggableCard({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function TrackerClient({ applications, interviews, currentUserId }: Props) {
+export function TrackerClient({ applications, interviews, helpRequests, currentUserId }: Props) {
   const router = useRouter();
   const [view, setView] = useState<"list" | "kanban" | "calendar">("kanban");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
@@ -295,6 +296,7 @@ export function TrackerClient({ applications, interviews, currentUserId }: Props
         onClose={() => setSelectedApp(null)}
         currentUserId={currentUserId}
         interviews={myInterviews.filter((iv) => iv.application_id === selectedApp.id)}
+        helpRequests={helpRequests.filter((h) => h.application_id === selectedApp.id)}
       />
     )}
     <div className="space-y-6">
