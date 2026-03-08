@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { LayoutList, Kanban, ExternalLink, Trash2, Pencil, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deleteApplication, type ApplicationStatus } from "./actions";
@@ -23,6 +22,7 @@ export interface Application {
   status_dates: Record<string, string>;
   url: string | null;
   is_shared: boolean;
+  job_posting_id: string | null;
   created_at: string;
   user_id: string;
   poster?: { id: string; display_name: string } | null;
@@ -185,7 +185,6 @@ export function TrackerClient({ applications, currentUserId }: Props) {
   const [view, setView] = useState<"list" | "kanban">("kanban");
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const myApps = applications.filter((a) => a.user_id === currentUserId);
-  const sharedApps = applications.filter((a) => a.user_id !== currentUserId && a.is_shared);
 
   return (
     <>
@@ -225,37 +224,17 @@ export function TrackerClient({ applications, currentUserId }: Props) {
 
       {/* ── LIST VIEW ─────────────────────────────────────────────── */}
       {view === "list" && (
-        <div className="space-y-8">
-          {/* My Applications */}
-          <section>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              My Applications ({myApps.length})
-            </h2>
-            {myApps.length === 0 ? (
-              <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-6 text-center">
-                No applications yet. Add one to get started.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {myApps.map((app) => (
-                  <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} onOpen={setSelectedApp} />
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* Shared by community */}
-          {sharedApps.length > 0 && (
-            <section>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                Shared by Community ({sharedApps.length})
-              </h2>
-              <div className="space-y-2">
-                {sharedApps.map((app) => (
-                  <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} onOpen={setSelectedApp} />
-                ))}
-              </div>
-            </section>
+        <div className="space-y-4">
+          {myApps.length === 0 ? (
+            <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-6 text-center">
+              No applications yet. Add one to get started.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {myApps.map((app) => (
+                <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} onOpen={setSelectedApp} />
+              ))}
+            </div>
           )}
         </div>
       )}
@@ -303,41 +282,6 @@ export function TrackerClient({ applications, currentUserId }: Props) {
               })}
             </div>
           </section>
-
-          {/* Shared by community */}
-          {sharedApps.length > 0 && (
-            <section>
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                Shared by Community
-              </h2>
-              <div className="flex gap-3 overflow-x-auto pb-3">
-                {STATUSES.map((col) => {
-                  const colApps = sharedApps.filter((a) =>
-                    col.value === "rejected"
-                      ? a.status === "rejected" || a.status === "withdrawn"
-                      : a.status === col.value
-                  );
-                  if (colApps.length === 0) return null;
-                  return (
-                    <div key={col.value} className={cn("flex flex-col gap-2 w-64 shrink-0 rounded-xl p-3", col.columnBg)}>
-                      <div className="flex items-center justify-between gap-1">
-                        <span className={cn("text-sm font-bold", col.color)}>{col.label}</span>
-                        <span className="text-[10px] text-muted-foreground font-medium bg-white/70 rounded-full px-1.5 py-0.5">
-                          {colApps.length}
-                        </span>
-                      </div>
-                      <div className={cn("h-0.5 w-full rounded-full", col.bg.split(" ")[0])} />
-                      <div className="space-y-2">
-                        {colApps.map((app) => (
-                          <ApplicationCard key={app.id} app={app} currentUserId={currentUserId} compact onOpen={setSelectedApp} />
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          )}
         </div>
       )}
     </div>

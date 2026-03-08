@@ -10,13 +10,14 @@ export default async function TrackerPage() {
   // Fetch own applications + shared applications from others
   const { data: rawApplications } = await supabase
     .from("job_applications")
-    .select("id, company, position, applied_date, status, notes, community_notes, status_dates, url, is_shared, created_at, user_id, poster:user_id(id, display_name)")
+    .select("id, company, position, applied_date, status, notes, community_notes, status_dates, url, is_shared, job_posting_id, created_at, user_id, poster:user_id(id, display_name)")
     .order("created_at", { ascending: false });
 
   const applications: Application[] = (rawApplications ?? []).map((a) => ({
     ...a,
     poster: Array.isArray(a.poster) ? (a.poster[0] ?? null) : a.poster,
     status_dates: (a.status_dates ?? {}) as Record<string, string>,
+    job_posting_id: a.job_posting_id ?? null,
   }));
 
   return (

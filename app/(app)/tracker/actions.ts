@@ -111,6 +111,53 @@ export async function updateStatusDate(
   return {};
 }
 
+/**
+ * Syncs the community note from a tracker entry to job_posting_comments.
+ * Called when community_notes is saved on an application that has a job_posting_id.
+ * Passing an empty string deletes any existing comment.
+ */
+export async function syncCommunityNote(
+  jobPostingId: string,
+  content: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  if (!content.trim()) {
+    // Remove the comment if content is cleared
+    await supabase
+      .from("job_posting_comments")
+      .delete()
+      .eq("job_posting_id", jobPostingId)
+      .eq("user_id", user.id);
+    revalidatePath("/jobs");
+    return {};
+  }
+
+  // Upsert: update existing comment or insert new one
+  const { data: existing } = await supabase
+    .from("job_posting_comments")
+    .select("id")
+    .eq("job_posting_id", jobPostingId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("job_posting_comments")
+      .update({ content: content.trim() })
+      .eq("id", existing.id);
+  } else {
+    await supabase
+      .from("job_posting_comments")
+      .insert({ job_posting_id: jobPostingId, user_id: user.id, content: content.trim() });
+  }
+
+  revalidatePath("/jobs");
+  return {};
+}
+
 export async function deleteApplication(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

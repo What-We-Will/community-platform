@@ -12,12 +12,11 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   ExternalLink, Pencil, Trash2, Loader2, Check, X, Lock, Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { updateApplication, updateStatusDate, deleteApplication, type ApplicationStatus } from "./actions";
+import { updateApplication, updateStatusDate, deleteApplication, syncCommunityNote, type ApplicationStatus } from "./actions";
 import { STATUSES, STATUS_MAP } from "./constants";
 import type { Application } from "./TrackerClient";
 
@@ -112,7 +111,6 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId }: Pr
   );
   const [currentStatus, setCurrentStatus] = useState<ApplicationStatus>(app.status);
   const [savingStatus, setSavingStatus] = useState(false);
-  const [isShared, setIsShared] = useState(app.is_shared);
 
   async function handleStatusChange(newStatus: ApplicationStatus) {
     setSavingStatus(true);
@@ -139,12 +137,6 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId }: Pr
     setDeleting(true);
     await deleteApplication(app.id);
     onClose();
-    router.refresh();
-  }
-
-  async function handleShareToggle(val: boolean) {
-    setIsShared(val);
-    await updateApplication(app.id, { is_shared: val });
     router.refresh();
   }
 
@@ -260,63 +252,48 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId }: Pr
             </div>
           </div>
 
-          {/* Notes sections */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* Personal Notes */}
-            <div className="space-y-2 rounded-xl border p-4">
-              <div className="flex items-center gap-1.5 text-sm font-semibold">
-                <Lock className="size-3.5 text-muted-foreground" />
-                Personal Notes
-              </div>
-              <p className="text-[11px] text-muted-foreground">Only visible to you</p>
-              {isOwn ? (
-                <InlineEdit
-                  value={app.notes ?? ""}
-                  placeholder="Interview tips, contacts, key info…"
-                  multiline
-                  onSave={async (v) => {
-                    await updateApplication(app.id, { notes: v });
-                    router.refresh();
-                  }}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground italic">Private</p>
-              )}
+          {/* Personal Notes — always private */}
+          <div className="space-y-2 rounded-xl border p-4">
+            <div className="flex items-center gap-1.5 text-sm font-semibold">
+              <Lock className="size-3.5 text-muted-foreground" />
+              Personal Notes
             </div>
-
-            {/* Community Notes */}
-            <div className="space-y-2 rounded-xl border p-4">
-              <div className="flex items-center gap-1.5 text-sm font-semibold">
-                <Users className="size-3.5 text-muted-foreground" />
-                Community Notes
-              </div>
-              <p className="text-[11px] text-muted-foreground">Visible to others when shared</p>
-              {isOwn ? (
-                <InlineEdit
-                  value={app.community_notes ?? ""}
-                  placeholder="Tips for others applying here…"
-                  multiline
-                  onSave={async (v) => {
-                    await updateApplication(app.id, { community_notes: v });
-                    router.refresh();
-                  }}
-                />
-              ) : (
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {app.community_notes || <span className="italic">No community notes.</span>}
-                </p>
-              )}
-            </div>
+            <p className="text-[11px] text-muted-foreground">Only visible to you</p>
+            {isOwn ? (
+              <InlineEdit
+                value={app.notes ?? ""}
+                placeholder="Interview tips, contacts, key info…"
+                multiline
+                onSave={async (v) => {
+                  await updateApplication(app.id, { notes: v });
+                  router.refresh();
+                }}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground italic">Private</p>
+            )}
           </div>
 
-          {/* Share toggle */}
-          {isOwn && (
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <p className="text-sm font-medium">Share with community</p>
-                <p className="text-xs text-muted-foreground">Others can see this application and community notes</p>
+          {/* Community Notes — only available when linked to a job posting */}
+          {isOwn && app.job_posting_id && (
+            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-center gap-1.5 text-sm font-semibold">
+                <Users className="size-3.5 text-primary" />
+                Community Notes
               </div>
-              <Switch checked={isShared} onCheckedChange={handleShareToggle} />
+              <p className="text-[11px] text-muted-foreground">
+                Saved here and posted on the job board listing for others to see.
+              </p>
+              <InlineEdit
+                value={app.community_notes ?? ""}
+                placeholder="Tips for others applying here — interview process, salary info, contacts…"
+                multiline
+                onSave={async (v) => {
+                  await updateApplication(app.id, { community_notes: v });
+                  await syncCommunityNote(app.job_posting_id!, v);
+                  router.refresh();
+                }}
+              />
             </div>
           )}
         </div>
