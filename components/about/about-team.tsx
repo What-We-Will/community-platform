@@ -8,35 +8,68 @@ type TeamMember = {
   image?: string;
 };
 
-const TEAM: TeamMember[] = [
+const FOUNDING_TEAM: TeamMember[] = [
   {
-    name: "Jordan Rivera",
-    role: "Executive Director",
+    name: "Kaitlin Cort",
+    role: "Co-Founder, Executive Director",
     bio: "Leads strategy and partnerships. Former labor organizer with a focus on tech and gig workers.",
   },
   {
-    name: "Sam Chen",
-    role: "Director of Programs",
+    name: "Daniel Buk",
+    role: "Co-Founder, Partnerships Research & Digital Outreach",
     bio: "Runs mutual aid, skill-sharing, and job support initiatives. Background in community organizing.",
   },
   {
-    name: "Alex Kim",
-    role: "Policy & Advocacy Lead",
+    name: "Kyle Albasi",
+    role: "Creative Director & Media Strategy",
     bio: "Advances human-first AI and worker protections in policy. Previously worked on labor and tech policy.",
   },
   {
-    name: "Morgan Hayes",
-    role: "Community & Membership",
+    name: "Charise Van Liew",
+    role: "Fundraising & Development",
     bio: "Builds and supports our member community. Ensures members have the tools and connections they need.",
   },
   {
-    name: "Riley Park",
-    role: "Operations & Technology",
-    bio: "Keeps our platforms and operations running. Focus on accessible, member-centered technology.",
+    name: "Jennifer Tovar",
+    role: "Curriculum Developer & Entry-Level Worker Support",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Casey Wright",
-    role: "Communications",
+    name: "Sabrina Shuss",
+    role: "Program Manager & Operations",
+    bio: "Keeps our platforms and operations running. Focus on accessible, member-centered technology.",
+  },
+];
+
+const CORE_ORGANIZING_TEAM: TeamMember[] = [
+  {
+    name: "Shannon Wait",
+    role: "Lead Organizer - Policy & Advocacy Team",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
+    name: "Abdhulladi Zaidan",
+    role: "Lead Organizer - Community Job Support Program",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
+    name: "Hope Jidenma",
+    role: "Lead Organizer - Marketing Team & Content Strategy",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
+    name: "Simon McGraw",
+    role: "Lead Organizer - Tech Worker Cooperative & Platform Engineering",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
+    name: "Simantha Pathak",
+    role: "Lead Organizer - Participatory Action Research Team",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
+    name: "George Dover",
+    role: "Lead Organizer - Layoff Crisis Response Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
 ];
@@ -78,28 +111,40 @@ function TeamCard({
   );
 }
 
+function TeamGrid({ members }: { members: TeamMember[] }) {
+  return (
+    <ul className="mt-4 grid grid-cols-3 gap-4 lg:grid-cols-4">
+      {members.map((member) => (
+        <li key={member.name} className="h-full">
+          <TeamCard
+            name={member.name}
+            role={member.role}
+            bio={member.bio}
+            image={member.image}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function AboutTeam() {
   return (
     <section className="border-t bg-white px-4 py-16 md:py-24">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-          Our Core Team
-        </h2>
-        <p className="mt-2 max-w-full text-muted-foreground">
-          The people who drive our mission every day—organizers, advocates, and operators committed to building worker power.
-        </p>
-        <ul className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {TEAM.map((member) => (
-            <li key={member.name} className="h-full">
-              <TeamCard
-                name={member.name}
-                role={member.role}
-                bio={member.bio}
-                image={member.image}
-              />
-            </li>
-          ))}
-        </ul>
+      <div className="mx-auto max-w-6xl space-y-16">
+        <div>
+          <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
+            Founding Team
+          </h2>
+          <TeamGrid members={FOUNDING_TEAM} />
+        </div>
+
+        <div>
+          <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
+            Core Organizing Team
+          </h2>
+          <TeamGrid members={CORE_ORGANIZING_TEAM} />
+        </div>
       </div>
     </section>
   );
