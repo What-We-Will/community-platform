@@ -62,6 +62,7 @@ function buildSenderProfile(user: CurrentUser): Profile {
     portfolio_url: null,
     timezone: "",
     is_onboarded: true,
+    approval_status: "approved",
     role: "member",
     last_seen_at: null,
     created_at: new Date().toISOString(),
