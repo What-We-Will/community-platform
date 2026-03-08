@@ -45,8 +45,12 @@ export default async function DashboardPage() {
       </Suspense>
 
       {/* Second row: Job Tracker, LeetCode, Learning */}
-      <JobTrackerCard />
-      <LearningCard />
+      <Suspense fallback={<CardSkeleton />}>
+        <JobTrackerCard userId={user.id} />
+      </Suspense>
+      <Suspense fallback={<CardSkeleton />}>
+        <LearningCard userId={user.id} />
+      </Suspense>
       <LeetcodeCard />
       <Suspense fallback={<CardSkeleton />}>
         <ActiveChatsCard userId={user.id} />
