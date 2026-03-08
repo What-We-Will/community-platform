@@ -5,9 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import nodemailer from "nodemailer";
 
-export type ApprovalResult = { error?: string };
-
-export async function approveUser(userId: string, _formData?: FormData): Promise<ApprovalResult> {
+export async function approveUser(userId: string, _formData?: FormData): Promise<void> {
   const supabase = await createClient();
 
   // Verify the caller is an admin
@@ -15,7 +13,10 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
     data: { user: callerUser },
   } = await supabase.auth.getUser();
 
-  if (!callerUser) return { error: "Not authenticated." };
+  if (!callerUser) {
+    console.error("[approvals] Not authenticated.");
+    return;
+  }
 
   const { data: callerProfile } = await supabase
     .from("profiles")
@@ -24,7 +25,8 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
     .single();
 
   if (callerProfile?.role !== "admin") {
-    return { error: "Not authorized." };
+    console.error("[approvals] Not authorized.");
+    return;
   }
 
   // Approve the user
@@ -33,7 +35,10 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
     .update({ approval_status: "approved" })
     .eq("id", userId);
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("[approvals] Failed to approve user:", error.message);
+    return;
+  }
 
   // Look up the user's email via service role (bypasses RLS on auth.users)
   const serviceClient = createServiceClient();
