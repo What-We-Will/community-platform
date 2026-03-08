@@ -11,7 +11,7 @@ export function LandingNav({ user }: { user?: User | null }) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-white">
-      <div className="mx-auto flex h-14 max-w-full items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
         <Link
           href="/"
           className="flex items-center gap-2 text-primary-orange"
@@ -100,7 +100,7 @@ export function LandingNav({ user }: { user?: User | null }) {
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              About
+              About Us
             </Link>
             <Link
               href="/#programs"

@@ -5,12 +5,12 @@ export function LandingFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-auto border-t bg-background px-4 py-6">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 flex-row">
-        <span className="text-sm text-muted-foreground">
+    <footer className="mt-auto border-t bg-background px-4 py-6 sm:px-6">
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row sm:gap-6">
+        <span className="text-center text-sm text-muted-foreground sm:text-left">
           © {year} What We Will
         </span>
-        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+        <nav className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground sm:gap-6 sm:justify-end">
           <BugReportDialog />
           <Link
             href="/about"
