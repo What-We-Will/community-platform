@@ -40,7 +40,7 @@ const GROUP_COLORS: GroupColor[] = [
 const WORKING_GROUPS = [
   {
     name: "Layoff Crisis Support Team",
-    volunteers: ["George D.", "Marc T.", "Sai N.", "Simon M.", "Summer N.", "Hope J.", "Abdul Z."],
+    volunteers: ["George D.", "Marc T.", "Sai N.", "Simon M.", "Summer N.", "Liping H.", "Hope J.", "Abdul Z."],
   },
   {
     name: "Community Job Support Team",
@@ -53,6 +53,14 @@ const WORKING_GROUPS = [
   {
     name: "Policy & Advocacy Team",
     volunteers: ["Shannon W.", "Hope J.", "Cody S.", "George D.", "Simantha P.", "Roxie T.", "Michael I.", "Abdul Z."],
+  },
+  {
+    name: "Media & Digital Organizing Team",
+    volunteers: ["Hope J.", "Cody S.", "Sonia J.", "Allen P."],
+  },
+  {
+    name: "Platform Engineering Team & WWW Tech Worker Cooperative",
+    volunteers: ["Kaitlin C.", "Simon M.", "Tim ", "Andrew W.", "Roxie T.", "George D.", "Marc T.", "Jasmine E."],
   },
 ];
 
@@ -102,7 +110,7 @@ export function AboutVolunteers() {
               key={group.name}
               name={group.name}
               volunteers={group.volunteers}
-              color={GROUP_COLORS[i]}
+              color={GROUP_COLORS[i % GROUP_COLORS.length]}
             />
           ))}
         </div>
