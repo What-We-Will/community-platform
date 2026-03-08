@@ -50,7 +50,7 @@ export function Programs() {
   return (
     <section id="programs" className="scroll-mt-20 bg-warm-beige px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
-        <h2 className="text-center text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+        <h2 className="text-center text-dark-blue font-bebas text-5xl">
           Our Core Programs
         </h2>
         <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">

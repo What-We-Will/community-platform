@@ -5,13 +5,12 @@ import Link from "next/link";
 import { useState } from "react";
 
 export function LandingFutureWeDemand() {
-  
 
   return (
     <section id="our-future" className="scroll-mt-20 bg-[#f5f5f5] px-4 py-16 md:py-24">
       <div className="mx-auto flex max-w-6xl flex-col gap-12 md:flex-row md:items-center">
         <div className="md:w-1/2">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          <h2 className="text-5xl font-bebas text-dark-blue">
             Our Future
           </h2>
           <blockquote className="mt-4 border-l-4 border-primary-orange pl-4 italic text-muted-foreground">

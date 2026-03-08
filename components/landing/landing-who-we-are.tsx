@@ -18,9 +18,8 @@ export function LandingWhoWeAre() {
           </div>
         </div>
         <div className="md:w-1/2">
-          <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
-            <span className="text-foreground">Who</span>{" "}
-            <span className="text-primary-orange">We Are</span>
+          <h2 className="font-bebas text-dark-blue text-5xl">
+            Who We Are
           </h2>
           <p className="mt-5 max-w-3xl text-muted-foreground">
             <strong className="text-primary-orange font-semibold">What We Will</strong>{" "}

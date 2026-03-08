@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
@@ -12,20 +11,22 @@ export function LandingNav({ user }: { user?: User | null }) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-white">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-14 max-w-full items-center justify-between gap-4 px-4">
         <Link
           href="/"
-          className="flex items-center gap-1 text-lg font-bold uppercase tracking-tight text-primary-orange"
+          className="flex items-center gap-2 text-primary-orange"
         >
           <Image
-            src="/images/logo-mark.webp"
+            src="/images/logo-mark.svg"
             alt="What We Will logo"
-            width={28}
-            height={28}
+            width={50}
+            height={50}
             className="w-12"
             priority
           />
-          <span>What We Will</span>
+          <span className="font-bebas text-2xl md:text-3xl">
+            What We Will
+          </span>
         </Link>
 
         <div className="flex items-center gap-4">

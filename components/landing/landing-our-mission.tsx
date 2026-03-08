@@ -5,13 +5,13 @@ export function OurMission() {
       className="scroll-mt-20 bg-dark-blue px-4 py-16 text-white md:py-24"
     >
       <div className="mx-auto max-w-5xl">
-        <h2 className="text-center text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-          Our mission is to bridge the
+        <h2 className="text-center text-3xl font-sans leading-tight tracking-tight sm:text-4xl md:text-5xl">
+          Our mission is to <span className="text-primary-orange">center humans</span> 
           <br />
-          <span className="text-primary-orange">equity gap</span> in the age of A.I.
+          in the future of work
         </h2>
         <div className="mt-12 flex flex-col gap-8 md:flex-row md:items-stretch md:gap-0">
-          <div className="flex-1 md:border-r md:border-primary-orange/50 md:pr-8">
+          <div className="flex-1 md:pr-8">
             <h3 className="border-l-4 border-primary-orange pl-4 text-lg font-semibold text-primary-orange">
               Advocacy &amp; Policy
             </h3>

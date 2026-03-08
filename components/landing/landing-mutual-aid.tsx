@@ -5,7 +5,7 @@ export function LandingMutualAid() {
   return (
     <section className="bg-primary-orange px-4 py-10 text-white md:py-12">
       <div className="mx-auto max-w-6xl">
-        <h2 className="text-xl font-bold tracking-tight md:text-2xl">
+        <h2 className="text-4xl font-bebas">
           Mutual Aid
         </h2>
         <p className="mt-4 text-sm leading-relaxed opacity-95 md:text-base">
