@@ -22,6 +22,7 @@ export function LiveStatusAvatar({
   );
 
   useEffect(() => {
+    setStatus(getOnlineStatus(lastSeenAt, { isCurrentUser }));
     const id = setInterval(() => {
       setStatus(getOnlineStatus(lastSeenAt, { isCurrentUser }));
     }, 60_000);
