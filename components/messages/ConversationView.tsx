@@ -335,7 +335,7 @@ export function ConversationView({
     setMessages((prev) => [...prev, optimisticMsg]);
 
     // Use the API route so the server can fire email notifications to other participants
-    let data: Record<string, unknown> | null = null;
+    let savedMsg: Message | null = null;
     let errorMsg: string | null = null;
     try {
       const res = await fetch("/api/messages", {
@@ -349,7 +349,7 @@ export function ConversationView({
         }),
       });
       if (res.ok) {
-        data = await res.json();
+        savedMsg = (await res.json()) as Message;
       } else {
         const body = await res.json().catch(() => ({}));
         errorMsg = (body as { error?: string }).error ?? "Failed to send. Try again.";
@@ -358,14 +358,13 @@ export function ConversationView({
       errorMsg = "Failed to send. Try again.";
     }
 
-    if (errorMsg || !data) {
+    if (errorMsg || !savedMsg) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setSendError(errorMsg ?? "Failed to send. Try again.");
     } else {
+      const confirmed: MessageWithSender = { ...savedMsg, sender: optimisticMsg.sender };
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === optimisticId ? { ...data, sender: optimisticMsg.sender } : m
-        )
+        prev.map((m) => (m.id === optimisticId ? confirmed : m))
       );
     }
 
