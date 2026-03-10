@@ -71,6 +71,7 @@ export default async function OurPlatformPage() {
                 title: "Resource Library",
                 description:
                   "Share resources, templates, and links. Vetted by the community for quality and relevance.",
+                image: "/images/platform/resource-library.png",
               },
             ].map(({ title, description, image }, index) => {
               const outlineColor =
