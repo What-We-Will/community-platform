@@ -94,7 +94,7 @@ export function LandingNav({ user }: { user?: User | null }) {
               className="order-2 rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange md:order-2"
               asChild
             >
-              <Link href="/dashboard">Dashboard</Link>
+              <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
             </Button>
           ) : (
             <Button
@@ -103,7 +103,7 @@ export function LandingNav({ user }: { user?: User | null }) {
               className="order-2 rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange md:order-2"
               asChild
             >
-              <Link href="/login">Login</Link>
+              <a href="https://members.wwwrise.org/login">Login</a>
             </Button>
           )}
         </div>
