@@ -20,6 +20,7 @@ import {
   BookMarked,
   ListTodo,
   GitFork,
+  ExternalLink,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -192,6 +193,16 @@ export default function AppShell({ children, user }: AppShellProps) {
                 {item.label}
               </Link>
             ))}
+            <a
+              href="https://techworkersco.slack.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <ExternalLink className="size-5 shrink-0" />
+              TWC Slack
+            </a>
 
             <Separator className="my-2" />
             {profileNavItems.map((item) => (
