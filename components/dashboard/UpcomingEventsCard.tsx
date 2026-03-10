@@ -96,7 +96,7 @@ export async function UpcomingEventsCard() {
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium line-clamp-3">{e.title}</p>
+                      <p className="text-sm font-medium whitespace-normal break-words">{e.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {format(startsAt, "MMM d")} · {format(startsAt, "h:mm a")}
                         {goingCount > 0 && ` · ${goingCount} going`}
