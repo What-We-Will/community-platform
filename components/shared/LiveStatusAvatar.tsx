@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getOnlineStatus } from "@/lib/utils/status";
+import { subscribeToStatusClock } from "@/lib/utils/status-clock";
 import { UserAvatar } from "./UserAvatar";
 import type { ComponentProps } from "react";
 
@@ -23,10 +24,9 @@ export function LiveStatusAvatar({
 
   useEffect(() => {
     setStatus(getOnlineStatus(lastSeenAt, { isCurrentUser }));
-    const id = setInterval(() => {
+    return subscribeToStatusClock(() => {
       setStatus(getOnlineStatus(lastSeenAt, { isCurrentUser }));
-    }, 60_000);
-    return () => clearInterval(id);
+    });
   }, [lastSeenAt, isCurrentUser]);
 
   return <UserAvatar {...avatarProps} showStatus status={status} />;
