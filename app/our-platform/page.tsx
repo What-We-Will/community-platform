@@ -35,7 +35,7 @@ export default async function OurPlatformPage() {
                 href="https://members.wwwrise.org/login"
                 className="inline-block rounded-md bg-primary-orange px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-orange/90"
               >
-                Join Our Community
+                Login to Our Community
               </a>
             </div>
           </div>
