@@ -9,8 +9,7 @@ import {
   UserMinus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { UserAvatar } from "@/components/shared/UserAvatar";
-import { getOnlineStatus } from "@/lib/utils/status";
+import { LiveStatusAvatar } from "@/components/shared/LiveStatusAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -104,14 +103,12 @@ export function GroupMemberList({
           return (
             <div key={member.id} className="flex items-center gap-3 py-3">
               <Link href={`/members/${member.id}`} className="shrink-0">
-                <UserAvatar
+                <LiveStatusAvatar
                   avatarUrl={member.avatar_url ?? null}
                   displayName={member.display_name}
                   size="md"
-                  showStatus
-                  status={getOnlineStatus(member.last_seen_at, {
-                    isCurrentUser: member.id === currentUserId,
-                  })}
+                  lastSeenAt={member.last_seen_at}
+                  isCurrentUser={member.id === currentUserId}
                 />
               </Link>
 
