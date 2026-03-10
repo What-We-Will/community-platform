@@ -334,21 +334,33 @@ export function ConversationView({
     };
     setMessages((prev) => [...prev, optimisticMsg]);
 
-    const { data, error } = await supabase
-      .from("messages")
-      .insert({
-        conversation_id: conversationId,
-        sender_id: currentUser.id,
-        content: text,
-        message_type: messageType,
-        metadata,
-      })
-      .select()
-      .single();
+    // Use the API route so the server can fire email notifications to other participants
+    let data: Record<string, unknown> | null = null;
+    let errorMsg: string | null = null;
+    try {
+      const res = await fetch("/api/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          content: text,
+          message_type: messageType,
+          metadata,
+        }),
+      });
+      if (res.ok) {
+        data = await res.json();
+      } else {
+        const body = await res.json().catch(() => ({}));
+        errorMsg = (body as { error?: string }).error ?? "Failed to send. Try again.";
+      }
+    } catch {
+      errorMsg = "Failed to send. Try again.";
+    }
 
-    if (error) {
+    if (errorMsg || !data) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
-      setSendError(error.message || "Failed to send. Try again.");
+      setSendError(errorMsg ?? "Failed to send. Try again.");
     } else {
       setMessages((prev) =>
         prev.map((m) =>
