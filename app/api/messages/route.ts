@@ -44,16 +44,17 @@ export async function POST(req: Request) {
     .single();
 
   if (insertError) {
+    console.error("[api/messages] insert error:", insertError.message);
     return NextResponse.json({ error: insertError.message }, { status: 500 });
   }
 
-  // Fire notifications in the background — don't block the response
-  sendNotifications({
+  // Await notifications so they complete before Vercel terminates the function
+  await sendNotifications({
     conversationId: conversation_id,
     senderId: user.id,
     messageType: message_type ?? "text",
     content: content ?? "",
-  }).catch((err) => console.error("[messages/notify]", err));
+  });
 
   return NextResponse.json(message);
 }
@@ -71,7 +72,10 @@ async function sendNotifications({
 }) {
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  if (!gmailUser || !gmailPass) return;
+  if (!gmailUser || !gmailPass) {
+    console.warn("[messages/notify] GMAIL_USER or GMAIL_APP_PASSWORD not set — skipping email");
+    return;
+  }
 
   const service = createServiceClient();
 
@@ -83,18 +87,37 @@ async function sendNotifications({
     .single();
   const senderName = senderProfile?.display_name ?? "A member";
 
-  // Get all participants in the conversation, excluding the sender,
-  // joined with their last_seen_at from profiles so we can check platform activity.
-  const { data: participants } = await service
+  // Get participants in this conversation, excluding the sender
+  const { data: participants, error: partError } = await service
     .from("conversation_participants")
-    .select("user_id, muted, profiles(last_seen_at)")
+    .select("user_id, muted")
     .eq("conversation_id", conversationId)
     .neq("user_id", senderId);
 
+  if (partError) {
+    console.error("[messages/notify] participants query error:", partError.message);
+    return;
+  }
   if (!participants || participants.length === 0) return;
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://members.wwwrise.org";
+  // Fetch last_seen_at for each participant from profiles separately
+  const recipientIds = participants.map((p) => p.user_id);
+  const { data: profileRows, error: profilesError } = await service
+    .from("profiles")
+    .select("id, last_seen_at")
+    .in("id", recipientIds);
+
+  if (profilesError) {
+    console.error("[messages/notify] profiles query error:", profilesError.message);
+    return;
+  }
+
+  const lastSeenMap: Record<string, string | null> = {};
+  for (const p of profileRows ?? []) {
+    lastSeenMap[p.id] = p.last_seen_at ?? null;
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://members.wwwrise.org";
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -102,21 +125,23 @@ async function sendNotifications({
   });
 
   for (const participant of participants) {
-    // Skip muted conversations
     if (participant.muted) continue;
 
-    // Skip if the recipient has been on the platform today
-    const profile = Array.isArray(participant.profiles)
-      ? participant.profiles[0]
-      : participant.profiles;
-    const lastSeen = (profile as { last_seen_at: string | null } | null)?.last_seen_at ?? null;
-    if (!notSeenToday(lastSeen)) continue;
+    const lastSeen = lastSeenMap[participant.user_id] ?? null;
+    if (!notSeenToday(lastSeen)) {
+      continue; // They've been on the platform today — skip
+    }
 
     // Get the recipient's email via the admin auth API
     const {
       data: { user: recipientAuth },
+      error: authErr,
     } = await service.auth.admin.getUserById(participant.user_id);
-    if (!recipientAuth?.email) continue;
+
+    if (authErr || !recipientAuth?.email) {
+      console.warn("[messages/notify] could not get email for user:", participant.user_id);
+      continue;
+    }
 
     const previewText =
       messageType === "file"
@@ -136,7 +161,7 @@ async function sendNotifications({
           <div style="font-family:sans-serif;max-width:520px;margin:0 auto;">
             <h2 style="margin-bottom:4px;">New message from ${senderName}</h2>
             <p style="color:#555;margin-top:0;">You have a new message on What We Will.</p>
-            <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;font-size:15px;color:#333;">
+            <div style="background:#f5f5f5;border-radius:8px;padding:16px;margin:16px 0;font-size:15px;color:#333;white-space:pre-wrap;">
               ${previewText}
             </div>
             <a href="${conversationUrl}"
@@ -150,8 +175,9 @@ async function sendNotifications({
           </div>
         `,
       });
+      console.log(`[messages/notify] emailed ${recipientAuth.email}`);
     } catch (err) {
-      console.error(`[messages/notify] Failed to email ${recipientAuth.email}:`, err);
+      console.error(`[messages/notify] failed to email ${recipientAuth.email}:`, err);
     }
   }
 }
