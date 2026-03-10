@@ -53,8 +53,8 @@ const myToolsNavItems = [
 const resourcesNavItems = [
   { href: "/jobs",         label: "Job Board",      icon: Briefcase },
   { href: "/learning",     label: "Group Learning", icon: BookMarked },
-  { href: "/links",        label: "Resource Hub",   icon: Link2 },
   { href: "/projects",     label: "Projects",       icon: GitFork },
+  { href: "/links",        label: "Resource Hub",   icon: Link2 },
 ];
 
 const profileNavItems = [
