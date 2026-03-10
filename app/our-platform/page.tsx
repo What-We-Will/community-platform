@@ -121,7 +121,14 @@ export default async function OurPlatformPage() {
             </p>
             <ul className="mt-6 flex flex-col items-center gap-3 text-center md:flex-row md:justify-center md:gap-10">
               <li className="font-bebas text-2xl tracking-tight text-foreground md:text-3xl">
-                Basic Income Pilot
+                <a
+                  href="https://aicommonsproject.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-primary-orange transition-colors"
+                >
+                  Basic Income Pilot
+                </a>
               </li>
               <li className="hidden text-muted-foreground md:block" aria-hidden>
                 ·
