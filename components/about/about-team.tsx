@@ -74,7 +74,7 @@ const CORE_ORGANIZING_TEAM: TeamMember[] = [
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Sonia Jacobs",
+    name: "Sonia Jacob",
     role: "Co-Lead Organizer - Participatory Research Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
