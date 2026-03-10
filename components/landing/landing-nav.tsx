@@ -63,6 +63,13 @@ export function LandingNav({ user }: { user?: User | null }) {
             </div>
 
             <Link
+              href="/our-platform"
+              className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
+            >
+              Our Platform
+            </Link>
+
+            <Link
               href="/#our-future"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
@@ -146,6 +153,14 @@ export function LandingNav({ user }: { user?: User | null }) {
               └ Mass Call
             </a>
             )}
+
+            <Link
+              href="/our-platform"
+              className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Our Platform
+            </Link>
 
             <Link
               href="/#our-future"
