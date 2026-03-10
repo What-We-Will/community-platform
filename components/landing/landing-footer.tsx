@@ -13,7 +13,7 @@ export function LandingFooter() {
         <nav className="flex items-center gap-6 text-sm text-muted-foreground">
           <BugReportDialog />
           <Link
-            href="/about"
+            href="/about-us"
             className="hover:text-foreground transition-colors"
           >
             About

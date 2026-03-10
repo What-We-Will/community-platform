@@ -34,7 +34,7 @@ export function LandingNav({ user }: { user?: User | null }) {
           {/* Desktop nav links */}
           <nav className="hidden items-center gap-8 md:flex md:order-1">
             <Link
-              href="/about"
+              href="/about-us"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
               About Us
@@ -114,7 +114,7 @@ export function LandingNav({ user }: { user?: User | null }) {
         <div className="border-t border-border/40 bg-white px-4 md:hidden">
           <nav className="ml-auto flex w-44 flex-col gap-2 py-3 text-right">
             <Link
-              href="/about"
+              href="/about-us"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
