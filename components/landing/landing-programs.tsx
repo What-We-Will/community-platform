@@ -12,7 +12,7 @@ const programs = [
       "Crisis support for people facing layoffs: benefits and severance guidance, legal and immigration referrals, and peer support.",
       "We use WARN filings to reach workers early and connect them with job pipelines and collective action.",
     ],
-    icon: "🫶🏿",
+    icon: "🫶",
     barClass: "bg-accent-blue",
   },
   {
