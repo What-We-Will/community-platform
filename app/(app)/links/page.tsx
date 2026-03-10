@@ -35,12 +35,12 @@ const SECTIONS: {
   categories: LinkCategory[];
 }[] = [
   {
-    heading: "Job Search Platforms",
-    categories: ["job_board_general", "job_board_remote"],
-  },
-  {
     heading: "Communities & Networking",
     categories: ["community"],
+  },
+  {
+    heading: "Job Search Platforms",
+    categories: ["job_board_remote", "job_board_general"],
   },
   {
     heading: "Organizations",
