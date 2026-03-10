@@ -79,7 +79,13 @@ export function ConversationList({
             const idx = prev.findIndex(
               (c) => c.conversation.id === newMsg.conversation_id
             );
-            if (idx === -1) return prev;
+
+            // Unknown conversation — this is a new thread. Refresh from server
+            // so the sidebar picks it up for both the sender and the recipient.
+            if (idx === -1) {
+              router.refresh();
+              return prev;
+            }
 
             const updated = [...prev];
             const conv = { ...updated[idx] };
@@ -100,7 +106,7 @@ export function ConversationList({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserId, pathname]);
+  }, [currentUserId, pathname, router]);
 
   async function handleArchive(e: React.MouseEvent, conversationId: string) {
     e.preventDefault();
