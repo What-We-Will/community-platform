@@ -69,6 +69,11 @@ const CORE_ORGANIZING_TEAM: TeamMember[] = [
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
+    name: "George Dover",
+    role: "Co-Lead Organizer - Layoff Crisis Response Team",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
     name: "Sonia Jacobs",
     role: "Co-Lead Organizer - Participatory Research Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
@@ -76,11 +81,6 @@ const CORE_ORGANIZING_TEAM: TeamMember[] = [
   {
     name: "Simantha Pathak",
     role: "Co-Lead Organizer - Participatory Research Team",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "George Dover",
-    role: "Co-Lead Organizer - Layoff Crisis Response Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {

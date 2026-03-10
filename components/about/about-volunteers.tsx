@@ -1,23 +1,23 @@
 const WORKING_GROUPS = [
   {
-    name: "Layoff Crisis Support Team",
-    volunteers: ["George D.", "Marc T.", "Sai N.", "Simon M.", "Summer N.", "Liping H.", "Hope J.", "Abdul Z."],
+    name: "Policy & Advocacy Team",
+    volunteers: ["Shannon W.", "George D.", "Simantha P.", "Hope J.", "Cody S.", "Roxie T.", "Michael I.", "Abdul Z."],
   },
   {
     name: "Community Job Support Team",
-    volunteers: ["Abdul Z.", "Margaret G.", "Simantha P.", "Warren L.", "Roxie T.", "Henry I.", "Mary F.", "Isaac L.", "Simon M."],
+    volunteers: ["Sabrina S.", "Abdul Z.", "Margaret G.", "Simantha P.", "Warren L.", "Roxie T.", "Henry I.", "Mary F.", "Isaac L.", "Simon M."],
+  },
+  {
+    name: "Layoff Crisis Support Team",
+    volunteers: ["Kaitlin C.","George D.", "Marc T.", "Sai N.", "Simon M.", "Summer N.", "Liping H.", "Hope J.", "Abdul Z."],
   },
   {
     name: "Participatory Action Research Team",
-    volunteers: ["Sonia J.", "Simantha J.", "Shannon W.", "Lara G.", "Michael I.", "Margaret G.", "Adbul Z."],
-  },
-  {
-    name: "Policy & Advocacy Team",
-    volunteers: ["Shannon W.", "Hope J.", "Cody S.", "George D.", "Simantha P.", "Roxie T.", "Michael I.", "Abdul Z."],
+    volunteers: ["Sonia J.", "Simantha J.", "Lara G.", "Shannon W.", "Michael I.", "Margaret G.", "Adbul Z."],
   },
   {
     name: "Media & Digital Organizing Team",
-    volunteers: ["Hope J.", "Cody S.", "Sonia J.", "Allen P."],
+    volunteers: ["Kyle A.","Hope J.", "Cody S.", "Sonia J.", "Allen P."],
   },
   {
     name: "Platform Engineering Team & WWW Tech Worker Cooperative",
