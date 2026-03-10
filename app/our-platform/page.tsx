@@ -65,6 +65,7 @@ export default async function OurPlatformPage() {
                 title: "Civic Tech Projects",
                 description:
                   "Collaborate on open source projects that serve workers and communities. Learn skills, get mentorship, and exchange stars.",
+                image: "/images/platform/civic-tech-projects.png",
               },
               {
                 title: "Resource Library",
