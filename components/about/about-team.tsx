@@ -54,7 +54,7 @@ const CORE_ORGANIZING_TEAM: TeamMember[] = [
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Hope Jindenma",
+    name: "Hope Jidenma",
     role: "Lead Organizer - Digital Organizing & Social Media Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
