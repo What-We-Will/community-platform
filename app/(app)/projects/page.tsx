@@ -1,17 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { ProjectsClient, type ProjectRow } from "./ProjectsClient";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Projects" };
 
+// Service-role client — bypasses RLS for reading projects (public open-source data)
+function getAdminClient() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+}
+
 export default async function ProjectsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const adminSupabase = getAdminClient();
+
   const [projectsResult, { data: profile }] = await Promise.all([
-    supabase
+    adminSupabase
       .from("projects")
       .select(`
         id, github_url, title, description, image_url, language, stars,
@@ -25,10 +37,8 @@ export default async function ProjectsPage() {
   if (projectsResult.error) {
     console.error("[projects page] fetch error:", projectsResult.error);
   }
-  const projects = projectsResult.data;
 
-  // Normalise the creator join (Supabase may return an array)
-  const normalised: ProjectRow[] = (projects ?? []).map((p) => {
+  const normalised: ProjectRow[] = (projectsResult.data ?? []).map((p) => {
     const raw = Array.isArray(p.creator) ? (p.creator[0] ?? null) : p.creator;
     return {
       ...p,
