@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Trash2, Plus, Check, X, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Check, X, Loader2, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ interface ScheduleRow {
   name: string;
   days: string;
   time: string;
+  zoom_url: string | null;
   position: number;
 }
 
@@ -23,7 +24,7 @@ interface Props {
   rows: ScheduleRow[];
 }
 
-const EMPTY = { name: "", days: "", time: "" };
+const EMPTY = { name: "", days: "", time: "", zoom_url: "" };
 
 export function WeeklyScheduleAdmin({ rows }: Props) {
   const router = useRouter();
@@ -94,6 +95,14 @@ export function WeeklyScheduleAdmin({ rows }: Props) {
                 placeholder="Time"
               />
             </td>
+            <td className="px-4 py-2">
+              <Input
+                value={editRow.zoom_url}
+                onChange={(e) => setEditRow((r) => ({ ...r, zoom_url: e.target.value }))}
+                className="h-7 text-sm"
+                placeholder="https://zoom.us/j/..."
+              />
+            </td>
             <td className="px-2 py-2">
               <div className="flex gap-1">
                 <Button size="icon" variant="ghost" className="size-7" onClick={() => handleSaveEdit(row.id)} disabled={busy}>
@@ -110,9 +119,33 @@ export function WeeklyScheduleAdmin({ rows }: Props) {
             <td className="px-4 py-2.5 text-sm font-medium">{row.name}</td>
             <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.days}</td>
             <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.time}</td>
+            <td className="px-4 py-2.5 text-sm">
+              {row.zoom_url ? (
+                <a
+                  href={row.zoom_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-blue-600 hover:underline"
+                >
+                  <Video className="size-3.5" />
+                  Join
+                </a>
+              ) : (
+                <span className="text-muted-foreground/40">—</span>
+              )}
+            </td>
             <td className="px-2 py-2">
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button size="icon" variant="ghost" className="size-7" onClick={() => { setEditingId(row.id); setEditRow({ name: row.name, days: row.days, time: row.time }); }} disabled={busy}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7"
+                  onClick={() => {
+                    setEditingId(row.id);
+                    setEditRow({ name: row.name, days: row.days, time: row.time, zoom_url: row.zoom_url ?? "" });
+                  }}
+                  disabled={busy}
+                >
                   <Pencil className="size-3.5" />
                 </Button>
                 <Button size="icon" variant="ghost" className="size-7 text-destructive hover:text-destructive" onClick={() => handleDelete(row.id)} disabled={busy}>
@@ -136,6 +169,9 @@ export function WeeklyScheduleAdmin({ rows }: Props) {
           <td className="px-4 py-2">
             <Input value={newRow.time} onChange={(e) => setNewRow((r) => ({ ...r, time: e.target.value }))} className="h-7 text-sm" placeholder="Time" />
           </td>
+          <td className="px-4 py-2">
+            <Input value={newRow.zoom_url} onChange={(e) => setNewRow((r) => ({ ...r, zoom_url: e.target.value }))} className="h-7 text-sm" placeholder="https://zoom.us/j/..." />
+          </td>
           <td className="px-2 py-2">
             <div className="flex gap-1">
               <Button size="icon" variant="ghost" className="size-7" onClick={handleAdd} disabled={busy}>
@@ -149,7 +185,7 @@ export function WeeklyScheduleAdmin({ rows }: Props) {
         </tr>
       ) : (
         <tr>
-          <td colSpan={4} className="px-4 py-2">
+          <td colSpan={5} className="px-4 py-2">
             <Button size="sm" variant="ghost" className="gap-1.5 text-xs h-7" onClick={() => setAdding(true)}>
               <Plus className="size-3.5" />
               Add row

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, ChevronDown } from "lucide-react";
+import { CalendarDays, ChevronDown, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ScheduleRow {
@@ -10,6 +10,7 @@ interface ScheduleRow {
   name: string;
   days: string;
   time: string;
+  zoom_url: string | null;
   position: number;
 }
 
@@ -21,7 +22,6 @@ interface Props {
 export function WeeklyScheduleCard({ rows, isPlatformAdmin }: Props) {
   const [open, setOpen] = useState(false);
 
-  // Lazy-load the admin component only when needed
   const [AdminComponent, setAdminComponent] = useState<React.ComponentType<{ rows: ScheduleRow[] }> | null>(null);
 
   async function handleOpen() {
@@ -61,6 +61,7 @@ export function WeeklyScheduleCard({ rows, isPlatformAdmin }: Props) {
                   <th className="px-4 py-2 text-left font-medium text-muted-foreground">Name</th>
                   <th className="px-4 py-2 text-left font-medium text-muted-foreground">Days</th>
                   <th className="px-4 py-2 text-left font-medium text-muted-foreground">Time</th>
+                  <th className="px-4 py-2 text-left font-medium text-muted-foreground">Zoom</th>
                   {isPlatformAdmin && <th className="w-20" />}
                 </tr>
               </thead>
@@ -73,6 +74,21 @@ export function WeeklyScheduleCard({ rows, isPlatformAdmin }: Props) {
                       <td className="px-4 py-2.5 font-medium">{row.name}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{row.days}</td>
                       <td className="px-4 py-2.5 text-muted-foreground">{row.time}</td>
+                      <td className="px-4 py-2.5">
+                        {row.zoom_url ? (
+                          <a
+                            href={row.zoom_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            <Video className="size-3.5 shrink-0" />
+                            Join
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground/40">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

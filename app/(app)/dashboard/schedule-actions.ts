@@ -17,11 +17,14 @@ async function requireAdmin() {
 }
 
 export async function createScheduleRow(
-  row: { name: string; days: string; time: string; position: number }
+  row: { name: string; days: string; time: string; zoom_url: string; position: number }
 ): Promise<{ error?: string }> {
   try {
     const supabase = await requireAdmin();
-    const { error } = await supabase.from("weekly_schedule").insert(row);
+    const { error } = await supabase.from("weekly_schedule").insert({
+      ...row,
+      zoom_url: row.zoom_url.trim() || null,
+    });
     if (error) return { error: error.message };
     revalidatePath("/dashboard");
     return {};
@@ -32,13 +35,13 @@ export async function createScheduleRow(
 
 export async function updateScheduleRow(
   id: string,
-  row: { name: string; days: string; time: string }
+  row: { name: string; days: string; time: string; zoom_url: string }
 ): Promise<{ error?: string }> {
   try {
     const supabase = await requireAdmin();
     const { error } = await supabase
       .from("weekly_schedule")
-      .update({ ...row, updated_at: new Date().toISOString() })
+      .update({ ...row, zoom_url: row.zoom_url.trim() || null, updated_at: new Date().toISOString() })
       .eq("id", id);
     if (error) return { error: error.message };
     revalidatePath("/dashboard");

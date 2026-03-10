@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   const [{ data: profile }, { data: scheduleRows }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
-    supabase.from("weekly_schedule").select("id, name, days, time, position").order("position", { ascending: true }),
+    supabase.from("weekly_schedule").select("id, name, days, time, zoom_url, position").order("position", { ascending: true }),
   ]);
 
   const isPlatformAdmin = profile?.role === "admin";
