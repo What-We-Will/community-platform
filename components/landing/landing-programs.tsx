@@ -12,14 +12,14 @@ const programs = [
       "Crisis support for people facing layoffs: benefits and severance guidance, legal and immigration referrals, and peer support.",
       "We use WARN filings to reach workers early and connect them with job pipelines and collective action.",
     ],
-    icon: "🫶",
+    icon: "🫶🏿",
     barClass: "bg-accent-blue",
   },
   {
     title: "Workforce Development",
     description:
       "Project-based learning that connects workers with local businesses and government to build community technology while practicing forward-deployed AI skills. We also provide evidence-based resources and counseling for moves into healthcare, social servics, and skilled trades.",
-    icon: "🤝",
+    icon: "🤝🏾",
     barClass: "bg-accent-green",
   },
   {
@@ -28,14 +28,14 @@ const programs = [
       "Participatory action research on changing work conditions and effective supports.",
       "We host discussion, evaluate policy proposals, and publish findings for broader public engagement.",
     ],
-    icon: "✍️",
+    icon: "✍🏽",
     barClass: "bg-accent-gold",
   },
   {
     title: "Organizing & Advocacy",
     description:
       "We track policy at state and federal levels and help members become informed organizers—advocating with officials, shaping media narratives, and organizing campaigns for stronger layoff protections, income stabilization, and worker voice in AI policy.",
-    icon: "✊",
+    icon: "✊🏻",
     barClass: "bg-primary-orange",
   },
 ];
