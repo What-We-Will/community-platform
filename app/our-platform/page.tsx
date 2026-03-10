@@ -58,6 +58,7 @@ export default async function OurPlatformPage() {
                 title: "Job Application Tracker",
                 description:
                   "Track your applications and interviews. Compare notes with other job seekers, and get metrics on your progress. Connect for mock interviews, DSA sessions, and shared tools to overcome AI screeners.",
+                image: "/images/platform/job-application-tracker.png",
               },
               {
                 title: "Civic Tech Projects",
@@ -78,7 +79,7 @@ export default async function OurPlatformPage() {
                 className="flex flex-col overflow-hidden rounded-lg border-2 bg-card"
                 style={{ borderColor: outlineColor }}
               >
-                <div className="relative aspect-video bg-muted/50">
+                <div className="relative aspect-[3/2] bg-muted/50">
                   {image ? (
                     <Image
                       src={image}
