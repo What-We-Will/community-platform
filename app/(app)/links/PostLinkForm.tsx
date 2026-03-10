@@ -29,6 +29,7 @@ const CATEGORIES: { value: LinkCategory; label: string }[] = [
   { value: "job_board_general", label: "Job Board — General" },
   { value: "job_board_remote",  label: "Job Board — Remote" },
   { value: "job_board_civic",   label: "Job Board — Civic Tech" },
+  { value: "labor_org",         label: "Labor Organization" },
   { value: "learning",         label: "Learning Material" },
   { value: "tool",             label: "Tool / App" },
   { value: "article",          label: "Article / Blog Post" },
