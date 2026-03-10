@@ -24,11 +24,14 @@ import { Plus, Loader2 } from "lucide-react";
 import { createLink, type LinkCategory } from "./actions";
 
 const CATEGORIES: { value: LinkCategory; label: string }[] = [
-  { value: "organization", label: "Organization" },
-  { value: "learning",     label: "Learning Material" },
-  { value: "tool",         label: "Tool / App" },
-  { value: "article",      label: "Article / Blog Post" },
-  { value: "other",        label: "Other" },
+  { value: "organization",     label: "Organization" },
+  { value: "community",        label: "Community / Networking" },
+  { value: "job_board_general", label: "Job Board — General" },
+  { value: "job_board_remote",  label: "Job Board — Remote" },
+  { value: "learning",         label: "Learning Material" },
+  { value: "tool",             label: "Tool / App" },
+  { value: "article",          label: "Article / Blog Post" },
+  { value: "other",            label: "Other" },
 ];
 
 export function PostLinkForm() {

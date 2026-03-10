@@ -3,7 +3,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export type LinkCategory = "organization" | "learning" | "tool" | "article" | "other";
+export type LinkCategory =
+  | "organization"
+  | "learning"
+  | "tool"
+  | "article"
+  | "other"
+  | "job_board_general"
+  | "job_board_remote"
+  | "community";
 
 export async function createLink(formData: {
   title: string;
