@@ -12,10 +12,11 @@ export default async function GroupsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // ── Fetch all groups (including study groups) ─────────────────────────────
+  // ── Fetch all non-archived groups (including study groups) ─────────────────
   const { data: allGroups } = await supabase
     .from("groups")
     .select("*")
+    .eq("archived", false)
     .order("created_at", { ascending: false });
 
   if (!allGroups || allGroups.length === 0) {
@@ -92,11 +93,9 @@ export default async function GroupsPage() {
   // Sort by member count descending
   enriched.sort((a, b) => b.memberCount - a.memberCount);
 
-  const active = enriched.filter((g) => !(g.archived === true));
-
-  const workingGroups = active.filter((g) => g.is_working_group === true && !g.is_study_group);
-  const studyGroups   = active.filter((g) => g.is_study_group === true);
-  const regularActive = active.filter((g) => !g.is_working_group && !g.is_study_group);
+  const workingGroups = enriched.filter((g) => g.is_working_group === true && !g.is_study_group);
+  const studyGroups   = enriched.filter((g) => g.is_study_group === true);
+  const regularActive = enriched.filter((g) => !g.is_working_group && !g.is_study_group);
 
   const myGroups      = regularActive.filter((g) => g.isMember);
   const discoverGroups = regularActive.filter((g) => !g.isMember);

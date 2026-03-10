@@ -19,7 +19,6 @@ import {
   Link2,
   BookMarked,
   ListTodo,
-  Radio,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -54,7 +53,6 @@ const resourcesNavItems = [
   { href: "/jobs",         label: "Job Board",    icon: Briefcase },
   { href: "/learning",     label: "Group Learning", icon: BookMarked },
   { href: "/links",        label: "Resource Hub", icon: Link2 },
-  { href: "/mass-call",    label: "Mass Call",    icon: Radio },
 ];
 
 const profileNavItems = [

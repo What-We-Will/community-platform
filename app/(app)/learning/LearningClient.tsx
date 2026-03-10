@@ -490,6 +490,56 @@ function AddResourceDialog({ type, label, urlPlaceholder }: AddResourceDialogPro
   );
 }
 
+// ── Learning Group sidebar item ───────────────────────────────────────────────
+
+function LearningGroupSidebarItem({
+  group,
+  onJoinLeave,
+}: {
+  group: StudyGroupRow;
+  onJoinLeave: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  async function handleJoinLeave() {
+    setLoading(true);
+    if (group.is_member) {
+      await leaveStudyGroup(group.id);
+    } else {
+      await joinStudyGroup(group.id);
+    }
+    onJoinLeave();
+    setLoading(false);
+  }
+  return (
+    <div className="rounded-lg border bg-card p-3 text-sm">
+      <p className="font-medium text-foreground">{group.name}</p>
+      {group.description && (
+        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{group.description}</p>
+      )}
+      <p className="text-[11px] text-muted-foreground mt-1">
+        {group.member_count} member{group.member_count !== 1 ? "s" : ""}
+        {group.creator && ` · ${group.creator.display_name}`}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {group.group_slug ? (
+          <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
+            <Link href={`/groups/${group.group_slug}`}>Open</Link>
+          </Button>
+        ) : null}
+        <Button
+          variant={group.is_member ? "ghost" : "default"}
+          size="sm"
+          className="h-7 text-xs"
+          onClick={handleJoinLeave}
+          disabled={loading}
+        >
+          {loading ? <Loader2 className="size-3 animate-spin" /> : group.is_member ? "Leave" : "Join"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ── Paths Tab ─────────────────────────────────────────────────────────────────
 
 interface PathsTabProps {
@@ -497,9 +547,10 @@ interface PathsTabProps {
   itemsByPath: Record<string, LearningPathItem[]>;
   currentUserId: string;
   isPlatformAdmin: boolean;
+  studyGroupsByResource: Record<string, StudyGroupRow[]>;
 }
 
-function PathsTab({ paths, itemsByPath, currentUserId, isPlatformAdmin }: PathsTabProps) {
+function PathsTab({ paths, itemsByPath, currentUserId, isPlatformAdmin, studyGroupsByResource }: PathsTabProps) {
   const router = useRouter();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [addItemPathId, setAddItemPathId] = useState<string | null>(null);
@@ -570,6 +621,7 @@ function PathsTab({ paths, itemsByPath, currentUserId, isPlatformAdmin }: PathsT
 
   const starredPaths = paths.filter((p) => p.is_starred);
   const communityPaths = paths.filter((p) => !p.is_starred);
+  const allStudyGroups = Object.values(studyGroupsByResource).flat();
 
   function renderPath(path: LearningPath) {
     const isExpanded = expandedIds.has(path.id);
@@ -746,7 +798,8 @@ function PathsTab({ paths, itemsByPath, currentUserId, isPlatformAdmin }: PathsT
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+      <div className="space-y-6 min-w-0">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {paths.length} path{paths.length !== 1 ? "s" : ""}
@@ -820,6 +873,29 @@ function PathsTab({ paths, itemsByPath, currentUserId, isPlatformAdmin }: PathsT
           <div className="space-y-2">{communityPaths.map(renderPath)}</div>
         </section>
       )}
+      </div>
+
+      {/* Learning Groups sidebar */}
+      <aside className="space-y-3 lg:order-2">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Learning Groups
+        </h2>
+        {allStudyGroups.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">
+            No study groups yet. Join a course, video, or tutorial and create one to study with others.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {allStudyGroups.map((g) => (
+              <LearningGroupSidebarItem
+                key={g.id}
+                group={g}
+                onJoinLeave={() => router.refresh()}
+              />
+            ))}
+          </div>
+        )}
+      </aside>
     </div>
   );
 }
@@ -1204,7 +1280,13 @@ export function LearningClient({
         </TabsList>
 
         <TabsContent value="paths">
-          <PathsTab paths={paths} itemsByPath={itemsByPath} currentUserId={currentUserId} isPlatformAdmin={isPlatformAdmin} />
+          <PathsTab
+            paths={paths}
+            itemsByPath={itemsByPath}
+            currentUserId={currentUserId}
+            isPlatformAdmin={isPlatformAdmin}
+            studyGroupsByResource={studyGroupsByResource}
+          />
         </TabsContent>
 
         <TabsContent value="courses">

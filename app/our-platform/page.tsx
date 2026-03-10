@@ -53,6 +53,7 @@ export default async function OurPlatformPage() {
                 title: "Shared Learning Tools",
                 description:
                   "Create study groups for a curated lists of resources, organized by skill paths. Join workshops and skillshares by community members. Daily Standups.",
+                image: "/images/platform/shared-learning-tools.png",
               },
               {
                 title: "Job Application Tracker",

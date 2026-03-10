@@ -57,7 +57,8 @@ async function MemberGroups({
   const { data: groups } = await supabase
     .from("groups")
     .select("id, name, slug, is_private")
-    .in("id", groupIds);
+    .in("id", groupIds)
+    .eq("archived", false);
 
   // Show: public groups + private groups where viewer is also a member
   const visibleGroups = (groups ?? []).filter(

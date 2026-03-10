@@ -65,7 +65,7 @@ export default async function GroupLearningPage() {
       .eq("user_id", user.id),
     supabase
       .from("learning_study_groups")
-      .select("id, resource_id, name, description, created_by, created_at, group_id, group:group_id(id, slug), creator:created_by(id, display_name)")
+      .select("id, resource_id, name, description, created_by, created_at, group_id, group:group_id(id, slug, archived), creator:created_by(id, display_name)")
       .order("created_at", { ascending: false }),
     supabase
       .from("learning_study_group_members")
@@ -119,10 +119,12 @@ export default async function GroupLearningPage() {
     if (m.user_id === user.id) myGroupIds.add(m.group_id);
   }
 
-  // Normalize study groups
+  // Normalize study groups (exclude those whose linked group is archived)
   const studyGroupsByResource: Record<string, StudyGroupRow[]> = {};
   for (const g of rawStudyGroups ?? []) {
     const groupRaw = Array.isArray(g.group) ? (g.group[0] ?? null) : g.group;
+    const groupArchived = (groupRaw as { archived?: boolean } | null)?.archived === true;
+    if (groupArchived) continue;
     const row: StudyGroupRow = {
       id: g.id,
       resource_id: g.resource_id,
