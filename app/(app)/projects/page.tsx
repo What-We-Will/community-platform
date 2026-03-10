@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProjectsClient, type ProjectRow } from "./ProjectsClient";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Projects" };
 
 export default async function ProjectsPage() {
@@ -9,7 +10,7 @@ export default async function ProjectsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: projects }, { data: profile }] = await Promise.all([
+  const [projectsResult, { data: profile }] = await Promise.all([
     supabase
       .from("projects")
       .select(`
@@ -20,6 +21,11 @@ export default async function ProjectsPage() {
       .order("created_at", { ascending: false }),
     supabase.from("profiles").select("role").eq("id", user.id).single(),
   ]);
+
+  if (projectsResult.error) {
+    console.error("[projects page] fetch error:", projectsResult.error);
+  }
+  const projects = projectsResult.data;
 
   // Normalise the creator join (Supabase may return an array)
   const normalised: ProjectRow[] = (projects ?? []).map((p) => {
