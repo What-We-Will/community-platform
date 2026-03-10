@@ -89,14 +89,14 @@ export async function UpcomingEventsCard() {
                 <li key={e.id}>
                   <Link
                     href={`/events/${e.id}`}
-                    className="flex items-center gap-2 rounded-lg p-2 -mx-2 hover:bg-accent/50 transition-colors"
+                    className="flex items-start gap-2 rounded-lg p-2 -mx-2 hover:bg-accent/50 transition-colors"
                   >
                     <span
-                      className={`size-2 shrink-0 rounded-full ${dotClass} ${isLive ? "animate-pulse" : ""}`}
+                      className={`mt-1.5 size-2 shrink-0 rounded-full ${dotClass} ${isLive ? "animate-pulse" : ""}`}
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">{e.title}</p>
+                      <p className="text-sm font-medium line-clamp-3">{e.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {format(startsAt, "MMM d")} · {format(startsAt, "h:mm a")}
                         {goingCount > 0 && ` · ${goingCount} going`}
