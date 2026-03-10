@@ -17,6 +17,9 @@ const PROTECTED_ROUTES = [
   "/onboarding",
   "/pending-approval",
   "/admin",
+  "/projects",
+  "/links",
+  "/learning",
 ];
 
 const AUTH_ROUTES = ["/login", "/signup"];
