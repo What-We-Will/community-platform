@@ -20,7 +20,7 @@ export function LandingPage({ user }: { user?: User | null }) {
         <Programs />
         <LandingMutualAid />
         <LandingFutureWeDemand />
-        <LandingJoinCommunity />
+        <LandingJoinCommunity user={user} />
       </main>
       <LandingFooter />
     </div>

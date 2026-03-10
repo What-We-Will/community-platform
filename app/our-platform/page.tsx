@@ -28,8 +28,16 @@ export default async function OurPlatformPage() {
               Our Platform
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
-              We build infrastructure for mutual aid. <br/> <span className="text-primary-orange">[Currently in Beta]</span>
+              We build infrastructure for mutual aid. <br/> <span className="text-primary-orange">[Currently Launched in Beta]</span>
             </p>
+            <div className="mt-6">
+              <a
+                href="https://members.wwwrise.org/login"
+                className="inline-block rounded-md bg-primary-orange px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-orange/90"
+              >
+                Join Our Community
+              </a>
+            </div>
           </div>
         </section>
 

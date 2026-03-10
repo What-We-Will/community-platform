@@ -27,7 +27,7 @@ export function OurMission() {
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">
               As a tech cooperative, we are worker-owners who build this platform democratically, and provide resources to help laid off and early career workers navigate a changing job
-              landscape with layoff crisis support, community job search tools, skill sharing, civic tech projects, and mutual aid.
+              landscape with community job search tools, layoff crisis support, skill sharing, civic tech projects, and mutual aid.
             </p>
           </div>
         </div>
