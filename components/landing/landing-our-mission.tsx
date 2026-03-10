@@ -18,7 +18,7 @@ export function OurMission() {
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">
               We organize to advance &quot;Human-First&quot; AI practices
               to empower workers' voices in decision-making, strengthen our social safety net, and fight for bold policies that ensure equitable access to quality jobs, and a dignified future of
-              shared prosperity.
+              shared prosperity. <strong> And yes, we fight for basic income. </strong>
             </p>
           </div>
           <div className="flex-1 md:pl-8">
@@ -26,8 +26,8 @@ export function OurMission() {
               Community Support
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">
-              As a tech cooperative, we provide resources to help entry-level and laid-off workers navigate a changing job
-              landscape including layoff crisis support, shared job search tools, upskilling and skill sharing, project-based learning in civic tech, and mutual aid.
+              As a tech cooperative, we are worker-owners who build this platform democratically, and provide resources to help laid off and early career workers navigate a changing job
+              landscape with layoff crisis support, community job search tools, skill sharing, civic tech projects, and mutual aid.
             </p>
           </div>
         </div>

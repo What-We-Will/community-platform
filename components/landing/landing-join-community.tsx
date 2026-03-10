@@ -1,8 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import Link from "next/link";
-
-const ACTION_NETWORK_SIGNUP_URL = "https://actionnetwork.org/forms/what-we-will";
+import { ActionNetworkFormEmbed } from "./action-network-form-embed";
 
 export function LandingJoinCommunity() {
   return (
@@ -18,30 +14,8 @@ export function LandingJoinCommunity() {
             a difference. Come be part of the solution. Join us in building the
             collective power we need to win.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:gap-2">
-            <label htmlFor="landing-email" className="sr-only">
-              Email address
-            </label>
-            <Input
-              id="landing-email"
-              type="email"
-              placeholder="Enter your email"
-              className="min-h-10 flex-1 bg-white"
-              autoComplete="email"
-            />
-            <Button
-              size="lg"
-              className="bg-primary-orange px-6 font-semibold text-white hover:bg-primary-orange-hover sm:flex-shrink-0"
-              asChild
-            >
-              <Link
-                href={ACTION_NETWORK_SIGNUP_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Sign Up
-              </Link>
-            </Button>
+          <div className="mt-8 w-full">
+            <ActionNetworkFormEmbed />
           </div>
         </div>
       </div>

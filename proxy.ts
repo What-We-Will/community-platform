@@ -42,6 +42,23 @@ function isPendingApprovalPath(pathname: string): boolean {
 }
 
 export async function proxy(request: NextRequest) {
+  /**
+   * Supabase OAuth (PKCE) must hit /auth/callback to exchange ?code= for a session.
+   * If Redirect URLs or Site URL point at the site root, the provider returns to
+   * /?code=... Forward those requests to the callback route (preserve query params).
+   */
+  const { pathname, searchParams } = request.nextUrl;
+  const code = searchParams.get("code");
+  if (
+    code &&
+    pathname !== "/auth/callback" &&
+    !pathname.startsWith("/auth/callback/")
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   let response: NextResponse;
   let user: { id: string } | null = null;
   let isOnboarded = false;
@@ -57,8 +74,6 @@ export async function proxy(request: NextRequest) {
     console.error("[proxy] Error:", err);
     return NextResponse.next({ request });
   }
-
-  const { pathname } = request.nextUrl;
 
   // Unauthenticated users on auth pages — allow through (prevents redirect loop)
   if (isAuthPath(pathname) && !user) {
