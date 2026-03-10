@@ -13,6 +13,7 @@ type LinkCategory =
   | "other"
   | "job_board_general"
   | "job_board_remote"
+  | "job_board_civic"
   | "community";
 
 const CATEGORY_META: Record<
@@ -23,6 +24,7 @@ const CATEGORY_META: Record<
   community:        { label: "Community / Networking",  color: "text-indigo-700", bg: "bg-indigo-100 border-indigo-200" },
   job_board_general:{ label: "General",                 color: "text-violet-700", bg: "bg-violet-100 border-violet-200" },
   job_board_remote: { label: "Remote-Focused",          color: "text-cyan-700",   bg: "bg-cyan-100 border-cyan-200" },
+  job_board_civic:  { label: "Civic Tech Jobs",          color: "text-emerald-700",bg: "bg-emerald-100 border-emerald-200" },
   learning:         { label: "Learning Material",       color: "text-green-700",  bg: "bg-green-100 border-green-200" },
   tool:             { label: "Tool / App",              color: "text-purple-700", bg: "bg-purple-100 border-purple-200" },
   article:          { label: "Article / Blog",          color: "text-amber-700",  bg: "bg-amber-100 border-amber-200" },
@@ -40,7 +42,7 @@ const SECTIONS: {
   },
   {
     heading: "Job Search Platforms",
-    categories: ["job_board_remote", "job_board_general"],
+    categories: ["job_board_remote", "job_board_civic", "job_board_general"],
   },
   {
     heading: "Organizations",

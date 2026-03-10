@@ -11,6 +11,7 @@ export type LinkCategory =
   | "other"
   | "job_board_general"
   | "job_board_remote"
+  | "job_board_civic"
   | "community";
 
 export async function createLink(formData: {
