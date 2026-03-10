@@ -6,38 +6,44 @@ type TeamMember = {
   role: string;
   bio: string;
   image?: string;
+  imagePosition?: string;
 };
 
 const FOUNDING_TEAM: TeamMember[] = [
   {
     name: "Kaitlin Cort",
     role: "Co-Founder, Executive Director",
-    bio: "Leads strategy and partnerships. Former labor organizer with a focus on tech and gig workers.",
+    bio: "Lead organizer shaping strategy, programs, partnerships, and platform. Software engineer and educator, with background in labor organizing, policy research, government leadership, and 20+ years in nonprofit management.",
   },
   {
     name: "Daniel Buk",
     role: "Co-Founder, Partnerships Research & Digital Outreach",
-    bio: "Runs mutual aid, skill-sharing, and job support initiatives. Background in community organizing.",
+    bio: "Research specialist leading digital outreach and prospective partnerships. M.A. in Labor Studies from CUNY School of Labor and Urban Studies.",
   },
   {
     name: "Kyle Albasi",
-    role: "Creative Director & Media Strategy",
-    bio: "Advances human-first AI and worker protections in policy. Previously worked on labor and tech policy.",
+    role: "Co-Founder, Creative Director & Media Strategy",
+    bio: "Creative Director shaping our visual identity, narrative content, and creative media campaigns. Video producer, graphic designer, and writer.",
+  },
+  {
+    name: "Jennifer Tovar",
+    role: "Co-Founder, Curriculum Developer & Early Career Worker Support",
+    bio: "Helping entry-level workers and youth in our community with relevant skill-building and career resources.",
+  },
+  {
+    name: "Helen Yang",
+    role: "Board Member, Tech Worker Organizing & Political Education",
+    bio: "Championing worker-led organizing within workplaces, and broader tech industry activism at the Tech Workers Coalition.",
   },
   {
     name: "Charise Van Liew",
     role: "Fundraising & Development",
-    bio: "Builds and supports our member community. Ensures members have the tools and connections they need.",
-  },
-  {
-    name: "Jennifer Tovar",
-    role: "Curriculum Developer & Entry-Level Worker Support",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+    bio: "Strategic resource development specialist, with 20+ years of nonprofit executive leadership. Passionate about youth empowerment and social justice.",
   },
   {
     name: "Sabrina Shuss",
     role: "Program Manager & Operations",
-    bio: "Keeps our platforms and operations running. Focus on accessible, member-centered technology.",
+    bio: "Project manager and operations specialist, with financial management skills. Coordinating volunteer teams and ensuring our daily programs run smoothly.",
   },
 ];
 
@@ -48,28 +54,38 @@ const CORE_ORGANIZING_TEAM: TeamMember[] = [
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Abdhulladi Zaidan",
+    name: "Hope Jindenma",
+    role: "Lead Organizer - Digital Organizing & Social Media Team",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
+    name: "Abdulhadi Zaidan",
     role: "Lead Organizer - Community Job Support Program",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Hope Jidenma",
-    role: "Lead Organizer - Marketing Team & Content Strategy",
+    name: "Simon McGraw",
+    role: "Lead Organizer - WWW Tech Worker Cooperative",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Simon McGraw",
-    role: "Lead Organizer - Tech Worker Cooperative & Platform Engineering",
+    name: "Sonia Jacobs",
+    role: "Co-Lead Organizer - Participatory Research Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
     name: "Simantha Pathak",
-    role: "Lead Organizer - Participatory Action Research Team",
+    role: "Co-Lead Organizer - Participatory Research Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
     name: "George Dover",
-    role: "Lead Organizer - Layoff Crisis Response Team",
+    role: "Co-Lead Organizer - Layoff Crisis Response Team",
+    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
+  },
+  {
+    name: "Margaret Gorlin",
+    role: "Co-Lead - Job Support & Participatory Research Teams",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
 ];
@@ -79,39 +95,42 @@ function TeamCard({
   role,
   bio,
   image,
+  imagePosition,
 }: {
   name: string;
   role: string;
   bio: string;
   image?: string;
+  imagePosition?: string;
 }) {
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
-      <div className="relative aspect-square w-full shrink-0 bg-muted flex items-center justify-center overflow-hidden">
-        {image ? (
+      {image && (
+        <div className="relative w-full shrink-0 overflow-hidden" style={{ height: "160px" }}>
           <Image
             src={image}
             alt={name}
             fill
             className="object-cover"
+            style={{ objectPosition: imagePosition ?? "top" }}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
           />
-        ) : (
-          <User className="h-20 w-20 text-muted-foreground/60" aria-hidden />
-        )}
-      </div>
-      <div className="flex min-h-0 flex-1 flex-col p-5">
+        </div>
+      )}
+      <div className="flex min-h-0 flex-1 flex-col p-4">
         <h3 className="font-semibold text-foreground">{name}</h3>
         <p className="mt-1 text-sm font-medium text-primary-orange">{role}</p>
-        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-          {bio}
-        </p>
+        {bio && (
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            {bio}
+          </p>
+        )}
       </div>
     </article>
   );
 }
 
-function TeamGrid({ members }: { members: TeamMember[] }) {
+function TeamGrid({ members, showBio = true }: { members: TeamMember[]; showBio?: boolean }) {
   return (
     <ul className="mt-4 grid grid-cols-3 gap-4 lg:grid-cols-4">
       {members.map((member) => (
@@ -119,8 +138,9 @@ function TeamGrid({ members }: { members: TeamMember[] }) {
           <TeamCard
             name={member.name}
             role={member.role}
-            bio={member.bio}
+            bio={showBio ? member.bio : ""}
             image={member.image}
+            imagePosition={member.imagePosition}
           />
         </li>
       ))}
@@ -141,9 +161,9 @@ export function AboutTeam() {
 
         <div>
           <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-            Core Organizing Team
+            Core Team
           </h2>
-          <TeamGrid members={CORE_ORGANIZING_TEAM} />
+          <TeamGrid members={CORE_ORGANIZING_TEAM} showBio={false} />
         </div>
       </div>
     </section>

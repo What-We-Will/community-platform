@@ -1,42 +1,3 @@
-type GroupColor = {
-  border: string;
-  leaderBg: string;
-  leaderText: string;
-  memberBg: string;
-  memberText: string;
-};
-
-const GROUP_COLORS: GroupColor[] = [
-  {
-    border:     "border-accent-blue",
-    leaderBg:   "bg-accent-blue/15",
-    leaderText: "text-accent-blue font-medium",
-    memberBg:   "bg-muted",
-    memberText: "text-muted-foreground",
-  },
-  {
-    border:     "border-accent-green",
-    leaderBg:   "bg-accent-green/20",
-    leaderText: "text-accent-green font-medium",
-    memberBg:   "bg-muted",
-    memberText: "text-muted-foreground",
-  },
-  {
-    border:     "border-accent-gold",
-    leaderBg:   "bg-accent-gold/25",
-    leaderText: "text-accent-gold font-medium",
-    memberBg:   "bg-muted",
-    memberText: "text-muted-foreground",
-  },
-  {
-    border:     "border-primary-orange",
-    leaderBg:   "bg-primary-orange/15",
-    leaderText: "text-primary-orange font-medium",
-    memberBg:   "bg-muted",
-    memberText: "text-muted-foreground",
-  },
-];
-
 const WORKING_GROUPS = [
   {
     name: "Layoff Crisis Support Team",
@@ -44,7 +5,7 @@ const WORKING_GROUPS = [
   },
   {
     name: "Community Job Support Team",
-    volunteers: ["Abdul Z.", "Margaret G.", "Simantha P.", "Roxie T.", "Henry I.", "Mary F.", "Isaac L.", "Simon M."],
+    volunteers: ["Abdul Z.", "Margaret G.", "Simantha P.", "Warren L.", "Roxie T.", "Henry I.", "Mary F.", "Isaac L.", "Simon M."],
   },
   {
     name: "Participatory Action Research Team",
@@ -60,38 +21,33 @@ const WORKING_GROUPS = [
   },
   {
     name: "Platform Engineering Team & WWW Tech Worker Cooperative",
-    volunteers: ["Kaitlin C.", "Simon M.", "Tim ", "Andrew W.", "Roxie T.", "George D.", "Marc T.", "Jasmine E."],
+    volunteers: ["Kaitlin C.", "Simon M.", "Tim C.", "Warren L.", "Andrew W.", "Roxie T.", "Jasmine E."],
   },
 ];
 
 function WorkingGroupCard({
   name,
   volunteers,
-  color,
 }: {
   name: string;
   volunteers: string[];
-  color: GroupColor;
 }) {
   return (
-    <div className={`rounded-xl border-2 bg-card p-5 shadow-sm ${color.border}`}>
+    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
       <h3 className="font-semibold text-foreground">{name}</h3>
       <ul className="mt-3 flex flex-wrap gap-2">
-        {volunteers.map((volunteer, i) => {
-          const isLead = i < 2;
-          return (
-            <li
-              key={`${name}-${volunteer}`}
-              className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
-                isLead
-                  ? `${color.leaderBg} ${color.leaderText}`
-                  : `${color.memberBg} ${color.memberText}`
-              }`}
-            >
-              {volunteer}
-            </li>
-          );
-        })}
+        {volunteers.map((volunteer, i) => (
+          <li
+            key={`${name}-${volunteer}`}
+            className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
+              i < 2
+                ? "bg-primary-orange/15 text-primary-orange font-medium"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {volunteer}
+          </li>
+        ))}
       </ul>
     </div>
   );
@@ -102,15 +58,14 @@ export function AboutVolunteers() {
     <section className="border-t bg-white px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
         <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-          Volunteer Teams
+          Program Volunteers
         </h2>
         <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {WORKING_GROUPS.map((group, i) => (
+          {WORKING_GROUPS.map((group) => (
             <WorkingGroupCard
               key={group.name}
               name={group.name}
               volunteers={group.volunteers}
-              color={GROUP_COLORS[i % GROUP_COLORS.length]}
             />
           ))}
         </div>

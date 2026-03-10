@@ -6,10 +6,8 @@ export function AboutHero() {
           About Us
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-white/90 sm:text-xl">
-          We are a community of workers, organizers, and advocates building
-          collective power in the age of AI. Meet the people behind What We
-          Will and learn how we're fighting for a human-centered future of
-          work.
+          We are a community of knowledge workers, organizers, and advocates mobilizing
+          to win an equitable and dignified future of work.
         </p>
       </div>
     </section>

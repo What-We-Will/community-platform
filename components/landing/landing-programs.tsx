@@ -7,7 +7,7 @@ import {
 import {
   HandFist,
   Handshake,
-  ThumbsUp,
+  NotebookPen,
   HandHeart,
 } from "lucide-react";
 
@@ -34,7 +34,7 @@ const programs = [
       "Participatory action research on changing work conditions and effective supports.",
       "We host discussion, evaluate policy proposals, and publish findings for broader public engagement.",
     ],
-    icon: ThumbsUp,
+    icon: NotebookPen,
     barClass: "bg-accent-gold",
   },
   {

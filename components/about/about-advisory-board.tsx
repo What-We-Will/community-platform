@@ -2,24 +2,24 @@ import { User } from "lucide-react";
 
 const ADVISORY_BOARD = [
   {
-    name: "Dr. Maya Johnson",
-    affiliation: "Professor of Labor Studies, State University",
+    name: "Andrew Stettner",
+    affiliation: "Senior Director of Economic Security, National Employment Law Project (NELP)",
     barClass: "bg-accent-blue",
   },
   {
-    name: "James Okonkwo",
-    affiliation: "Former Union Director, Tech Sector",
+    name: "Helen Yang",
+    affiliation: "Tech Worker Coalition (Steering Committee Member)",
+    barClass: "bg-primary-orange",
+  },
+  {
+    name: "Jerome Greco",
+    affiliation: "Supervising Attorney, Legal Aid Society",
     barClass: "bg-accent-green",
   },
   {
-    name: "Dr. Sarah Lin",
-    affiliation: "AI Ethics Researcher",
+    name: "Misha Hadar",
+    affiliation: "Communications Workers of America (UCAW Board)",
     barClass: "bg-accent-gold",
-  },
-  {
-    name: "David Torres",
-    affiliation: "Community Organizer & Mutual Aid Network",
-    barClass: "bg-primary-orange",
   },
 ];
 
@@ -54,10 +54,6 @@ export function AboutAdvisoryBoard() {
         <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
           Our Advisors
         </h2>
-        <p className="mt-2 max-w-full text-muted-foreground">
-          Advisors who guide our strategy and connect our work to labor, policy,
-          and community organizing.
-        </p>
         <ul className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {ADVISORY_BOARD.map((advisor) => (
             <li key={advisor.name} className="h-full">
