@@ -26,8 +26,9 @@ interface Props {
 
 const EMPTY = { name: "", days: "", time: "", zoom_url: "" };
 
-export function WeeklyScheduleAdmin({ rows }: Props) {
+export function WeeklyScheduleAdmin({ rows: initialRows }: Props) {
   const router = useRouter();
+  const [rows, setRows] = useState<ScheduleRow[]>(initialRows);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editRow, setEditRow] = useState(EMPTY);
   const [adding, setAdding] = useState(false);
@@ -41,6 +42,13 @@ export function WeeklyScheduleAdmin({ rows }: Props) {
     const res = await updateScheduleRow(id, editRow);
     setBusy(false);
     if (res.error) { setError(res.error); return; }
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === id
+          ? { ...r, ...editRow, zoom_url: editRow.zoom_url.trim() || null }
+          : r
+      )
+    );
     setEditingId(null);
     router.refresh();
   }
@@ -50,6 +58,7 @@ export function WeeklyScheduleAdmin({ rows }: Props) {
     const res = await deleteScheduleRow(id);
     setBusy(false);
     if (res.error) { setError(res.error); return; }
+    setRows((prev) => prev.filter((r) => r.id !== id));
     router.refresh();
   }
 
@@ -60,6 +69,16 @@ export function WeeklyScheduleAdmin({ rows }: Props) {
     const res = await createScheduleRow({ ...newRow, position: maxPos });
     setBusy(false);
     if (res.error) { setError(res.error); return; }
+    // Optimistically append; router.refresh() will replace with server-assigned id
+    setRows((prev) => [
+      ...prev,
+      {
+        id: `temp-${Date.now()}`,
+        ...newRow,
+        zoom_url: newRow.zoom_url.trim() || null,
+        position: maxPos,
+      },
+    ]);
     setNewRow(EMPTY);
     setAdding(false);
     router.refresh();
