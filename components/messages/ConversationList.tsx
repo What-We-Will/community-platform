@@ -69,6 +69,20 @@ export function ConversationList({
 
     const channel = supabase
       .channel("conversation-list")
+      // When the current user is added to a new conversation (new DM or group),
+      // refresh the server data so the thread appears in the sidebar immediately.
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "conversation_participants",
+          filter: `user_id=eq.${currentUserId}`,
+        },
+        () => {
+          router.refresh();
+        }
+      )
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
@@ -80,8 +94,7 @@ export function ConversationList({
               (c) => c.conversation.id === newMsg.conversation_id
             );
 
-            // Unknown conversation — this is a new thread. Refresh from server
-            // so the sidebar picks it up for both the sender and the recipient.
+            // Unknown conversation — refresh from server as a fallback.
             if (idx === -1) {
               router.refresh();
               return prev;
