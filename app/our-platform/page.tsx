@@ -28,7 +28,7 @@ export default async function OurPlatformPage() {
               Our Platform
             </h1>
             <p className="mt-4 text-lg text-muted-foreground">
-              We build infrastructure for mutual aid.
+              We build infrastructure for mutual aid. <br/> <span className="text-primary-orange">[Currently in Beta]</span>
             </p>
           </div>
         </section>
