@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Bookmark, BookmarkCheck, Loader2 } from "lucide-react";
@@ -18,6 +18,11 @@ export function WishlistButton({ jobPostingId, company, position, url, initialWi
   const router = useRouter();
   const [wishlisted, setWishlisted] = useState(initialWishlisted);
   const [loading, setLoading] = useState(false);
+
+  // Sync with server state when job or initialWishlisted changes (e.g. after refresh or switching jobs)
+  useEffect(() => {
+    setWishlisted(initialWishlisted);
+  }, [jobPostingId, initialWishlisted]);
 
   async function handleClick() {
     setLoading(true);

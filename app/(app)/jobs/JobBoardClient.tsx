@@ -384,6 +384,7 @@ export function JobBoardClient({
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-2">
                   <WishlistButton
+                    key={selectedJob.id}
                     jobPostingId={selectedJob.id}
                     company={selectedJob.company}
                     position={selectedJob.title}
