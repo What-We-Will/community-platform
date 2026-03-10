@@ -32,44 +32,39 @@ export function AddProjectForm() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  // Step 1: GitHub URL entry
-  const [githubUrl, setGithubUrl] = useState("");
-  const [fetchingMeta, setFetchingMeta] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [meta, setMeta] = useState<GitHubMeta | null>(null);
+  const [githubUrl, setGithubUrl]           = useState("");
+  const [fetchingMeta, setFetchingMeta]     = useState(false);
+  const [fetchError, setFetchError]         = useState<string | null>(null);
+  const [meta, setMeta]                     = useState<GitHubMeta | null>(null);
 
-  // Step 2: Additional fields
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [rolesSelected, setRolesSelected] = useState<Set<string>>(new Set());
+  const [title, setTitle]                   = useState("");
+  const [description, setDescription]       = useState("");
+  const [rolesSelected, setRolesSelected]   = useState<Set<string>>(new Set());
   const [offersMentorship, setOffersMentorship] = useState(false);
-  const [seeksMentorship, setSeeksMentorship] = useState(false);
+  const [seeksMentorship, setSeeksMentorship]   = useState(false);
 
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitting, setSubmitting]         = useState(false);
+  const [submitError, setSubmitError]       = useState<string | null>(null);
 
   function resetForm() {
-    setGithubUrl("");
-    setFetchingMeta(false);
-    setFetchError(null);
-    setMeta(null);
-    setTitle("");
-    setDescription("");
+    setGithubUrl(""); setFetchingMeta(false); setFetchError(null); setMeta(null);
+    setTitle(""); setDescription("");
     setRolesSelected(new Set());
-    setOffersMentorship(false);
-    setSeeksMentorship(false);
+    setOffersMentorship(false); setSeeksMentorship(false);
     setSubmitError(null);
   }
 
-  async function handleFetchMeta() {
+  async function handleImport() {
+    if (!githubUrl.trim()) return;
     setFetchError(null);
     setFetchingMeta(true);
     const res = await fetchGitHubMeta(githubUrl);
     setFetchingMeta(false);
     if (res.error) { setFetchError(res.error); return; }
     setMeta(res.data!);
-    setTitle(res.data!.title);
-    setDescription(res.data!.description ?? "");
+    // Only auto-fill if the user hasn't typed anything yet
+    if (!title)       setTitle(res.data!.title);
+    if (!description) setDescription(res.data!.description ?? "");
   }
 
   function toggleRole(value: string) {
@@ -82,16 +77,15 @@ export function AddProjectForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!meta) return;
     setSubmitError(null);
     setSubmitting(true);
     const res = await createProject({
       github_url: githubUrl.trim(),
       title: title.trim(),
       description: description.trim() || null,
-      image_url: meta.image_url,
-      language: meta.language,
-      stars: meta.stars,
+      image_url: meta?.image_url ?? null,
+      language: meta?.language ?? null,
+      stars: meta?.stars ?? 0,
       roles_seeking: [...rolesSelected],
       offers_mentorship: offersMentorship,
       seeks_mentorship: seeksMentorship,
@@ -116,163 +110,152 @@ export function AddProjectForm() {
           <DialogTitle>Add Open Source Project</DialogTitle>
         </DialogHeader>
 
-        {/* Step 1 — GitHub URL */}
-        {!meta ? (
-          <div className="space-y-4 pt-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="github-url">GitHub Repository URL</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="github-url"
-                  placeholder="https://github.com/owner/repo"
-                  value={githubUrl}
-                  onChange={(e) => setGithubUrl(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleFetchMeta(); } }}
-                  disabled={fetchingMeta}
-                />
-                <Button
-                  type="button"
-                  onClick={handleFetchMeta}
-                  disabled={!githubUrl.trim() || fetchingMeta}
-                  className="shrink-0"
-                >
-                  {fetchingMeta ? <Loader2 className="size-4 animate-spin" /> : <Github className="size-4" />}
-                </Button>
-              </div>
-              {fetchError && (
-                <p className="text-sm text-destructive">{fetchError}</p>
-              )}
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+
+          {/* GitHub URL + import */}
+          <div className="space-y-1.5">
+            <Label htmlFor="github-url">GitHub Repository URL</Label>
+            <div className="flex gap-2">
+              <Input
+                id="github-url"
+                placeholder="https://github.com/owner/repo"
+                value={githubUrl}
+                onChange={(e) => { setGithubUrl(e.target.value); setFetchError(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleImport(); } }}
+                disabled={fetchingMeta}
+                required
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleImport}
+                disabled={!githubUrl.trim() || fetchingMeta}
+                className="shrink-0 gap-1.5"
+              >
+                {fetchingMeta
+                  ? <Loader2 className="size-4 animate-spin" />
+                  : <Github className="size-4" />}
+                Import
+              </Button>
             </div>
+            {fetchError && <p className="text-sm text-destructive">{fetchError}</p>}
           </div>
-        ) : (
-          /* Step 2 — Fill in details */
-          <form onSubmit={handleSubmit} className="space-y-5 pt-2">
-            {/* Preview card */}
+
+          {/* Preview image (shown after import) */}
+          {meta && (
             <div className="rounded-lg border overflow-hidden">
               <div className="relative aspect-[2/1] bg-muted">
                 <Image
                   src={meta.image_url}
-                  alt={title}
+                  alt={title || "preview"}
                   fill
                   className="object-cover"
                   unoptimized
                 />
               </div>
-              <div className="px-3 py-2 flex items-center gap-2 bg-card text-xs text-muted-foreground">
-                <Github className="size-3.5 shrink-0" />
-                <a href={githubUrl} target="_blank" rel="noopener noreferrer" className="truncate hover:underline text-foreground">
-                  {githubUrl}
-                </a>
+              <div className="px-3 py-1.5 flex items-center gap-3 bg-muted/40 text-xs text-muted-foreground">
                 {meta.stars > 0 && (
-                  <span className="ml-auto flex items-center gap-1 shrink-0">
+                  <span className="flex items-center gap-1">
                     <Star className="size-3 fill-amber-400 text-amber-400" />
-                    {meta.stars.toLocaleString()}
+                    {meta.stars.toLocaleString()} stars
                   </span>
                 )}
                 {meta.language && (
-                  <span className="flex items-center gap-1 shrink-0">
+                  <span className="flex items-center gap-1">
                     <Code className="size-3" /> {meta.language}
                   </span>
                 )}
               </div>
             </div>
+          )}
 
-            {/* Change URL */}
-            <button
-              type="button"
-              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
-              onClick={() => { setMeta(null); setFetchError(null); }}
-            >
-              ← Use a different URL
-            </button>
+          {/* Title */}
+          <div className="space-y-1.5">
+            <Label htmlFor="proj-title">Project name</Label>
+            <Input
+              id="proj-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="My Awesome Project"
+              required
+            />
+          </div>
 
-            {/* Title */}
-            <div className="space-y-1.5">
-              <Label htmlFor="proj-title">Project name</Label>
-              <Input
-                id="proj-title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+          {/* Description */}
+          <div className="space-y-1.5">
+            <Label htmlFor="proj-desc">Description</Label>
+            <Textarea
+              id="proj-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What does this project do? What problem does it solve?"
+              className="min-h-[80px]"
+            />
+          </div>
+
+          {/* Roles seeking */}
+          <div className="space-y-2">
+            <Label>Roles seeking</Label>
+            <div className="flex flex-wrap gap-2">
+              {PROJECT_ROLES.map((r) => {
+                const selected = rolesSelected.has(r.value);
+                return (
+                  <button
+                    key={r.value}
+                    type="button"
+                    onClick={() => toggleRole(r.value)}
+                    className={cn(
+                      "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                      selected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-muted text-muted-foreground hover:border-foreground/40 hover:text-foreground"
+                    )}
+                  >
+                    {selected && <Check className="size-3" />}
+                    {r.label}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            {/* Description */}
-            <div className="space-y-1.5">
-              <Label htmlFor="proj-desc">Description</Label>
-              <Textarea
-                id="proj-desc"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="What does this project do? What problem does it solve?"
-                className="min-h-[80px]"
-              />
-            </div>
-
-            {/* Roles seeking */}
+          {/* Mentorship */}
+          <div className="space-y-2">
+            <Label>Mentorship</Label>
             <div className="space-y-2">
-              <Label>Roles seeking</Label>
-              <div className="flex flex-wrap gap-2">
-                {PROJECT_ROLES.map((r) => {
-                  const selected = rolesSelected.has(r.value);
-                  return (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => toggleRole(r.value)}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                        selected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-muted text-muted-foreground hover:border-foreground/40 hover:text-foreground"
-                      )}
-                    >
-                      {selected && <Check className="size-3" />}
-                      {r.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={offersMentorship}
+                  onChange={(e) => setOffersMentorship(e.target.checked)}
+                  className="size-4 accent-primary"
+                />
+                <span className="text-sm">I can provide mentorship</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={seeksMentorship}
+                  onChange={(e) => setSeeksMentorship(e.target.checked)}
+                  className="size-4 accent-primary"
+                />
+                <span className="text-sm">I am seeking mentorship</span>
+              </label>
             </div>
+          </div>
 
-            {/* Mentorship */}
-            <div className="space-y-2">
-              <Label>Mentorship</Label>
-              <div className="space-y-2">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={offersMentorship}
-                    onChange={(e) => setOffersMentorship(e.target.checked)}
-                    className="size-4 accent-primary"
-                  />
-                  <span className="text-sm">I can provide mentorship</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={seeksMentorship}
-                    onChange={(e) => setSeeksMentorship(e.target.checked)}
-                    className="size-4 accent-primary"
-                  />
-                  <span className="text-sm">I am seeking mentorship</span>
-                </label>
-              </div>
-            </div>
+          {submitError && <p className="text-sm text-destructive">{submitError}</p>}
 
-            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => { setOpen(false); resetForm(); }}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submitting || !title.trim()}>
-                {submitting && <Loader2 className="size-4 animate-spin mr-1" />}
-                Add Project
-              </Button>
-            </div>
-          </form>
-        )}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="outline" onClick={() => { setOpen(false); resetForm(); }}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting || !title.trim() || !githubUrl.trim()}>
+              {submitting && <Loader2 className="size-4 animate-spin mr-1" />}
+              Add Project
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
