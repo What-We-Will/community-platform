@@ -2,7 +2,7 @@
 
 Welcome! We are open to the use of AI tools so everyone can contribute effectively regardless of experience level. This policy exists in an effort to reduce technical risks for our contributors, and hopefully refuce downtime for our members, not to overly restrict or police the tools used.
 
-**Mistakes happen:** If you make a mistake involving an AI tool such as: accidentally sharing sensitive data, pasting the wrong thing, or leaking PII,  please report it immediately. Mistakes happen, reporting them makes us all more aware & mindful in the future. After a report, appropriate steps will be taken to rotate keys, alert affected individuals, and enhance AI use guidelines.
+**Mistakes happen:** If you make a mistake involving an AI tool such as: accidentally sharing sensitive data, pasting the wrong thing, or leaking PII, please report it immediately. Mistakes happen, reporting them makes us all more aware & mindful in the future. After a report, appropriate steps will be taken to rotate keys, alert affected individuals, and enhance AI use guidelines. We all make mistakes, acknowledging them and learning from them is what we care about!
 
 **How to report a breach:** The best way to is to DM a maintainer or mod via Slack. If you're not a member of our Slack, please open Github issue titled "AI breach" : "context" and request a mod or maintainer review.
  
@@ -58,6 +58,13 @@ This isn't about distrust — it's because these areas have the highest impact i
 - The `.cursorignore` and `.claude/settings.json` configs in this repo are there to help you — please don't remove or weaken them.
 
 We will use separate Supabase projects for dev/staging/production. As a volunteer, you should only ever need the dev and staging credentials. If someone asks you to use production credentials, please check in with a maintainer or mod before proceeding. 
+
+---
+
+## AI Use across Git & Github
+- NEVER give an AI tool direct access to the Github repository. No AI agentes are allowed in Github or allowed to automate anything related to Github.
+
+- Avoid letting AI tools run git commands. Using them to generate a commit message is a-ok, but allow-listing git commands can cause significant setbacks to the repo and platform as a whole. 
 
 ---
 

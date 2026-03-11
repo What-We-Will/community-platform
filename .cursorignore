@@ -1,5 +1,4 @@
 # Secrets & env
-.env.local
 .env
 .env.*
 
