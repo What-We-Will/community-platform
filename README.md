@@ -154,13 +154,13 @@ Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow; 
 ---
 
 ## How to contribute
-
-1. **Fork** the repo and clone your fork.
-2. **Create a branch** (e.g. `feature/your-feature` or `fix/issue-123`).
-3. **Set up locally** (see [Getting started](#getting-started)) and make your changes.
-4. **Run lint:** `npm run lint`
-5. **Run build:** `npm run build`
-6. **Open a PR** against `main` with a short description of what you changed and why.
+1. **Read the [AI use policy](AI_POLICY.md)** 
+2. **Fork** the repo and clone your fork.
+3. **Create a branch** (e.g. `feature/your-feature` or `fix/issue-123`).
+4. **Set up locally** (see [Getting started](#getting-started)) and make your changes.
+5. **Run lint:** `npm run lint`
+6. **Run build:** `npm run build`
+7. **Open a PR** against `main` with a short description of what you changed and why.
 
 ### Good first contributions
 Check the Github Issues in the repo to find some good first issues to tackle.
