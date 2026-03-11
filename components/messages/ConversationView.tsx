@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -88,7 +88,7 @@ export function ConversationView({
   readOnlyFooter,
 }: ConversationViewProps) {
   // Stable client instance per component mount — avoids duplicate Realtime subscriptions on HMR
-  const supabase = useRef(createClient()).current;
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
 
 

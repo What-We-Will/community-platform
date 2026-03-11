@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfile, updateAvatarUrl, updateResumePath, getResumeSignedUrl } from "./actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
@@ -45,19 +45,6 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDisplayName(profile.display_name);
-    setHeadline(profile.headline ?? "");
-    setLocation(profile.location ?? "");
-    setBio(profile.bio ?? "");
-    setSkillsInput(profile.skills?.join(", ") ?? "");
-    setOpenToReferrals(profile.open_to_referrals ?? false);
-    setLinkedinUrl(profile.linkedin_url ?? "");
-    setGithubUrl(profile.github_url ?? "");
-    setPortfolioUrl(profile.portfolio_url ?? "");
-  }, [profile]);
 
   const router = useRouter();
 

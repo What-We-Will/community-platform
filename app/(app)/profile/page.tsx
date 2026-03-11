@@ -33,7 +33,7 @@ export default async function ProfilePage() {
           Manage your profile information
         </p>
       </div>
-      <ProfileForm profile={profile as Profile} />
+      <ProfileForm key={profile.id} profile={profile as Profile} />
     </div>
   );
 }
