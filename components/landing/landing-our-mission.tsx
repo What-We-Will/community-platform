@@ -18,7 +18,7 @@ export function OurMission() {
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">
               We organize to advance &quot;Human-First&quot; AI practices
               to empower workers' voices in decision-making, strengthen our social safety net, and fight for bold policies that ensure equitable access to quality jobs, and a dignified future of
-              shared prosperity. <strong> And yes, we fight for basic income. </strong>
+              shared prosperity.
             </p>
           </div>
           <div className="flex-1 md:pl-8">
