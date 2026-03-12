@@ -110,7 +110,7 @@ function hideHeadingNodesByText() {
     ) {
       (el as HTMLElement).style.display = "none";
       // Hide following hr if present
-      let next = el.nextElementSibling;
+      const next = el.nextElementSibling;
       if (next && next.tagName === "HR") (next as HTMLElement).style.display = "none";
     }
   });
