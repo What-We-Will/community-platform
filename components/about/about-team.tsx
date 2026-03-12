@@ -49,42 +49,42 @@ const FOUNDING_TEAM: TeamMember[] = [
 
 const CORE_ORGANIZING_TEAM: TeamMember[] = [
   {
-    name: "Shannon Wait",
+    name: "Shannon W.",
     role: "Lead Organizer - Policy & Advocacy Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Hope Jidenma",
+    name: "Hope J.",
     role: "Lead Organizer - Digital Organizing & Social Media Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Abdulhadi Zaidan",
+    name: "Abdulhadi Z.",
     role: "Lead Organizer - Community Job Support Program",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Simon McGraw",
+    name: "Simon M.",
     role: "Lead Organizer - WWW Tech Worker Cooperative",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "George Dover",
+    name: "George D.",
     role: "Co-Lead Organizer - Layoff Crisis Response Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Sonia Jacob",
+    name: "Sonia J.",
     role: "Co-Lead Organizer - Participatory Research Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Simantha Pathak",
+    name: "Simantha P.",
     role: "Co-Lead Organizer - Participatory Research Team",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
   {
-    name: "Margaret Gorlin",
+    name: "Margaret G.",
     role: "Co-Lead - Job Support & Participatory Research Teams",
     bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },

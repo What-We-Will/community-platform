@@ -1,7 +1,7 @@
 const WORKING_GROUPS = [
   {
     name: "Policy & Advocacy Team",
-    volunteers: ["Shannon W.", "George D.", "Simantha P.", "Hope J.", "Cody S.", "Roxie T.", "Michael I.", "Abdul Z."],
+    volunteers: ["Shannon W.", "George D.", "Simantha P.", "Hope J.", "Cody S.", "Roxie T.", "Michael I.", "Joseph S.", "Abdul Z."],
   },
   {
     name: "Community Job Support Team",
@@ -13,7 +13,7 @@ const WORKING_GROUPS = [
   },
   {
     name: "Participatory Action Research Team",
-    volunteers: ["Sonia J.", "Simantha J.", "Lara G.", "Shannon W.", "Michael I.", "Margaret G.", "Adbul Z."],
+    volunteers: ["Sonia J.", "Simantha J.", "Lara G.", "Shannon W.", "Michael I.", "Margaret G.", "Joseph S.", "Adbul Z."],
   },
   {
     name: "Media & Digital Organizing Team",
@@ -21,7 +21,7 @@ const WORKING_GROUPS = [
   },
   {
     name: "Platform Engineering Team & WWW Tech Worker Cooperative",
-    volunteers: ["Kaitlin C.", "Simon M.", "Tim C.", "Warren L.", "Andrew W.", "Roxie T.", "Jasmine E."],
+    volunteers: ["Kaitlin C.", "Simon M.", "Tim C.", "Andrew W.", "Roxie T."],
   },
 ];
 
