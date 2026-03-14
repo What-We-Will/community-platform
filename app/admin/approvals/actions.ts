@@ -1,21 +1,20 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import nodemailer from "nodemailer";
 
-export async function approveUser(userId: string, _formData?: FormData): Promise<void> {
+async function ensureAdmin(): Promise<boolean> {
   const supabase = await createClient();
-
-  // Verify the caller is an admin
   const {
     data: { user: callerUser },
   } = await supabase.auth.getUser();
 
   if (!callerUser) {
     console.error("[approvals] Not authenticated.");
-    return;
+    return false;
   }
 
   const { data: callerProfile } = await supabase
@@ -26,60 +25,43 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
 
   if (callerProfile?.role !== "admin") {
     console.error("[approvals] Not authorized.");
-    return;
+    return false;
   }
 
-  // Use service role for the update to bypass RLS — admins updating other users' rows
+  return true;
+}
+
+export async function approveUser(userId: string, _formData?: FormData): Promise<void> {
+  if (!(await ensureAdmin())) return;
+
+  // Use service role to bypass RLS — admins updating other users' rows
   const serviceClient = createServiceClient();
-  const { error } = await serviceClient
-    .from("profiles")
-    .update({ approval_status: "approved" })
-    .eq("id", userId);
+
+  // Run profile update and email lookup in parallel — they're independent
+  const [{ error }, { data: { user: targetUser } }] = await Promise.all([
+    serviceClient.from("profiles").update({ approval_status: "approved" }).eq("id", userId),
+    serviceClient.auth.admin.getUserById(userId),
+  ]);
 
   if (error) {
     console.error("[approvals] Failed to approve user:", error.message);
     return;
   }
 
-  // Look up the user's email via service role (bypasses RLS on auth.users)
-  const {
-    data: { user: targetUser },
-  } = await serviceClient.auth.admin.getUserById(userId);
-
   if (targetUser?.email) {
     await sendApprovalEmail(targetUser.email);
   }
 
+  revalidatePath("/admin/approvals");
   redirect("/admin/approvals");
 }
 
 export async function rejectUser(userId: string, _formData?: FormData): Promise<void> {
-  const supabase = await createClient();
-
-  // Verify the caller is an admin
-  const {
-    data: { user: callerUser },
-  } = await supabase.auth.getUser();
-
-  if (!callerUser) {
-    console.error("[approvals] Not authenticated.");
-    return;
-  }
-
-  const { data: callerProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", callerUser.id)
-    .single();
-
-  if (callerProfile?.role !== "admin") {
-    console.error("[approvals] Not authorized.");
-    return;
-  }
+  if (!(await ensureAdmin())) return;
 
   const serviceClient = createServiceClient();
 
-  // Delete the profile row
+  // Delete profile first, then auth user (order matters for FK constraints)
   const { error: profileError } = await serviceClient
     .from("profiles")
     .delete()
@@ -90,7 +72,6 @@ export async function rejectUser(userId: string, _formData?: FormData): Promise<
     return;
   }
 
-  // Delete the auth user
   const { error: authError } = await serviceClient.auth.admin.deleteUser(userId);
 
   if (authError) {
@@ -98,6 +79,7 @@ export async function rejectUser(userId: string, _formData?: FormData): Promise<
     return;
   }
 
+  revalidatePath("/admin/approvals");
   redirect("/admin/approvals");
 }
 
