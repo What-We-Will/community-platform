@@ -19,18 +19,16 @@ export function LandingNav({ user }: { user?: User | null }) {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4">
         <Link
           href="/"
-          className="flex items-center gap-2 text-primary-orange"
+          className="flex items-center text-primary-orange"
         >
           <Image
-            src="/images/logo-mark.svg"
+            src="/images/branding/WWW-logo-horizontal.svg"
             alt="What We Will logo"
-            width={40}
-            height={40}
+            width={180}
+            height={36}
+            className="h-8 w-auto md:h-9"
             priority
           />
-          <span className="font-bebas text-2xl md:text-3xl uppercase tracking-tight">
-            What We Will
-          </span>
         </Link>
 
         <div className="flex items-center gap-4">
@@ -113,31 +111,53 @@ export function LandingNav({ user }: { user?: User | null }) {
             )}
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            type="button"
-            className="order-1 inline-flex items-center justify-center rounded-md border border-border/40 p-2 text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange md:hidden"
-            onClick={() => setIsMobileMenuOpen((open) => !open)}
-            aria-label="Toggle navigation"
-            aria-expanded={isMobileMenuOpen}
-          >
-            <span className="sr-only">Toggle navigation</span>
-            <span className="flex h-5 w-5 flex-col justify-between">
-              <span className="h-0.5 w-full bg-current" />
-              <span className="h-0.5 w-full bg-current" />
-              <span className="h-0.5 w-full bg-current" />
-            </span>
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              size="sm"
+              className="rounded-md bg-primary-orange text-white hover:bg-primary-orange-hover"
+              asChild
+            >
+              <a href={DONATE_URL} target="_blank" rel="noopener noreferrer">
+                Donate
+              </a>
+            </Button>
 
-          <Button
-            size="sm"
-            className="order-2 rounded-md bg-primary-orange text-white hover:bg-primary-orange-hover md:hidden"
-            asChild
-          >
-            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer">
-              Donate
-            </a>
-          </Button>
+            {user ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
+                asChild
+              >
+                <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
+                asChild
+              >
+                <a href="https://members.wwwrise.org/login">Login</a>
+              </Button>
+            )}
+
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-md border border-border/40 p-2 text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+              aria-label="Toggle navigation"
+              aria-expanded={isMobileMenuOpen}
+            >
+              <span className="sr-only">Toggle navigation</span>
+              <span className="flex h-5 w-5 flex-col justify-between">
+                <span className="h-0.5 w-full bg-current" />
+                <span className="h-0.5 w-full bg-current" />
+                <span className="h-0.5 w-full bg-current" />
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 
