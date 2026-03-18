@@ -3,17 +3,19 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Sparkles } from "lucide-react";
-import type { Profile } from "@/lib/types";
-
-const THIRTY_DAYS_AGO = new Date();
-THIRTY_DAYS_AGO.setDate(THIRTY_DAYS_AGO.getDate() - 30);
 
 export async function NewMembersCard() {
   const supabase = await createClient();
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("*")
+    .select("id, created_at, avatar_url, display_name, headline")
     .eq("is_onboarded", true)
+    .eq("approval_status", "approved")
+    .gte("created_at", thirtyDaysAgo.toISOString())
     .order("created_at", { ascending: false })
     .limit(10);
 
@@ -35,10 +37,6 @@ export async function NewMembersCard() {
     );
   }
 
-  const recent = (profiles ?? []).filter(
-    (p) => new Date(p.created_at) >= THIRTY_DAYS_AGO
-  );
-
   return (
     <Card>
       <CardHeader>
@@ -48,13 +46,13 @@ export async function NewMembersCard() {
         </CardTitle>
       </CardHeader>
       <CardContent className="h-64 overflow-y-auto">
-        {recent.length === 0 ? (
+        {(profiles ?? []).length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Invite friends to grow the community!
           </p>
         ) : (
           <div className="flex flex-col divide-y">
-            {recent.map((member) => (
+            {(profiles ?? []).map((member) => (
               <Link
                 key={member.id}
                 href={`/members/${member.id}`}
