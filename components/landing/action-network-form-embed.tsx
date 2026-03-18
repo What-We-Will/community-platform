@@ -119,7 +119,7 @@ export function ActionNetworkFormEmbed() {
         </div>
       </div>
       <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="w-full ">
+        <div className="w-full">
           <label htmlFor="newsletter-email" className="sr-only">
             Email address
           </label>
@@ -137,7 +137,7 @@ export function ActionNetworkFormEmbed() {
             disabled={isSubmitting}
           />
         </div>
-        <div className="w-1/2 sm:w-32">
+        <div className="sm:w-1/2">
           <label htmlFor="newsletter-zip" className="sr-only">
             Zip code (optional)
           </label>

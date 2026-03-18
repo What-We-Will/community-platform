@@ -7,13 +7,16 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const DONATE_URL =
+  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
+
 export function LandingNav({ user }: { user?: User | null }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-white">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4">
         <Link
           href="/"
           className="flex items-center gap-2 text-primary-orange"
@@ -32,7 +35,7 @@ export function LandingNav({ user }: { user?: User | null }) {
 
         <div className="flex items-center gap-4">
           {/* Desktop nav links */}
-          <nav className="hidden items-center gap-8 md:flex md:order-1">
+          <nav className="hidden items-center gap-6 md:flex">
             <Link
               href="/about-us"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
@@ -77,6 +80,39 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
           </nav>
 
+          <div className="hidden items-center gap-4 md:flex">
+            <Button
+              size="sm"
+              className="rounded-md bg-primary-orange text-white hover:bg-primary-orange-hover"
+              asChild
+            >
+              <a href={DONATE_URL} target="_blank" rel="noopener noreferrer">
+                Donate
+              </a>
+            </Button>
+
+            {/* Auth button */}
+            {user ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
+                asChild
+              >
+                <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
+                asChild
+              >
+                <a href="https://members.wwwrise.org/login">Login</a>
+              </Button>
+            )}
+          </div>
+
           {/* Mobile hamburger */}
           <button
             type="button"
@@ -93,26 +129,15 @@ export function LandingNav({ user }: { user?: User | null }) {
             </span>
           </button>
 
-          {/* Auth button */}
-          {user ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="order-2 rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange md:order-2"
-              asChild
-            >
-              <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="order-2 rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange md:order-2"
-              asChild
-            >
-              <a href="https://members.wwwrise.org/login">Login</a>
-            </Button>
-          )}
+          <Button
+            size="sm"
+            className="order-2 rounded-md bg-primary-orange text-white hover:bg-primary-orange-hover md:hidden"
+            asChild
+          >
+            <a href={DONATE_URL} target="_blank" rel="noopener noreferrer">
+              Donate
+            </a>
+          </Button>
         </div>
       </div>
 
