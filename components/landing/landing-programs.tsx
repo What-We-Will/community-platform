@@ -62,7 +62,7 @@ export function Programs() {
                 aria-hidden
               />
               <CardHeader className="text-left pb-8">
-                <div className="flex size-12 items-center justify-center rounded border border-border bg-white">
+                <div className="flex size-12 items-center justify-center bg-white">
                   <span className="text-3xl leading-none" role="img" aria-label={program.title}>
                     {program.icon}
                   </span>

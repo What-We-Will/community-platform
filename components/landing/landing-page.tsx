@@ -6,6 +6,7 @@ import { LandingWhoWeAre } from "./landing-who-we-are";
 import { Programs } from "./landing-programs";
 import { LandingMutualAid } from "./landing-mutual-aid";
 import { LandingFutureWeDemand } from "./landing-future-we-demand";
+import { LandingDonate } from "./landing-donate";
 import { LandingJoinCommunity } from "./landing-join-community";
 import { LandingFooter } from "./landing-footer";
 
@@ -20,6 +21,7 @@ export function LandingPage({ user }: { user?: User | null }) {
         <Programs />
         <LandingMutualAid />
         <LandingFutureWeDemand />
+        <LandingDonate />
         <LandingJoinCommunity user={user} />
       </main>
       <LandingFooter />

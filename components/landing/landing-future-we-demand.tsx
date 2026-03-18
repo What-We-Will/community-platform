@@ -7,7 +7,7 @@ import { useState } from "react";
 export function LandingFutureWeDemand() {
 
   return (
-    <section id="our-future" className="scroll-mt-20 bg-white px-4 py-16 md:py-24">
+    <section id="our-future" className="scroll-mt-20 bg-white px-4 py-16 md:py-16">
       <div className="mx-auto flex max-w-6xl flex-col gap-12 md:flex-row md:items-center">
         <div className="md:w-1/2">
           <h2 className="text-5xl font-bebas text-dark-blue">
