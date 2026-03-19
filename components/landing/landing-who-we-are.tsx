@@ -34,7 +34,7 @@ export function LandingWhoWeAre() {
             >
               Tech Workers Coalition
             </Link>
-            , a grassroots labor organization with local chapters all over the
+            , a grassroots labor organization with local chapters across
             U.S. and Europe.
           </p>
           <p className="mt-5 max-w-3xl text-muted-foreground">

@@ -6,8 +6,7 @@ export function OurMission() {
     >
       <div className="mx-auto max-w-5xl">
         <h2 className="text-center mx-auto max-w-3xl text-3xl font-sans font-semibold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-          Our mission is to <span className="text-primary-orange">center humans</span>{" "}
-          in the future of work
+          Our mission is to <span className="text-primary-orange">center humans</span>{" "}in the future of work
         </h2>
         <div className="mt-12 flex flex-col gap-8 md:flex-row md:items-stretch md:gap-0">
           <div className="flex-1 md:pr-8">
