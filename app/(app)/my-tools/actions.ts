@@ -1,5 +1,12 @@
 "use server";
 
+/**
+ * My Tools ↔ Pulsar: all match and career-brief calls are **user-triggered** only
+ * (buttons in the UI). There is no scheduled batch refresh in this app—doing so
+ * would scale cost with membership (ATS + LLM). For periodic nudges without API
+ * cost, see the weekly email cron (`/api/cron/my-tools-reminders`) and
+ * `docs/mytools-refresh.md`.
+ */
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fetchPulsarBrief, fetchPulsarMatches } from "@/lib/pulsar/client";

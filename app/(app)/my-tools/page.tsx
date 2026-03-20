@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import MyToolsClient from "./MyToolsClient";
 import { WhatWeWillMatch } from "@/lib/pulsar/types";
+import { getProfileCompleteness } from "@/lib/profile-completeness";
 
 type MatchRunRow = {
   request_id: string;
@@ -28,7 +29,11 @@ export default async function MyToolsPage() {
     redirect("/login");
   }
 
-  const [{ data: latestMatchRun }, { data: latestBrief }] = await Promise.all([
+  const [
+    { data: latestMatchRun },
+    { data: latestBrief },
+    { data: profileRow },
+  ] = await Promise.all([
     supabase
       .from("member_match_runs")
       .select("request_id, candidate_summary, matches, created_at")
@@ -43,7 +48,26 @@ export default async function MyToolsPage() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("headline, bio, skills, linkedin_url, location")
+      .eq("id", user.id)
+      .maybeSingle(),
   ]);
+
+  const profileCompleteness = getProfileCompleteness({
+    headline: profileRow?.headline ?? null,
+    bio: profileRow?.bio ?? null,
+    skills: profileRow?.skills ?? null,
+    linkedin_url: profileRow?.linkedin_url ?? null,
+    location: profileRow?.location ?? null,
+  });
+
+  let matchRunAgeDays: number | null = null;
+  if (latestMatchRun?.created_at) {
+    const ms = Date.now() - new Date(latestMatchRun.created_at).getTime();
+    matchRunAgeDays = Math.floor(ms / (24 * 60 * 60 * 1000));
+  }
 
   const normalizedMatchRun = latestMatchRun
     ? {
@@ -58,6 +82,8 @@ export default async function MyToolsPage() {
     <MyToolsClient
       latestMatchRun={normalizedMatchRun}
       latestBrief={(latestBrief as BriefRow | null) ?? null}
+      profileCompleteness={profileCompleteness}
+      matchRunAgeDays={matchRunAgeDays}
     />
   );
 }

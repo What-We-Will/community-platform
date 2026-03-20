@@ -43,6 +43,26 @@ Optional (for Jitsi JWT / 8x8 JaaS):
 NEXT_PUBLIC_JITSI_APP_ID=your-jaas-app-id
 ```
 
+### Email (Gmail) — DM notifications & My Tools reminders
+
+Direct messages can **email** other thread participants when `GMAIL_USER` and `GMAIL_APP_PASSWORD` (Gmail [app password](https://support.google.com/accounts/answer/185833)) are set. Without them, chat still works but **no inbox email** is sent (see [`app/api/messages/route.ts`](app/api/messages/route.ts)).
+
+For **weekly My Tools reminder** emails (member opt-in on **My Profile**), use the same Gmail vars plus:
+
+```env
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key   # server-only; never expose to the client
+CRON_SECRET=long-random-string                    # Vercel cron sends Authorization: Bearer <CRON_SECRET>
+NEXT_PUBLIC_SITE_URL=https://your-production-domain
+```
+
+Apply migration `058_profile_my_tools_email_prefs.sql`, enable the cron in [`vercel.json`](vercel.json), and set `CRON_SECRET` in the Vercel project. Details: [`docs/mytools-refresh.md`](docs/mytools-refresh.md).
+
+Optional admin notification for new membership applications:
+
+```env
+ADMIN_EMAIL=you@example.com
+```
+
 Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If you have not created a blank new Supabase project for this repo please do so now. 
 
 ### 3. Database
@@ -138,6 +158,7 @@ Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow; 
 | **Dashboard** | Welcome banner, new members, recent chats, community polls, my groups, upcoming events |
 | **Events** | Create/edit/delete events, RSVP (going/maybe/declined), list + calendar view, video link (Jitsi) |
 | **Polls** | Community-wide polls, vote, create poll (dialog + server action) |
+| **My Tools** | Pulsar job matches + career brief (user-triggered); profile completeness nudges; optional weekly email reminder ([`docs/mytools-refresh.md`](docs/mytools-refresh.md)) |
 
 ---
 
