@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import ReactMarkdown from "react-markdown";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { generateCareerBrief, refreshLiveMatches, saveMatchToTracker } from "./actions";
 import { WhatWeWillMatch } from "@/lib/pulsar/types";
+import type { ProfileCompleteness } from "@/lib/profile-completeness";
 
 type MatchRun = {
   request_id: string;
@@ -24,12 +26,18 @@ type CareerBrief = {
   created_at: string;
 };
 
+const STALE_MATCH_DAYS = 7;
+
 export default function MyToolsClient({
   latestMatchRun,
   latestBrief,
+  profileCompleteness,
+  matchRunAgeDays,
 }: {
   latestMatchRun: MatchRun | null;
   latestBrief: CareerBrief | null;
+  profileCompleteness: ProfileCompleteness;
+  matchRunAgeDays: number | null;
 }) {
   const router = useRouter();
   const [pendingMatch, startMatch] = useTransition();
@@ -89,6 +97,28 @@ export default function MyToolsClient({
         </div>
       )}
 
+      {!profileCompleteness.isStrong && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+          <p className="font-medium text-amber-950 dark:text-amber-100">
+            Stronger profile → better matches ({profileCompleteness.score}/100)
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Add: {profileCompleteness.missing.join(", ")}.
+          </p>
+          <Button asChild variant="secondary" size="sm" className="mt-3">
+            <Link href="/profile">Update my profile</Link>
+          </Button>
+        </div>
+      )}
+
+      {matchRunAgeDays !== null && matchRunAgeDays >= STALE_MATCH_DAYS && (
+        <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          Your last match run was {matchRunAgeDays} day
+          {matchRunAgeDays === 1 ? "" : "s"} ago. Postings change often—use{" "}
+          <strong>Refresh matches</strong> when you want an up-to-date list.
+        </div>
+      )}
+
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Live job matches (ATS)</CardTitle>
@@ -100,6 +130,16 @@ export default function MyToolsClient({
           {!latestMatchRun ? (
             <p className="text-sm text-muted-foreground">
               No match run yet. Click “Refresh matches” to fetch current postings.
+              {!profileCompleteness.isStrong ? (
+                <>
+                  {" "}
+                  Expect more relevant results after you{" "}
+                  <Link href="/profile" className="underline text-foreground">
+                    enrich your profile
+                  </Link>
+                  .
+                </>
+              ) : null}
             </p>
           ) : (
             <>

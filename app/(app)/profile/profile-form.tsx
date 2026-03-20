@@ -42,6 +42,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [portfolioUrl, setPortfolioUrl] = useState(
     profile.portfolio_url ?? ""
   );
+  const [emailMyToolsReminders, setEmailMyToolsReminders] = useState(
+    profile.email_my_tools_reminders ?? false
+  );
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -56,6 +59,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setLinkedinUrl(profile.linkedin_url ?? "");
     setGithubUrl(profile.github_url ?? "");
     setPortfolioUrl(profile.portfolio_url ?? "");
+    setEmailMyToolsReminders(profile.email_my_tools_reminders ?? false);
   }, [profile]);
 
   const router = useRouter();
@@ -82,6 +86,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         linkedin_url: linkedinUrl || null,
         github_url: githubUrl || null,
         portfolio_url: portfolioUrl || null,
+        email_my_tools_reminders: emailMyToolsReminders,
       });
 
       if (result.error) {
@@ -199,6 +204,28 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             >
               Open to Mock Interviews
             </Label>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="email_my_tools_reminders"
+                checked={emailMyToolsReminders}
+                onCheckedChange={(checked) =>
+                  setEmailMyToolsReminders(checked === true)
+                }
+              />
+              <Label
+                htmlFor="email_my_tools_reminders"
+                className="cursor-pointer text-sm font-normal leading-snug"
+              >
+                Email me a weekly reminder about My Tools (refresh matches / update
+                profile)
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground pl-6">
+              We don&apos;t run job matching automatically—you&apos;ll get at most one
+              email per week with links to the app. Turn off anytime here.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="linkedin_url">LinkedIn URL</Label>

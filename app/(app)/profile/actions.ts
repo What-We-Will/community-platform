@@ -16,6 +16,8 @@ export async function updateProfile(
     linkedin_url?: string | null;
     github_url?: string | null;
     portfolio_url?: string | null;
+    /** Opt-in weekly email: My Tools / profile reminder (no automatic Pulsar refresh). */
+    email_my_tools_reminders: boolean;
   }
 ): Promise<ProfileUpdateResult> {
   const supabase = await createClient();
@@ -42,6 +44,7 @@ export async function updateProfile(
       github_url: data.github_url || null,
       portfolio_url: data.portfolio_url || null,
       is_onboarded: true,
+      email_my_tools_reminders: data.email_my_tools_reminders,
     },
     { onConflict: "id" }
   );
