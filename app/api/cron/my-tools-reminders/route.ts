@@ -2,22 +2,13 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { sendMyToolsReminderEmail } from "@/lib/email";
 import { getProfileCompleteness } from "@/lib/profile-completeness";
+import { missingFieldToReminderTip } from "@/lib/my-tools-reminder-tips";
+import {
+  MY_TOOLS_REMINDER_COOLDOWN_DAYS,
+  canSendReminderEmail,
+} from "@/lib/my-tools-reminder-schedule";
 
 export const dynamic = "force-dynamic";
-
-function tipFromMissingField(m: string): string {
-  if (m.startsWith("At least")) return `Add ${m.toLowerCase()}.`;
-  if (m === "Bio") return "Add a short career summary to your bio.";
-  if (m === "A longer bio (40+ characters)")
-    return "Expand your bio to at least 40 characters.";
-  if (m === "LinkedIn URL") return "Add your LinkedIn URL.";
-  if (m === "Headline") return "Add a professional headline.";
-  if (m === "Location") return "Add your location.";
-  return `Complete: ${m}.`;
-}
-
-/** Minimum days between reminder emails per member. */
-const COOLDOWN_DAYS = 7;
 /** Cap per invocation to stay within serverless time limits. */
 const MAX_SEND_PER_RUN = 40;
 
@@ -47,9 +38,7 @@ export async function GET(request: Request) {
   const myToolsUrl = `${siteUrl.replace(/\/$/, "")}/my-tools`;
   const profileUrl = `${siteUrl.replace(/\/$/, "")}/profile`;
 
-  const cutoff = new Date(
-    Date.now() - COOLDOWN_DAYS * 24 * 60 * 60 * 1000
-  ).toISOString();
+  const now = new Date();
 
   const { data: candidates, error: qErr } = await service
     .from("profiles")
@@ -66,10 +55,12 @@ export async function GET(request: Request) {
   }
 
   const eligible = (candidates ?? [])
-    .filter(
-      (p) =>
-        !p.last_my_tools_reminder_sent_at ||
-        p.last_my_tools_reminder_sent_at < cutoff
+    .filter((p) =>
+      canSendReminderEmail(
+        p.last_my_tools_reminder_sent_at ?? null,
+        now,
+        MY_TOOLS_REMINDER_COOLDOWN_DAYS
+      )
     )
     .slice(0, MAX_SEND_PER_RUN);
 
@@ -96,7 +87,7 @@ export async function GET(request: Request) {
 
     const tips =
       completeness.score < 80
-        ? completeness.missing.map((m) => tipFromMissingField(m))
+        ? completeness.missing.map((m) => missingFieldToReminderTip(m))
         : [];
 
     const result = await sendMyToolsReminderEmail({
