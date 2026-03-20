@@ -5,6 +5,11 @@ import {
   WhatWeWillProfileRequest,
 } from "./types";
 
+/** Strip trailing slashes so `${baseUrl}${path}` is stable. */
+export function normalizePulsarBaseUrl(baseUrl: string): string {
+  return baseUrl.replace(/\/+$/, "");
+}
+
 function getPulsarConfig() {
   const baseUrl = process.env.PULSAR_BASE_URL;
   const apiKey = process.env.WHATWEWILL_API_KEY;
@@ -17,7 +22,7 @@ function getPulsarConfig() {
   }
 
   return {
-    baseUrl: baseUrl.replace(/\/+$/, ""),
+    baseUrl: normalizePulsarBaseUrl(baseUrl),
     apiKey,
   };
 }

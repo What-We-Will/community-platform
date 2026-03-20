@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { fetchPulsarBrief, fetchPulsarMatches } from "@/lib/pulsar/client";
 import {
-  WhatWeWillMatch,
-  WhatWeWillProfileRequest,
-} from "@/lib/pulsar/types";
+  buildWhatWeWillBriefRequest,
+  buildWhatWeWillProfilePayload,
+} from "@/lib/pulsar/profile-payload";
+import { jobApplicationInsertFromPulsarMatch } from "@/lib/pulsar/tracker-from-match";
+import type { WhatWeWillMatch } from "@/lib/pulsar/types";
 
 type ActionResult = { error?: string; ok?: true };
 
@@ -27,7 +29,7 @@ export async function refreshLiveMatches(): Promise<ActionResult> {
     return { error: "Unable to load profile for matching" };
   }
 
-  const payload = buildProfilePayload(profile);
+  const payload = buildWhatWeWillProfilePayload(profile);
 
   try {
     const response = await fetchPulsarMatches(payload);
@@ -64,15 +66,10 @@ export async function generateCareerBrief(): Promise<ActionResult> {
     return { error: "Unable to load profile for brief generation" };
   }
 
-  const payload = buildProfilePayload(profile);
+  const briefPayload = buildWhatWeWillBriefRequest(profile);
 
   try {
-    const response = await fetchPulsarBrief({
-      ...payload,
-      tone: "supportive",
-      maxWords: 700,
-      includeIllustrativeLinks: true,
-    });
+    const response = await fetchPulsarBrief(briefPayload);
 
     const { error: insertError } = await supabase.from("member_career_briefs").insert({
       user_id: user.id,
@@ -103,46 +100,12 @@ export async function saveMatchToTracker(match: WhatWeWillMatch): Promise<Action
 
   const { error } = await supabase.from("job_applications").insert({
     user_id: user.id,
-    company: match.company,
-    position: match.roleTitle,
-    status: "wishlist",
-    notes: `From Pulsar match (${match.label}, score ${match.score}).`,
-    url: match.applyUrl || null,
-    is_shared: false,
+    ...jobApplicationInsertFromPulsarMatch(match),
   });
 
   if (error) return { error: error.message };
   revalidatePath("/tracker");
   revalidatePath("/my-tools");
   return { ok: true };
-}
-
-function buildProfilePayload(profile: {
-  id: string;
-  headline: string | null;
-  bio: string | null;
-  skills: string[] | null;
-  linkedin_url: string | null;
-  location: string | null;
-}): WhatWeWillProfileRequest {
-  const inferredRoleTitles = profile.headline
-    ? profile.headline
-        .split(/[|,/]/g)
-        .map((v) => v.trim())
-        .filter(Boolean)
-        .slice(0, 3)
-    : [];
-
-  return {
-    personId: profile.id,
-    linkedinUrl: profile.linkedin_url ?? undefined,
-    resumeText: undefined,
-    skills: profile.skills ?? [],
-    experienceSummary: profile.bio ?? undefined,
-    interestedIndustries: [],
-    interestedRoleTitles: inferredRoleTitles,
-    preferredWorkTypes: ["remote", "hybrid"],
-    preferredLocations: profile.location ? [profile.location] : [],
-  };
 }
 
