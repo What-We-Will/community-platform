@@ -19,6 +19,7 @@ import {
   Link2,
   BookMarked,
   ListTodo,
+  WandSparkles,
   GitFork,
   ExternalLink,
 } from "lucide-react";
@@ -47,6 +48,7 @@ const mainNavItems = [
 ];
 
 const myToolsNavItems = [
+  { href: "/my-tools",         label: "Career Match Tools",    icon: WandSparkles },
   { href: "/tracker",          label: "Job Application Tracker", icon: ClipboardList },
   { href: "/learning/tracker", label: "Learning Tracker",        icon: ListTodo },
 ];
