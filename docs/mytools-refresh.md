@@ -39,3 +39,7 @@ Running matches or briefs on a schedule for every member would multiply **ATS + 
 
 - **Profile completeness** (headline, bio, skills, location, LinkedIn) is shown on My Tools when the score is below 80/100, with a link to `/profile`.
 - If the last match run is **7+ days** old, a non-blocking “stale matches” note encourages a manual refresh.
+
+## Tests
+
+Jest covers the pure logic: `lib/profile-completeness.test.ts`, `lib/my-tools-reminder-tips.test.ts`, `lib/my-tools-reminder-schedule.test.ts`, and `lib/email.test.ts` (mail-not-configured path). Run `npm test`.
