@@ -18,6 +18,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+function getTimezoneGroups(): { region: string; zones: string[] }[] {
+  const zones = Intl.supportedValuesOf("timeZone");
+  const grouped = new Map<string, string[]>();
+  for (const tz of zones) {
+    const region = tz.split("/")[0];
+    if (!grouped.has(region)) grouped.set(region, []);
+    grouped.get(region)!.push(tz);
+  }
+  return Array.from(grouped, ([region, zones]) => ({ region, zones }));
+}
+
 interface OnboardingFormProps {
   initialData: {
     display_name: string;
@@ -49,6 +60,10 @@ export default function OnboardingForm({
   const [linkedinUrl, setLinkedinUrl] = useState(
     initialData.linkedin_url ?? ""
   );
+  const [timezone, setTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"
+  );
+  const [timezoneGroups] = useState(getTimezoneGroups);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -80,6 +95,7 @@ export default function OnboardingForm({
         skills,
         open_to_referrals: openToReferrals,
         linkedin_url: linkedinUrl || null,
+        timezone,
       });
 
       clearTimeout(timeoutId);
@@ -154,6 +170,28 @@ export default function OnboardingForm({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="timezone">Timezone</Label>
+            <select
+              id="timezone"
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              {timezoneGroups.map((group) => (
+                <optgroup key={group.region} label={group.region}>
+                  {group.zones.map((tz) => (
+                    <option key={tz} value={tz}>
+                      {tz.replace(/_/g, " ")}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Detected from your browser. Change if needed.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>
