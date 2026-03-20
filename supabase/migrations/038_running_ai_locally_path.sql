@@ -10,6 +10,10 @@ BEGIN
     SELECT id INTO owner_id FROM profiles ORDER BY created_at LIMIT 1;
   END IF;
 
+  IF owner_id IS NULL THEN
+    RETURN;
+  END IF;
+
   INSERT INTO learning_paths (title, description, is_starred, created_by)
   VALUES (
     'Running AI Locally',

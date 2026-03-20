@@ -35,6 +35,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [openToReferrals, setOpenToReferrals] = useState(
     profile.open_to_referrals ?? false
   );
+  const [timezone, setTimezone] = useState(
+    profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
   const [linkedinUrl, setLinkedinUrl] = useState(
     profile.linkedin_url ?? ""
   );
@@ -53,6 +56,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setBio(profile.bio ?? "");
     setSkillsInput(profile.skills?.join(", ") ?? "");
     setOpenToReferrals(profile.open_to_referrals ?? false);
+    setTimezone(profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
     setLinkedinUrl(profile.linkedin_url ?? "");
     setGithubUrl(profile.github_url ?? "");
     setPortfolioUrl(profile.portfolio_url ?? "");
@@ -79,6 +83,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         bio: bio || null,
         skills,
         open_to_referrals: openToReferrals,
+        timezone: timezone || null,
         linkedin_url: linkedinUrl || null,
         github_url: githubUrl || null,
         portfolio_url: portfolioUrl || null,
@@ -162,6 +167,24 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="timezone">Timezone</Label>
+            <select
+              id="timezone"
+              value={timezone}
+              onChange={(e) => setTimezone(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              {Intl.supportedValuesOf("timeZone").map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Used for displaying event times
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>

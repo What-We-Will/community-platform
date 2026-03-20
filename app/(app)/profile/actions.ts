@@ -16,6 +16,7 @@ export async function updateProfile(
     linkedin_url?: string | null;
     github_url?: string | null;
     portfolio_url?: string | null;
+    timezone?: string | null;
   }
 ): Promise<ProfileUpdateResult> {
   const supabase = await createClient();
@@ -41,6 +42,7 @@ export async function updateProfile(
       linkedin_url: data.linkedin_url || null,
       github_url: data.github_url || null,
       portfolio_url: data.portfolio_url || null,
+      timezone: data.timezone || "America/Chicago",
       is_onboarded: true,
     },
     { onConflict: "id" }
