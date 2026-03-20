@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Check, HelpCircle, X, Users, Video, Repeat2 } from "lucide-react";
 import { eventTypeConfig } from "@/lib/utils/events";
+import { formatInTimeZone } from "@/lib/utils/timezone";
 import { updateRsvp } from "@/app/(app)/events/actions";
 import type { EventRsvp } from "@/lib/types";
 
@@ -34,6 +34,7 @@ interface EventCardProps {
   rsvpCounts: { going: number; maybe: number; declined: number };
   currentUserRsvp: EventRsvp | null;
   currentUserId: string;
+  viewerTimezone: string;
 }
 
 const JITSI_BASE = "https://meet.jit.si";
@@ -43,6 +44,7 @@ export function EventCard({
   rsvpCounts,
   currentUserRsvp,
   currentUserId,
+  viewerTimezone,
 }: EventCardProps) {
   const [status, setStatus] = useState<"going" | "maybe" | "declined" | null>(
     currentUserRsvp?.status ?? null
@@ -152,8 +154,9 @@ export function EventCard({
             "Happening now"
           ) : (
             <>
-              {format(startsAt, "EEE, MMM d")} · {format(startsAt, "h:mm a")} –{" "}
-              {format(endsAt, "h:mm a")}
+              {formatInTimeZone(event.starts_at, viewerTimezone, "EEE, MMM d")} ·{" "}
+              {formatInTimeZone(event.starts_at, viewerTimezone, "h:mm a")} –{" "}
+              {formatInTimeZone(event.ends_at, viewerTimezone, "h:mm a")}
             </>
           )}
         </p>

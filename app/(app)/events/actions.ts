@@ -70,6 +70,7 @@ export async function createEventAction(formData: {
   location: string;
   max_attendees: number | null;
   group_id: string | null;
+  timezone: string;
   recurrence_rule?: "daily" | "weekly" | null;
   recurrence_end_date?: string | null;
 }) {
@@ -81,10 +82,13 @@ export async function createEventAction(formData: {
 
   const { recurrence_rule, recurrence_end_date, ...baseData } = formData;
 
+  const eventTimezone = formData.timezone;
+
   // Create the parent (first) event
   const event = await createEvent({
     ...baseData,
     host_id: user.id,
+    timezone: eventTimezone,
     recurrence_rule: recurrence_rule ?? null,
     recurrence_end_date: recurrence_end_date ?? null,
   });
@@ -96,6 +100,7 @@ export async function createEventAction(formData: {
       formData.ends_at,
       recurrence_rule,
       recurrence_end_date,
+      eventTimezone,
     );
 
     const instances = datePairs.map(({ starts_at, ends_at }) => {
@@ -112,6 +117,7 @@ export async function createEventAction(formData: {
         starts_at,
         ends_at,
         video_room_name: getVideoRoomName({ type: "event", id }),
+        timezone: eventTimezone,
         recurrence_rule,
         parent_event_id: event.id,
       };
@@ -147,6 +153,7 @@ export async function updateEventAction(
     location: string;
     max_attendees: number | null;
     group_id: string | null;
+    timezone?: string;
   }
 ) {
   const supabase = await createClient();
@@ -176,6 +183,7 @@ export async function updateEventAction(
       location: formData.location.trim() || "Online",
       max_attendees: formData.max_attendees,
       group_id: formData.group_id,
+      ...(formData.timezone ? { timezone: formData.timezone } : {}),
       updated_at: new Date().toISOString(),
     })
     .eq("id", eventId)

@@ -51,6 +51,7 @@ interface GroupHubClientProps {
   eventRsvpCounts: Record<string, { going: number; maybe: number; declined: number }>;
   eventUserRsvp: Record<string, { status: string }>;
   initialNotes: GroupNote[];
+  viewerTimezone: string;
 }
 
 export function GroupHubClient({
@@ -66,6 +67,7 @@ export function GroupHubClient({
   eventRsvpCounts,
   eventUserRsvp,
   initialNotes,
+  viewerTimezone,
 }: GroupHubClientProps) {
   const router = useRouter();
   const [joining, setJoining] = useState(false);
@@ -441,6 +443,7 @@ export function GroupHubClient({
                       rsvpCounts={eventRsvpCounts[e.id] ?? { going: 0, maybe: 0, declined: 0 }}
                       currentUserRsvp={eventUserRsvp[e.id] ? { event_id: e.id, user_id: currentUser.id, status: eventUserRsvp[e.id].status as "going" | "maybe" | "declined", created_at: "" } : null}
                       currentUserId={currentUser.id}
+                      viewerTimezone={viewerTimezone}
                     />
                   </li>
                 );

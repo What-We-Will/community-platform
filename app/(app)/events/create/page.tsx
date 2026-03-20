@@ -16,6 +16,12 @@ export default async function CreateEventPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("timezone")
+    .eq("id", user.id)
+    .single();
+
   const params = await searchParams;
   const preselectedGroupId = params.group ?? null;
 
@@ -46,6 +52,7 @@ export default async function CreateEventPage({
       <CreateEventForm
         groups={groups}
         preselectedGroupId={preselectedGroupId}
+        profileTimezone={profile?.timezone ?? "America/Chicago"}
       />
     </div>
   );

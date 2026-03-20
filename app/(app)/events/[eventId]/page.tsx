@@ -1,13 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { formatInTimeZone } from "@/lib/utils/timezone";
 import {
   ArrowLeft,
   Video,
   Calendar,
   MapPin,
-  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,6 +32,13 @@ export default async function EventDetailPage({
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("timezone")
+    .eq("id", user.id)
+    .single();
+  const viewerTimezone = viewerProfile?.timezone ?? "America/Chicago";
 
   const eventData = await fetchEventWithDetails(eventId, user.id);
   if (!eventData) notFound();
@@ -65,7 +71,6 @@ export default async function EventDetailPage({
     .order("created_at", { ascending: true });
 
   const startsAt = new Date(event.starts_at);
-  const endsAt = new Date(event.ends_at);
   const now = new Date();
   const minsToStart = Math.round((startsAt.getTime() - now.getTime()) / 60000);
   const startingSoon =
@@ -106,7 +111,9 @@ export default async function EventDetailPage({
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Calendar className="size-4 shrink-0" />
-              {format(startsAt, "EEEE, MMMM d, yyyy")} · {format(startsAt, "h:mm a")} – {format(endsAt, "h:mm a")}
+              {formatInTimeZone(event.starts_at, viewerTimezone, "EEEE, MMMM d, yyyy")} ·{" "}
+              {formatInTimeZone(event.starts_at, viewerTimezone, "h:mm a")} –{" "}
+              {formatInTimeZone(event.ends_at, viewerTimezone, "h:mm a")}
             </span>
             {event.location && (
               <span className="flex items-center gap-1.5">

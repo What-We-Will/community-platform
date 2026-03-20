@@ -11,6 +11,7 @@ export async function createEvent(data: {
   starts_at: string;
   ends_at: string;
   max_attendees?: number | null;
+  timezone?: string;
   recurrence_rule?: "daily" | "weekly" | null;
   recurrence_end_date?: string | null;
 }) {
@@ -27,6 +28,7 @@ export async function createEvent(data: {
       max_attendees: data.max_attendees ?? null,
       video_room_name: videoRoomName,
       location: data.location ?? "Online",
+      timezone: data.timezone ?? "America/Chicago",
       recurrence_rule: data.recurrence_rule ?? null,
       recurrence_end_date: data.recurrence_end_date ?? null,
     })

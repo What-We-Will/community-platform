@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { format, isSameDay, startOfDay } from "date-fns";
+import { format } from "date-fns";
+import { formatInTimeZone } from "@/lib/utils/timezone";
 import { EventCalendarView } from "./EventCalendarView";
 import { EventCard } from "./EventCard";
 
@@ -32,11 +33,13 @@ type EventItem = {
 interface EventsCalendarClientProps {
   events: EventItem[];
   currentUserId: string;
+  viewerTimezone: string;
 }
 
 export function EventsCalendarClient({
   events,
   currentUserId,
+  viewerTimezone,
 }: EventsCalendarClientProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => new Date());
 
@@ -52,10 +55,11 @@ export function EventsCalendarClient({
 
   const eventsForSelectedDay = useMemo(() => {
     if (!selectedDate) return [];
-    return events.filter((e) =>
-      isSameDay(startOfDay(new Date(e.starts_at)), selectedDate)
+    const selectedKey = format(selectedDate, "yyyy-MM-dd");
+    return events.filter(
+      (e) => formatInTimeZone(e.starts_at, viewerTimezone, "yyyy-MM-dd") === selectedKey
     );
-  }, [events, selectedDate]);
+  }, [events, selectedDate, viewerTimezone]);
 
   return (
     <div className="space-y-6">
@@ -63,6 +67,7 @@ export function EventsCalendarClient({
         events={calendarEvents}
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
+        viewerTimezone={viewerTimezone}
       />
 
       <section>
@@ -84,6 +89,7 @@ export function EventsCalendarClient({
                   rsvpCounts={event.rsvpCounts}
                   currentUserRsvp={event.currentUserRsvp}
                   currentUserId={currentUserId}
+                  viewerTimezone={viewerTimezone}
                 />
               </li>
             ))}

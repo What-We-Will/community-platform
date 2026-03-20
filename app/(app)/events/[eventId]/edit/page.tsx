@@ -21,7 +21,7 @@ export default async function EditEventPage({
   const { data: event } = await supabase
     .from("events")
     .select(
-      "id, title, description, event_type, host_id, starts_at, ends_at, location, max_attendees, group_id"
+      "id, title, description, event_type, host_id, starts_at, ends_at, location, max_attendees, group_id, timezone"
     )
     .eq("id", eventId)
     .single();
@@ -63,6 +63,7 @@ export default async function EditEventPage({
           location: event.location,
           max_attendees: event.max_attendees,
           group_id: event.group_id,
+          timezone: event.timezone ?? "America/Chicago",
         }}
         groups={groups}
       />

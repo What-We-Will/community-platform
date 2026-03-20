@@ -1,3 +1,5 @@
+import { fromZonedTime } from "date-fns-tz";
+
 export interface RecurrenceDatePair {
   starts_at: string;
   ends_at: string;
@@ -20,12 +22,13 @@ export function buildRecurrenceDates(
   parentEndsAt: string,
   rule: "daily" | "weekly",
   recurrenceEndDate: string,
+  eventTimezone: string,
   maxInstances = rule === "daily" ? 1500 : 260,
 ): RecurrenceDatePair[] {
   const durationMs =
     new Date(parentEndsAt).getTime() - new Date(parentStartsAt).getTime();
 
-  const endDate = new Date(recurrenceEndDate + "T23:59:59Z");
+  const endDate = fromZonedTime(recurrenceEndDate + "T23:59:59", eventTimezone);
   const parentWeekday = new Date(parentStartsAt).getUTCDay();
 
   const cursor = new Date(parentStartsAt);

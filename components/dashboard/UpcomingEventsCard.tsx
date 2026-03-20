@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { formatInTimeZone } from "@/lib/utils/timezone";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Plus } from "lucide-react";
@@ -16,10 +16,15 @@ export async function UpcomingEventsCard() {
   }
 
   const now = new Date();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: viewerProfile } = user
+    ? await supabase.from("profiles").select("timezone").eq("id", user.id).single()
+    : { data: null };
+  const viewerTimezone = viewerProfile?.timezone ?? "America/Chicago";
 
   let goingByEventId: Record<string, number> = {};
   if (events.length > 0) {
-    const supabase = await createClient();
     const eventIds = events.map((e) => (e as { id: string }).id);
     const { data: rsvps } = await supabase
       .from("event_rsvps")
@@ -98,7 +103,8 @@ export async function UpcomingEventsCard() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium whitespace-normal break-words">{e.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {format(startsAt, "MMM d")} · {format(startsAt, "h:mm a")}
+                        {formatInTimeZone(e.starts_at, viewerTimezone, "MMM d")} ·{" "}
+                        {formatInTimeZone(e.starts_at, viewerTimezone, "h:mm a")}
                         {goingCount > 0 && ` · ${goingCount} going`}
                       </p>
                     </div>

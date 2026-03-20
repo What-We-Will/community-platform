@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { createEventAction } from "@/app/(app)/events/actions";
 import { eventTypeOptions } from "@/lib/utils/events";
 import { formatTimeLabel, countWeekdays } from "@/lib/utils/format";
+import { localTimeToUTC } from "@/lib/utils/timezone";
 import type { Group } from "@/lib/types";
 
 type RecurrenceRule = "none" | "daily" | "weekly";
@@ -34,11 +35,13 @@ for (let h = 6; h <= 23; h++) {
 interface CreateEventFormProps {
   groups: Group[];
   preselectedGroupId: string | null;
+  profileTimezone: string;
 }
 
 export function CreateEventForm({
   groups,
   preselectedGroupId,
+  profileTimezone,
 }: CreateEventFormProps) {
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,7 +58,7 @@ export function CreateEventForm({
   const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule>("none");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<string>("");
 
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timezone = profileTimezone;
 
   function handleStartTimeChange(value: string) {
     setStartTime(value);
@@ -109,10 +112,8 @@ export function CreateEventForm({
     e.preventDefault();
     if (!validate()) return;
 
-    const start = new Date(`${date}T${startTime}`);
-    const end = new Date(`${date}T${endTime}`);
-    const starts_at = start.toISOString();
-    const ends_at = end.toISOString();
+    const starts_at = localTimeToUTC(date, startTime, profileTimezone);
+    const ends_at = localTimeToUTC(date, endTime, profileTimezone);
 
     startTransition(async () => {
       try {
@@ -125,6 +126,7 @@ export function CreateEventForm({
           location: location.trim() || "Online",
           max_attendees: maxAttendees ? parseInt(maxAttendees, 10) : null,
           group_id: groupId === "none" ? null : groupId,
+          timezone: profileTimezone,
           recurrence_rule: recurrenceRule === "none" ? null : recurrenceRule,
           recurrence_end_date: recurrenceRule !== "none" ? recurrenceEndDate : null,
         });

@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  format,
   isToday,
   isSameDay,
   addDays,
@@ -86,6 +85,13 @@ export default async function EventsPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: viewerProfile } = await supabase
+    .from("profiles")
+    .select("timezone")
+    .eq("id", user.id)
+    .single();
+  const viewerTimezone = viewerProfile?.timezone ?? "America/Chicago";
+
   const [upcomingRaw, pastRaw] = await Promise.all([
     fetchUpcomingEvents({ groupId: null, type: typeParam }),
     fetchPastEvents({ limit: 10 }),
@@ -162,6 +168,7 @@ export default async function EventsPage({
         <EventsCalendarClient
           events={upcomingWithDetails}
           currentUserId={user.id}
+          viewerTimezone={viewerTimezone}
         />
       ) : (
         <>
@@ -179,6 +186,7 @@ export default async function EventsPage({
                         rsvpCounts={event.rsvpCounts}
                         currentUserRsvp={event.currentUserRsvp}
                         currentUserId={user.id}
+                        viewerTimezone={viewerTimezone}
                       />
                     </li>
                   ))}
@@ -187,7 +195,7 @@ export default async function EventsPage({
             ))}
           </div>
 
-          <PastEventsSection past={past} currentUserId={user.id} />
+          <PastEventsSection past={past} currentUserId={user.id} viewerTimezone={viewerTimezone} />
         </>
       )}
     </div>
@@ -197,9 +205,11 @@ export default async function EventsPage({
 function PastEventsSection({
   past,
   currentUserId,
+  viewerTimezone,
 }: {
   past: EventRow[];
   currentUserId: string;
+  viewerTimezone: string;
 }) {
   return (
     <details className="group">
@@ -214,6 +224,7 @@ function PastEventsSection({
               rsvpCounts={{ going: 0, maybe: 0, declined: 0 }}
               currentUserRsvp={null}
               currentUserId={currentUserId}
+              viewerTimezone={viewerTimezone}
             />
           </li>
         ))}
