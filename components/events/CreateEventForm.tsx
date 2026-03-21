@@ -132,6 +132,7 @@ export function CreateEventForm({
           recurrence_end_date: recurrenceRule !== "none" ? recurrenceEndDate : null,
         });
       } catch (err) {
+        if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
         setErrors({
           form: err instanceof Error ? err.message : "Something went wrong",
         });

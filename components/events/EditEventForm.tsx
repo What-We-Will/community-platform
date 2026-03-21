@@ -123,6 +123,7 @@ export function EditEventForm({ eventId, event, groups }: EditEventFormProps) {
           timezone: event.timezone,
         });
       } catch (err) {
+        if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
         setErrors({
           form: err instanceof Error ? err.message : "Something went wrong",
         });
