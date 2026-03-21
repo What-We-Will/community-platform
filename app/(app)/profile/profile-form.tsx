@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
 import {
   Card,
   CardContent,
@@ -169,19 +170,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="timezone">Timezone</Label>
-            <select
-              id="timezone"
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              {Intl.supportedValuesOf("timeZone").map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz.replace(/_/g, " ")}
-                </option>
-              ))}
-            </select>
+            <Label>Timezone</Label>
+            <TimezoneCombobox value={timezone} onChange={setTimezone} />
             <p className="text-xs text-muted-foreground">
               Used for displaying event times
             </p>
