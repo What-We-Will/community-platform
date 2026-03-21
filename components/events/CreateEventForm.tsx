@@ -18,6 +18,7 @@ import { createEventAction } from "@/app/(app)/events/actions";
 import { eventTypeOptions } from "@/lib/utils/events";
 import { formatTimeLabel, countWeekdays } from "@/lib/utils/format";
 import { localTimeToUTC } from "@/lib/utils/timezone";
+import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
 import type { Group } from "@/lib/types";
 
 type RecurrenceRule = "none" | "daily" | "weekly";
@@ -58,7 +59,7 @@ export function CreateEventForm({
   const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule>("none");
   const [recurrenceEndDate, setRecurrenceEndDate] = useState<string>("");
 
-  const timezone = profileTimezone;
+  const [timezone, setTimezone] = useState(profileTimezone);
 
   function handleStartTimeChange(value: string) {
     setStartTime(value);
@@ -112,8 +113,8 @@ export function CreateEventForm({
     e.preventDefault();
     if (!validate()) return;
 
-    const starts_at = localTimeToUTC(date, startTime, profileTimezone);
-    const ends_at = localTimeToUTC(date, endTime, profileTimezone);
+    const starts_at = localTimeToUTC(date, startTime, timezone);
+    const ends_at = localTimeToUTC(date, endTime, timezone);
 
     startTransition(async () => {
       try {
@@ -126,7 +127,7 @@ export function CreateEventForm({
           location: location.trim() || "Online",
           max_attendees: maxAttendees ? parseInt(maxAttendees, 10) : null,
           group_id: groupId === "none" ? null : groupId,
-          timezone: profileTimezone,
+          timezone,
           recurrence_rule: recurrenceRule === "none" ? null : recurrenceRule,
           recurrence_end_date: recurrenceRule !== "none" ? recurrenceEndDate : null,
         });
@@ -206,9 +207,7 @@ export function CreateEventForm({
         </div>
         <div className="space-y-2">
           <Label>Timezone</Label>
-          <p className="text-sm text-muted-foreground pt-2">
-            Times are in {timezone}
-          </p>
+          <TimezoneCombobox value={timezone} onChange={setTimezone} />
         </div>
       </div>
 
