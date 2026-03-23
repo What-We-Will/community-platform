@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Check, HelpCircle, X, Users, Video, Repeat2 } from "lucide-react";
 import { eventTypeConfig } from "@/lib/utils/events";
-import { formatInTimeZone, getTimeZoneAbbreviation } from "@/lib/utils/timezone";
 import { updateRsvp } from "@/app/(app)/events/actions";
+import { EventTimeDisplay } from "@/components/events/EventTimeDisplay";
 import type { EventRsvp } from "@/lib/types";
 
 interface EventCardProps {
@@ -152,27 +152,14 @@ export function EventCard({
       <CardContent className="space-y-3">
         {isLive ? (
           <p className="text-sm text-muted-foreground">Happening now</p>
-        ) : (() => {
-          const eventTz = event.timezone ?? viewerTimezone;
-          const sameTz = eventTz === viewerTimezone;
-          const eventTzAbbr = getTimeZoneAbbreviation(event.starts_at, eventTz);
-          return (
-            <div className="text-sm text-muted-foreground">
-              <p>
-                {formatInTimeZone(event.starts_at, eventTz, "EEE, MMM d")} ·{" "}
-                {formatInTimeZone(event.starts_at, eventTz, "h:mm a")} –{" "}
-                {formatInTimeZone(event.ends_at, eventTz, "h:mm a")} {eventTzAbbr}
-              </p>
-              {!sameTz && (
-                <p className="text-xs text-muted-foreground/70">
-                  {formatInTimeZone(event.starts_at, viewerTimezone, "h:mm a")} –{" "}
-                  {formatInTimeZone(event.ends_at, viewerTimezone, "h:mm a")}{" "}
-                  {getTimeZoneAbbreviation(event.starts_at, viewerTimezone)} in your time
-                </p>
-              )}
-            </div>
-          );
-        })()}
+        ) : (
+          <EventTimeDisplay
+            startsAt={event.starts_at}
+            endsAt={event.ends_at}
+            eventTimezone={event.timezone ?? viewerTimezone}
+            profileTimezone={viewerTimezone}
+          />
+        )}
 
         {event.host && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
