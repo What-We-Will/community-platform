@@ -33,6 +33,7 @@ type EventRow = {
   max_attendees: number | null;
   created_at: string;
   updated_at: string;
+  timezone?: string;
   host: Profile | null;
 };
 

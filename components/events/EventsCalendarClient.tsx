@@ -20,6 +20,7 @@ type EventItem = {
   max_attendees: number | null;
   created_at: string;
   updated_at: string;
+  timezone?: string;
   host: { id: string; display_name: string; avatar_url: string | null } | null;
   rsvpCounts: { going: number; maybe: number; declined: number };
   currentUserRsvp: {

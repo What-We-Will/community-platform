@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatInTimeZone } from "@/lib/utils/timezone";
+import { formatInTimeZone, getTimeZoneAbbreviation } from "@/lib/utils/timezone";
 import {
   ArrowLeft,
   Video,
@@ -55,6 +55,7 @@ export default async function EventDetailPage({
     starts_at: string;
     ends_at: string;
     max_attendees: number | null;
+    timezone: string;
     host: Profile | null;
     group: unknown;
     rsvpCounts: { going: number; maybe: number; declined: number };
@@ -62,6 +63,10 @@ export default async function EventDetailPage({
     isLive: boolean;
     isPast: boolean;
   };
+
+  const eventTz = event.timezone ?? viewerTimezone;
+  const sameTz = eventTz === viewerTimezone;
+  const eventTzAbbr = getTimeZoneAbbreviation(event.starts_at, eventTz);
 
   const { data: attendees } = await supabase
     .from("event_rsvps")
@@ -109,12 +114,21 @@ export default async function EventDetailPage({
             {event.title}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="size-4 shrink-0" />
-              {formatInTimeZone(event.starts_at, viewerTimezone, "EEEE, MMMM d, yyyy")} ·{" "}
-              {formatInTimeZone(event.starts_at, viewerTimezone, "h:mm a")} –{" "}
-              {formatInTimeZone(event.ends_at, viewerTimezone, "h:mm a")}
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="flex items-center gap-1.5">
+                <Calendar className="size-4 shrink-0" />
+                {formatInTimeZone(event.starts_at, eventTz, "EEEE, MMMM d, yyyy")} ·{" "}
+                {formatInTimeZone(event.starts_at, eventTz, "h:mm a")} –{" "}
+                {formatInTimeZone(event.ends_at, eventTz, "h:mm a")} {eventTzAbbr}
+              </span>
+              {!sameTz && (
+                <span className="ml-5.5 text-sm text-muted-foreground/70">
+                  {formatInTimeZone(event.starts_at, viewerTimezone, "h:mm a")} –{" "}
+                  {formatInTimeZone(event.ends_at, viewerTimezone, "h:mm a")}{" "}
+                  {getTimeZoneAbbreviation(event.starts_at, viewerTimezone)} in your time
+                </span>
+              )}
+            </div>
             {event.location && (
               <span className="flex items-center gap-1.5">
                 <MapPin className="size-4 shrink-0" />

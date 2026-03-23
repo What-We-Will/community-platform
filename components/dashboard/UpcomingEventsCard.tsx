@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatInTimeZone } from "@/lib/utils/timezone";
+import { formatInTimeZone, getTimeZoneAbbreviation } from "@/lib/utils/timezone";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Plus } from "lucide-react";
@@ -104,7 +104,8 @@ export async function UpcomingEventsCard() {
                       <p className="text-sm font-medium whitespace-normal break-words">{e.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatInTimeZone(e.starts_at, viewerTimezone, "MMM d")} ·{" "}
-                        {formatInTimeZone(e.starts_at, viewerTimezone, "h:mm a")}
+                        {formatInTimeZone(e.starts_at, viewerTimezone, "h:mm a")}{" "}
+                        {getTimeZoneAbbreviation(e.starts_at, viewerTimezone)}
                         {goingCount > 0 && ` · ${goingCount} going`}
                       </p>
                     </div>
