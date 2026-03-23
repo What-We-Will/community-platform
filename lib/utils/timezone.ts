@@ -3,6 +3,12 @@ import {
   formatInTimeZone as dateFnsFormatInTimeZone,
 } from "date-fns-tz";
 
+// UTC Storage Assumption
+// This module assumes Supabase/Postgres is configured with timezone = 'UTC' (the default).
+// localTimeToUTC converts browser-local times to UTC before storage.
+// formatInTimeZone converts stored UTC back to a display timezone.
+// If the DB timezone setting changes, all stored timestamps will be misinterpreted.
+
 const DEFAULT_TIMEZONE = "America/Chicago";
 
 /**

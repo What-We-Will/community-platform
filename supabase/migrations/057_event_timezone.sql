@@ -1,4 +1,6 @@
--- Store the IANA timezone the event was created in.
+-- The events.timezone column stores the IANA timezone in which the event was created.
+-- starts_at and ends_at are always stored as UTC (timestamptz).
+-- This assumes the Postgres server timezone is UTC (Supabase default: SHOW timezone → 'UTC').
 -- Used for display context ("2 PM ET") and correct round-tripping in edit forms.
 -- Defaults to America/Chicago to match the profile timezone default.
 
