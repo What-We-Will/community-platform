@@ -1,7 +1,5 @@
 "use server";
 
-const FORM_RESPONSE_URL = process.env.GOOGLE_FORM_SHARE_YOUR_STORY_URL;
-
 const ENTRY = {
   name: "entry.838646267",
   anonymous: "entry.1537978588",
@@ -19,6 +17,15 @@ function emailOk(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 }
 
+function zipOk(v: string) {
+  return /^\d{5}(-\d{4})?$/.test(v);
+}
+
+function sanitizeForSpreadsheet(v: string): string {
+  if (/^[=+\-@]/.test(v)) return "'" + v;
+  return v;
+}
+
 export type ShareYourStoryResult =
   | { ok: true }
   | {
@@ -33,8 +40,15 @@ export async function submitShareYourStory(input: {
   zip: string;
   story: string;
 }): Promise<ShareYourStoryResult> {
-  if (!FORM_RESPONSE_URL) {
+  const formResponseUrl = process.env.GOOGLE_FORM_SHARE_YOUR_STORY_URL;
+  if (!formResponseUrl) {
     console.error("[share-your-story] GOOGLE_FORM_SHARE_YOUR_STORY_URL is not configured.");
+    return { ok: false, error: "submission_failed" };
+  }
+
+  const url = new URL(formResponseUrl);
+  if (url.protocol !== "https:" || url.hostname !== "docs.google.com") {
+    console.error("[share-your-story] GOOGLE_FORM_SHARE_YOUR_STORY_URL must be an https://docs.google.com URL");
     return { ok: false, error: "submission_failed" };
   }
 
@@ -50,7 +64,7 @@ export async function submitShareYourStory(input: {
   if (!email || !emailOk(email)) {
     return { ok: false, error: "validation_failed" };
   }
-  if (!zip) {
+  if (!zip || !zipOk(zip)) {
     return { ok: false, error: "validation_failed" };
   }
   if (!story) {
@@ -58,15 +72,15 @@ export async function submitShareYourStory(input: {
   }
 
   const data = new FormData();
-  data.append(ENTRY.name, name);
+  data.append(ENTRY.name, sanitizeForSpreadsheet(name));
   data.append(ENTRY.anonymous, anonymous);
-  data.append(ENTRY.email, email);
+  data.append(ENTRY.email, sanitizeForSpreadsheet(email));
   data.append(ENTRY.zip, zip);
-  data.append(ENTRY.story, story);
+  data.append(ENTRY.story, sanitizeForSpreadsheet(story));
 
   let response: Response;
   try {
-    response = await fetch(FORM_RESPONSE_URL, {
+    response = await fetch(formResponseUrl, {
       method: "POST",
       body: data,
       redirect: "follow",

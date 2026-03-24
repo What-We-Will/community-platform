@@ -32,7 +32,7 @@ export function ShareYourStoryForm() {
     if (!anonymous) next.anonymous = true;
     const em = email.trim();
     if (!em || !emailOk(em)) next.email = true;
-    if (!zip.trim()) next.zip = true;
+    if (!zip.trim() || !/^\d{5}(-\d{4})?$/.test(zip.trim())) next.zip = true;
     if (!story.trim()) next.story = true;
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -180,7 +180,7 @@ export function ShareYourStoryForm() {
         />
         {errors.zip ? (
           <p id="err-zip" className="text-xs text-destructive" role="alert">
-            Please enter your zip code.
+            Please enter a valid US zip code (e.g. 94110).
           </p>
         ) : null}
       </div>
