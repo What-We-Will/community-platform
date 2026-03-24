@@ -79,13 +79,7 @@ export async function submitShareYourStory(input: {
     return { ok: false, error: "submission_failed" };
   }
 
-  const text = await response.text();
   if (!response.ok) {
-    return { ok: false, error: "submission_failed" };
-  }
-
-  // Google Forms confirmation HTML (English) — do not report success without it.
-  if (!/Your response has been recorded/i.test(text)) {
     return { ok: false, error: "submission_failed" };
   }
 
