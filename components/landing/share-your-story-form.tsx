@@ -6,18 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { submitShareYourStory } from "@/lib/actions/share-your-story";
 import { cn } from "@/lib/utils";
-
-const FORM_RESPONSE_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLScIHbzanh1i_mQsn3KZ1YtcM2Oz4Wd4comxB0R0Ihi-UPIsLw/formResponse";
-
-const ENTRY = {
-  name: "entry.838646267",
-  anonymous: "entry.1537978588",
-  email: "entry.1217872030",
-  zip: "entry.1081502524",
-  story: "entry.1664592696",
-} as const;
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
@@ -35,6 +25,7 @@ export function ShareYourStoryForm() {
   }>({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function validate() {
     const next: typeof errors = {};
@@ -53,24 +44,39 @@ export function ShareYourStoryForm() {
     if (!validate()) return;
 
     setSubmitting(true);
-    const data = new FormData();
-    data.append(ENTRY.name, name);
-    data.append(ENTRY.anonymous, anonymous);
-    data.append(ENTRY.email, email.trim());
-    data.append(ENTRY.zip, zip.trim());
-    data.append(ENTRY.story, story.trim());
+    setSubmitError(null);
 
     try {
-      await fetch(FORM_RESPONSE_URL, {
-        method: "POST",
-        body: data,
-        mode: "no-cors",
+      const result = await submitShareYourStory({
+        name,
+        anonymous,
+        email: email.trim(),
+        zip: zip.trim(),
+        story: story.trim(),
       });
-    } catch {
-      // no-cors: network errors are rare; Google may still receive the POST
+
+      if (result.ok) {
+        setSubmitted(true);
+        return;
+      }
+
+      if (result.error === "rate_limited") {
+        setSubmitError(
+          "Too many submissions from this connection. Please try again later."
+        );
+        return;
+      }
+
+      if (result.error === "validation_failed") {
+        setSubmitError("Please check your entries and try again.");
+        return;
+      }
+
+      setSubmitError(
+        "We could not submit your story. Please try again in a moment."
+      );
     } finally {
       setSubmitting(false);
-      setSubmitted(true);
     }
   }
 
@@ -210,6 +216,12 @@ export function ShareYourStoryForm() {
           </p>
         ) : null}
       </div>
+
+      {submitError ? (
+        <p className="text-sm text-destructive" role="alert" aria-live="polite">
+          {submitError}
+        </p>
+      ) : null}
 
       <Button
         type="submit"
