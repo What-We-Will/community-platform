@@ -2,9 +2,7 @@
 
 import { headers } from "next/headers";
 
-const FORM_RESPONSE_URL =
-  process.env.GOOGLE_FORM_SHARE_YOUR_STORY_URL ??
-  "https://docs.google.com/forms/d/e/1FAIpQLScIHbzanh1i_mQsn3KZ1YtcM2Oz4Wd4comxB0R0Ihi-UPIsLw/formResponse";
+const FORM_RESPONSE_URL = process.env.GOOGLE_FORM_SHARE_YOUR_STORY_URL;
 
 const ENTRY = {
   name: "entry.838646267",
@@ -103,6 +101,11 @@ export async function submitShareYourStory(input: {
   data.append(ENTRY.email, email);
   data.append(ENTRY.zip, zip);
   data.append(ENTRY.story, story);
+
+  if (!FORM_RESPONSE_URL) {
+    console.error("[share-your-story] GOOGLE_FORM_SHARE_YOUR_STORY_URL is not configured.");
+    return { ok: false, error: "submission_failed" };
+  }
 
   let response: Response;
   try {
