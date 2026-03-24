@@ -1,7 +1,5 @@
 "use server";
 
-import { headers } from "next/headers";
-
 const FORM_RESPONSE_URL = process.env.GOOGLE_FORM_SHARE_YOUR_STORY_URL;
 
 const ENTRY = {
@@ -12,46 +10,10 @@ const ENTRY = {
   story: "entry.1664592696",
 } as const;
 
-const RATE_WINDOW_MS = 60 * 60 * 1000;
-/** Per-IP cap on server action invocations (any payload), including failed validation. */
-const RATE_MAX_PER_WINDOW = 15;
-
 const MAX_NAME = 200;
 const MAX_EMAIL = 254;
 const MAX_ZIP = 10;
 const MAX_STORY = 50_000;
-
-const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
-
-function pruneRateBuckets() {
-  if (rateLimitBuckets.size < 5000) return;
-  const now = Date.now();
-  for (const [k, v] of rateLimitBuckets) {
-    if (now > v.resetAt) rateLimitBuckets.delete(k);
-  }
-}
-
-function allowSubmission(ip: string): boolean {
-  pruneRateBuckets();
-  const now = Date.now();
-  const bucket = rateLimitBuckets.get(ip);
-  if (!bucket || now > bucket.resetAt) {
-    rateLimitBuckets.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
-    return true;
-  }
-  if (bucket.count >= RATE_MAX_PER_WINDOW) return false;
-  bucket.count++;
-  return true;
-}
-
-async function getClientIp(): Promise<string> {
-  const h = await headers();
-  const forwarded = h.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0]?.trim() || "unknown";
-  }
-  return h.get("x-real-ip") ?? "unknown";
-}
 
 function emailOk(v: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -61,7 +23,7 @@ export type ShareYourStoryResult =
   | { ok: true }
   | {
       ok: false;
-      error: "rate_limited" | "validation_failed" | "submission_failed";
+      error: "validation_failed" | "submission_failed";
     };
 
 export async function submitShareYourStory(input: {
@@ -71,9 +33,9 @@ export async function submitShareYourStory(input: {
   zip: string;
   story: string;
 }): Promise<ShareYourStoryResult> {
-  const ip = await getClientIp();
-  if (!allowSubmission(ip)) {
-    return { ok: false, error: "rate_limited" };
+  if (!FORM_RESPONSE_URL) {
+    console.error("[share-your-story] GOOGLE_FORM_SHARE_YOUR_STORY_URL is not configured.");
+    return { ok: false, error: "submission_failed" };
   }
 
   const name = input.name.trim().slice(0, MAX_NAME);
@@ -101,11 +63,6 @@ export async function submitShareYourStory(input: {
   data.append(ENTRY.email, email);
   data.append(ENTRY.zip, zip);
   data.append(ENTRY.story, story);
-
-  if (!FORM_RESPONSE_URL) {
-    console.error("[share-your-story] GOOGLE_FORM_SHARE_YOUR_STORY_URL is not configured.");
-    return { ok: false, error: "submission_failed" };
-  }
 
   let response: Response;
   try {

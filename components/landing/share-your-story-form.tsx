@@ -60,13 +60,6 @@ export function ShareYourStoryForm() {
         return;
       }
 
-      if (result.error === "rate_limited") {
-        setSubmitError(
-          "Too many submissions from this connection. Please try again later."
-        );
-        return;
-      }
-
       if (result.error === "validation_failed") {
         setSubmitError("Please check your entries and try again.");
         return;
