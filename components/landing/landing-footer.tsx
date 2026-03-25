@@ -19,6 +19,12 @@ export function LandingFooter() {
             About
           </Link>
           <Link
+            href="/share-your-story"
+            className="hover:text-foreground transition-colors"
+          >
+            Share your story
+          </Link>
+          <Link
             href="/signup"
             className="hover:text-foreground transition-colors"
           >
