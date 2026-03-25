@@ -4,6 +4,7 @@ import { useState } from "react";
 import { completeOnboarding } from "./actions";
 import { updateAvatarUrl } from "@/app/(app)/profile/actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 
 interface OnboardingFormProps {
   initialData: {
@@ -49,6 +51,9 @@ export default function OnboardingForm({
   const [linkedinUrl, setLinkedinUrl] = useState(
     initialData.linkedin_url ?? ""
   );
+  const [timezone, setTimezone] = useState(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -80,6 +85,7 @@ export default function OnboardingForm({
         skills,
         open_to_referrals: openToReferrals,
         linkedin_url: linkedinUrl || null,
+        timezone,
       });
 
       clearTimeout(timeoutId);
@@ -154,6 +160,13 @@ export default function OnboardingForm({
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="timezone">Timezone</Label>
+            <TimezoneCombobox value={timezone} onChange={setTimezone} />
+            <p className="text-xs text-muted-foreground">
+              Detected from your browser. Change if needed.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
+import { safeTimezone } from "@/lib/utils/timezone";
 
 export type OnboardingResult = { error?: string };
 
@@ -16,6 +17,7 @@ export async function completeOnboarding(
     skills: string[];
     open_to_referrals: boolean;
     linkedin_url?: string | null;
+    timezone?: string;
   }
 ): Promise<OnboardingResult> {
   const supabase = await createClient();
@@ -43,6 +45,7 @@ export async function completeOnboarding(
       skills: data.skills,
       open_to_referrals: data.open_to_referrals,
       linkedin_url: data.linkedin_url || null,
+      timezone: safeTimezone(data.timezone),
       is_onboarded: true,
       approval_status: "pending",
     },

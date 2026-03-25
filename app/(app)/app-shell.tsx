@@ -35,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { UnreadBadge } from "@/components/messages/UnreadBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { updateLastSeen } from "@/app/(app)/profile/actions";
+import { syncBrowserTimezone } from "@/lib/actions/timezone";
 
 const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
 
@@ -85,6 +86,25 @@ export default function AppShell({ children, user }: AppShellProps) {
     }, HEARTBEAT_INTERVAL_MS);
     updateLastSeen(); // run once on mount
     return () => clearInterval(interval);
+  }, []);
+
+  // One-time timezone sync: if the user's profile still has the default
+  // timezone, update it to match the browser's detected timezone.
+  // Uses localStorage so the check persists across tabs (profile is already
+  // updated after the first sync; no need to repeat per tab).
+  useEffect(() => {
+    if (localStorage.getItem("tz_checked")) return;
+    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (browserTz) {
+      syncBrowserTimezone(browserTz)
+        .then(() => {
+          localStorage.setItem("tz_checked", "1");
+        })
+        .catch(() => {
+          // Leave flag unset so we retry on the next page load.
+          console.error("[timezone] Failed to sync browser timezone");
+        });
+    }
   }, []);
 
   async function handleSignOut() {
