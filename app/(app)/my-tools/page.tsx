@@ -5,6 +5,7 @@ import { WhatWeWillMatch } from "@/lib/pulsar/types";
 import { getProfileCompleteness } from "@/lib/profile-completeness";
 
 type MatchRunRow = {
+  id: string;
   request_id: string;
   candidate_summary: string;
   matches: unknown;
@@ -36,7 +37,7 @@ export default async function MyToolsPage() {
   ] = await Promise.all([
     supabase
       .from("member_match_runs")
-      .select("request_id, candidate_summary, matches, created_at")
+      .select("id, request_id, candidate_summary, matches, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)

@@ -12,6 +12,7 @@ import { WhatWeWillMatch } from "@/lib/pulsar/types";
 import type { ProfileCompleteness } from "@/lib/profile-completeness";
 
 type MatchRun = {
+  id: string;
   request_id: string;
   candidate_summary: string;
   created_at: string;
@@ -27,6 +28,11 @@ type CareerBrief = {
 };
 
 const STALE_MATCH_DAYS = 7;
+const DATETIME_UTC = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
 
 export default function MyToolsClient({
   latestMatchRun,
@@ -69,11 +75,11 @@ export default function MyToolsClient({
     });
   }
 
-  async function onSaveToTracker(match: WhatWeWillMatch) {
+  async function onSaveToTracker(matchRunId: string, matchIndex: number) {
     setError(null);
-    const key = `${match.company}-${match.roleTitle}-${match.applyUrl}`;
+    const key = `${matchRunId}-${matchIndex}`;
     setSavingIds((prev) => ({ ...prev, [key]: true }));
-    const result = await saveMatchToTracker(match);
+    const result = await saveMatchToTracker(matchRunId, matchIndex);
     setSavingIds((prev) => ({ ...prev, [key]: false }));
     if (result.error) {
       setError(result.error);
@@ -144,7 +150,7 @@ export default function MyToolsClient({
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Last run: {new Date(latestMatchRun.created_at).toLocaleString()}
+                Last run: {DATETIME_UTC.format(new Date(latestMatchRun.created_at))} UTC
               </p>
               <p className="text-sm">{latestMatchRun.candidate_summary}</p>
               {latestMatchRun.matches.length === 0 ? (
@@ -154,7 +160,7 @@ export default function MyToolsClient({
               ) : (
                 <div className="space-y-3">
                   {latestMatchRun.matches.map((match, idx) => {
-                    const saveKey = `${match.company}-${match.roleTitle}-${match.applyUrl}`;
+                    const saveKey = `${latestMatchRun.id}-${idx}`;
                     return (
                       <div key={`${latestMatchRun.request_id}-${idx}-${saveKey}`} className="rounded-lg border p-3">
                         <div className="flex items-center justify-between gap-3">
@@ -179,7 +185,7 @@ export default function MyToolsClient({
                               variant="outline"
                               size="sm"
                               disabled={savingIds[saveKey]}
-                              onClick={() => onSaveToTracker(match)}
+                              onClick={() => onSaveToTracker(latestMatchRun.id, idx)}
                             >
                               {savingIds[saveKey] ? "Saving..." : "Add to tracker"}
                             </Button>
@@ -220,7 +226,7 @@ export default function MyToolsClient({
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                Generated: {new Date(latestBrief.created_at).toLocaleString()} · model:{" "}
+                Generated: {DATETIME_UTC.format(new Date(latestBrief.created_at))} UTC · model:{" "}
                 {latestBrief.model}
               </p>
               <div className="prose prose-sm dark:prose-invert max-w-none">

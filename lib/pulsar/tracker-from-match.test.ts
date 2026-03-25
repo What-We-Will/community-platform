@@ -25,11 +25,19 @@ describe("jobApplicationInsertFromPulsarMatch", () => {
     });
   });
 
-  it("uses null url when applyUrl empty", () => {
+  it("uses empty url when applyUrl empty", () => {
     const row = jobApplicationInsertFromPulsarMatch({
       ...sampleMatch,
       applyUrl: "",
     });
-    expect(row.url).toBeNull();
+    expect(row.url).toBe("");
+  });
+
+  it("uses empty url when applyUrl is not http/https", () => {
+    const row = jobApplicationInsertFromPulsarMatch({
+      ...sampleMatch,
+      applyUrl: "javascript:alert(1)",
+    });
+    expect(row.url).toBe("");
   });
 });

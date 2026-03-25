@@ -90,6 +90,30 @@ export async function GET(request: Request) {
         ? completeness.missing.map((m) => missingFieldToReminderTip(m))
         : [];
 
+    const previousLastSent = row.last_my_tools_reminder_sent_at ?? null;
+    const reservedAt = new Date().toISOString();
+    let reserveQuery = service
+      .from("profiles")
+      .update({ last_my_tools_reminder_sent_at: reservedAt })
+      .eq("id", row.id);
+    reserveQuery = previousLastSent
+      ? reserveQuery.eq("last_my_tools_reminder_sent_at", previousLastSent)
+      : reserveQuery.is("last_my_tools_reminder_sent_at", null);
+
+    const { data: reserveRows, error: reserveErr } = await reserveQuery
+      .select("id")
+      .limit(1);
+
+    if (reserveErr) {
+      failed += 1;
+      errors.push(`reserve ${row.id}: ${reserveErr.message}`);
+      continue;
+    }
+    if (!reserveRows || reserveRows.length === 0) {
+      // Another worker likely reserved this row first.
+      continue;
+    }
+
     const result = await sendMyToolsReminderEmail({
       to: authUser.user.email,
       displayName: row.display_name,
@@ -99,19 +123,15 @@ export async function GET(request: Request) {
     });
 
     if (!result.ok) {
+      // Best-effort rollback so transient mail failures can retry sooner.
+      const rollbackValue = previousLastSent ? previousLastSent : null;
+      await service
+        .from("profiles")
+        .update({ last_my_tools_reminder_sent_at: rollbackValue })
+        .eq("id", row.id)
+        .eq("last_my_tools_reminder_sent_at", reservedAt);
       failed += 1;
       errors.push(`${authUser.user.email}: ${result.reason}`);
-      continue;
-    }
-
-    const { error: upErr } = await service
-      .from("profiles")
-      .update({ last_my_tools_reminder_sent_at: new Date().toISOString() })
-      .eq("id", row.id);
-
-    if (upErr) {
-      failed += 1;
-      errors.push(`update ${row.id}: ${upErr.message}`);
       continue;
     }
 

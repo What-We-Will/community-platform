@@ -98,17 +98,57 @@ export async function generateCareerBrief(): Promise<ActionResult> {
   }
 }
 
-export async function saveMatchToTracker(match: WhatWeWillMatch): Promise<ActionResult> {
+export async function saveMatchToTracker(
+  matchRunId: string,
+  matchIndex: number
+): Promise<ActionResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { error } = await supabase.from("job_applications").insert({
-    user_id: user.id,
-    ...jobApplicationInsertFromPulsarMatch(match),
-  });
+  if (!matchRunId.trim()) return { error: "Missing match run id" };
+  if (!Number.isInteger(matchIndex) || matchIndex < 0) {
+    return { error: "Invalid match index" };
+  }
+
+  const { data: run, error: runError } = await supabase
+    .from("member_match_runs")
+    .select("matches")
+    .eq("id", matchRunId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (runError || !run || !Array.isArray(run.matches)) {
+    return { error: "Unable to load match run" };
+  }
+
+  const selected = run.matches[matchIndex];
+  if (!selected || typeof selected !== "object") {
+    return { error: "Selected match not found" };
+  }
+
+  const match = selected as Partial<WhatWeWillMatch>;
+  if (
+    typeof match.company !== "string" ||
+    typeof match.roleTitle !== "string" ||
+    typeof match.label !== "string" ||
+    typeof match.score !== "number"
+  ) {
+    return { error: "Stored match has invalid shape" };
+  }
+
+  const { error } = await supabase.from("job_applications").upsert(
+    {
+      user_id: user.id,
+      ...jobApplicationInsertFromPulsarMatch(match as WhatWeWillMatch),
+    },
+    {
+      onConflict: "user_id,company,position,url",
+      ignoreDuplicates: true,
+    }
+  );
 
   if (error) return { error: error.message };
   revalidatePath("/tracker");
