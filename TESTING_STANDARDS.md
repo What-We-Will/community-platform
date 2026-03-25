@@ -4,6 +4,8 @@ Hard rules for all test code in this project. No exceptions without explicit app
 
 This document is the authoritative reference. If AI tooling, contributor habits, or convenience conflict with these standards, the standards win.
 
+**Last updated:** 2026-03-24 · **Applies to:** Jest 29 · **Owner:** platform lead
+
 ---
 
 ## AI-assisted development rules
@@ -55,6 +57,46 @@ This is the single most important testing principle, and the one AI tools violat
 - Write tests that break when you rename a private helper
 
 **Litmus test:** If a refactor changes zero behavior but breaks a test, the test was wrong.
+
+### What a bad test looks like
+
+This is the pattern AI tools produce most often. It passes, it covers lines, and it catches nothing useful:
+
+```typescript
+// ❌ BAD — tests implementation, not behavior
+it("should call supabase", async () => {
+  const mockSupabase = buildMockSupabaseClient();
+  mockSupabase.from.mockReturnThis();
+  mockSupabase.select.mockReturnThis();
+  mockSupabase.eq.mockResolvedValue({ data: [], error: null });
+
+  await fetchUserEvents("user-1");
+
+  // Only asserts the call happened — not what was returned, not what was queried
+  expect(mockSupabase.from).toHaveBeenCalled();
+  expect(mockSupabase.select).toHaveBeenCalled();
+});
+```
+
+This test breaks if you rename an internal chain method, but passes even if the function returns the wrong data or silently swallows an error.
+
+```typescript
+// ✅ GOOD — tests behavior
+it("should return only events belonging to the user when user ID is valid", async () => {
+  // Arrange
+  const mockSupabase = buildMockSupabaseClient();
+  const expected = [makeBaseEvent({ host_id: "user-1" })];
+  mockSupabase.from("events").select.mockResolvedValue({ data: expected, error: null });
+
+  // Act
+  const result = await fetchUserEvents("user-1");
+
+  // Assert — what came back, and what was queried
+  expect(result).toEqual(expected);
+  expect(mockSupabase.from).toHaveBeenCalledWith("events");
+  expect(mockSupabase.eq).toHaveBeenCalledWith("host_id", "user-1");
+});
+```
 
 ### What counts as a boundary (mockable)
 
@@ -250,6 +292,55 @@ it("should return event with RSVP counts when event exists", () => {
 
 ---
 
+## Test isolation
+
+Every test must be independent. A test that passes in isolation but fails when run after another test has a hidden state dependency — this is one of the hardest categories of test bug to diagnose.
+
+### Required cleanup patterns
+
+**Supabase mocks** — reset between tests, not just between files:
+
+```typescript
+describe("fetchEvent", () => {
+  let mockSupabase: ReturnType<typeof buildMockSupabaseClient>;
+
+  beforeEach(() => {
+    mockSupabase = buildMockSupabaseClient();
+    jest.clearAllMocks(); // Clears call counts and return values
+  });
+});
+```
+
+**Environment variables** — always restore after override:
+
+```typescript
+const originalEnv = process.env;
+
+beforeEach(() => {
+  process.env = { ...originalEnv };
+});
+
+afterEach(() => {
+  process.env = originalEnv;
+});
+```
+
+**Fake timers** — always restore after use:
+
+```typescript
+beforeEach(() => jest.useFakeTimers());
+afterEach(() => jest.useRealTimers());
+```
+
+### Rules
+
+- `jest.clearAllMocks()` in `beforeEach` for any file that uses mocks — not `afterEach` (a failing test can skip cleanup)
+- Never rely on test execution order — Jest may shuffle or parallelize
+- Never share mutable state between `it()` blocks outside of `beforeEach` setup
+- pgTAP tests must use `begin` / `rollback` to leave the database unchanged (see RLS testing section — already enforced by the template)
+
+---
+
 ## Test data
 
 Use factory functions from `lib/__tests__/factories.ts`. **Never construct test objects inline.**
@@ -291,23 +382,47 @@ Auth and data access code are [flagged for human review](AI_POLICY.md) in this p
 
 ## Forbidden patterns
 
-- `any` type in test files
-- `// @ts-ignore` without a justifying comment explaining why it's necessary
-- `setTimeout` / `sleep` in tests — use `jest.useFakeTimers()` instead
-- Testing getters, setters, or type-only exports
-- `console.log` left in test files
-- Snapshot tests (unless explicitly approved by the platform lead)
-- Tests and implementation generated in the same AI prompt/response
-- Deleting or weakening a test to make implementation pass
-- Mocking internal functions that are not boundaries
+The following are banned in all test files. Each maps to an enforceable mechanism — rules marked **lint** are caught automatically; rules marked **review** require PR review until CI is wired.
+
+| Pattern | Why | Enforcement |
+|---|---|---|
+| `any` type in test files | Undermines type-safety guarantees in tests | `@typescript-eslint/no-explicit-any` (lint) |
+| `// @ts-ignore` without justification comment | Masks real type errors | `@typescript-eslint/ban-ts-comment` (lint) |
+| `setTimeout` / `sleep` in tests | Creates flaky, slow tests | `jest/no-restricted-matchers` + manual (review) |
+| Testing getters, setters, or type-only exports | Tests framework, not behavior | review |
+| `console.log` left in test files | Noise in CI output | `no-console` rule scoped to `**/*.test.*` (lint) |
+| Snapshot tests without platform lead approval | AI generates snapshots that lock in broken UI | `jest/no-large-snapshots` + review |
+| Test + implementation in same AI prompt/response | Breaks TDD — see AI rules section | review |
+| Deleting or weakening a test to make implementation pass | Destroys coverage intentionally | review |
+| Mocking internal functions that are not boundaries | Tests implementation, not behavior | review |
+| `.only` left in committed tests | Silently skips entire test suite | `jest/no-focused-tests` (lint) |
+| `.skip` without a tracking comment | Tests disappear without explanation | `jest/no-disabled-tests` (lint) |
+
+The lint rules above should be present in your ESLint config under `eslint-plugin-jest` and `@typescript-eslint`. If a rule is missing from the config, that is a gap to close — the doc is the spec, the config is the enforcement.
 
 ---
 
 ## Quality metrics
 
+### Enforcement status
+
+This table is the ground truth for what is currently enforced vs. intended. When CI ships, "pending" rows become "enforced" in a PR that references the config change.
+
+| Rule | Target | Status | Mechanism |
+|---|---|---|---|
+| Line coverage (`lib/`) | ≥ 80% | **Pending CI** | `coverageThreshold` in `jest.config.mjs` — runs locally, not yet blocking |
+| Mutation score — critical paths | ≥ 70% | **Deferred** | Blocked on 80% line coverage baseline |
+| Mutation score — standard features | ≥ 50% | **Deferred** | Blocked on 80% line coverage baseline |
+| No forbidden lint patterns | See table above | **Partial** | `eslint-plugin-jest` + `@typescript-eslint` — enforced locally, not in CI |
+| Naming convention | `should X when Y` | **Manual** | PR review only until CI lint gate exists |
+| No `.only` / `.skip` in committed code | Zero | **Partial** | `jest/no-focused-tests`, `jest/no-disabled-tests` — enforced locally |
+| pgTAP for every RLS migration | One test per migration | **Manual** | PR review |
+
+**Until CI is in place:** run `npm run test:ci` locally before every PR and paste the coverage summary in the PR description. This is not optional — it is the manual stand-in for the automated gate.
+
 ### Line coverage
 
-- Target: ≥ 80% line coverage for `lib/` (enforced once CI exists)
+- Target: ≥ 80% line coverage for `lib/`
 - Line coverage is a **floor**, not a quality signal. AI-generated tests can trivially achieve high coverage while catching almost nothing.
 
 ### Mutation testing
@@ -341,9 +456,12 @@ Before marking any test task done:
 - [ ] Primary failure / not-found case covered
 - [ ] At least one edge case (null, boundary, invalid input)
 - [ ] Unauthenticated case tested (server actions and data helpers)
-- [ ] No forbidden patterns
+- [ ] `jest.clearAllMocks()` in `beforeEach` for any file using mocks
+- [ ] Environment variable overrides restored in `afterEach`
+- [ ] No forbidden patterns (no `.only`, no `.skip` without comment, no `console.log`)
 - [ ] Every test can be explained without re-reading the AI conversation that produced it
 - [ ] `npm test` passes
+- [ ] `npm run test:ci` run locally and coverage summary included in PR description (required until CI gate exists)
 - [ ] `npx tsc --noEmit` passes (no type errors in test files)
 
 ---
