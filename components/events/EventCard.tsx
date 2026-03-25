@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { format } from "date-fns";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +9,7 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { Check, HelpCircle, X, Users, Video, Repeat2 } from "lucide-react";
 import { eventTypeConfig } from "@/lib/utils/events";
 import { updateRsvp } from "@/app/(app)/events/actions";
+import { EventTimeDisplay } from "@/components/events/EventTimeDisplay";
 import type { EventRsvp } from "@/lib/types";
 
 interface EventCardProps {
@@ -27,6 +27,7 @@ interface EventCardProps {
     max_attendees: number | null;
     created_at: string;
     updated_at: string;
+    timezone: string;
     recurrence_rule?: string | null;
     parent_event_id?: string | null;
     host: { id: string; display_name: string; avatar_url: string | null } | null;
@@ -34,6 +35,7 @@ interface EventCardProps {
   rsvpCounts: { going: number; maybe: number; declined: number };
   currentUserRsvp: EventRsvp | null;
   currentUserId: string;
+  viewerTimezone: string;
 }
 
 const JITSI_BASE = "https://meet.jit.si";
@@ -43,6 +45,7 @@ export function EventCard({
   rsvpCounts,
   currentUserRsvp,
   currentUserId,
+  viewerTimezone,
 }: EventCardProps) {
   const [status, setStatus] = useState<"going" | "maybe" | "declined" | null>(
     currentUserRsvp?.status ?? null
@@ -147,16 +150,16 @@ export function EventCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          {isLive ? (
-            "Happening now"
-          ) : (
-            <>
-              {format(startsAt, "EEE, MMM d")} · {format(startsAt, "h:mm a")} –{" "}
-              {format(endsAt, "h:mm a")}
-            </>
-          )}
-        </p>
+        {isLive ? (
+          <p className="text-sm text-muted-foreground">Happening now</p>
+        ) : (
+          <EventTimeDisplay
+            startsAt={event.starts_at}
+            endsAt={event.ends_at}
+            eventTimezone={event.timezone || viewerTimezone}
+            profileTimezone={viewerTimezone}
+          />
+        )}
 
         {event.host && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">

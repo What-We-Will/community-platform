@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { formatInTimeZone, getTimeZoneAbbreviation } from "@/lib/utils/timezone";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Plus } from "lucide-react";
@@ -8,18 +8,21 @@ import { fetchUpcomingEvents } from "@/lib/events";
 import { eventTypeConfig } from "@/lib/utils/events";
 
 export async function UpcomingEventsCard() {
-  let events: Awaited<ReturnType<typeof fetchUpcomingEvents>> = [];
-  try {
-    events = await fetchUpcomingEvents({ groupId: null, limit: 5 });
-  } catch {
-    // show empty state
-  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const [events, viewerProfileResult] = await Promise.all([
+    fetchUpcomingEvents({ groupId: null, limit: 5 }).catch(() => []),
+    user
+      ? supabase.from("profiles").select("timezone").eq("id", user.id).single()
+      : Promise.resolve({ data: null, error: null }),
+  ]);
 
   const now = new Date();
+  const viewerTimezone = viewerProfileResult.data?.timezone ?? "America/Chicago";
 
   let goingByEventId: Record<string, number> = {};
   if (events.length > 0) {
-    const supabase = await createClient();
     const eventIds = events.map((e) => (e as { id: string }).id);
     const { data: rsvps } = await supabase
       .from("event_rsvps")
@@ -65,6 +68,7 @@ export async function UpcomingEventsCard() {
                 starts_at: string;
                 video_room_name: string | null;
                 event_type: string;
+                timezone: string;
               };
               const startsAt = new Date(e.starts_at);
               const isLive =
@@ -98,7 +102,9 @@ export async function UpcomingEventsCard() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium whitespace-normal break-words">{e.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {format(startsAt, "MMM d")} · {format(startsAt, "h:mm a")}
+                        {formatInTimeZone(e.starts_at, e.timezone || viewerTimezone, "MMM d")} ·{" "}
+                        {formatInTimeZone(e.starts_at, e.timezone || viewerTimezone, "h:mm a")}{" "}
+                        {getTimeZoneAbbreviation(e.starts_at, e.timezone || viewerTimezone)}
                         {goingCount > 0 && ` · ${goingCount} going`}
                       </p>
                     </div>
