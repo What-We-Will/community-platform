@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/select";
 import { updateEventAction } from "@/app/(app)/events/actions";
 import { eventTypeOptions } from "@/lib/utils/events";
-import { format } from "date-fns";
+import { formatInTimeZone, localTimeToUTC } from "@/lib/utils/timezone";
+import { formatTimeLabel } from "@/lib/utils/format";
+import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
 import type { Group } from "@/lib/types";
 
 const TIME_OPTIONS: string[] = [];
@@ -38,23 +40,21 @@ interface EditEventFormProps {
     location: string | null;
     max_attendees: number | null;
     group_id: string | null;
+    timezone: string;
   };
   groups: Group[];
 }
 
 export function EditEventForm({ eventId, event, groups }: EditEventFormProps) {
-  const startsAt = new Date(event.starts_at);
-  const endsAt = new Date(event.ends_at);
-
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [title, setTitle] = useState(event.title);
   const [eventType, setEventType] = useState(event.event_type);
   const [description, setDescription] = useState(event.description ?? "");
-  const [date, setDate] = useState(format(startsAt, "yyyy-MM-dd"));
-  const [startTime, setStartTime] = useState(format(startsAt, "HH:mm"));
-  const [endTime, setEndTime] = useState(format(endsAt, "HH:mm"));
+  const [date, setDate] = useState(formatInTimeZone(event.starts_at, event.timezone, "yyyy-MM-dd"));
+  const [startTime, setStartTime] = useState(formatInTimeZone(event.starts_at, event.timezone, "HH:mm"));
+  const [endTime, setEndTime] = useState(formatInTimeZone(event.ends_at, event.timezone, "HH:mm"));
   const [location, setLocation] = useState(event.location ?? "Online");
   const [maxAttendees, setMaxAttendees] = useState<string>(
     event.max_attendees != null ? String(event.max_attendees) : ""
@@ -63,7 +63,7 @@ export function EditEventForm({ eventId, event, groups }: EditEventFormProps) {
     event.group_id ?? "none"
   );
 
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [timezone, setTimezone] = useState(event.timezone);
 
   function handleStartTimeChange(value: string) {
     setStartTime(value);
@@ -108,10 +108,8 @@ export function EditEventForm({ eventId, event, groups }: EditEventFormProps) {
     e.preventDefault();
     if (!validate()) return;
 
-    const start = new Date(`${date}T${startTime}`);
-    const end = new Date(`${date}T${endTime}`);
-    const starts_at = start.toISOString();
-    const ends_at = end.toISOString();
+    const starts_at = localTimeToUTC(date, startTime, timezone);
+    const ends_at = localTimeToUTC(date, endTime, timezone);
 
     startTransition(async () => {
       try {
@@ -124,8 +122,10 @@ export function EditEventForm({ eventId, event, groups }: EditEventFormProps) {
           location: location.trim() || "Online",
           max_attendees: maxAttendees ? parseInt(maxAttendees, 10) : null,
           group_id: groupId === "none" ? null : groupId,
+          timezone,
         });
       } catch (err) {
+        if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
         setErrors({
           form: err instanceof Error ? err.message : "Something went wrong",
         });
@@ -200,9 +200,7 @@ export function EditEventForm({ eventId, event, groups }: EditEventFormProps) {
         </div>
         <div className="space-y-2">
           <Label>Timezone</Label>
-          <p className="pt-2 text-sm text-muted-foreground">
-            Times are in {timezone}
-          </p>
+          <TimezoneCombobox value={timezone} onChange={setTimezone} />
         </div>
       </div>
 
@@ -293,11 +291,4 @@ export function EditEventForm({ eventId, event, groups }: EditEventFormProps) {
       </Button>
     </form>
   );
-}
-
-function formatTimeLabel(t: string): string {
-  const [h, m] = t.split(":").map(Number);
-  const period = h >= 12 ? "PM" : "AM";
-  const h12 = h % 12 || 12;
-  return `${h12}:${m.toString().padStart(2, "0")} ${period}`;
 }

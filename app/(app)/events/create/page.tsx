@@ -19,10 +19,13 @@ export default async function CreateEventPage({
   const params = await searchParams;
   const preselectedGroupId = params.group ?? null;
 
-  const { data: memberships } = await supabase
-    .from("group_members")
-    .select("group_id, groups(id, name, slug)")
-    .eq("user_id", user.id);
+  const [{ data: profile }, { data: memberships }] = await Promise.all([
+    supabase.from("profiles").select("timezone").eq("id", user.id).single(),
+    supabase
+      .from("group_members")
+      .select("group_id, groups(id, name, slug)")
+      .eq("user_id", user.id),
+  ]);
 
   const groups: Group[] = [];
   for (const m of memberships ?? []) {
@@ -46,6 +49,7 @@ export default async function CreateEventPage({
       <CreateEventForm
         groups={groups}
         preselectedGroupId={preselectedGroupId}
+        profileTimezone={profile?.timezone ?? "America/Chicago"}
       />
     </div>
   );
