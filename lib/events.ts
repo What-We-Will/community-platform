@@ -1,6 +1,22 @@
 import { createClient } from "@/lib/supabase/server";
 import { getVideoRoomName } from "@/lib/utils/video";
 
+const DEFAULT_TIMEZONE = "America/Chicago";
+
+/**
+ * Fetch the viewer's profile timezone. Use alongside other data fetches in
+ * Promise.all to avoid a sequential round-trip on every page load.
+ */
+export async function getViewerTimezone(userId: string): Promise<string> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("timezone")
+    .eq("id", userId)
+    .single();
+  return data?.timezone ?? DEFAULT_TIMEZONE;
+}
+
 export async function createEvent(data: {
   title: string;
   description?: string;
@@ -11,6 +27,7 @@ export async function createEvent(data: {
   starts_at: string;
   ends_at: string;
   max_attendees?: number | null;
+  timezone?: string;
   recurrence_rule?: "daily" | "weekly" | null;
   recurrence_end_date?: string | null;
 }) {
@@ -27,6 +44,7 @@ export async function createEvent(data: {
       max_attendees: data.max_attendees ?? null,
       video_room_name: videoRoomName,
       location: data.location ?? "Online",
+      timezone: data.timezone ?? "America/Chicago",
       recurrence_rule: data.recurrence_rule ?? null,
       recurrence_end_date: data.recurrence_end_date ?? null,
     })
@@ -108,6 +126,7 @@ export async function fetchEventWithDetails(
   starts_at: string;
   ends_at: string;
   max_attendees: number | null;
+  timezone: string;
   created_at: string;
   updated_at: string;
   host: unknown;
@@ -136,6 +155,8 @@ export async function fetchEventWithDetails(
   ]);
 
   if (eventResult.error || !eventResult.data) return null;
+  if (rsvpsResult.error) throw new Error(rsvpsResult.error.message);
+  if (userRsvpResult.error) throw new Error(userRsvpResult.error.message);
 
   const event = eventResult.data as Record<string, unknown>;
   const rsvps = (rsvpsResult.data ?? []) as Array<{ status: string }>;
@@ -167,6 +188,7 @@ export async function fetchEventWithDetails(
     starts_at: string;
     ends_at: string;
     max_attendees: number | null;
+    timezone: string;
     created_at: string;
     updated_at: string;
     host: unknown;

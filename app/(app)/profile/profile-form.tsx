@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
 import {
   Card,
   CardContent,
@@ -35,6 +36,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [openToReferrals, setOpenToReferrals] = useState(
     profile.open_to_referrals ?? false
   );
+  const [timezone, setTimezone] = useState(
+    profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
   const [linkedinUrl, setLinkedinUrl] = useState(
     profile.linkedin_url ?? ""
   );
@@ -53,6 +57,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setBio(profile.bio ?? "");
     setSkillsInput(profile.skills?.join(", ") ?? "");
     setOpenToReferrals(profile.open_to_referrals ?? false);
+    setTimezone(profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
     setLinkedinUrl(profile.linkedin_url ?? "");
     setGithubUrl(profile.github_url ?? "");
     setPortfolioUrl(profile.portfolio_url ?? "");
@@ -79,6 +84,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         bio: bio || null,
         skills,
         open_to_referrals: openToReferrals,
+        timezone: timezone || null,
         linkedin_url: linkedinUrl || null,
         github_url: githubUrl || null,
         portfolio_url: portfolioUrl || null,
@@ -162,6 +168,13 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Timezone</Label>
+            <TimezoneCombobox value={timezone} onChange={setTimezone} />
+            <p className="text-xs text-muted-foreground">
+              Used for displaying event times
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bio">Bio</Label>

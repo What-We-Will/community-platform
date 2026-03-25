@@ -103,7 +103,7 @@ export default async function GroupHubPage({ params }: Props) {
   // Current user's profile (include role for platform admin features)
   const { data: currentUserProfile } = await supabase
     .from("profiles")
-    .select("id, display_name, avatar_url, role")
+    .select("id, display_name, avatar_url, role, timezone")
     .eq("id", user.id)
     .single();
 
@@ -200,6 +200,7 @@ export default async function GroupHubPage({ params }: Props) {
       eventRsvpCounts={eventRsvpCounts}
       eventUserRsvp={eventUserRsvp}
       initialNotes={notes}
+      viewerTimezone={currentUserProfile?.timezone ?? "America/Chicago"}
     />
   );
 }

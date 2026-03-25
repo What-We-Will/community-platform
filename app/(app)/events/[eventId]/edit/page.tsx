@@ -18,15 +18,20 @@ export default async function EditEventPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: event } = await supabase
-    .from("events")
-    .select(
-      "id, title, description, event_type, host_id, starts_at, ends_at, location, max_attendees, group_id"
-    )
-    .eq("id", eventId)
-    .single();
+  const [{ data: event }, { data: viewerProfile }] = await Promise.all([
+    supabase
+      .from("events")
+      .select(
+        "id, title, description, event_type, host_id, starts_at, ends_at, location, max_attendees, group_id, timezone"
+      )
+      .eq("id", eventId)
+      .single(),
+    supabase.from("profiles").select("timezone").eq("id", user.id).single(),
+  ]);
 
   if (!event || event.host_id !== user.id) notFound();
+
+  const viewerTimezone = viewerProfile?.timezone ?? "America/Chicago";
 
   const { data: memberships } = await supabase
     .from("group_members")
@@ -63,6 +68,10 @@ export default async function EditEventPage({
           location: event.location,
           max_attendees: event.max_attendees,
           group_id: event.group_id,
+          // event.timezone is NOT NULL since migration 057. This fallback
+          // handles corrupted data. Hosts editing pre-migration events should
+          // verify the displayed timezone is correct before saving.
+          timezone: event.timezone ?? viewerTimezone,
         }}
         groups={groups}
       />
