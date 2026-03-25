@@ -51,7 +51,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 <ChevronDown className="size-3.5 transition-transform duration-200 group-hover:rotate-180" />
               </Link>
               {/* Dropdown panel */}
-              <div className="invisible absolute left-0 top-full mt-1 w-44 rounded-md border border-border/60 bg-white py-1 shadow-md opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+              <div className="invisible absolute left-0 top-full mt-1 w-56 rounded-md border border-border/60 bg-white py-1 shadow-md opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
                 <a
                   href="https://kaizengrowth.github.io/masscall/"
                   target="_blank"
@@ -60,6 +60,12 @@ export function LandingNav({ user }: { user?: User | null }) {
                 >
                   Mass Call
                 </a>
+                <Link
+                  href="/programs/no-robo-bosses"
+                  className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
+                >
+                  No Robo Bosses
+                </Link>
               </div>
             </div>
 
@@ -185,18 +191,30 @@ export function LandingNav({ user }: { user?: User | null }) {
               />
             </button>
             {isProgramsOpen && (
-            <a
-              href="https://kaizengrowth.github.io/masscall/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setIsProgramsOpen(false);
-              }}
-            >
-              └ Mass Call
-            </a>
+              <>
+                <a
+                  href="https://kaizengrowth.github.io/masscall/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsProgramsOpen(false);
+                  }}
+                >
+                  └ Mass Call
+                </a>
+                <Link
+                  href="/programs/no-robo-bosses"
+                  className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsProgramsOpen(false);
+                  }}
+                >
+                  └ No Robo Bosses
+                </Link>
+              </>
             )}
 
             <Link
