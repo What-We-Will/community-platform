@@ -206,7 +206,6 @@ export default async function NoRoboBossesPage() {
               The History
             </p>
 
-
             <div className="mt-10 space-y-0">
               {[
                 {
@@ -219,7 +218,7 @@ export default async function NoRoboBossesPage() {
                 {
                   year: "Sept 2025",
                   label: "Newsom vetoes SB 7",
-                  body: "Despite bipartisan legislative support, Gov. Newsom veoted the bill. Workers were sent back to square one to fight for its passage with no guardrails on algorithmic discipline or AI-driven layoffs.",
+                  body: "Despite bipartisan legislative support, Gov. Newsom vetoed the bill. Workers were sent back to square one to fight for its passage with no guardrails on algorithmic discipline or AI-driven layoffs.",
                   color: "border-primary-orange",
                   dotColor: "bg-primary-orange",
                   alert: true,
@@ -239,7 +238,7 @@ export default async function NoRoboBossesPage() {
                   dotColor: "bg-dark-blue",
                 },
               ].map((item, i) => (
-                <div key={i} className="flex gap-5">
+                <div key={item.label} className="flex gap-5">
                   <div className="flex flex-col items-center">
                     <div
                       className={`mt-1 size-3 shrink-0 rounded-full ${item.dotColor}`}
