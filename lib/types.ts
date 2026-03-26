@@ -216,6 +216,7 @@ export interface Event {
   starts_at: string;
   ends_at: string;
   max_attendees: number | null;
+  timezone: string;
   created_at: string;
   updated_at: string;
 }

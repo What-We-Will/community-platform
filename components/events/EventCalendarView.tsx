@@ -11,11 +11,11 @@ import {
   isToday,
   addMonths,
   subMonths,
-  startOfDay,
 } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { eventTypeConfig } from "@/lib/utils/events";
+import { formatInTimeZone } from "@/lib/utils/timezone";
 import { cn } from "@/lib/utils";
 
 interface CalendarEvent {
@@ -28,6 +28,7 @@ interface EventCalendarViewProps {
   events: CalendarEvent[];
   selectedDate: Date | null;
   onSelectDate: (date: Date | null) => void;
+  viewerTimezone: string;
 }
 
 const WEEKDAY_HEADERS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -36,6 +37,7 @@ export function EventCalendarView({
   events,
   selectedDate,
   onSelectDate,
+  viewerTimezone,
 }: EventCalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(() => {
     const d = selectedDate ?? new Date();
@@ -52,7 +54,7 @@ export function EventCalendarView({
 
   const eventsByDay = new Map<string, CalendarEvent[]>();
   for (const e of events) {
-    const dayKey = format(startOfDay(new Date(e.starts_at)), "yyyy-MM-dd");
+    const dayKey = formatInTimeZone(e.starts_at, viewerTimezone, "yyyy-MM-dd");
     const arr = eventsByDay.get(dayKey) ?? [];
     arr.push(e);
     eventsByDay.set(dayKey, arr);

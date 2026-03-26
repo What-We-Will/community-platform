@@ -1,13 +1,12 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { EventTimeDisplay } from "@/components/events/EventTimeDisplay";
 import {
   ArrowLeft,
   Video,
   Calendar,
   MapPin,
-  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,7 +33,11 @@ export default async function EventDetailPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const eventData = await fetchEventWithDetails(eventId, user.id);
+  const [viewerProfileResult, eventData] = await Promise.all([
+    supabase.from("profiles").select("timezone").eq("id", user.id).single(),
+    fetchEventWithDetails(eventId, user.id),
+  ]);
+  const viewerTimezone = viewerProfileResult.data?.timezone ?? "America/Chicago";
   if (!eventData) notFound();
 
   const event = eventData as {
@@ -49,6 +52,7 @@ export default async function EventDetailPage({
     starts_at: string;
     ends_at: string;
     max_attendees: number | null;
+    timezone: string;
     host: Profile | null;
     group: unknown;
     rsvpCounts: { going: number; maybe: number; declined: number };
@@ -56,6 +60,11 @@ export default async function EventDetailPage({
     isLive: boolean;
     isPast: boolean;
   };
+
+  // Belt-and-suspenders: events.timezone is NOT NULL since migration 057.
+  // This fallback only fires for corrupted rows. Viewer's timezone is a safer
+  // fallback than hardcoding — it keeps the display sensible rather than wrong.
+  const eventTz = event.timezone || viewerTimezone;
 
   const { data: attendees } = await supabase
     .from("event_rsvps")
@@ -65,7 +74,6 @@ export default async function EventDetailPage({
     .order("created_at", { ascending: true });
 
   const startsAt = new Date(event.starts_at);
-  const endsAt = new Date(event.ends_at);
   const now = new Date();
   const minsToStart = Math.round((startsAt.getTime() - now.getTime()) / 60000);
   const startingSoon =
@@ -104,10 +112,16 @@ export default async function EventDetailPage({
             {event.title}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="size-4 shrink-0" />
-              {format(startsAt, "EEEE, MMMM d, yyyy")} · {format(startsAt, "h:mm a")} – {format(endsAt, "h:mm a")}
-            </span>
+            <div className="flex items-start gap-1.5">
+              <Calendar className="size-4 shrink-0 mt-0.5" />
+              <EventTimeDisplay
+                startsAt={event.starts_at}
+                endsAt={event.ends_at}
+                eventTimezone={eventTz}
+                profileTimezone={viewerTimezone}
+                dateFormat="EEEE, MMMM d, yyyy"
+              />
+            </div>
             {event.location && (
               <span className="flex items-center gap-1.5">
                 <MapPin className="size-4 shrink-0" />

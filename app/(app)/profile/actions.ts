@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { safeTimezone } from "@/lib/utils/timezone";
 
 export type ProfileUpdateResult = { error?: string };
 
@@ -18,6 +19,7 @@ export async function updateProfile(
     portfolio_url?: string | null;
     /** Opt-in weekly email: My Tools / profile reminder (no automatic Pulsar refresh). */
     email_my_tools_reminders: boolean;
+    timezone?: string | null;
   }
 ): Promise<ProfileUpdateResult> {
   const supabase = await createClient();
@@ -43,6 +45,7 @@ export async function updateProfile(
       linkedin_url: data.linkedin_url || null,
       github_url: data.github_url || null,
       portfolio_url: data.portfolio_url || null,
+      timezone: safeTimezone(data.timezone),
       is_onboarded: true,
       email_my_tools_reminders: data.email_my_tools_reminders,
     },
