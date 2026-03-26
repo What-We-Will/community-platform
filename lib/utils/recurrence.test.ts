@@ -227,7 +227,7 @@ describe("buildRecurrenceDates", () => {
     const NY_PARENT_STARTS = "2026-03-12T03:00:00.000Z";
     const NY_PARENT_ENDS   = "2026-03-12T04:00:00.000Z";
 
-    it("should generate only Wednesday ET instances when weekly parent is Wednesday 10 PM ET (Thursday UTC)", () => {
+    it("generates only Wednesday ET instances for a weekly event at 10 PM ET (Thursday UTC)", () => {
 
       const result = buildRecurrenceDates(
         NY_PARENT_STARTS, NY_PARENT_ENDS, "weekly", "2026-04-08", NY_TZ
@@ -239,7 +239,7 @@ describe("buildRecurrenceDates", () => {
       }
     });
 
-    it("should skip Saturday and Sunday ET instances when daily cursor falls on a weekend in ET (but not UTC)", () => {
+    it("skips Saturday and Sunday ET instances when UTC date and local date fall on different days", () => {
       // Friday 2026-03-13 22:00 ET → 2026-03-14T03:00:00Z (Saturday UTC).
       // Pre-fix: cursor at 2026-03-16T03:00:00Z was Sunday UTC → incorrectly treated as a weekday.
       const friStarts = "2026-03-14T03:00:00.000Z";
