@@ -10,7 +10,7 @@ import { getAvatarColor } from "@/lib/utils/avatar";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UsersRound, Archive, Video, BookMarked } from "lucide-react";
+import { UsersRound, Archive, Video, BookMarked, Trash } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -36,7 +36,10 @@ export function ConversationList({
   const [conversations, setConversations] =
     useState<ConversationWithDetails[]>(initialConversations);
   const prevInitialIdsRef = useRef(
-    initialConversations.map((c) => c.conversation.id).sort().join(",")
+    initialConversations
+      .map((c) => c.conversation.id)
+      .sort()
+      .join(","),
   );
 
   // Sync from server when initialConversations gains new conversations (e.g. after starting a new thread + refresh)
@@ -58,8 +61,8 @@ export function ConversationList({
     const convId = match[1];
     setConversations((prev) =>
       prev.map((c) =>
-        c.conversation.id === convId ? { ...c, unreadCount: 0 } : c
-      )
+        c.conversation.id === convId ? { ...c, unreadCount: 0 } : c,
+      ),
     );
   }, [pathname]);
 
@@ -81,7 +84,7 @@ export function ConversationList({
         },
         () => {
           router.refresh();
-        }
+        },
       )
       .on(
         "postgres_changes",
@@ -91,7 +94,7 @@ export function ConversationList({
 
           setConversations((prev) => {
             const idx = prev.findIndex(
-              (c) => c.conversation.id === newMsg.conversation_id
+              (c) => c.conversation.id === newMsg.conversation_id,
             );
 
             // Unknown conversation — refresh from server as a fallback.
@@ -104,7 +107,8 @@ export function ConversationList({
             const conv = { ...updated[idx] };
             conv.lastMessage = newMsg;
 
-            const isViewing = pathname === `/messages/${newMsg.conversation_id}`;
+            const isViewing =
+              pathname === `/messages/${newMsg.conversation_id}`;
             if (newMsg.sender_id !== currentUserId && !isViewing) {
               conv.unreadCount = (conv.unreadCount ?? 0) + 1;
             }
@@ -112,7 +116,7 @@ export function ConversationList({
             updated.splice(idx, 1);
             return [conv, ...updated];
           });
-        }
+        },
       )
       .subscribe();
 
@@ -130,7 +134,29 @@ export function ConversationList({
       .update({ archived: true })
       .eq("conversation_id", conversationId)
       .eq("user_id", currentUserId);
-    setConversations((prev) => prev.filter((c) => c.conversation.id !== conversationId));
+    setConversations((prev) =>
+      prev.filter((c) => c.conversation.id !== conversationId),
+    );
+    if (pathname === `/messages/${conversationId}`) {
+      router.push("/messages");
+    }
+    router.refresh();
+  }
+
+  async function handleDelete(
+    e: React.MouseEvent<HTMLButtonElement>,
+    conversationId: string,
+  ) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const supabase = createClient();
+    await supabase.from("conversations").delete().eq("id", conversationId);
+
+    setConversations((prev) =>
+      prev.filter((c) => c.conversation.id !== conversationId),
+    );
+
     if (pathname === `/messages/${conversationId}`) {
       router.push("/messages");
     }
@@ -150,14 +176,16 @@ export function ConversationList({
         {/* My Notes — always pinned at top */}
         {(() => {
           const isNotesActive = pathname === `/messages/${selfNotesId}`;
-          const notesConv = conversations.find((c) => c.conversation.id === selfNotesId);
+          const notesConv = conversations.find(
+            (c) => c.conversation.id === selfNotesId,
+          );
           const lastNoteMsg = notesConv?.lastMessage;
           return (
             <Link
               href={`/messages/${selfNotesId}`}
               className={cn(
                 "flex items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent",
-                isNotesActive && "bg-accent"
+                isNotesActive && "bg-accent",
               )}
             >
               <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -180,67 +208,192 @@ export function ConversationList({
           );
         })()}
 
-        {conversations.filter((c) => c.conversation.id !== selfNotesId).length === 0 ? (
+        {conversations.filter((c) => c.conversation.id !== selfNotesId)
+          .length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-center px-6">
-            <p className="text-sm text-muted-foreground">No conversations yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No conversations yet.
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               Message a member to get started.
             </p>
           </div>
         ) : (
-          conversations.filter((c) => c.conversation.id !== selfNotesId).map(
-            ({ conversation, participants, lastMessage, unreadCount, groupName, groupSlug }) => {
-              const isActive = pathname === `/messages/${conversation.id}`;
-              const hasUnread = unreadCount > 0;
-              const isGroupConv = conversation.type === "group";
+          conversations
+            .filter((c) => c.conversation.id !== selfNotesId)
+            .map(
+              ({
+                conversation,
+                participants,
+                lastMessage,
+                unreadCount,
+                groupName,
+                groupSlug,
+              }) => {
+                const isActive = pathname === `/messages/${conversation.id}`;
+                const hasUnread = unreadCount > 0;
+                const isGroupConv = conversation.type === "group";
 
-              const isPendingCall =
-                lastMessage?.message_type === "video_invite" &&
-                lastMessage.sender_id !== currentUserId;
+                const isPendingCall =
+                  lastMessage?.message_type === "video_invite" &&
+                  lastMessage.sender_id !== currentUserId;
 
-              if (isGroupConv) {
+                if (isGroupConv) {
+                  return (
+                    <div
+                      key={conversation.id}
+                      className={cn(
+                        "flex items-center gap-1 border-b px-4 py-3 transition-colors hover:bg-accent",
+                        isActive && "bg-accent",
+                      )}
+                    >
+                      <Link
+                        href={`/messages/${conversation.id}`}
+                        className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
+                      >
+                        {/* Group icon avatar */}
+                        <div className="relative shrink-0">
+                          <div
+                            className={cn(
+                              "flex size-10 items-center justify-center rounded-full text-white text-sm font-semibold",
+                              getAvatarColor(groupName ?? "Group"),
+                            )}
+                          >
+                            <UsersRound className="size-4" />
+                          </div>
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <p
+                                className={cn(
+                                  "text-sm truncate",
+                                  hasUnread ? "font-semibold" : "font-medium",
+                                )}
+                              >
+                                {groupName ?? "Group"}
+                              </p>
+                              <Badge
+                                variant="secondary"
+                                className="shrink-0 text-[10px] px-1.5 py-0 h-4"
+                              >
+                                Group
+                              </Badge>
+                            </div>
+                            {lastMessage && (
+                              <span className="text-[11px] text-muted-foreground shrink-0">
+                                {formatRelativeTime(lastMessage.created_at)}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between gap-2 mt-0.5">
+                            <p
+                              className={cn(
+                                "text-xs truncate",
+                                hasUnread
+                                  ? "font-medium text-foreground"
+                                  : "text-muted-foreground",
+                              )}
+                            >
+                              {lastMessage
+                                ? lastMessage.message_type === "system"
+                                  ? lastMessage.content
+                                  : lastMessage.message_type === "video_invite"
+                                    ? lastMessage.sender_id === currentUserId
+                                      ? "You started a video call"
+                                      : "Incoming video call"
+                                    : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
+                                : "No messages yet"}
+                            </p>
+                            {isPendingCall ? (
+                              <span className="shrink-0 flex items-center gap-1 rounded-full bg-green-500 text-white px-2 py-0.5 text-[10px] font-semibold animate-pulse">
+                                <Video className="size-3" />
+                                Incoming call
+                              </span>
+                            ) : hasUnread ? (
+                              <Badge
+                                variant="destructive"
+                                className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
+                              >
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                              </Badge>
+                            ) : null}
+                          </div>
+                        </div>
+                      </Link>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger
+                            asChild
+                            onClick={(e) => handleArchive(e, conversation.id)}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 shrink-0"
+                            >
+                              <Archive className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Archive conversation</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger
+                            asChild
+                            onClick={(e) => handleDelete(e, conversation.id)}
+                          >
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 shrink-0"
+                            >
+                              <Trash className="size-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Delete conversation</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  );
+                }
+
+                // DM row
+                const otherUser = participants[0];
+                if (!otherUser) return null;
+
                 return (
                   <div
                     key={conversation.id}
                     className={cn(
                       "flex items-center gap-1 border-b px-4 py-3 transition-colors hover:bg-accent",
-                      isActive && "bg-accent"
+                      isActive && "bg-accent",
                     )}
                   >
                     <Link
                       href={`/messages/${conversation.id}`}
                       className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
                     >
-                      {/* Group icon avatar */}
-                      <div className="relative shrink-0">
-                        <div
-                          className={cn(
-                            "flex size-10 items-center justify-center rounded-full text-white text-sm font-semibold",
-                            getAvatarColor(groupName ?? "Group")
-                          )}
-                        >
-                          <UsersRound className="size-4" />
-                        </div>
-                      </div>
+                      <LiveStatusAvatar
+                        avatarUrl={otherUser.avatar_url ?? null}
+                        displayName={otherUser.display_name}
+                        size="md"
+                        lastSeenAt={otherUser.last_seen_at}
+                      />
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <p
-                              className={cn(
-                                "text-sm truncate",
-                                hasUnread ? "font-semibold" : "font-medium"
-                              )}
-                            >
-                              {groupName ?? "Group"}
-                            </p>
-                            <Badge
-                              variant="secondary"
-                              className="shrink-0 text-[10px] px-1.5 py-0 h-4"
-                            >
-                              Group
-                            </Badge>
-                          </div>
+                          <p
+                            className={cn(
+                              "text-sm truncate",
+                              hasUnread ? "font-semibold" : "font-medium",
+                            )}
+                          >
+                            {otherUser.display_name}
+                          </p>
                           {lastMessage && (
                             <span className="text-[11px] text-muted-foreground shrink-0">
                               {formatRelativeTime(lastMessage.created_at)}
@@ -254,7 +407,7 @@ export function ConversationList({
                               "text-xs truncate",
                               hasUnread
                                 ? "font-medium text-foreground"
-                                : "text-muted-foreground"
+                                : "text-muted-foreground",
                             )}
                           >
                             {lastMessage
@@ -285,12 +438,14 @@ export function ConversationList({
                     </Link>
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger asChild>
+                        <TooltipTrigger
+                          asChild
+                          onClick={(e) => handleArchive(e, conversation.id)}
+                        >
                           <Button
                             variant="ghost"
                             size="icon"
                             className="size-8 shrink-0"
-                            onClick={(e) => handleArchive(e, conversation.id)}
                           >
                             <Archive className="size-4" />
                           </Button>
@@ -300,102 +455,8 @@ export function ConversationList({
                     </TooltipProvider>
                   </div>
                 );
-              }
-
-              // DM row
-              const otherUser = participants[0];
-              if (!otherUser) return null;
-
-              return (
-                <div
-                  key={conversation.id}
-                  className={cn(
-                    "flex items-center gap-1 border-b px-4 py-3 transition-colors hover:bg-accent",
-                    isActive && "bg-accent"
-                  )}
-                >
-                  <Link
-                    href={`/messages/${conversation.id}`}
-                    className="flex min-w-0 flex-1 items-center gap-3 py-0.5 -my-0.5 -mx-1 px-1 rounded-md hover:bg-transparent"
-                  >
-                    <LiveStatusAvatar
-                      avatarUrl={otherUser.avatar_url ?? null}
-                      displayName={otherUser.display_name}
-                      size="md"
-                      lastSeenAt={otherUser.last_seen_at}
-                    />
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p
-                          className={cn(
-                            "text-sm truncate",
-                            hasUnread ? "font-semibold" : "font-medium"
-                          )}
-                        >
-                          {otherUser.display_name}
-                        </p>
-                        {lastMessage && (
-                          <span className="text-[11px] text-muted-foreground shrink-0">
-                            {formatRelativeTime(lastMessage.created_at)}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between gap-2 mt-0.5">
-                        <p
-                          className={cn(
-                            "text-xs truncate",
-                            hasUnread
-                              ? "font-medium text-foreground"
-                              : "text-muted-foreground"
-                          )}
-                        >
-                          {lastMessage
-                            ? lastMessage.message_type === "system"
-                              ? lastMessage.content
-                              : lastMessage.message_type === "video_invite"
-                                ? lastMessage.sender_id === currentUserId
-                                  ? "You started a video call"
-                                  : "Incoming video call"
-                                : `${lastMessage.sender_id === currentUserId ? "You: " : ""}${lastMessage.content}`
-                            : "No messages yet"}
-                        </p>
-                        {isPendingCall ? (
-                          <span className="shrink-0 flex items-center gap-1 rounded-full bg-green-500 text-white px-2 py-0.5 text-[10px] font-semibold animate-pulse">
-                            <Video className="size-3" />
-                            Incoming call
-                          </span>
-                        ) : hasUnread ? (
-                          <Badge
-                            variant="destructive"
-                            className="shrink-0 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
-                          >
-                            {unreadCount > 99 ? "99+" : unreadCount}
-                          </Badge>
-                        ) : null}
-                      </div>
-                    </div>
-                  </Link>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 shrink-0"
-                          onClick={(e) => handleArchive(e, conversation.id)}
-                        >
-                          <Archive className="size-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Archive conversation</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              );
-            }
-          )
+              },
+            )
         )}
       </div>
     </div>
