@@ -79,13 +79,18 @@ export default function MyToolsClient({
     setError(null);
     const key = `${matchRunId}-${matchIndex}`;
     setSavingIds((prev) => ({ ...prev, [key]: true }));
-    const result = await saveMatchToTracker(matchRunId, matchIndex);
-    setSavingIds((prev) => ({ ...prev, [key]: false }));
-    if (result.error) {
-      setError(result.error);
-      return;
+    try {
+      const result = await saveMatchToTracker(matchRunId, matchIndex);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save match to tracker");
+    } finally {
+      setSavingIds((prev) => ({ ...prev, [key]: false }));
     }
-    router.refresh();
   }
 
   return (

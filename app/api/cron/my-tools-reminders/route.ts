@@ -68,12 +68,30 @@ export async function GET(request: Request) {
   let failed = 0;
   const errors: string[] = [];
 
-  for (const row of eligible) {
-    const { data: authUser, error: authErr } =
-      await service.auth.admin.getUserById(row.id);
-    if (authErr || !authUser.user?.email) {
+  // Resolve auth emails concurrently to avoid serial Admin API round-trips.
+  const emailByUserId = new Map<string, string>();
+  const authLookupResults = await Promise.all(
+    eligible.map(async (row) => {
+      const { data, error } = await service.auth.admin.getUserById(row.id);
+      return {
+        id: row.id,
+        email: data.user?.email ?? null,
+        error,
+      };
+    })
+  );
+  for (const item of authLookupResults) {
+    if (item.error || !item.email) {
       failed += 1;
-      errors.push(`no email for ${row.id}`);
+      errors.push(`no email for ${item.id}`);
+      continue;
+    }
+    emailByUserId.set(item.id, item.email);
+  }
+
+  for (const row of eligible) {
+    const recipientEmail = emailByUserId.get(row.id);
+    if (!recipientEmail) {
       continue;
     }
 
@@ -115,7 +133,7 @@ export async function GET(request: Request) {
     }
 
     const result = await sendMyToolsReminderEmail({
-      to: authUser.user.email,
+      to: recipientEmail,
       displayName: row.display_name,
       myToolsUrl,
       profileUrl,
@@ -131,7 +149,7 @@ export async function GET(request: Request) {
         .eq("id", row.id)
         .eq("last_my_tools_reminder_sent_at", reservedAt);
       failed += 1;
-      errors.push(`${authUser.user.email}: ${result.reason}`);
+      errors.push(`${recipientEmail}: ${result.reason}`);
       continue;
     }
 

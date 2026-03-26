@@ -18,6 +18,36 @@ import { jobApplicationInsertFromPulsarMatch } from "@/lib/pulsar/tracker-from-m
 import type { WhatWeWillMatch } from "@/lib/pulsar/types";
 
 type ActionResult = { error?: string; ok?: true };
+const PULSAR_ACTION_COOLDOWN_SECONDS = 300;
+
+async function checkRecentUserRun(
+  table: "member_match_runs" | "member_career_briefs",
+  userId: string
+): Promise<ActionResult | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from(table)
+    .select("created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) return null;
+  if (!data?.created_at) return null;
+
+  const ageSeconds = Math.floor(
+    (Date.now() - new Date(data.created_at).getTime()) / 1000
+  );
+  if (ageSeconds < PULSAR_ACTION_COOLDOWN_SECONDS) {
+    const waitSeconds = PULSAR_ACTION_COOLDOWN_SECONDS - ageSeconds;
+    return {
+      error: `Please wait ${waitSeconds}s before running this again.`,
+    };
+  }
+
+  return null;
+}
 
 export async function refreshLiveMatches(): Promise<ActionResult> {
   const supabase = await createClient();
@@ -25,6 +55,9 @@ export async function refreshLiveMatches(): Promise<ActionResult> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+
+  const cooldown = await checkRecentUserRun("member_match_runs", user.id);
+  if (cooldown) return cooldown;
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
@@ -62,6 +95,9 @@ export async function generateCareerBrief(): Promise<ActionResult> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+
+  const cooldown = await checkRecentUserRun("member_career_briefs", user.id);
+  if (cooldown) return cooldown;
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
