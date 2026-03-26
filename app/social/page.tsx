@@ -25,7 +25,7 @@ const LINKS = [
   {
     label: "No Robo Bosses",
     description: "Learn about the bill and get involved",
-    href: "/share-your-story",
+    href: "/programs/no-robo-bosses",
     icon: BookOpen,
     primary: false,
   },
@@ -65,7 +65,7 @@ export default function SocialLinksPage() {
 
           {/* ── Profile ── */}
           <div className="flex flex-col items-center gap-3 text-center">
-            <div className="flex size-20 items-center justify-center rounded-full bg-white shadow-md ring-4 ring-white">
+            <div className="flex size-20 items-center justify-center rounded-full bg-white">
               <Image
                 src="/images/logo-mark.svg"
                 alt="What We Will"
