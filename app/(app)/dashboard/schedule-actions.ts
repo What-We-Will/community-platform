@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logger";
 
 async function requireAdmin() {
   const supabase = await createClient();
@@ -27,8 +28,10 @@ export async function createScheduleRow(
     });
     if (error) return { error: error.message };
     revalidatePath("/dashboard");
+    logger.info("server-action:complete", { action: "createScheduleRow", revalidated: ["/dashboard"] });
     return {};
   } catch (e) {
+    logger.error("server-action:error", { action: "createScheduleRow", error: String(e) });
     return { error: e instanceof Error ? e.message : "Failed" };
   }
 }
@@ -45,8 +48,10 @@ export async function updateScheduleRow(
       .eq("id", id);
     if (error) return { error: error.message };
     revalidatePath("/dashboard");
+    logger.info("server-action:complete", { action: "updateScheduleRow", id, revalidated: ["/dashboard"] });
     return {};
   } catch (e) {
+    logger.error("server-action:error", { action: "updateScheduleRow", error: String(e) });
     return { error: e instanceof Error ? e.message : "Failed" };
   }
 }
@@ -57,8 +62,10 @@ export async function deleteScheduleRow(id: string): Promise<{ error?: string }>
     const { error } = await supabase.from("weekly_schedule").delete().eq("id", id);
     if (error) return { error: error.message };
     revalidatePath("/dashboard");
+    logger.info("server-action:complete", { action: "deleteScheduleRow", id, revalidated: ["/dashboard"] });
     return {};
   } catch (e) {
+    logger.error("server-action:error", { action: "deleteScheduleRow", error: String(e) });
     return { error: e instanceof Error ? e.message : "Failed" };
   }
 }

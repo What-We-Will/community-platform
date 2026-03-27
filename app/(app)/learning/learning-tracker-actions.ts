@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createGroup, generateSlug, joinGroup, leaveGroup } from "@/lib/groups";
+import { logger } from "@/lib/logger";
 
 export type TrackerStatus = "want_to_take" | "in_progress" | "completed";
 
@@ -19,8 +20,12 @@ export async function addToTracker(
   const { error } = await supabase
     .from("personal_learning_items")
     .insert({ user_id: user.id, resource_id: resourceId, status });
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "addToTracker", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "addToTracker", userId: user.id, resourceId, status, revalidated: ["/learning"] });
   return {};
 }
 
@@ -37,8 +42,12 @@ export async function updateTrackerStatus(
     .update({ status })
     .eq("id", itemId)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "updateTrackerStatus", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "updateTrackerStatus", userId: user.id, itemId, status, revalidated: ["/learning"] });
   return {};
 }
 
@@ -52,8 +61,12 @@ export async function removeFromTracker(itemId: string): Promise<{ error?: strin
     .delete()
     .eq("id", itemId)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "removeFromTracker", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "removeFromTracker", userId: user.id, itemId, revalidated: ["/learning"] });
   return {};
 }
 
@@ -107,9 +120,11 @@ export async function createStudyGroup(
       .select();
 
     revalidatePath("/learning");
+    logger.info("server-action:complete", { action: "createStudyGroup", userId: user.id, studyGroupId: data.id, groupSlug: group.slug, revalidated: ["/learning"] });
     return { studyGroupId: data.id, groupSlug: group.slug };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to create study group";
+    logger.error("server-action:error", { action: "createStudyGroup", userId: user.id, error: msg });
     return { error: msg };
   }
 }
@@ -142,9 +157,13 @@ export async function joinStudyGroup(
   const { error } = await supabase
     .from("learning_study_group_members")
     .insert({ group_id: studyGroupId, user_id: user.id });
-  if (error && error.code !== "23505") return { error: error.message };
+  if (error && error.code !== "23505") {
+    logger.error("server-action:error", { action: "joinStudyGroup", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
 
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "joinStudyGroup", userId: user.id, studyGroupId, revalidated: ["/learning"] });
   return {};
 }
 
@@ -174,9 +193,13 @@ export async function leaveStudyGroup(
     .delete()
     .eq("group_id", studyGroupId)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "leaveStudyGroup", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
 
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "leaveStudyGroup", userId: user.id, studyGroupId, revalidated: ["/learning"] });
   return {};
 }
 
@@ -216,5 +239,6 @@ export async function deleteStudyGroup(
   }
 
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "deleteStudyGroup", userId: user.id, studyGroupId, revalidated: ["/learning"] });
   return {};
 }

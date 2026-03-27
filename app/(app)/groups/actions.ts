@@ -11,6 +11,7 @@ import {
   isSlugAvailable,
 } from "@/lib/groups";
 import type { GroupJoinRequest } from "@/lib/types";
+import { logger } from "@/lib/logger";
 
 // ─── Create group ─────────────────────────────────────────────────────────────
 
@@ -32,6 +33,8 @@ export async function createGroupAction(
 
   if (!input.name.trim()) return { error: "Group name is required" };
 
+  logger.info("server-action:start", { action: "createGroup", userId: user.id, groupName: input.name });
+
   try {
     const slug = await generateSlug(input.name);
     const group = await createGroup(
@@ -43,9 +46,10 @@ export async function createGroupAction(
       input.isDiscoverable
     );
     revalidatePath("/groups");
+    logger.info("server-action:complete", { action: "createGroup", userId: user.id, slug: group.slug, revalidated: ["/groups"] });
     return { slug: group.slug };
   } catch (err) {
-    console.error("[createGroupAction]", err);
+    logger.error("server-action:error", { action: "createGroup", userId: user.id, error: String(err) });
     return { error: "Failed to create group. Please try again." };
   }
 }
@@ -61,13 +65,16 @@ export async function joinGroupAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  logger.info("server-action:start", { action: "joinGroup", userId: user.id, groupId });
+
   try {
     await joinGroup(groupId, user.id);
     revalidatePath("/groups");
     revalidatePath(`/groups/[slug]`, "page");
+    logger.info("server-action:complete", { action: "joinGroup", userId: user.id, groupId, revalidated: ["/groups", "/groups/[slug]"] });
     return {};
   } catch (err) {
-    console.error("[joinGroupAction]", err);
+    logger.error("server-action:error", { action: "joinGroup", userId: user.id, groupId, error: String(err) });
     return { error: "Failed to join group. Please try again." };
   }
 }
@@ -83,14 +90,17 @@ export async function leaveGroupAction(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
+  logger.info("server-action:start", { action: "leaveGroup", userId: user.id, groupId });
+
   try {
     const err = await leaveGroup(groupId, user.id);
     if (err) return { error: err };
     revalidatePath("/groups");
     revalidatePath(`/groups/[slug]`, "page");
+    logger.info("server-action:complete", { action: "leaveGroup", userId: user.id, groupId, revalidated: ["/groups", "/groups/[slug]"] });
     return {};
   } catch (err) {
-    console.error("[leaveGroupAction]", err);
+    logger.error("server-action:error", { action: "leaveGroup", userId: user.id, groupId, error: String(err) });
     return { error: "Failed to leave group. Please try again." };
   }
 }
@@ -115,11 +125,12 @@ export async function updateMemberRoleAction(
     .eq("user_id", userId);
 
   if (error) {
-    console.error("[updateMemberRoleAction]", error);
+    logger.error("server-action:error", { action: "updateMemberRole", userId: user.id, groupId, targetUserId: userId, error: error.message });
     return { error: "Failed to update role." };
   }
 
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "updateMemberRole", userId: user.id, groupId, targetUserId: userId, role, revalidated: ["/groups/[slug]"] });
   return {};
 }
 
@@ -151,9 +162,10 @@ export async function removeMemberAction(
     const err = await leaveGroup(groupId, userId);
     if (err) return { error: err };
     revalidatePath(`/groups/[slug]`, "page");
+    logger.info("server-action:complete", { action: "removeMember", userId: user.id, groupId, targetUserId: userId, revalidated: ["/groups/[slug]"] });
     return {};
   } catch (err) {
-    console.error("[removeMemberAction]", err);
+    logger.error("server-action:error", { action: "removeMember", userId: user.id, groupId, error: String(err) });
     return { error: "Failed to remove member." };
   }
 }
@@ -179,11 +191,12 @@ export async function requestJoinGroupAction(
 
   if (error) {
     if (error.code === "23505") return { error: "You have already requested to join this group." };
-    console.error("[requestJoinGroupAction]", error);
+    logger.error("server-action:error", { action: "requestJoinGroup", userId: user.id, groupId, error: error.message });
     return { error: "Failed to submit request. Please try again." };
   }
 
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "requestJoinGroup", userId: user.id, groupId, revalidated: ["/groups/[slug]"] });
   return {};
 }
 
@@ -206,11 +219,12 @@ export async function withdrawJoinRequestAction(
     .eq("status", "pending");
 
   if (error) {
-    console.error("[withdrawJoinRequestAction]", error);
+    logger.error("server-action:error", { action: "withdrawJoinRequest", userId: user.id, error: error.message });
     return { error: "Failed to withdraw request." };
   }
 
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "withdrawJoinRequest", userId: user.id, revalidated: ["/groups/[slug]"] });
   return {};
 }
 
@@ -236,9 +250,10 @@ export async function approveJoinRequestAction(
       .eq("id", request.id);
 
     revalidatePath(`/groups/[slug]`, "page");
+    logger.info("server-action:complete", { action: "approveJoinRequest", userId: user.id, requestId: request.id, revalidated: ["/groups/[slug]"] });
     return {};
   } catch (err) {
-    console.error("[approveJoinRequestAction]", err);
+    logger.error("server-action:error", { action: "approveJoinRequest", userId: user.id, error: String(err) });
     return { error: "Failed to approve request." };
   }
 }
@@ -260,11 +275,12 @@ export async function rejectJoinRequestAction(
     .eq("id", requestId);
 
   if (error) {
-    console.error("[rejectJoinRequestAction]", error);
+    logger.error("server-action:error", { action: "rejectJoinRequest", userId: user.id, error: error.message });
     return { error: "Failed to reject request." };
   }
 
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "rejectJoinRequest", userId: user.id, revalidated: ["/groups/[slug]"] });
   return {};
 }
 
@@ -292,9 +308,10 @@ export async function inviteMemberAction(
   try {
     await joinGroup(groupId, userId);
     revalidatePath(`/groups/[slug]`, "page");
+    logger.info("server-action:complete", { action: "inviteMember", userId: user.id, groupId, targetUserId: userId, revalidated: ["/groups/[slug]"] });
     return {};
   } catch (err) {
-    console.error("[inviteMemberAction]", err);
+    logger.error("server-action:error", { action: "inviteMember", userId: user.id, groupId, error: String(err) });
     return { error: "Failed to invite member. They may already be in the group." };
   }
 }
@@ -315,8 +332,12 @@ export async function addGroupNoteAction(
     .insert({ group_id: groupId, created_by: user.id, title: title.trim() || "Untitled Note", content })
     .select("id")
     .single();
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "addGroupNote", userId: user.id, groupId, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "addGroupNote", userId: user.id, groupId, noteId: data.id, revalidated: ["/groups/[slug]"] });
   return { noteId: data.id };
 }
 
@@ -333,8 +354,12 @@ export async function updateGroupNoteAction(
     .from("group_notes")
     .update({ title: title.trim() || "Untitled Note", content, updated_at: new Date().toISOString() })
     .eq("id", noteId);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "updateGroupNote", userId: user.id, noteId, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "updateGroupNote", userId: user.id, noteId, revalidated: ["/groups/[slug]"] });
   return {};
 }
 
@@ -349,8 +374,12 @@ export async function deleteGroupNoteAction(
     .from("group_notes")
     .delete()
     .eq("id", noteId);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "deleteGroupNote", userId: user.id, noteId, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "deleteGroupNote", userId: user.id, noteId, revalidated: ["/groups/[slug]"] });
   return {};
 }
 
@@ -414,11 +443,12 @@ export async function updateGroupSettingsAction(
     .eq("id", groupId);
 
   if (error) {
-    console.error("[updateGroupSettingsAction]", error);
+    logger.error("server-action:error", { action: "updateGroupSettings", userId: user.id, groupId, error: error.message });
     return { error: "Failed to update settings." };
   }
 
   revalidatePath("/groups");
   revalidatePath(`/groups/[slug]`, "page");
+  logger.info("server-action:complete", { action: "updateGroupSettings", userId: user.id, groupId, revalidated: ["/groups", "/groups/[slug]"] });
   return newSlug !== undefined ? { newSlug } : {};
 }

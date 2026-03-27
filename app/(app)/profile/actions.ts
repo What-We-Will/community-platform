@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { safeTimezone } from "@/lib/utils/timezone";
+import { logger } from "@/lib/logger";
 
 export type ProfileUpdateResult = { error?: string };
 
@@ -30,6 +31,8 @@ export async function updateProfile(
     return { error: "You must be signed in to update your profile." };
   }
 
+  logger.info("server-action:start", { action: "updateProfile", userId: user.id });
+
   // Upsert: insert if profile doesn't exist, otherwise update
   const { error } = await supabase.from("profiles").upsert(
     {
@@ -50,9 +53,11 @@ export async function updateProfile(
   );
 
   if (error) {
+    logger.error("server-action:error", { action: "updateProfile", userId: user.id, error: error.message });
     return { error: error.message };
   }
 
+  logger.info("server-action:complete", { action: "updateProfile", userId: user.id });
   return {};
 }
 
@@ -83,9 +88,13 @@ export async function updateAvatarUrl(avatarUrl: string): Promise<{ error?: stri
     .update({ avatar_url: avatarUrl })
     .eq("id", user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "updateAvatarUrl", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/profile");
   revalidatePath("/members");
+  logger.info("server-action:complete", { action: "updateAvatarUrl", userId: user.id, revalidated: ["/profile", "/members"] });
   return {};
 }
 
@@ -99,8 +108,12 @@ export async function updateResumePath(resumePath: string): Promise<{ error?: st
     .update({ resume_path: resumePath })
     .eq("id", user.id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "updateResumePath", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/profile");
+  logger.info("server-action:complete", { action: "updateResumePath", userId: user.id, revalidated: ["/profile"] });
   return {};
 }
 

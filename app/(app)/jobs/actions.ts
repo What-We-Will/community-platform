@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { findExistingDM, createDMConversation } from "@/lib/messages";
+import { logger } from "@/lib/logger";
 
 export type JobType = "full_time" | "part_time" | "contract" | "internship" | "volunteer";
 
@@ -29,8 +30,12 @@ export async function createJobPosting(input: JobPostingInput): Promise<{ error?
     posted_by: user.id,
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "createJobPosting", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/jobs");
+  logger.info("server-action:complete", { action: "createJobPosting", userId: user.id, company: input.company, revalidated: ["/jobs"] });
   return {};
 }
 
@@ -65,8 +70,12 @@ export async function updateJobPosting(
     .update({ ...input, updated_at: new Date().toISOString() })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "updateJobPosting", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/jobs");
+  logger.info("server-action:complete", { action: "updateJobPosting", userId: user.id, jobPostingId: id, revalidated: ["/jobs"] });
   return {};
 }
 
@@ -88,7 +97,11 @@ export async function deleteJobPosting(id: string): Promise<{ error?: string }> 
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase.from("job_postings").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "deleteJobPosting", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/jobs");
+  logger.info("server-action:complete", { action: "deleteJobPosting", userId: user.id, jobPostingId: id, revalidated: ["/jobs"] });
   return {};
 }

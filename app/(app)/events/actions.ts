@@ -7,6 +7,7 @@ import { createEvent } from "@/lib/events";
 import { getVideoRoomName } from "@/lib/utils/video";
 import { buildRecurrenceDates } from "@/lib/utils/recurrence";
 import { safeTimezone } from "@/lib/utils/timezone";
+import { logger } from "@/lib/logger";
 
 export async function updateRsvp(
   eventId: string,
@@ -24,6 +25,8 @@ export async function updateRsvp(
     .eq("event_id", eventId)
     .eq("user_id", user.id)
     .maybeSingle();
+
+  logger.info("server-action:start", { action: "updateRsvp", userId: user.id, eventId, status });
 
   if (existing?.status === status) {
     await supabase
@@ -60,6 +63,7 @@ export async function updateRsvp(
   revalidatePath("/events");
   revalidatePath(`/events/${eventId}`);
   revalidatePath("/dashboard");
+  logger.info("server-action:complete", { action: "updateRsvp", userId: user.id, eventId, revalidated: ["/events", `/events/${eventId}`, "/dashboard"] });
 }
 
 export async function createEventAction(formData: {
@@ -80,6 +84,8 @@ export async function createEventAction(formData: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
+
+  logger.info("server-action:start", { action: "createEvent", userId: user.id, title: formData.title });
 
   const { recurrence_rule, recurrence_end_date, ...baseData } = formData;
 
@@ -143,6 +149,7 @@ export async function createEventAction(formData: {
     }
   }
 
+  logger.info("server-action:complete", { action: "createEvent", userId: user.id, eventId: event.id });
   redirect(`/events/${event.id}`);
 }
 
@@ -176,6 +183,8 @@ export async function updateEventAction(
     throw new Error("Only the host can edit this event");
   }
 
+  logger.info("server-action:start", { action: "updateEvent", userId: user.id, eventId });
+
   if (formData.timezone !== undefined) {
     const validated = safeTimezone(formData.timezone);
     if (validated !== formData.timezone) throw new Error("Invalid timezone");
@@ -198,10 +207,14 @@ export async function updateEventAction(
     .eq("id", eventId)
     .eq("host_id", user.id);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("server-action:error", { action: "updateEvent", userId: user.id, eventId, error: error.message });
+    throw new Error(error.message);
+  }
   revalidatePath("/events");
   revalidatePath(`/events/${eventId}`);
   revalidatePath("/dashboard");
+  logger.info("server-action:complete", { action: "updateEvent", userId: user.id, eventId, revalidated: ["/events", `/events/${eventId}`, "/dashboard"] });
   redirect(`/events/${eventId}`);
 }
 
@@ -212,13 +225,19 @@ export async function deleteEvent(eventId: string) {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
+  logger.info("server-action:start", { action: "deleteEvent", userId: user.id, eventId });
+
   const { error } = await supabase
     .from("events")
     .delete()
     .eq("id", eventId)
     .eq("host_id", user.id);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    logger.error("server-action:error", { action: "deleteEvent", userId: user.id, eventId, error: error.message });
+    throw new Error(error.message);
+  }
   revalidatePath("/events");
+  logger.info("server-action:complete", { action: "deleteEvent", userId: user.id, eventId, revalidated: ["/events"] });
   redirect("/events");
 }

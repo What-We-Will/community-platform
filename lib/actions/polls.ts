@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logger";
 
 export async function createPollAction(formData: FormData) {
   const question = formData.get("question") as string | null;
@@ -64,5 +65,6 @@ export async function createPollAction(formData: FormData) {
   }
 
   revalidatePath("/dashboard");
+  logger.info("server-action:complete", { action: "createPoll", userId: user.id, pollId: poll.id, revalidated: ["/dashboard"] });
   return { success: true };
 }

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ResourceType } from "./types";
+import { logger } from "@/lib/logger";
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
 
@@ -16,8 +17,12 @@ export async function createPath(title: string, description: string) {
     description: description.trim() || null,
     created_by: user.id,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "createPath", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "createPath", userId: user.id, revalidated: ["/learning"] });
   return { error: null };
 }
 
@@ -27,8 +32,12 @@ export async function deletePath(id: string) {
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase.from("learning_paths").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "deletePath", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "deletePath", userId: user.id, pathId: id, revalidated: ["/learning"] });
   return { error: null };
 }
 
@@ -43,8 +52,12 @@ export async function toggleStarPath(id: string, current: boolean) {
 
   const { error } = await supabase
     .from("learning_paths").update({ is_starred: !current }).eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "toggleStarPath", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "toggleStarPath", userId: user.id, pathId: id, starred: !current, revalidated: ["/learning"] });
   return { error: null };
 }
 
@@ -85,8 +98,12 @@ export async function addPathItem(
     description: description.trim() || null,
     position: nextPosition,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "addPathItem", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "addPathItem", userId: user.id, pathId, revalidated: ["/learning"] });
   return { error: null };
 }
 
@@ -105,8 +122,12 @@ export async function deletePathItem(id: string, pathId: string) {
   }
 
   const { error } = await supabase.from("learning_path_items").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "deletePathItem", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "deletePathItem", userId: user.id, itemId: id, pathId, revalidated: ["/learning"] });
   return { error: null };
 }
 
@@ -131,8 +152,12 @@ export async function addResource(
     tags,
     added_by: user.id,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "addResource", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "addResource", userId: user.id, resourceType: type, revalidated: ["/learning"] });
   return { error: null };
 }
 
@@ -142,7 +167,11 @@ export async function deleteResource(id: string) {
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase.from("learning_resources").delete().eq("id", id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "deleteResource", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/learning");
+  logger.info("server-action:complete", { action: "deleteResource", userId: user.id, resourceId: id, revalidated: ["/learning"] });
   return { error: null };
 }

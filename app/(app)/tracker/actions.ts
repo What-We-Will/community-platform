@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logger";
 
 export type ApplicationStatus =
   | "wishlist" | "applied" | "phone_screen"
@@ -34,8 +35,12 @@ export async function createApplication(input: JobApplicationInput): Promise<{ e
     user_id: user.id,
     status_dates,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "createApplication", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
+  logger.info("server-action:complete", { action: "createApplication", userId: user.id, company: input.company, status: input.status, revalidated: ["/tracker"] });
   return {};
 }
 
@@ -72,8 +77,12 @@ export async function updateApplication(
     .update({ ...input, ...extra, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "updateApplication", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
+  logger.info("server-action:complete", { action: "updateApplication", userId: user.id, applicationId: id, revalidated: ["/tracker"] });
   return {};
 }
 
@@ -106,8 +115,12 @@ export async function updateStatusDate(
     .update({ status_dates: updated, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "updateStatusDate", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
+  logger.info("server-action:complete", { action: "updateStatusDate", userId: user.id, applicationId: id, status, revalidated: ["/tracker"] });
   return {};
 }
 
@@ -155,6 +168,7 @@ export async function syncCommunityNote(
   }
 
   revalidatePath("/jobs");
+  logger.info("server-action:complete", { action: "syncCommunityNote", userId: user.id, jobPostingId, revalidated: ["/jobs"] });
   return {};
 }
 
@@ -190,8 +204,12 @@ export async function addInterview(
     interview_time: time.trim() || null,
     notes: notes.trim() || null,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "addInterview", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
+  logger.info("server-action:complete", { action: "addInterview", userId: user.id, applicationId, revalidated: ["/tracker"] });
   return {};
 }
 
@@ -205,8 +223,12 @@ export async function deleteInterview(id: string): Promise<{ error?: string }> {
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "deleteInterview", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
+  logger.info("server-action:complete", { action: "deleteInterview", userId: user.id, interviewId: id, revalidated: ["/tracker"] });
   return {};
 }
 
@@ -252,9 +274,13 @@ export async function requestHelp(
     interview_id: interviewId,
     message: message.trim() || null,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "requestHelp", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
   revalidatePath("/dashboard");
+  logger.info("server-action:complete", { action: "requestHelp", userId: user.id, applicationId, revalidated: ["/tracker", "/dashboard"] });
   return {};
 }
 
@@ -268,9 +294,13 @@ export async function cancelHelp(id: string): Promise<{ error?: string }> {
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "cancelHelp", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
   revalidatePath("/dashboard");
+  logger.info("server-action:complete", { action: "cancelHelp", userId: user.id, helpRequestId: id, revalidated: ["/tracker", "/dashboard"] });
   return {};
 }
 
@@ -283,7 +313,11 @@ export async function deleteApplication(id: string): Promise<{ error?: string }>
     .delete()
     .eq("id", id)
     .eq("user_id", user.id);
-  if (error) return { error: error.message };
+  if (error) {
+    logger.error("server-action:error", { action: "deleteApplication", userId: user.id, error: error.message });
+    return { error: error.message };
+  }
   revalidatePath("/tracker");
+  logger.info("server-action:complete", { action: "deleteApplication", userId: user.id, applicationId: id, revalidated: ["/tracker"] });
   return {};
 }
