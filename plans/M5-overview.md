@@ -1,6 +1,6 @@
 # M5 — State Bugs (Stale UI Investigation)
 
-**Status:** Open
+**Status:** In Progress
 **Origin:** Anecdotal reports that some features/pages require manual refresh or navigate-away-and-back to see updates. Suspected pages: events, dashboard, messages.
 
 ---
@@ -29,7 +29,7 @@ These constraints inform decisions in T02 (logging), T04 (Playwright), and T05 (
 | Testing environment | Local `npm run dev` + remote Supabase only | No staging/QA env; E2E tests must run locally |
 | Tester count | 1 (platform lead) | Manual walkthrough must be structured and efficient; invest in automation |
 | Existing test framework | Jest + Testing Library (unit) | Playwright would be new; no E2E exists yet |
-| Existing logging | Ad-hoc `console.log`/`console.error` across ~19 files | No structured logger; need one before investigation |
+| Existing logging | ~~Ad-hoc `console.log`/`console.error`~~ Structured logger (`lib/logger.ts`) + 61 instrumented Server Actions | T02 complete — all actions log `server-action:complete` with revalidated paths |
 | Deployment | Vercel (eventual) | Vercel logs will be available later; for now, terminal output only |
 
 ## Task dependency chain
@@ -50,9 +50,9 @@ T02 (structured logging) ──┘
 
 | Task | File | Status | Description |
 |------|------|--------|-------------|
-| M5-T01 | `M5-T01-audit-revalidation-patterns.md` | Open | Code audit: catalog every component where client state can diverge from server |
-| M5-T02 | `M5-T02-add-structured-logging.md` | Open | Add `lib/logger.ts` + instrument all Server Actions with mutation logging |
-| M5-T03 | `M5-T03-manual-walkthrough-checklist.md` | Open | 24 manual test scenarios to confirm which bugs actually exist |
+| M5-T01 | `M5-T01-audit-revalidation-patterns.md` | Done | Code audit: catalog every component where client state can diverge from server |
+| M5-T02 | `M5-T02-add-structured-logging.md` | Done | Add `lib/logger.ts` + instrument all 61 Server Actions with mutation logging |
+| M5-T03 | `M5-T03-manual-walkthrough-checklist.md` | Done | Manual QA: 40 findings (2 state bugs, 3 React bugs, 6 perf issues, 10 UX issues, 1 infra blocker) |
 | M5-T04 | `M5-T04-playwright-setup-and-staleness-tests.md` | Open | Playwright setup + E2E staleness tests for confirmed bugs |
 | M5-T05 | `M5-T05-fix-strategy-and-pros-cons.md` | Open | Evaluate fix approaches (pros/cons for each) and execute |
 
