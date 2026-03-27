@@ -34,8 +34,9 @@ export function NewMessageDialog() {
       return;
     }
     setLoading(true);
+    const t0 = performance.now();
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error: fetchError, status } = await supabase
       .from("profiles")
       .select(
         "id, display_name, avatar_url, headline, last_seen_at, skills, open_to_referrals, bio, location, linkedin_url, github_url, portfolio_url, timezone, is_onboarded, role, created_at, updated_at"
@@ -43,7 +44,16 @@ export function NewMessageDialog() {
       .eq("is_onboarded", true)
       .ilike("display_name", `%${query}%`)
       .limit(10);
-    setResults((data as Profile[]) ?? []);
+    const ms = Math.round(performance.now() - t0);
+    const profiles = (data as Profile[]) ?? [];
+    console.log(
+      `[NewMessageDialog] search query="${query}" status=${status} results=${profiles.length} time=${ms}ms`,
+      profiles.map((p) => ({ id: p.id, name: p.display_name })),
+    );
+    if (fetchError) {
+      console.error(`[NewMessageDialog] search error`, fetchError);
+    }
+    setResults(profiles);
     setLoading(false);
   }
 
@@ -99,9 +109,10 @@ export function NewMessageDialog() {
           )}
 
           {!opening && loading && (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              Searching…
-            </p>
+            <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Searching members…
+            </div>
           )}
 
           {!opening && !loading && search.length > 0 && results.length === 0 && (
