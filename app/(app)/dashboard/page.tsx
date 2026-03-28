@@ -32,14 +32,14 @@ export default async function DashboardPage() {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
       <WelcomeBanner profile={profile ?? null} />
-      <AnnouncementsCard />
+      <AnnouncementsCard isPlatformAdmin={isPlatformAdmin} />
       <WeeklyScheduleCard rows={scheduleRows ?? []} isPlatformAdmin={isPlatformAdmin} />
 
       {/* First row: My Groups, Upcoming Events, Help Requests */}
       <Suspense fallback={<CardSkeleton />}>
         <MyGroupsCard userId={user.id} />
       </Suspense>
-      <UpcomingEventsCard />
+      <UpcomingEventsCard viewerTimezone={profile?.timezone ?? "America/Chicago"} />
       <Suspense fallback={<CardSkeleton />}>
         <InterviewHelpCard currentUserId={user.id} />
       </Suspense>
