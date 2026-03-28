@@ -6,11 +6,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getSiteUrl } from "@/lib/utils/get-site-url";
 
 const DONATE_URL =
   "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
 
 export function LandingNav({ user }: { user?: User | null }) {
+  const siteUrl = getSiteUrl();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
 
@@ -103,7 +106,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
+                <Link href={`${siteUrl}/dashboard`}>Dashboard</Link>
               </Button>
             ) : (
               <Button
@@ -112,7 +115,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/login">Login</a>
+                <Link href={`${siteUrl}/login`}>Login</Link>
               </Button>
             )}
           </div>
@@ -135,7 +138,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
+                <Link href={`${siteUrl}/dashboard`}>Dashboard</Link>
               </Button>
             ) : (
               <Button
@@ -144,7 +147,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/login">Login</a>
+                <Link href={`${siteUrl}/login`}>Login</Link>
               </Button>
             )}
 
