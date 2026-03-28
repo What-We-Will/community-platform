@@ -39,7 +39,7 @@ export function NewMessageDialog() {
     const { data, error: fetchError, status } = await supabase
       .from("profiles")
       .select(
-        "id, display_name, avatar_url, headline, last_seen_at, skills, open_to_referrals, bio, location, linkedin_url, github_url, portfolio_url, timezone, is_onboarded, role, created_at, updated_at"
+        "id, display_name, avatar_url, headline, last_seen_at"
       )
       .eq("is_onboarded", true)
       .ilike("display_name", `%${query}%`)
