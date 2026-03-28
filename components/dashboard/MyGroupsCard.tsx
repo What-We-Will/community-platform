@@ -63,28 +63,12 @@ export async function MyGroupsCard({ userId }: MyGroupsCardProps) {
 
   let unreadByConvId: Record<string, number> = {};
   if (conversationIds.length > 0) {
-    const { data: participations } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id, last_read_at")
-      .eq("user_id", userId)
-      .in("conversation_id", conversationIds);
-
-    const counts = await Promise.all(
-      (participations ?? []).map(async (p) => {
-        let query = supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", p.conversation_id)
-          .neq("sender_id", userId);
-        if (p.last_read_at) {
-          query = query.gt("created_at", p.last_read_at);
-        }
-        const { count } = await query;
-        return { conversation_id: p.conversation_id, count: count ?? 0 };
-      })
-    );
-    for (const { conversation_id, count } of counts) {
-      unreadByConvId[conversation_id] = count;
+    const { data: unreads } = await supabase.rpc("get_unread_counts", {
+      p_user_id: userId,
+      p_conversation_ids: conversationIds,
+    });
+    for (const row of unreads ?? []) {
+      unreadByConvId[row.conversation_id] = Number(row.unread_count);
     }
   }
 
