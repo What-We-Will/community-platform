@@ -88,7 +88,8 @@ async function notifyAdminOfNewApplication({
       auth: { user: gmailUser, pass: gmailPass },
     });
 
-    const approvalUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "https://community-platform-x74m.vercel.app"}/admin/approvals`;
+    const { getSiteUrl } = await import("@/lib/utils/get-site-url");
+    const approvalUrl = `${getSiteUrl()}/admin/approvals`;
 
     await transporter.sendMail({
       from: `What We Will <${gmailUser}>`,

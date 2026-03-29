@@ -89,9 +89,8 @@ async function sendApprovalEmail(toEmail: string) {
 
   if (!gmailUser || !gmailPass) return;
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://community-platform-x74m.vercel.app";
+  const { getSiteUrl } = await import("@/lib/utils/get-site-url");
+  const siteUrl = getSiteUrl();
 
   try {
     const transporter = nodemailer.createTransport({
