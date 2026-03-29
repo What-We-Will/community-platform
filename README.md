@@ -80,7 +80,11 @@ npx supabase link
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow; after onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
+Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow;
+
+To manually approve yourself, open Supabase > Table Editor > "profiles". You should see a row for your user. Change the "approval_status" column from "pending" to "approved".
+
+After onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
 
 ---
 
