@@ -26,7 +26,7 @@ jobs:
 
       - run: npm ci
 
-      # Temp fix: disable linting on every pr for now
+      # Temp: disable linting on every pr for now
       #- name: Lint
       #  run: npm run lint
 
