@@ -4,21 +4,18 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { AnnouncementsAdmin } from "./AnnouncementsAdmin";
 
-export async function AnnouncementsCard() {
-  const supabase = await createClient();
+interface AnnouncementsCardProps {
+  isPlatformAdmin: boolean;
+}
 
-  const { data: { user } } = await supabase.auth.getUser();
+export async function AnnouncementsCard({ isPlatformAdmin }: AnnouncementsCardProps) {
+  const supabase = await createClient();
 
   const { data: announcements } = await supabase
     .from("announcements")
     .select("id, content")
     .order("created_at", { ascending: true });
 
-  const { data: profile } = user
-    ? await supabase.from("profiles").select("role").eq("id", user.id).single()
-    : { data: null };
-
-  const isPlatformAdmin = profile?.role === "admin";
   const items = announcements ?? [];
 
   if (items.length === 0 && !isPlatformAdmin) return null;

@@ -7,19 +7,16 @@ import { Calendar, Plus } from "lucide-react";
 import { fetchUpcomingEvents } from "@/lib/events";
 import { eventTypeConfig } from "@/lib/utils/events";
 
-export async function UpcomingEventsCard() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+interface UpcomingEventsCardProps {
+  viewerTimezone: string;
+}
 
-  const [events, viewerProfileResult] = await Promise.all([
-    fetchUpcomingEvents({ groupId: null, limit: 5 }).catch(() => []),
-    user
-      ? supabase.from("profiles").select("timezone").eq("id", user.id).single()
-      : Promise.resolve({ data: null, error: null }),
-  ]);
+export async function UpcomingEventsCard({ viewerTimezone }: UpcomingEventsCardProps) {
+  const supabase = await createClient();
+
+  const events = await fetchUpcomingEvents({ groupId: null, limit: 5 }).catch(() => []);
 
   const now = new Date();
-  const viewerTimezone = viewerProfileResult.data?.timezone ?? "America/Chicago";
 
   let goingByEventId: Record<string, number> = {};
   if (events.length > 0) {
