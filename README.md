@@ -14,7 +14,7 @@ A community membership platform for job seekers and mutual support. Members can 
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm (or yarn/pnpm)
 - A [Supabase](https://supabase.com) project (free tier works)
 
@@ -30,57 +30,72 @@ npm install
 
 ### 2. Environment variables
 
-Create `.env.local` in the project root:
+Create `.env.local` in the project root and add the following key-value pairs:
 
-```env
+```
+touch .env.local
+
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 ```
+#### Where to find the Supabase details
+> [!IMPORTANT]
+> If you have not created a new Supabase project for this repo, please do so now: [Create a Supabase project](https://supabase.com/dashboard/sign-in?returnTo=%2Forg)
+
+Navigate to Project Settings:
+- **API url:** Project Settings -> Data API
+- **Publishable Key/Anon Key :** Project Settings -> API Keys -> Copy from Publishable Key
 
 Optional (for Jitsi JWT / 8x8 JaaS):
+
+*TODO: what makes this optional or when would someone need need this?*
 
 ```env
 NEXT_PUBLIC_JITSI_APP_ID=your-jaas-app-id
 ```
 
-Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If you have not created a blank new Supabase project for this repo please do so now. 
-
 ### 3. Database
-
-
-Apply migrations so the schema and RLS policies exist:
+#### 1. Apply migrations so the schema and RLS policies exist
+Option 1 - command line
 
 ```bash
 npx supabase db push
 ```
 
-Or, if using Supabase CLI linked to your project:
+Option 2 - use Supabase CLI linked to your project:
 
 ```bash
 npx supabase migration up
 ```
+> [!IMPORTANT]
+> If the above command gives an error `Cannot find project ref. Have you run supabase link?` run these commands:
+> 1. Login to Supabase
+> ```bash
+> npx supabase login
+> ```
+> 2. Link your Supabase project
+>
+> ```bash
+> npx supabase link
+> ```
+> 3. Go back to step 3.1 and run the migrations
 
-**NOTE**: If the above command gives an error `Cannot find project ref. Have you run supabase link?` run these commands and then retry the above command:
-
-```bash
-npx supabase login
-```
-
-Link to your Supabase project, selecting the appropriate project:
-
-```bash
-npx supabase link
-```
-
-**NOTE**:Migrations live in `supabase/migrations/` and run in order (e.g. `001_profiles.sql` → `014_events.sql`).
+**Migration Notes**
+- Migrations live in `supabase/migrations/` and run in order (e.g. `001_profiles.sql` → `014_events.sql`).
 
 ### 4. Run the app
 
 ```bash
 npm run dev
 ```
+### 5. Sign up
 
-Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow; after onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
+- Open [http://localhost:3000](http://localhost:3000).
+- Sign up via the auth flow
+- **TODO:** seems to be something missing - after signing up, I have to wait to be approved.
+  -  How do I self approve?
+  - UPDATE: Login button points to production! (https://members.wwwrise.org/pending-approval)
+- After onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
 
 ---
 
