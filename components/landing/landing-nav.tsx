@@ -80,10 +80,10 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
 
             <Link
-              href="/#our-future"
+              href="/news"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
-              Our Future
+              News
             </Link>
           </nav>
 
@@ -229,11 +229,11 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
 
             <Link
-              href="/#our-future"
+              href="/news"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Our Future
+              News
             </Link>
           </nav>
         </div>

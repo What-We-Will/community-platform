@@ -14,6 +14,7 @@ import {
   Menu,
   LogOut,
   ShieldCheck,
+  Newspaper,
   Briefcase,
   ClipboardList,
   Link2,
@@ -240,6 +241,14 @@ export default function AppShell({ children, user }: AppShellProps) {
             {user.isAdmin && (
               <>
                 <Separator className="my-2" />
+                <Link
+                  href="/admin/news"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Newspaper className="size-5 shrink-0" />
+                  News
+                </Link>
                 <Link
                   href="/admin/approvals"
                   onClick={() => setSidebarOpen(false)}
