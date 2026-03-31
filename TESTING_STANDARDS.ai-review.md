@@ -2,7 +2,7 @@
 
 Load this file for AI-assisted sessions, PR review, and pre-merge quality gates. Assumes preamble is loaded.
 
-**Last updated:** 2026-03-29 · **Applies to:** Jest 29 · **Owner:** platform lead
+**Last updated:** 2026-03-31 · **Applies to:** Jest 29 · **Owner:** platform lead
 
 ---
 
@@ -12,8 +12,9 @@ Load this file for AI-assisted sessions, PR review, and pre-merge quality gates.
 
 - **Prompt for the failing test first.** AI defaults to implementation-first — override explicitly: _"Write a failing test for [feature]. Do NOT write implementation yet."_
 - **Never accept test + implementation in the same AI response.** Separate the sessions. A test written alongside its implementation is confirmation bias, not TDD.
-- **Use the Writer / Reviewer pattern.** One session writes the test, a fresh session writes the implementation. This prevents the AI from anchoring on code it just generated.
+- **Use the Spec → Test → Implementation pattern.** Give the AI a spec or acceptance criteria and have it write the test. In a **fresh session**, give the same spec and have the AI write the implementation — do NOT paste or reference the test. Then run the tests. This prevents the AI from reverse-engineering tests to pass, or writing tests that simply confirm what it already wrote.
 - **Always run the test suite after AI generates code.** Prompt explicitly: _"Run `npm test` and show me the results."_
+- **Run the full suite before submitting.** After all AI-generated code is in place, run `npm test` (or `npm run test:ci`) and confirm all tests pass.
 
 ### Blockers — AI must not weaken the test suite
 

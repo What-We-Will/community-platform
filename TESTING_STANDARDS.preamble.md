@@ -2,13 +2,13 @@
 
 Loaded in every testing-related session. All rules below apply regardless of task type.
 
-**Last updated:** 2026-03-29 · **Applies to:** Jest 29 · **Owner:** platform lead
+**Last updated:** 2026-03-31 · **Applies to:** Jest 29 · **Owner:** platform lead
 
 ---
 
 ## Non-negotiable rules
 
-1. **TDD is mandatory.** Every feature and bug fix follows red-green-refactor: write a failing test first, write the minimum implementation to pass it, then refactor without changing behavior.
+1. **Tests are mandatory; TDD is strongly encouraged.** Every feature and bug fix must have tests that meet our coverage and quality standards. Red-green-refactor is the recommended workflow — especially for bug fixes, where writing the failing test first proves the bug exists and the fix works. Coverage thresholds and the pre-merge checklist are the enforcement mechanism, not workflow policing.
 
 2. **Test behavior, not implementation.** Assert on return values and observable side effects. Do not assert on internal call sequences, intermediate state, or implementation details.
 
