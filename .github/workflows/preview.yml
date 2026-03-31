@@ -45,7 +45,7 @@ jobs:
         run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Initialize Supabase project config
-        run: supabase init
+        run: supabase init --force
 
       - name: Set project ref
         run: |
@@ -167,7 +167,7 @@ jobs:
       #  run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       #- name: Initialize Supabase project config
-      #  run: supabase init
+      #  run: supabase init --force
 
       #- name: Set project ref
       #  run: |
