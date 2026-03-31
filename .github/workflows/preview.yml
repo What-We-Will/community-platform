@@ -1,34 +1,59 @@
-name: Preview Deploy
+name: Preview Deploy on PR with Supabase Branch Deploy and cleanup
 
 on:
-  push:
-    branches-ignore:
-      - main
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
 
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  SUPABASE_DB_BRANCH: pr-${{ github.event.number }}
 
 permissions:
   contents: read
   pull-requests: write
 
 jobs:
-  preview:
+  pr-preview:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '24.x'
           cache: 'npm'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
       # Temp: disable linting on every pr for now
       #- name: Lint
       #  run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Login Supabase
+        run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Create Supabase DB branch
+        run: supabase db branch create $SUPABASE_DB_BRANCH --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Deploy migrations to branch
+        run: supabase db push --branch $SUPABASE_DB_BRANCH --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Get branch connection string
+        id: db-url
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL_BASE }}/$SUPABASE_DB_BRANCH" >> $GITHUB_OUTPUT
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
@@ -36,14 +61,35 @@ jobs:
       - name: Pull Vercel env
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Build
+      # WHY ENV IS NEEDED HERE
+      # - Next.js injects NEXT_PUBLIC_* variables at build time
+      # - The build output must point to the correct Supabase branch
+      - name: Build app (using branch DB env)
+        env:
+          SUPABASE_URL: ${{ steps.db-url.outputs.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ steps.db-url.outputs.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUB_KEY: ${{ secrets.SUPABASE_PUB_KEY }}
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
+      
+      # WHY ENV IS NEEDED HERE:
+      # - Vercel attaches runtime env vars to serverless/edge functions
+      # - These are NOT baked into the build output
       - name: Deploy preview
         id: deploy
+        env:
+          SUPABASE_URL: ${{ steps.db-url.outputs.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ steps.db-url.outputs.SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUB_KEY: ${{ secrets.SUPABASE_PUB_KEY }}
         run: |
           url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "preview_url=$url" >> $GITHUB_OUTPUT
+
+      # Save deployment ID so cleanup job can delete it later
+      - name: Save deployment ID
+        uses: actions/upload-artifact@v4
+        with:
+          name: vercel-deployment-id
+          path: deployment_url.txt
 
       - name: Comment PR with URL
         uses: actions/github-script@v7
@@ -64,3 +110,62 @@ jobs:
                 body: '✅ Preview deployed: ${{ steps.deploy.outputs.preview_url }}'
               });
             }
+
+      - name: Slack notify success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"PR #${{ github.event.number }} preview deployed: ${{ steps.deploy.outputs.preview_url }}\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack notify failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"❌ PR #${{ github.event.number }} preview failed.\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download deployment ID
+        uses: actions/download-artifact@v4
+        with:
+          name: vercel-deployment-id
+
+      - name: Read deployment ID
+        id: read-id
+        run: |
+          url=$(cat deployment_url.txt)
+          echo "deployment_id=$(basename "$url")" >> $GITHUB_OUTPUT
+
+      # TODO: Uncomment and test once we are ready to cleanup vercel preview and supabase branch on PR close
+
+      #- name: Setup Vercel CLI
+      #  run: npm install -g vercel
+
+      #- name: Delete Vercel preview deployment
+      #  run: |
+      #    vercel remove ${{ steps.read-id.outputs.deployment_id }} \
+      #      --token=${{ secrets.VERCEL_TOKEN }} \
+      #      --yes
+
+      #- name: Setup Supabase CLI
+      #  uses: supabase/setup-cli@v1
+
+      #- name: Login Supabase
+      #  run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      #- name: Delete Supabase DB branch
+      #  run: supabase db branch delete $SUPABASE_DB_BRANCH \
+      #    --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} \
+      #    --force
+
+      - name: Slack notify cleanup
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"🧹 Cleanup complete for PR #${{ github.event.number }} (Supabase branch + Vercel preview NOT removed YET - once we are ready this will be changed to remove them).\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
