@@ -44,11 +44,18 @@ jobs:
       - name: Login Supabase
         run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      - name: Initialize Supabase project config
+        run: supabase init
+
+      - name: Set project ref
+        run: |
+          sed -i "s/project_id = .*/project_id = \"${{ secrets.SUPABASE_PROJECT_REF }}\"/" supabase/config.toml
+
       - name: Create Supabase DB branch
-        run: supabase db branches create $SUPABASE_DB_BRANCH --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase db branches create $SUPABASE_DB_BRANCH
 
       - name: Deploy migrations to branch
-        run: supabase db push --branch $SUPABASE_DB_BRANCH --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: supabase db push --branch $SUPABASE_DB_BRANCH
 
       - name: Get branch connection string
         id: db-url
@@ -159,9 +166,15 @@ jobs:
       #- name: Login Supabase
       #  run: supabase login --token ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
+      #- name: Initialize Supabase project config
+      #  run: supabase init
+
+      #- name: Set project ref
+      #  run: |
+      #    sed -i "s/project_id = .*/project_id = \"${{ secrets.SUPABASE_PROJECT_REF }}\"/" supabase/config.toml
+
       #- name: Delete Supabase DB branch
       #  run: supabase db branches delete $SUPABASE_DB_BRANCH \
-      #    --project-ref ${{ secrets.SUPABASE_PROJECT_REF }} \
       #    --force
 
       - name: Slack notify cleanup
