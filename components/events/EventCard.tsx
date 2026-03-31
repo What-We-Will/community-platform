@@ -38,7 +38,7 @@ interface EventCardProps {
   viewerTimezone: string;
 }
 
-const JITSI_BASE = "https://meet.jit.si";
+const JITSI_BASE = "https://meetings.wwwrise.org";
 
 export function EventCard({
   event,
