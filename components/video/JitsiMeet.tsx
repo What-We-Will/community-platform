@@ -39,7 +39,12 @@ export default function JitsiMeet({
 }: JitsiMeetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<JitsiApi | null>(null);
+  const onCloseRef = useRef(onClose);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -83,7 +88,7 @@ export default function JitsiMeet({
       });
 
       api.addEventListener("videoConferenceLeft", () => {
-        onClose();
+        onCloseRef.current();
       });
       api.addEventListener("videoConferenceJoined", () => {
         // Hide the top filmstrip by default to avoid the duplicate self-view strip.
@@ -104,7 +109,7 @@ export default function JitsiMeet({
         script.parentNode.removeChild(script);
       }
     };
-  }, [roomName, displayName, onClose]);
+  }, [roomName, displayName]);
 
   return (
     <div className="relative w-full h-full min-h-[400px]">
