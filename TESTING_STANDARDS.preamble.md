@@ -32,4 +32,4 @@ Loaded in every testing-related session. All rules below apply regardless of tas
 
 12. **`npm test` must pass** before any PR.
 
-13. **Every test must be explainable** without re-reading the AI conversation that produced it. If you cannot explain what a test verifies and why it matters, it is not ready for review.
+13. **Every contributor must understand every test.** The `describe` block should clearly document the feature or behavior under test — not mirror the function name. A reviewer should be able to read the `describe` block and `it` descriptions alone and understand the intent and what's being validated. If that's not possible without re-reading the AI conversation that produced it, the test isn't ready for review.
