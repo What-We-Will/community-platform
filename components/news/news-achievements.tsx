@@ -16,32 +16,11 @@ type Achievement = {
 
 const ACHIEVEMENTS: Achievement[] = [
   {
-    icon: Users,
-    stat: "37 Volunteers",
-    label: "Across 6 working groups",
-    detail:
-      "Our core team has grown to 37 active volunteers from 550+ engaged workers organized across 6 working groups — from policy advocacy to tech cooperative development.",
-  },
-  {
-    icon: DollarSign,
-    stat: "$1,000 / month",
-    label: "Basic income pilot launched",
-    detail:
-      "Paying our first cohort of low-income people of color who transitioned into tech, were laid off, and have been unemployed for over a year — for 12 months, in partnership with AI Commons Project (Fund for Guaranteed Income).",
-  },
-  {
     icon: Handshake,
-    stat: "2 Coalitions",
+    stat: "Policy Coalitions",
     label: "New York & California",
     detail:
       "Joined coalitions in both states and submitted worker stories to the California Labor Federation supporting the No Robo Bosses Act. Participating in biweekly meetings with the NY Unemployment Insurance Coalition.",
-  },
-  {
-    icon: ShieldCheck,
-    stat: "Layoff Crisis Platform",
-    label: "Co-designed with WaPo Tech Guild",
-    detail:
-      "Co-designing a secure layoff support platform with the Washington Post Tech Guild. CWA will train workers on collective bargaining, and Brooklyn Legal Defenders and Legal Aid Society will provide legal support for unemployment insurance navigation.",
   },
   {
     icon: Laptop,
@@ -51,11 +30,33 @@ const ACHIEVEMENTS: Achievement[] = [
       "In talks with Tech Equity to co-publish participatory action research on the impact of AI on workplace environments — covering productivity pressures, mass layoffs, and upskilling realities. Centering worker perspectives that are missing from most current research.",
   },
   {
+    icon: DollarSign,
+    stat: "Pilot Launch",
+    label: "Basic income pilot launched",
+    detail:
+      "Enrolled our first cohort of workers displaced by AI into a program offering $1,000/month cash assistance and support for up to 12 months, in partnership with AI Commons Project (Fund for Guaranteed Income).",
+  },
+  {
+    icon: ShieldCheck,
+    stat: "Layoff Crisis Platform",
+    label: "Co-designed with WaPo Tech Guild",
+    detail:
+      "Co-designing a secure layoff support platform with the Washington Post Tech Guild. CWA will train workers on collective bargaining, and Brooklyn Legal Defenders and Legal Aid Society will provide legal support for unemployment insurance navigation.",
+  },
+
+  {
     icon: BookOpen,
     stat: "Weekly Skillshares",
     label: "Technical & workers' rights training",
     detail:
       "Running a weekly skillshare series on locally deploying AI models, fighting AI résumé screeners, and workers' rights. Formalizing curriculum with 3 developers combining political education with hands-on technical training.",
+  },
+  {
+    icon: Users,
+    stat: "Team Building",
+    label: "Across 6 working groups",
+    detail:
+      "Our core team has grown to 37 active volunteers from 550+ engaged workers organized across 6 working groups — from policy advocacy to tech cooperative development.",
   },
 ];
 
