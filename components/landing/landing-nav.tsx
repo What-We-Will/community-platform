@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,8 +11,19 @@ import { getSiteUrl } from "@/lib/utils/get-site-url";
 const DONATE_URL =
   "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
 
+// Server-safe initial value — must match what getSiteUrl() returns on the server
+// so the first client render is identical to the SSR HTML (avoids hydration mismatch).
+const SERVER_SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+  "https://members.wwwrise.org";
+
 export function LandingNav({ user }: { user?: User | null }) {
-  const siteUrl = getSiteUrl();
+  const [siteUrl, setSiteUrl] = useState(SERVER_SITE_URL);
+
+  // After hydration, update to the actual client origin (handles dev + preview URLs)
+  useEffect(() => {
+    setSiteUrl(getSiteUrl());
+  }, []);
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
@@ -80,11 +91,12 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
 
             <Link
-              href="/#our-future"
+              href="/news"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
-              Our Future
+              News
             </Link>
+
           </nav>
 
           <div className="hidden items-center gap-4 md:flex">
@@ -229,12 +241,13 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
 
             <Link
-              href="/#our-future"
+              href="/news"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Our Future
+              News
             </Link>
+
           </nav>
         </div>
       )}
