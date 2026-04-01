@@ -57,10 +57,6 @@ jobs:
       # - Next.js injects NEXT_PUBLIC_* variables at build time
       # - The build output must point to the correct Supabase branch
       - name: Build app (using branch DB env)
-        env:
-          SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
-          NEXT_PUBLIC_SUPABASE_PUB_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
       
       # WHY ENV IS NEEDED HERE:
@@ -68,10 +64,6 @@ jobs:
       # - These are NOT baked into the build output
       - name: Deploy preview
         id: deploy
-        env:
-          SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
-          NEXT_PUBLIC_SUPABASE_PUB_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
         run: |
           url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "preview_url=$url" >> $GITHUB_OUTPUT
