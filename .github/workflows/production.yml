@@ -6,8 +6,6 @@ on:
       - main
 
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 permissions:
   contents: read
@@ -29,6 +27,9 @@ jobs:
       # Temp: disable linting on every pr for now
       #- name: Lint
       #  run: npm run lint
+
+      - name: Run tests
+        run: npm test
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
