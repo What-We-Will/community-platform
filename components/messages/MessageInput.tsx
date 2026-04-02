@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { SendHorizonal, Paperclip } from "lucide-react";
+import { SendHorizontal, Paperclip } from "lucide-react";
 import { FileAttachmentPreview } from "./FileAttachmentPreview";
 
 const ATTACHMENT_ACCEPT =
@@ -30,8 +30,11 @@ export function MessageInput({
 }: MessageInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [internalAttachment, setInternalAttachment] = useState<File | null>(null);
+  const [internalAttachment, setInternalAttachment] = useState<File | null>(
+    null,
+  );
   const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   const attachment = controlledAttachment ?? internalAttachment;
   const setAttachment = onAttachmentChange ?? setInternalAttachment;
@@ -43,20 +46,36 @@ export function MessageInput({
     ta.style.height = `${Math.min(ta.scrollHeight, 104)}px`;
   }, [value]);
 
+  async function send() {
+    if (sending) return;
+    if (!value.trim() && !attachment) return;
+    if (disabled) return;
+
+    setSending(true);
+
+    try {
+      console.log("SEND CALLED"); // temp debug
+
+      await onSend(value.trim(), attachment ?? undefined);
+
+      // clear AFTER send
+      setAttachment(null);
+      setAttachmentError(null);
+      onChange("");
+    } finally {
+      setSending(false);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      const canSend = (value.trim() || attachment) && !disabled;
-      if (canSend) onSend(value.trim(), attachment ?? undefined);
+      send();
     }
   }
 
   function handleSendClick() {
-    if (!value.trim() && !attachment) return;
-    if (disabled) return;
-    onSend(value.trim(), attachment ?? undefined);
-    setAttachment(null);
-    setAttachmentError(null);
+    send();
   }
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -118,11 +137,11 @@ export function MessageInput({
         <Button
           size="icon"
           onClick={handleSendClick}
-          disabled={disabled || (!value.trim() && !attachment)}
+          disabled={disabled || sending || (!value.trim() && !attachment)}
           className="shrink-0"
           aria-label="Send message"
         >
-          <SendHorizonal className="size-4" />
+          <SendHorizontal className="size-4" />
         </Button>
       </div>
     </div>
