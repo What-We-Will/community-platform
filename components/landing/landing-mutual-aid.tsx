@@ -1,6 +1,3 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-
 export function LandingMutualAid() {
   return (
     <section className="bg-primary-orange px-4 py-10 text-white md:py-12">

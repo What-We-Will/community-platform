@@ -7,7 +7,6 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { UserAvatar } from "@/components/shared/UserAvatar";
 import { BarChart3 } from "lucide-react";
 import { CreatePollDialog } from "./CreatePollDialog";
 import type { PollWithDetails } from "@/lib/types";
@@ -28,12 +27,10 @@ export function PollsCard({ userId, initialPoll }: PollsCardProps) {
 
   // Sync from server when initialPoll changes (e.g. after router.refresh())
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPoll(initialPoll);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedOptions(initialPoll?.userVotes ?? []);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVoted((initialPoll?.userVotes?.length ?? 0) > 0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPoll?.id, initialPoll?.totalVotes, initialPoll?.userVotes?.length]);
 
   const hasSelection = selectedOptions.length > 0;

@@ -1,7 +1,6 @@
-import type { User } from "@supabase/supabase-js";
 import { ActionNetworkFormEmbed } from "./action-network-form-embed";
 
-export function LandingJoinCommunity({ user: _user }: { user?: User | null }) {
+export function LandingJoinCommunity() {
   return (
     <section id="newsletter" className="scroll-mt-20 bg-muted px-4 py-16 md:py-24">
       <div className="mx-auto max-w-3xl">

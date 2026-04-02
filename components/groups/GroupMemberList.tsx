@@ -8,7 +8,6 @@ import {
   Crown,
   UserMinus,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { LiveStatusAvatar } from "@/components/shared/LiveStatusAvatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

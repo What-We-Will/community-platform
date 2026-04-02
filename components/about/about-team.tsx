@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { User } from "lucide-react";
 
 type TeamMember = {
   name: string;

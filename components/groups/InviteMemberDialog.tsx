@@ -41,11 +41,8 @@ export function InviteMemberDialog({
     if (!open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInvited(new Set());
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(null);
     }
   }, [open]);

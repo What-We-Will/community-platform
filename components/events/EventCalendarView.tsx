@@ -14,7 +14,6 @@ import {
 } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { eventTypeConfig } from "@/lib/utils/events";
 import { formatInTimeZone } from "@/lib/utils/timezone";
 import { cn } from "@/lib/utils";
 

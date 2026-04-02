@@ -22,7 +22,7 @@ export function LandingPage({ user }: { user?: User | null }) {
         <LandingMutualAid />
         <LandingFutureWeDemand />
         <LandingDonate />
-        <LandingJoinCommunity user={user} />
+        <LandingJoinCommunity />
       </main>
       <LandingFooter />
     </div>

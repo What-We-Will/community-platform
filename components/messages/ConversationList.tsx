@@ -191,7 +191,7 @@ export function ConversationList({
           </div>
         ) : (
           conversations.filter((c) => c.conversation.id !== selfNotesId).map(
-            ({ conversation, participants, lastMessage, unreadCount, groupName, groupSlug }) => {
+            ({ conversation, participants, lastMessage, unreadCount, groupName }) => {
               const isActive = pathname === `/messages/${conversation.id}`;
               const hasUnread = unreadCount > 0;
               const isGroupConv = conversation.type === "group";

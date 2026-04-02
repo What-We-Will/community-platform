@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { getAvatarColor } from "@/lib/utils/avatar";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,6 +135,7 @@ export function ConversationView({
     const interval = setInterval(fetchLastSeen, 30_000); // every 30s
     fetchLastSeen(); // run once immediately
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherUser?.id]);
 
   // Open video modal when landing with ?videoRoom= (e.g. from "Join call" in list)

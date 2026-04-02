@@ -67,7 +67,7 @@ export function PostJobForm() {
   function toggleRole(role: JobRole) {
     setSelectedRoles((prev) => {
       const next = new Set(prev);
-      next.has(role) ? next.delete(role) : next.add(role);
+      if (next.has(role)) next.delete(role); else next.add(role);
       return next;
     });
   }

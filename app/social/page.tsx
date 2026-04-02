@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Users, CalendarDays, BookOpen, Mail, Megaphone, ArrowRight } from "lucide-react";
+import { BookOpen, Mail, Megaphone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   BlueSkyIcon,

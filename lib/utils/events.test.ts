@@ -14,7 +14,7 @@ describe('eventTypeConfig', () => {
   });
 
   it('provides label and color for each event type', () => {
-    for (const [key, value] of Object.entries(eventTypeConfig)) {
+    for (const [, value] of Object.entries(eventTypeConfig)) {
       expect(value.label).toBeTruthy();
       expect(value.color).toBeTruthy();
       expect(typeof value.label).toBe('string');

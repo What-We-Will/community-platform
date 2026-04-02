@@ -34,7 +34,6 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
     const q = searchParams.get("q") ?? "";
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSearchInput(q);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDebouncedSearch(q);
   }, [searchParams]);
 
