@@ -53,6 +53,9 @@ export async function updateProfile(
     return { error: error.message };
   }
 
+  revalidatePath("/members");
+  revalidatePath("/events");
+  revalidatePath("/dashboard");
   return {};
 }
 
