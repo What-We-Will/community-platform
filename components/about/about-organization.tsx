@@ -16,12 +16,12 @@ export function AboutOrganization() {
           </p>
           <p className="text-base leading-relaxed sm:text-lg">
             Software engineers, call center workers, and copywriters are among the first to experience a significant shift in the capacity of AI to replace tasks we once performed.
-            For decades, "Teach X to Code" was promoted as an economic justice strategy for marginalized workers, from coal miners to the formerly incarcerated. Now these workers
+            For decades, &quot;Teach X to Code&quot; was promoted as an economic justice strategy for marginalized workers, from coal miners to the formerly incarcerated. Now these workers
             from nontraditional training paths are among the first to be laid off.
           </p>
           <p className="text-base leading-relaxed sm:text-lg">
           Knowledge workers are experiencing what manufacturing and agricultural workers faced decades ago, with few institutional supports to navigate this time of transition. <strong>We believe that no worker should have to bear the costs of automation alone.</strong> The worst predicted harms of A.I. are not inevitable, but we
-          can't afford to wait for mass unemployment before we mobilize. This moment presents a narrow window of opportunity to intervene by building worker power, strengthening social safety nets, and organizing for broader legal, institutional, and cultural change.
+          can&apos;t afford to wait for mass unemployment before we mobilize. This moment presents a narrow window of opportunity to intervene by building worker power, strengthening social safety nets, and organizing for broader legal, institutional, and cultural change.
           </p>
         </div>
       </div>

@@ -39,9 +39,13 @@ export function InviteMemberDialog({
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInvited(new Set());
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError(null);
     }
   }, [open]);
@@ -49,6 +53,7 @@ export function InviteMemberDialog({
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!query.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       return;
     }

@@ -108,9 +108,9 @@ function ComingSoon({ article }: { article: { title: string; excerpt: string } }
       </p>
       <p className="mt-8 text-sm text-muted-foreground">
         Full text coming soon. Check back or{" "}
-        <a href="/#newsletter" className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover">
+        <Link href="/#newsletter" className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover">
           subscribe to our newsletter
-        </a>{" "}
+        </Link>{" "}
         to be notified.
       </p>
     </div>

@@ -21,6 +21,7 @@ export function EventTimeDisplay({
 }: EventTimeDisplayProps) {
   const [browserTz, setBrowserTz] = useState<string | null>(null);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBrowserTz(Intl.DateTimeFormat().resolvedOptions().timeZone);
   }, []);
 

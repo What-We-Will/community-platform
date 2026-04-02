@@ -21,6 +21,7 @@ export function WishlistButton({ jobPostingId, company, position, url, initialWi
 
   // Sync with server state when job or initialWishlisted changes (e.g. after refresh or switching jobs)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setWishlisted(initialWishlisted);
   }, [jobPostingId, initialWishlisted]);
 

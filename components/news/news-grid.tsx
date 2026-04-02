@@ -145,13 +145,13 @@ export function NewsGrid() {
             Subscribe to our newsletter and get updates on campaigns, events,
             and resources delivered straight to your inbox.
           </p>
-          <a
+          <Link
             href="/#newsletter"
             className="mt-6 inline-flex items-center gap-2 rounded-md bg-white px-6 py-2.5 text-sm font-semibold text-primary-orange transition-colors hover:bg-white/90"
           >
             Subscribe
             <ArrowRight className="size-4" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>
