@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ADMIN_ROLE } from "@/lib/roles";
 
 function toSlug(input: string) {
   return input
@@ -28,7 +29,7 @@ async function requireAdmin() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") throw new Error("Not authorized");
+  if (profile?.role !== ADMIN_ROLE) throw new Error("Not authorized");
 
   return { supabase, userId: user.id };
 }
@@ -61,6 +62,7 @@ export async function createNewsPost(formData: FormData) {
     published_at: isPublished ? nowIso : null,
     cover_image_url: coverImageUrl || null,
     created_by: userId,
+    updated_by: userId,
   });
 
   if (error) throw new Error(error.message);
@@ -71,11 +73,14 @@ export async function createNewsPost(formData: FormData) {
 }
 
 export async function deleteNewsPost(formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, userId } = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   if (!id) throw new Error("Missing post id.");
 
-  const { error } = await supabase.from("news_posts").delete().eq("id", id);
+  const { error } = await supabase
+    .from("news_posts")
+    .update({ is_deleted: true, updated_by: userId, updated_at: new Date().toISOString() })
+    .eq("id", id);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/news");
@@ -84,7 +89,7 @@ export async function deleteNewsPost(formData: FormData) {
 }
 
 export async function togglePublishNewsPost(formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { supabase, userId } = await requireAdmin();
   const id = String(formData.get("id") ?? "");
   const publish = String(formData.get("publish") ?? "") === "true";
   if (!id) throw new Error("Missing post id.");
@@ -94,6 +99,7 @@ export async function togglePublishNewsPost(formData: FormData) {
     .update({
       is_published: publish,
       published_at: publish ? new Date().toISOString() : null,
+      updated_by: userId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id);

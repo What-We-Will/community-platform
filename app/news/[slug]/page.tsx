@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { createClient } from "@/lib/supabase/server";
+import { ADMIN_ROLE } from "@/lib/roles";
 
 export default async function NewsDetailPage({
   params,
@@ -22,13 +23,14 @@ export default async function NewsDetailPage({
       .select("role")
       .eq("id", user.id)
       .single();
-    isAdmin = profile?.role === "admin";
+    isAdmin = profile?.role === ADMIN_ROLE;
   }
 
   let query = supabase
     .from("news_posts")
     .select("title, excerpt, content, cover_image_url, is_published, published_at, created_at")
-    .eq("slug", slug);
+    .eq("slug", slug)
+    .eq("is_deleted", false);
 
   if (!isAdmin) query = query.eq("is_published", true);
 

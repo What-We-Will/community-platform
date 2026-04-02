@@ -9,8 +9,10 @@ CREATE TABLE public.news_posts (
   is_published    BOOLEAN NOT NULL DEFAULT false,
   published_at    TIMESTAMPTZ,
   cover_image_url TEXT,
+  is_deleted      BOOLEAN NOT NULL DEFAULT false,
   created_by      UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_by      UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -22,8 +24,11 @@ CREATE POLICY "Published news is publicly readable"
   FOR SELECT
   TO anon, authenticated
   USING (
-    is_published = true
-    OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    is_deleted = false
+    AND (
+      is_published = true
+      OR (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+    )
   );
 
 CREATE POLICY "Admins can create news"
