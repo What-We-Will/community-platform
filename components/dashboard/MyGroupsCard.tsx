@@ -41,7 +41,7 @@ export async function MyGroupsCard({ userId }: MyGroupsCardProps) {
     .map((r) => (r as { group_id: string }).group_id)
     .filter(Boolean);
 
-  let memberCounts: Record<string, number> = {};
+  const memberCounts: Record<string, number> = {};
   if (groupIds.length > 0) {
     const { data: counts } = await supabase
       .from("group_members")
@@ -61,7 +61,7 @@ export async function MyGroupsCard({ userId }: MyGroupsCardProps) {
     })
     .filter((id): id is string => Boolean(id));
 
-  let unreadByConvId: Record<string, number> = {};
+  const unreadByConvId: Record<string, number> = {};
   if (conversationIds.length > 0) {
     const { data: participations } = await supabase
       .from("conversation_participants")

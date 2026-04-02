@@ -21,7 +21,7 @@ export async function UpcomingEventsCard() {
   const now = new Date();
   const viewerTimezone = viewerProfileResult.data?.timezone ?? "America/Chicago";
 
-  let goingByEventId: Record<string, number> = {};
+  const goingByEventId: Record<string, number> = {};
   if (events.length > 0) {
     const eventIds = events.map((e) => (e as { id: string }).id);
     const { data: rsvps } = await supabase

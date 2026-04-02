@@ -97,11 +97,11 @@ export default async function EventsPage({
   const past = pastRaw as EventRow[];
 
   const eventIds = upcoming.map((e) => e.id);
-  let rsvpCountsMap: Record<
+  const rsvpCountsMap: Record<
     string,
     { going: number; maybe: number; declined: number }
   > = {};
-  let userRsvpMap: Record<string, { status: string }> = {};
+  const userRsvpMap: Record<string, { status: string }> = {};
 
   if (eventIds.length > 0) {
     const { data: rsvps } = await supabase

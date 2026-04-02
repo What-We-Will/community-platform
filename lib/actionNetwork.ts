@@ -6,7 +6,7 @@ const ACTION_NETWORK_FORM_ID = process.env.ACTION_NETWORK_FORM_ID;
 if (!ACTION_NETWORK_API_KEY) {
   // Intentionally throw at module init in non-test environments so misconfig is obvious
   if (process.env.NODE_ENV !== "test") {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       "[actionNetwork] ACTION_NETWORK_API_KEY is not set; newsletter signup will fail.",
     );
