@@ -8,24 +8,14 @@ import {
 } from "./timezone";
 
 describe("safeTimezone", () => {
-  it("returns valid timezone as-is", () => {
-    expect(safeTimezone("America/New_York")).toBe("America/New_York");
-  });
-
-  it("returns default for null", () => {
-    expect(safeTimezone(null)).toBe("America/Chicago");
-  });
-
-  it("returns default for undefined", () => {
-    expect(safeTimezone(undefined)).toBe("America/Chicago");
-  });
-
-  it("returns default for empty string", () => {
-    expect(safeTimezone("")).toBe("America/Chicago");
-  });
-
-  it("returns default for invalid timezone", () => {
-    expect(safeTimezone("Not/A_Zone")).toBe("America/Chicago");
+  it.each([
+    ["returns valid timezone as-is",         "America/New_York", "America/New_York"],
+    ["returns default for null",             null,               "America/Chicago"],
+    ["returns default for undefined",        undefined,          "America/Chicago"],
+    ["returns default for empty string",     "",                 "America/Chicago"],
+    ["returns default for invalid timezone", "Not/A_Zone",       "America/Chicago"],
+  ])("%s", (_desc, input, expected) => {
+    expect(safeTimezone(input)).toBe(expected);
   });
 });
 
@@ -121,16 +111,16 @@ describe("getTimeZoneAbbreviation", () => {
 });
 
 describe("getTimezoneRegion", () => {
-  it("returns region prefix for standard IANA zone", () => {
-    expect(getTimezoneRegion("America/Chicago")).toBe("America");
-  });
-
-  it("returns empty string for flat name (UTC)", () => {
-    expect(getTimezoneRegion("UTC")).toBe("");
-  });
-
-  it("returns empty string for null", () => {
-    expect(getTimezoneRegion(null)).toBe("");
+  it.each([
+    ["returns region prefix for standard IANA zone",         "America/Chicago",              "America"],
+    ["returns region prefix for another standard IANA zone", "America/New_York",             "America"],
+    ["returns region prefix for sub-region IANA zone",       "America/Indiana/Indianapolis", "America"],
+    ["returns region prefix for European zone",              "Europe/Berlin",                "Europe"],
+    ["returns region prefix for Asian zone",                 "Asia/Tokyo",                   "Asia"],
+    ["returns empty string for flat name (UTC)",             "UTC",                          ""],
+    ["returns empty string for null",                        null,                           ""],
+  ])("%s", (_desc, input, expected) => {
+    expect(getTimezoneRegion(input)).toBe(expected);
   });
 });
 
