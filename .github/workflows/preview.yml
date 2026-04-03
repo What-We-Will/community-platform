@@ -26,9 +26,8 @@ jobs:
 
       - run: npm ci
 
-      # Temp: disable linting on every pr for now
-      #- name: Lint
-      #  run: npm run lint
+      - name: Lint
+        run: npm run lint
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
