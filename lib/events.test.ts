@@ -46,47 +46,7 @@ function makeRsvps(counts: { going?: number; maybe?: number; declined?: number }
   return rows;
 }
 
-function buildMockClient(
-  eventData: Record<string, unknown> | null,
-  rsvps: RsvpRow[],
-  userRsvp: RsvpRow | null = null,
-  eventError: { message: string } | null = null
-) {
-  const mockClient = {
-    from: jest.fn((table: string) => {
-      if (table === "events") {
-        return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({
-            data: eventData,
-            error: eventError,
-          }),
-        };
-      }
-      // event_rsvps — called twice: once for all rsvps, once for user rsvp
-      let rsvpCallCount = 0;
-      const rsvpChain: Record<string, unknown> = {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockImplementation(() => {
-          rsvpCallCount++;
-          return rsvpChain;
-        }),
-        maybeSingle: jest.fn().mockResolvedValue({
-          data: userRsvp,
-          error: null,
-        }),
-        then: jest.fn().mockImplementation((resolve: (v: unknown) => unknown) =>
-          Promise.resolve(resolve({ data: rsvps, error: null }))
-        ),
-      };
-      return rsvpChain;
-    }),
-  };
-  return mockClient;
-}
-
-// Simpler mock approach: build per-call interceptors
+// Build per-call interceptors
 function buildClientWithSequentialRsvps(
   eventData: Record<string, unknown> | null,
   allRsvps: RsvpRow[],

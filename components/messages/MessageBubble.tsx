@@ -3,7 +3,6 @@ import { Video, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { getSignedUrl } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import type { MessageWithSender } from "@/lib/types";
@@ -24,7 +23,6 @@ function FileMessageBubble({
   storagePath,
   fileName,
   fileSize,
-  fileType,
   isImage,
 }: {
   isOwn: boolean;
@@ -101,6 +99,7 @@ function FileMessageBubble({
               onClick={handleOpenUrl}
               className="block max-w-full rounded overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={signedUrl}
                 alt={fileName}

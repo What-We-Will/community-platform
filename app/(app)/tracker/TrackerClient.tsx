@@ -271,7 +271,7 @@ function CommunityNotesSection({ notes = [] }: { notes?: CommunityNote[] }) {
           </h2>
         </div>
         <p className="text-sm text-muted-foreground rounded-lg border border-dashed p-5 text-center">
-          No community notes yet for the companies you've applied to.
+          No community notes yet for the companies you&apos;ve applied to.
         </p>
       </section>
     );

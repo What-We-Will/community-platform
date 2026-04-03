@@ -12,7 +12,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Loader2, Pencil } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { createApplication, updateApplication, type ApplicationStatus, type JobApplicationInput } from "./actions";
 import { STATUSES } from "./constants";
 

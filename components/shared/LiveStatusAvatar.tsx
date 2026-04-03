@@ -22,6 +22,7 @@ export function LiveStatusAvatar({
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus(getOnlineStatus(lastSeenAt, { isCurrentUser }));
     const id = setInterval(() => {
       setStatus(getOnlineStatus(lastSeenAt, { isCurrentUser }));

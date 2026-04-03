@@ -1,5 +1,3 @@
-import { User } from "lucide-react";
-
 const ADVISORY_BOARD = [
   {
     name: "Andrew Stettner",

@@ -31,7 +31,7 @@ async function ensureAdmin(): Promise<boolean> {
   return true;
 }
 
-export async function approveUser(userId: string, _formData?: FormData): Promise<void> {
+export async function approveUser(userId: string): Promise<void> {
   if (!(await ensureAdmin())) return;
 
   // Use service role to bypass RLS — admins updating other users' rows
@@ -56,7 +56,7 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
   redirect("/admin/approvals");
 }
 
-export async function rejectUser(userId: string, _formData?: FormData): Promise<void> {
+export async function rejectUser(userId: string): Promise<void> {
   if (!(await ensureAdmin())) return;
 
   const serviceClient = createServiceClient();

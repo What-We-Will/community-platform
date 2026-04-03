@@ -43,6 +43,7 @@ export function UnreadBadge({ initialCount, userId }: UnreadBadgeProps) {
 
   // Re-fetch whenever the user navigates (catches mark-as-read from conversation pages)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUnreadCount();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 

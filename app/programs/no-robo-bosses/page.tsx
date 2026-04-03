@@ -47,7 +47,7 @@ export default async function NoRoboBossesPage() {
                 no restrictions on how employers use AI to fire, discipline,
                 or lay off workers
               </strong>{" "}
-              in California. The No Robo Bosses Act changes that, and we're
+              in California. The No Robo Bosses Act changes that, and we&apos;re
               fighting to make it law.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -83,21 +83,21 @@ export default async function NoRoboBossesPage() {
               The Crisis
             </p>
             <h2 className="font-bebas text-4xl text-dark-blue sm:text-5xl">
-              Machines don't get to end your livelihood.
+              Machines don&apos;t get to end your livelihood.
             </h2>
             <p className="mt-5 text-base leading-relaxed text-foreground/80 sm:text-lg">
               Every month, more employers are using AI to automate, erode, and
               eliminate jobs without oversight, accountability, or the
-              requirement to tell workers or the public what's happening.
+              requirement to tell workers or the public what&apos;s happening.
               Companies like Amazon, Salesforce, and Dow Chemical have
               announced mass layoffs and hiring freezes driven by AI investment,
               while workers bear all the costs and share none of the gains.
             </p>
             <blockquote className="mt-8 border-l-4 border-primary-orange pl-5">
               <p className="text-lg font-medium italic leading-relaxed text-dark-blue">
-                "Employers are devastating workers&apos; livelihoods and taking
+                &quot;Employers are devastating workers&apos; livelihoods and taking
                 no responsibility for the callous decisions of this unchecked
-                technology. This is unacceptable."
+                technology. This is unacceptable.&quot;
               </p>
               <cite className="mt-3 block text-sm font-semibold text-muted-foreground not-italic">
                 — Lorena Gonzalez, President, California Federation of Labor
@@ -279,7 +279,7 @@ export default async function NoRoboBossesPage() {
             <p className="mt-4 max-w-3xl text-base leading-relaxed text-muted-foreground">
               As companies work to rapidly deploy AI agents across the economy, we need
               legislation to ensure these systems remain transparent and that workers
-              don't bear the burden.
+              don&apos;t bear the burden.
             </p>
             <div className="mt-6 grid gap-6 sm:grid-cols-3">
               {[
@@ -326,7 +326,7 @@ export default async function NoRoboBossesPage() {
               Workers cannot go another year unprotected.
             </h2>
             <p className="mt-4 max-w-3xl text-base leading-relaxed text-white/80 sm:text-lg">
-              Passing these bills will require workers to organize, contact their legislators, and share their stories. Here's where to start.
+              Passing these bills will require workers to organize, contact their legislators, and share their stories. Here&apos;s where to start.
             </p>
 
             <div className="mt-8 grid gap-4 sm:grid-cols-3">

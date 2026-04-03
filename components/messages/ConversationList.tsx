@@ -47,6 +47,7 @@ export function ConversationList({
       .join(",");
     if (prevInitialIdsRef.current !== ids) {
       prevInitialIdsRef.current = ids;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConversations(initialConversations);
     }
   }, [initialConversations]);
@@ -56,6 +57,7 @@ export function ConversationList({
     const match = pathname.match(/\/messages\/([^/]+)/);
     if (!match) return;
     const convId = match[1];
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setConversations((prev) =>
       prev.map((c) =>
         c.conversation.id === convId ? { ...c, unreadCount: 0 } : c
@@ -189,7 +191,7 @@ export function ConversationList({
           </div>
         ) : (
           conversations.filter((c) => c.conversation.id !== selfNotesId).map(
-            ({ conversation, participants, lastMessage, unreadCount, groupName, groupSlug }) => {
+            ({ conversation, participants, lastMessage, unreadCount, groupName }) => {
               const isActive = pathname === `/messages/${conversation.id}`;
               const hasUnread = unreadCount > 0;
               const isGroupConv = conversation.type === "group";

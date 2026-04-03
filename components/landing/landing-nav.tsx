@@ -22,6 +22,7 @@ export function LandingNav({ user }: { user?: User | null }) {
 
   // After hydration, update to the actual client origin (handles dev + preview URLs)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSiteUrl(getSiteUrl());
   }, []);
 

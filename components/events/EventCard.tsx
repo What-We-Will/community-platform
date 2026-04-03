@@ -44,7 +44,6 @@ export function EventCard({
   event,
   rsvpCounts,
   currentUserRsvp,
-  currentUserId,
   viewerTimezone,
 }: EventCardProps) {
   const [status, setStatus] = useState<"going" | "maybe" | "declined" | null>(
