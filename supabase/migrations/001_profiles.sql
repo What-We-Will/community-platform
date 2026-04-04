@@ -14,6 +14,7 @@ CREATE TABLE public.profiles (
   is_onboarded BOOLEAN DEFAULT false,
   role TEXT DEFAULT 'member' CHECK (role IN ('member', 'admin', 'moderator')),
   last_seen_at TIMESTAMPTZ,
+  approval_status TEXT NOT NULL DEFAULT 'approved',
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
