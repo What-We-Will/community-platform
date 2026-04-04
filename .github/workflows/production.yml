@@ -29,6 +29,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Run tests
+        run: npm test
+
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 

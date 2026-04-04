@@ -1,9 +1,8 @@
-name: Preview Deploy
+name: PR Preview Vercel Deploy with Supabase preview DB
 
 on:
-  push:
-    branches-ignore:
-      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -14,20 +13,42 @@ permissions:
   pull-requests: write
 
 jobs:
-  preview:
+  pr-preview:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.PREVIEW_SUPABASE_ACCESS_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '24.x'
           cache: 'npm'
 
-      - run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
       - name: Lint
         run: npm run lint
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to Preview project
+        run: supabase link --project-ref ${{ secrets.PREVIEW_SUPABASE_PROJECT_ID }}
+
+      - name: Push Supabase migrations to PREVIEW DB
+        run: supabase db push
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
@@ -35,11 +56,25 @@ jobs:
       - name: Pull Vercel env
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Build
+      # WHY ENV IS NEEDED HERE
+      # - Next.js injects NEXT_PUBLIC_* variables at build time
+      # - The build output must point to the correct Supabase branch
+      - name: Build app (using branch DB env)
+        env:
+          SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-
+      
+      # WHY ENV IS NEEDED HERE:
+      # - Vercel attaches runtime env vars to serverless/edge functions
+      # - These are NOT baked into the build output
       - name: Deploy preview
         id: deploy
+        env:
+          SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
         run: |
           url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "preview_url=$url" >> $GITHUB_OUTPUT
@@ -63,3 +98,20 @@ jobs:
                 body: '✅ Preview deployed: ${{ steps.deploy.outputs.preview_url }}'
               });
             }
+
+      - name: Slack notify success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"PR #${{ github.event.number }} preview deployed: ${{ steps.deploy.outputs.preview_url }}\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack notify failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{\"text\":\"❌ PR #${{ github.event.number }} preview failed.\"}" \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  
+ 
