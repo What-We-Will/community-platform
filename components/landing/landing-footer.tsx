@@ -25,6 +25,12 @@ export function LandingFooter() {
             Share your story
           </Link>
           <Link
+            href="/oracle-layoff-survey"
+            className="hover:text-foreground transition-colors"
+          >
+            Oracle layoff survey
+          </Link>
+          <Link
             href="/signup"
             className="hover:text-foreground transition-colors"
           >
