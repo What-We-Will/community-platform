@@ -89,23 +89,16 @@ jobs:
 
       - name: Comment PR with URL
         uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
         with:
           script: |
-            const branch = context.ref.replace('refs/heads/', '');
-            const { data: prs } = await github.rest.pulls.list({
+            await github.rest.issues.createComment({
+              issue_number: context.payload.pull_request.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              head: `${context.repo.owner}:${branch}`,
-              state: 'open',
+              body: `✅ Preview deployed: ${process.env.PREVIEW_URL}`,
             });
-            for (const pr of prs) {
-              await github.rest.issues.createComment({
-                issue_number: pr.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: '✅ Preview deployed: ${{ steps.deploy.outputs.preview_url }}'
-              });
-            }
 
       - name: Slack notify success
         if: success()
