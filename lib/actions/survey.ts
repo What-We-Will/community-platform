@@ -235,42 +235,23 @@ export async function submitSurvey(data: {
       }
     }
 
-    // ── Insert both rows ──────────────────────────────────────────────────
-    // Two separate inserts, no FK — anonymity preserved at the data layer.
+    // ── Atomic insert via RPC — both rows succeed or neither does ────────
+    const { error: rpcError } = await supabase.rpc("submit_survey", {
+      p_survey_id: config.surveyId,
+      p_respondent_type: data.respondentType,
+      p_answers: jsonbAnswers,
+      p_employment_status: data.respondentType,
+      p_willingness: data.willingness,
+      p_encrypted_contact: encryptedContact,
+      p_contact_iv: contactIv,
+      p_contact_type: contactType,
+      p_domain_hash: domainHash,
+      p_key_version: keyVersion,
+    });
 
-    // Insert into survey_responses
-    const { error: responseError } = await supabase
-      .from("survey_responses")
-      .insert({
-        survey_id: config.surveyId,
-        respondent_type: data.respondentType,
-        answers: jsonbAnswers,
-      });
-
-    if (responseError) {
+    if (rpcError) {
       console.error(
-        `[survey/actions] survey_responses insert failed: ${responseError.constructor?.name ?? "SupabaseError"}: ${responseError.message}`
-      );
-      return GENERIC_ERROR;
-    }
-
-    // Insert into survey_sensitive
-    const { error: sensitiveError } = await supabase
-      .from("survey_sensitive")
-      .insert({
-        survey_id: config.surveyId,
-        employment_status: data.respondentType,
-        willingness: data.willingness,
-        encrypted_contact: encryptedContact,
-        contact_iv: contactIv,
-        contact_type: contactType,
-        domain_hash: domainHash,
-        key_version: keyVersion,
-      });
-
-    if (sensitiveError) {
-      console.error(
-        `[survey/actions] survey_sensitive insert failed: ${sensitiveError.constructor?.name ?? "SupabaseError"}: ${sensitiveError.message}`
+        `[survey/actions] submit_survey RPC failed: ${rpcError.message}`
       );
       return GENERIC_ERROR;
     }
