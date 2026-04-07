@@ -101,11 +101,6 @@ export async function submitSurvey(data: {
       return SURVEY_CLOSED_ERROR;
     }
 
-    // Reject oversized answer payloads
-    if (Object.keys(data.answers).length > config.questions.length) {
-      return VALIDATION_ERROR;
-    }
-
     // Validate respondentType against config
     const respondentTypeConfig = config.respondentTypes.find(
       (rt) => rt.value === data.respondentType
@@ -124,6 +119,11 @@ export async function submitSurvey(data: {
         q.id !== "respondent_type" &&
         (q.section === respondentSection || q.section === "everyone")
     );
+
+    // Reject oversized answer payloads
+    if (Object.keys(data.answers).length > applicableQuestions.length) {
+      return VALIDATION_ERROR;
+    }
 
     // Reject any answer keys not in the applicable set
     const allowedKeys = new Set(applicableQuestions.map((q) => q.id));
