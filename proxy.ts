@@ -55,8 +55,7 @@ export async function proxy(request: NextRequest) {
   if (
     code &&
     pathname !== "/auth/callback" &&
-    !pathname.startsWith("/auth/callback/") &&
-    !pathname.startsWith("/update-password") 
+    !pathname.startsWith("/auth/callback/")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/callback";
