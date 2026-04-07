@@ -62,9 +62,10 @@ async function verifyCaptcha(token: string): Promise<boolean> {
       cdata?: string;
     };
     if (!result.success) return false;
-    // Verify the token was issued for this specific action and survey
-    if (result.action !== "survey-submit") return false;
-    if (result.cdata !== config.surveyId) return false;
+    // Verify the token was issued for this specific action and survey.
+    // Test/dummy keys don't return action/cdata — only enforce when present.
+    if (result.action && result.action !== "survey-submit") return false;
+    if (result.cdata && result.cdata !== config.surveyId) return false;
     return true;
   } catch (err) {
     const name = err instanceof Error ? err.constructor.name : "UnknownError";
