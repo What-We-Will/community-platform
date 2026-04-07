@@ -23,12 +23,12 @@ function makeDeleteChain() {
   return chain;
 }
 
-describe("deleteEvent — cache revalidation", () => {
+describe("deleteEvent — revalidates affected pages", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should throw when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -39,7 +39,7 @@ describe("deleteEvent — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /events and /dashboard on successful deletion", async () => {
+  it("should revalidate on successful deletion", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: {

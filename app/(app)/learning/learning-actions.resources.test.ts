@@ -22,10 +22,10 @@ function makeChain(thenResult = { error: null }) {
   return chain;
 }
 
-describe("addResource — cache revalidation", () => {
+describe("addResource — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -39,7 +39,7 @@ describe("addResource — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /learning and /dashboard on successful resource add", async () => {
+  it("should revalidate on successful add", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
@@ -56,10 +56,10 @@ describe("addResource — cache revalidation", () => {
   });
 });
 
-describe("deleteResource — cache revalidation", () => {
+describe("deleteResource — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -73,7 +73,7 @@ describe("deleteResource — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /learning and /dashboard on successful resource deletion", async () => {
+  it("should revalidate on successful deletion", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },

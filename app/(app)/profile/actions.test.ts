@@ -18,12 +18,12 @@ const validInput = {
   open_to_referrals: true,
 };
 
-describe("updateProfile — cache revalidation", () => {
+describe("updateProfile — revalidates affected pages", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -37,7 +37,7 @@ describe("updateProfile — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /members, /events, and /dashboard — but not /profile — on successful update", async () => {
+  it("should revalidate on successful update but not /profile", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: {

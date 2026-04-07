@@ -41,12 +41,12 @@ function makeClient(userId: string | null) {
   };
 }
 
-describe("createGroupAction — cache revalidation", () => {
+describe("createGroupAction — revalidates affected pages", () => {
   const input = { name: "Test Group", description: null, isPrivate: false, isDiscoverable: true };
 
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
@@ -58,7 +58,7 @@ describe("createGroupAction — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /groups and /dashboard on successful creation", async () => {
+  it("should revalidate on successful creation", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
@@ -72,10 +72,10 @@ describe("createGroupAction — cache revalidation", () => {
   });
 });
 
-describe("joinGroupAction — cache revalidation", () => {
+describe("joinGroupAction — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
@@ -87,7 +87,7 @@ describe("joinGroupAction — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /groups and /dashboard on successful join", async () => {
+  it("should revalidate on successful join", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
@@ -101,10 +101,10 @@ describe("joinGroupAction — cache revalidation", () => {
   });
 });
 
-describe("leaveGroupAction — cache revalidation", () => {
+describe("leaveGroupAction — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
@@ -116,7 +116,7 @@ describe("leaveGroupAction — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /groups and /dashboard on successful leave", async () => {
+  it("should revalidate on successful leave", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
@@ -129,3 +129,4 @@ describe("leaveGroupAction — cache revalidation", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
   });
 });
+

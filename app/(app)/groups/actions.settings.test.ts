@@ -37,10 +37,10 @@ function makeClient(userId: string | null) {
   };
 }
 
-describe("updateGroupSettingsAction — cache revalidation", () => {
+describe("updateGroupSettingsAction — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
     const result = await updateGroupSettingsAction("group-1", { is_discoverable: true });
@@ -49,7 +49,7 @@ describe("updateGroupSettingsAction — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /groups and /dashboard on successful settings update", async () => {
+  it("should revalidate on successful settings update", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
     const result = await updateGroupSettingsAction("group-1", { is_discoverable: true });
@@ -59,7 +59,7 @@ describe("updateGroupSettingsAction — cache revalidation", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
   });
 
-  it("should return newSlug when slug is updated successfully", async () => {
+  it("should revalidate on successful slug change", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
     mockNormalizeSlug.mockReturnValue("new-slug");
     mockIsSlugAvailable.mockResolvedValue(true);
@@ -71,7 +71,7 @@ describe("updateGroupSettingsAction — cache revalidation", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
   });
 
-  it("should return an error when slug is invalid", async () => {
+  it("should not revalidate when slug is invalid", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
     mockNormalizeSlug.mockReturnValue("");
 
@@ -81,7 +81,7 @@ describe("updateGroupSettingsAction — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should return an error when slug is already taken", async () => {
+  it("should not revalidate when slug is already taken", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
     mockNormalizeSlug.mockReturnValue("taken-slug");
     mockIsSlugAvailable.mockResolvedValue(false);

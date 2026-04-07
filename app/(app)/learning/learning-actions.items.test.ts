@@ -23,10 +23,10 @@ function makeChain(thenResult: Record<string, any> = { error: null }, singleResu
   return chain;
 }
 
-describe("addPathItem — cache revalidation", () => {
+describe("addPathItem — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -40,7 +40,7 @@ describe("addPathItem — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /learning and /dashboard when creator adds an item", async () => {
+  it("should revalidate when creator adds an item", async () => {
     // Arrange
     // Promise.all calls from("learning_paths") then from("profiles") simultaneously,
     // then from("learning_path_items") twice (position query, then insert)
@@ -65,10 +65,10 @@ describe("addPathItem — cache revalidation", () => {
   });
 });
 
-describe("deletePathItem — cache revalidation", () => {
+describe("deletePathItem — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -82,7 +82,7 @@ describe("deletePathItem — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /learning and /dashboard when creator deletes an item", async () => {
+  it("should revalidate when creator deletes an item", async () => {
     // Arrange
     // Promise.all calls from("learning_paths") then from("profiles"),
     // then from("learning_path_items") for the delete

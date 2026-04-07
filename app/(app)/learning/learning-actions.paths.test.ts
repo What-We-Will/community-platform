@@ -23,10 +23,10 @@ function makeChain(thenResult = { error: null }, singleResult: Record<string, an
   return chain;
 }
 
-describe("createPath — cache revalidation", () => {
+describe("createPath — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -40,7 +40,7 @@ describe("createPath — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /learning and /dashboard on successful creation", async () => {
+  it("should revalidate on successful creation", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
@@ -57,10 +57,10 @@ describe("createPath — cache revalidation", () => {
   });
 });
 
-describe("deletePath — cache revalidation", () => {
+describe("deletePath — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -74,7 +74,7 @@ describe("deletePath — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /learning and /dashboard on successful deletion", async () => {
+  it("should revalidate on successful deletion", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
@@ -91,10 +91,10 @@ describe("deletePath — cache revalidation", () => {
   });
 });
 
-describe("toggleStarPath — cache revalidation", () => {
+describe("toggleStarPath — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
@@ -108,7 +108,7 @@ describe("toggleStarPath — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /learning and /dashboard on successful toggle by admin", async () => {
+  it("should revalidate on successful toggle by admin", async () => {
     // Arrange
     const profileChain = makeChain({ error: null }, { data: { role: "admin" }, error: null });
     const updateChain = makeChain({ error: null });

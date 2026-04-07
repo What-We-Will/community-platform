@@ -33,12 +33,12 @@ function makeClient(userId: string | null) {
   };
 }
 
-describe("createApplication — cache revalidation", () => {
+describe("createApplication — revalidates affected pages", () => {
   const input = { company: "ACME", position: "Engineer", status: "applied" as const };
 
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
     const result = await createApplication(input);
@@ -47,7 +47,7 @@ describe("createApplication — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /tracker and /dashboard on successful creation", async () => {
+  it("should revalidate on successful creation", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
     const result = await createApplication(input);
@@ -58,10 +58,10 @@ describe("createApplication — cache revalidation", () => {
   });
 });
 
-describe("addInterview — cache revalidation", () => {
+describe("addInterview — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
     const result = await addInterview("app-1", "Phone screen", "2026-04-10", "14:00", "");
@@ -70,7 +70,7 @@ describe("addInterview — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /tracker and /dashboard on successful insert", async () => {
+  it("should revalidate on successful insert", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
     const result = await addInterview("app-1", "Phone screen", "2026-04-10", "14:00", "");
@@ -81,10 +81,10 @@ describe("addInterview — cache revalidation", () => {
   });
 });
 
-describe("deleteInterview — cache revalidation", () => {
+describe("deleteInterview — revalidates affected pages", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it("should return an error when user is not authenticated", async () => {
+  it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
     const result = await deleteInterview("interview-1");
@@ -93,7 +93,7 @@ describe("deleteInterview — cache revalidation", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /tracker and /dashboard on successful deletion", async () => {
+  it("should revalidate on successful deletion", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
     const result = await deleteInterview("interview-1");
