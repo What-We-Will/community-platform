@@ -8,6 +8,7 @@ on:
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  HUSKY: 0
 
 permissions:
   contents: read
@@ -28,6 +29,9 @@ jobs:
       
       - name: Lint
         run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
 
       - name: Run tests
         run: npm test

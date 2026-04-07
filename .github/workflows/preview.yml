@@ -7,6 +7,7 @@ on:
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  HUSKY: 0
 
 permissions:
   contents: read
@@ -35,9 +36,16 @@ jobs:
 
       - name: Lint
         run: npm run lint
+      
+      - name: Type check
+        run: npx tsc --noEmit
 
       - name: Run unit tests
         run: npm test
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
