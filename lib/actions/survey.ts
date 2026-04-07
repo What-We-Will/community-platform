@@ -172,11 +172,13 @@ export async function submitSurvey(data: {
       }
     }
 
-    // Validate free-text length
+    // Validate text length — explicit maxLength or 500-char default for short-answer
+    const SHORT_ANSWER_MAX = 500;
     for (const q of applicableQuestions) {
-      if (!q.maxLength) continue;
       const val = data.answers[q.id];
-      if (typeof val === "string" && val.length > q.maxLength) {
+      if (typeof val !== "string") continue;
+      const limit = q.maxLength ?? (q.type === "short-answer" ? SHORT_ANSWER_MAX : 0);
+      if (limit > 0 && val.length > limit) {
         return VALIDATION_ERROR;
       }
     }
