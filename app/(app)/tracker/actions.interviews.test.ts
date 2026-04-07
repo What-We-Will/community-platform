@@ -4,128 +4,102 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 jest.mock("@/lib/supabase/server", () => ({ createClient: jest.fn() }));
-jest.mock("@/lib/groups", () => ({
-  generateSlug: jest.fn().mockResolvedValue("test-slug"),
-  createGroup: jest.fn().mockResolvedValue({ slug: "test-slug", id: "group-1" }),
-  joinGroup: jest.fn().mockResolvedValue(undefined),
-  leaveGroup: jest.fn().mockResolvedValue(null),
-  isSlugAvailable: jest.fn().mockResolvedValue(true),
-  normalizeSlug: jest.fn().mockReturnValue("test-slug"),
-}));
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import {
-  createGroupAction,
-  joinGroupAction,
-  leaveGroupAction,
-} from "./actions";
+import { createApplication, addInterview, deleteInterview } from "./actions";
 
 const mockRevalidatePath = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
 const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>;
 
-function makeClient(userId: string | null) {
+function makeChain(thenResult = { error: null }) {
   const chain: Record<string, any> = {};
-  ["select", "update", "insert", "delete", "eq", "single"].forEach((m) => {
+  ["select", "insert", "delete", "eq", "single"].forEach((m) => {
     chain[m] = jest.fn().mockReturnValue(chain);
   });
-  chain.then = (r: any, j: any) => Promise.resolve({ error: null }).then(r, j);
-  chain.catch = (j: any) => Promise.resolve({ error: null }).catch(j);
+  chain.then = (r: any, j: any) => Promise.resolve(thenResult).then(r, j);
+  chain.catch = (j: any) => Promise.resolve(thenResult).catch(j);
+  return chain;
+}
+
+function makeClient(userId: string | null) {
   return {
     auth: {
       getUser: jest.fn().mockResolvedValue({
         data: { user: userId ? { id: userId } : null },
       }),
     },
-    from: jest.fn().mockReturnValue(chain),
+    from: jest.fn().mockReturnValue(makeChain()),
   };
 }
 
-describe("createGroupAction — cache revalidation", () => {
-  const input = { name: "Test Group", description: null, isPrivate: false, isDiscoverable: true };
+describe("createApplication — cache revalidation", () => {
+  const input = { company: "ACME", position: "Engineer", status: "applied" as const };
 
   beforeEach(() => { jest.clearAllMocks(); });
 
   it("should return an error when user is not authenticated", async () => {
-    // Arrange
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
-    // Act
-    const result = await createGroupAction(input);
+    const result = await createApplication(input);
 
-    // Assert
     expect(result).toEqual({ error: "Not authenticated" });
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /groups and /dashboard on successful creation", async () => {
-    // Arrange
+  it("should revalidate /tracker and /dashboard on successful creation", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
-    // Act
-    const result = await createGroupAction(input);
+    const result = await createApplication(input);
 
-    // Assert
-    expect(result).toMatchObject({ slug: "test-slug" });
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/groups");
+    expect(result).toEqual({});
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/tracker");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
   });
 });
 
-describe("joinGroupAction — cache revalidation", () => {
+describe("addInterview — cache revalidation", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
   it("should return an error when user is not authenticated", async () => {
-    // Arrange
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
-    // Act
-    const result = await joinGroupAction("group-1");
+    const result = await addInterview("app-1", "Phone screen", "2026-04-10", "14:00", "");
 
-    // Assert
     expect(result).toEqual({ error: "Not authenticated" });
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /groups and /dashboard on successful join", async () => {
-    // Arrange
+  it("should revalidate /tracker and /dashboard on successful insert", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
-    // Act
-    const result = await joinGroupAction("group-1");
+    const result = await addInterview("app-1", "Phone screen", "2026-04-10", "14:00", "");
 
-    // Assert
     expect(result).toEqual({});
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/groups");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/tracker");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
   });
 });
 
-describe("leaveGroupAction — cache revalidation", () => {
+describe("deleteInterview — cache revalidation", () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
   it("should return an error when user is not authenticated", async () => {
-    // Arrange
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
 
-    // Act
-    const result = await leaveGroupAction("group-1");
+    const result = await deleteInterview("interview-1");
 
-    // Assert
     expect(result).toEqual({ error: "Not authenticated" });
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("should revalidate /groups and /dashboard on successful leave", async () => {
-    // Arrange
+  it("should revalidate /tracker and /dashboard on successful deletion", async () => {
     mockCreateClient.mockResolvedValue(makeClient("user-1") as any);
 
-    // Act
-    const result = await leaveGroupAction("group-1");
+    const result = await deleteInterview("interview-1");
 
-    // Assert
     expect(result).toEqual({});
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/groups");
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/tracker");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
   });
 });
