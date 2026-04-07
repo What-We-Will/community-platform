@@ -56,8 +56,16 @@ async function verifyCaptcha(token: string): Promise<boolean> {
         body: new URLSearchParams({ secret, response: token }),
       }
     );
-    const result = (await res.json()) as { success: boolean };
-    return result.success === true;
+    const result = (await res.json()) as {
+      success: boolean;
+      action?: string;
+      cdata?: string;
+    };
+    if (!result.success) return false;
+    // Verify the token was issued for this specific action and survey
+    if (result.action !== "survey-submit") return false;
+    if (result.cdata !== config.surveyId) return false;
+    return true;
   } catch (err) {
     const name = err instanceof Error ? err.constructor.name : "UnknownError";
     console.error(`[survey/actions] Turnstile request failed: ${name}`);

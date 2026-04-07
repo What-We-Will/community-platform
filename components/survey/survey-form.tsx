@@ -327,6 +327,7 @@ export function SurveyForm() {
         <Turnstile
           ref={turnstileRef}
           siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+          options={{ action: "survey-submit", cData: config.surveyId }}
           onSuccess={(token) => setTurnstileToken(token)}
           onError={() => setTurnstileToken(null)}
           onExpire={() => setTurnstileToken(null)}
