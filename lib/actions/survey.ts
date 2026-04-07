@@ -125,6 +125,14 @@ export async function submitSurvey(data: {
         (q.section === respondentSection || q.section === "everyone")
     );
 
+    // Reject any answer keys not in the applicable set
+    const allowedKeys = new Set(applicableQuestions.map((q) => q.id));
+    for (const key of Object.keys(data.answers)) {
+      if (!allowedKeys.has(key)) {
+        return VALIDATION_ERROR;
+      }
+    }
+
     // Validate required fields
     for (const q of applicableQuestions) {
       if (!q.required) continue;
