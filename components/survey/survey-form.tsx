@@ -119,7 +119,7 @@ export function SurveyForm() {
   }
 
   function handleNext() {
-    const questions = getQuestionsForStep(step, respondentSection as SurveySectionType);
+    const questions = getQuestionsForStep(step, respondentSection);
     const errs = validateQuestions(questions, answers);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -250,7 +250,7 @@ export function SurveyForm() {
   }
 
   // ── Section steps ──────────────────────────────────────────────────────────
-  const currentQuestions = getQuestionsForStep(step, respondentSection as SurveySectionType);
+  const currentQuestions = getQuestionsForStep(step, respondentSection);
   const contact = typeof answers.contact === "string" ? answers.contact.trim() : "";
 
   return (
