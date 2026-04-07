@@ -41,7 +41,6 @@ export function ConversationList({
       .join(","),
   );
 
-  // Sync from server when initialConversations gains new conversations
   useEffect(() => {
     const ids = initialConversations
       .map((c) => c.conversation.id)
@@ -53,7 +52,6 @@ export function ConversationList({
     }
   }, [initialConversations]);
 
-  // Reset unread count when a conversation becomes active
   useEffect(() => {
     const match = pathname.match(/\/messages\/([^/]+)/);
     if (!match) return;
@@ -65,7 +63,6 @@ export function ConversationList({
     );
   }, [pathname]);
 
-  // Subscribe to new messages for real-time updates
   useEffect(() => {
     const supabase = createClient();
 
@@ -166,22 +163,18 @@ export function ConversationList({
     router.refresh();
   }
 
-  // Only show DMs + notes
   const dmConversations = conversations.filter(
     (c) => c.conversation.id !== selfNotesId && c.conversation.type !== "group",
   );
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="flex items-center justify-between border-b px-4 py-3 shrink-0">
         <h2 className="text-base font-semibold">Messages</h2>
         <NewMessageDialog />
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto">
-        {/* My Notes */}
         {(() => {
           const isNotesActive = pathname === `/messages/${selfNotesId}`;
           const notesConv = conversations.find(
