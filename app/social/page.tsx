@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Mail, Megaphone, ArrowRight } from "lucide-react";
+import { BookOpen, Mail, Megaphone, ArrowRight, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   BlueSkyIcon,
@@ -23,6 +23,13 @@ export const metadata: Metadata = {
 
 const LINKS = [
   {
+    label: "Join Our Mass Call",
+    description: "Join us for our next layoff support call",
+    href: "https://movement.wwwrise.org",
+    icon: Megaphone,
+    primary: true,
+  },
+  {
     label: "No Robo Bosses",
     description: "Learn about the bill and get involved",
     href: "/programs/no-robo-bosses",
@@ -40,7 +47,7 @@ const LINKS = [
     label: "About Us",
     description: "Learn about our mission and vision",
     href: "/about-us",
-    icon: Megaphone,
+    icon: Users,
     primary: false,
   },
 ];
