@@ -43,25 +43,39 @@ describe("encrypt → decrypt round-trip", () => {
 // ── tamper detection (GCM auth tag) ──────────────────────────────────────────
 
 describe("tamper detection", () => {
-  it("should throw when the ciphertext has been modified", () => {
-    const { ciphertext, iv } = encrypt("user@example.com", TEST_KEY);
-    const tampered = ciphertext.slice(0, -2) + "ff";
-    expect(() => decrypt(tampered, iv, TEST_KEY)).toThrow();
+  beforeEach(() => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
-  it("should throw when the IV has been modified", () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it("should throw a generic error when the ciphertext has been modified", () => {
+    const { ciphertext, iv } = encrypt("user@example.com", TEST_KEY);
+    const tampered = ciphertext.slice(0, -2) + "ff";
+    expect(() => decrypt(tampered, iv, TEST_KEY)).toThrow("Decryption failed");
+  });
+
+  it("should throw a generic error when the IV has been modified", () => {
     const { ciphertext, iv } = encrypt("user@example.com", TEST_KEY);
     const tamperedIv = iv.slice(0, -2) + "ff";
-    expect(() => decrypt(ciphertext, tamperedIv, TEST_KEY)).toThrow();
+    expect(() => decrypt(ciphertext, tamperedIv, TEST_KEY)).toThrow("Decryption failed");
   });
 });
 
 // ── key validation ────────────────────────────────────────────────────────────
 
 describe("key validation", () => {
-  it("should throw when the key is not 32 bytes", () => {
+  it("should throw when the encryption key is not 32 bytes", () => {
     const shortKey = Buffer.from("deadbeef", "hex");
     expect(() => encrypt("test", shortKey)).toThrow("Encryption key must be 32 bytes");
+  });
+
+  it("should throw when the decryption key is not 32 bytes", () => {
+    const { ciphertext, iv } = encrypt("test", TEST_KEY);
+    const shortKey = Buffer.from("deadbeef", "hex");
+    expect(() => decrypt(ciphertext, iv, shortKey)).toThrow("Decryption key must be 32 bytes");
   });
 });
 
