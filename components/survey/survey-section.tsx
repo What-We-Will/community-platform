@@ -50,7 +50,7 @@ interface SurveySectionProps {
   errors: Record<string, string>;
   companyName: string;
   respondentTypes?: RespondentType[];
-  onChange: (id: string, value: string | string[]) => void;
+  onChange: (id: string, value: string | string[] | Record<string, string>) => void;
 }
 
 export function SurveySection({
@@ -158,6 +158,56 @@ export function SurveySection({
                     <span>{q.maxLabel}</span>
                   </div>
                 )}
+              </div>
+            )}
+
+            {q.type === "matrix-radio" && q.rows && q.columns && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr>
+                      <th className="w-2/5 pb-2 text-left font-normal text-muted-foreground" />
+                      {q.columns.map((col) => (
+                        <th
+                          key={col.key}
+                          className="min-w-[4rem] px-2 pb-2 text-center font-normal text-muted-foreground"
+                        >
+                          {col.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {q.rows.map((row, rowIdx) => {
+                      const rowLabel = row.label.replace("{companyName}", companyName);
+                      const currentVal =
+                        (answers[q.id] as Record<string, string> | undefined) ?? {};
+                      return (
+                        <tr
+                          key={row.key}
+                          className={cn("border-t", rowIdx % 2 === 0 && "bg-muted/20")}
+                        >
+                          <td className="py-3 pr-4 align-top leading-snug">{rowLabel}</td>
+                          {q.columns!.map((col) => (
+                            <td key={col.key} className="px-2 py-3 text-center align-middle">
+                              <input
+                                type="radio"
+                                name={`${q.id}-${row.key}`}
+                                value={col.key}
+                                checked={currentVal[row.key] === col.key}
+                                onChange={() =>
+                                  onChange(q.id, { ...currentVal, [row.key]: col.key })
+                                }
+                                aria-label={`${rowLabel} — ${col.label}`}
+                                className="h-4 w-4 accent-primary"
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
 

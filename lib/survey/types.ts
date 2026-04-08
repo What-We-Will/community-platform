@@ -16,7 +16,7 @@ export interface RespondentType {
 
 export type SurveySection = "everyone" | "laid_off" | "current_employee" | "closing" | "main";
 
-export type QuestionType = "single-select" | "multi-select" | "short-answer" | "free-text" | "scale";
+export type QuestionType = "single-select" | "multi-select" | "short-answer" | "free-text" | "scale" | "matrix-radio";
 
 export type StorageTarget = "responses" | "sensitive";
 
@@ -38,6 +38,8 @@ export interface SurveyQuestion {
   max?: number;
   minLabel?: string;
   maxLabel?: string;
+  rows?: { key: string; label: string }[];
+  columns?: { key: string; label: string }[];
 }
 
 export type SurveyStep = "preamble" | "s1" | "s2" | "s3" | "s4" | "submitted";

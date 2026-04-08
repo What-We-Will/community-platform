@@ -109,7 +109,7 @@ export function SurveyForm() {
   const respondentSection =
     (config.respondentTypes ?? []).find((rt) => rt.value === respondentTypeValue)?.section ?? null;
 
-  function handleChange(id: string, value: string | string[]) {
+  function handleChange(id: string, value: string | string[] | Record<string, string>) {
     setAnswers((prev) => ({ ...prev, [id]: value }));
     if (errors[id]) {
       setErrors((prev) => {

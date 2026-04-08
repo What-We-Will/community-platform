@@ -197,6 +197,27 @@ export async function submitSurvey(data: {
         }
       }
 
+      if (q.type === "matrix-radio" && q.rows && q.columns) {
+        if (typeof val !== "object" || Array.isArray(val) || val === null) {
+          return VALIDATION_ERROR;
+        }
+        const obj = val as Record<string, string>;
+        const validRows = new Set(q.rows.map((r) => r.key));
+        const validCols = new Set(q.columns.map((c) => c.key));
+
+        // Validate answered rows: each key must be a valid row, each value a valid column
+        for (const [rowKey, rowVal] of Object.entries(obj)) {
+          if (!validRows.has(rowKey) || !validCols.has(rowVal)) return VALIDATION_ERROR;
+        }
+
+        // Only enforce all-rows-present when question is required
+        if (q.required) {
+          for (const row of q.rows) {
+            if (!(row.key in obj)) return VALIDATION_ERROR;
+          }
+        }
+      }
+
     }
 
     // Validate text length — explicit maxLength or 500-char default for short-answer
