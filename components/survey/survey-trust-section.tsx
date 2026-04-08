@@ -16,7 +16,9 @@ export function SurveyTrustSection() {
           <span className="mt-0.5 shrink-0 text-green-600">✓</span>
           <span>
             Your survey answers (grievances, team, stories) are stored separately from your
-            contact information. They cannot be linked to you even if you provide a contact.
+            contact information. Anyone with access to our stored data cannot connect your
+            answers to your identity. If you have a platform account, submit from a private
+            window.
           </span>
         </li>
         <li className="flex gap-2">
