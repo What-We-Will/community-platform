@@ -135,6 +135,32 @@ export function SurveySection({
               </RadioGroup>
             )}
 
+            {q.type === "scale" && q.min != null && q.max != null && (
+              <div className="space-y-2">
+                <RadioGroup
+                  value={typeof value === "string" ? value : ""}
+                  onValueChange={(v) => onChange(q.id, v)}
+                  name={q.id}
+                  className={cn(
+                    "flex flex-row gap-4",
+                    error && "rounded-md border border-destructive p-3"
+                  )}
+                >
+                  {Array.from({ length: q.max - q.min + 1 }, (_, i) => String(q.min! + i)).map((opt) => (
+                    <RadioGroupItem key={opt} value={opt}>
+                      {opt}
+                    </RadioGroupItem>
+                  ))}
+                </RadioGroup>
+                {(q.minLabel || q.maxLabel) && (
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{q.minLabel}</span>
+                    <span>{q.maxLabel}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {q.type === "multi-select" && q.options && (
               <div
                 role="group"

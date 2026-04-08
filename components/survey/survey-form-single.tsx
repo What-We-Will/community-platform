@@ -1,0 +1,147 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
+import { Button } from "@/components/ui/button";
+import { SurveySection } from "./survey-section";
+import { SurveyExplainer } from "./survey-explainer";
+import { SurveyTrustSection } from "./survey-trust-section";
+import { submitSurvey } from "@/lib/actions/survey";
+import type { SurveyConfig, SurveyAnswers } from "@/lib/survey/types";
+
+interface SurveyFormSingleProps {
+  config: SurveyConfig;
+}
+
+export function SurveyFormSingle({ config }: SurveyFormSingleProps) {
+  const STORAGE_KEY = `survey_submitted_${config.surveyId}`;
+
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [answers, setAnswers] = useState<SurveyAnswers>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileInstance>(undefined);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development" && localStorage.getItem(STORAGE_KEY)) {
+      setAlreadySubmitted(true);
+    }
+  }, [STORAGE_KEY]);
+
+  function handleChange(id: string, value: string | string[] | Record<string, string>) {
+    setAnswers((prev) => ({ ...prev, [id]: value }));
+    if (errors[id]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    }
+  }
+
+  async function handleSubmit() {
+    if (!turnstileToken) {
+      setSubmitError("Please wait for the security check to complete.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const result = await submitSurvey({
+        surveyId: config.surveyId,
+        answers,
+        turnstileToken,
+      });
+
+      if (!result.ok) {
+        setSubmitError(result.error);
+        turnstileRef.current?.reset();
+        setTurnstileToken(null);
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEY, "1");
+      setSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  if (alreadySubmitted) {
+    return (
+      <div className="rounded-lg border bg-muted/40 p-8 text-center">
+        <p className="text-lg font-semibold">You&apos;ve already submitted a response.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Thank you — we&apos;ll be in touch with next steps.
+        </p>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="rounded-lg border bg-muted/40 p-8 text-center">
+        <p className="text-2xl font-bold">Thank you.</p>
+        <p className="mt-2 text-muted-foreground">
+          Your response has been recorded. We&apos;ll be in touch with next steps.
+        </p>
+        <p className="mt-4 text-xs text-muted-foreground/70">
+          No identifying information was stored alongside your survey answers.
+        </p>
+      </div>
+    );
+  }
+
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+
+  return (
+    <div className="space-y-8">
+      <SurveyExplainer
+        companyName={config.companyName}
+        description={config.description}
+      />
+      <SurveyTrustSection />
+
+      <SurveySection
+        questions={config.questions}
+        answers={answers}
+        errors={errors}
+        companyName={config.companyName}
+        onChange={handleChange}
+      />
+
+      {siteKey ? (
+        <Turnstile
+          ref={turnstileRef}
+          siteKey={siteKey}
+          options={{ action: "survey-submit", cData: config.surveyId }}
+          onSuccess={(token) => setTurnstileToken(token)}
+          onExpire={() => setTurnstileToken(null)}
+        />
+      ) : (
+        <p className="text-sm text-destructive">
+          Security check unavailable. Please contact the site administrator.
+        </p>
+      )}
+
+      {submitError && (
+        <p className="text-sm text-destructive" role="alert">
+          {submitError}
+        </p>
+      )}
+
+      <Button
+        className="w-full sm:w-auto"
+        onClick={handleSubmit}
+        disabled={isSubmitting || !turnstileToken}
+      >
+        {isSubmitting ? "Submitting…" : "Submit"}
+      </Button>
+    </div>
+  );
+}

@@ -2,7 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt, hashDomain } from "@/lib/survey/crypto";
-import config from "@/lib/survey/config";
+import { surveyConfigs } from "@/lib/survey/config";
 import type { SurveyActionResult, SurveyAnswers, SurveySection } from "@/lib/survey/types";
 
 // Validate required env vars on first cold start (prod only).
@@ -41,7 +41,7 @@ const VALIDATION_ERROR: SurveyActionResult = {
   error: "Invalid submission. Please check your answers.",
 };
 
-async function verifyCaptcha(token: string): Promise<boolean> {
+async function verifyCaptcha(token: string, surveyId: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
     console.error("[survey/actions] TURNSTILE_SECRET_KEY is not set");
@@ -65,7 +65,7 @@ async function verifyCaptcha(token: string): Promise<boolean> {
     // Verify the token was issued for this specific action and survey.
     // Test/dummy keys don't return action/cdata — only enforce when present.
     if (result.action && result.action !== "survey-submit") return false;
-    if (result.cdata && result.cdata !== config.surveyId) return false;
+    if (result.cdata && result.cdata !== surveyId) return false;
     return true;
   } catch (err) {
     const name = err instanceof Error ? err.constructor.name : "UnknownError";
@@ -83,16 +83,21 @@ type ContactType = (typeof CONTACT_TYPES)[number];
  * with no FK linking them — preserving respondent anonymity at the data layer.
  */
 export async function submitSurvey(data: {
-  respondentType: string;
+  surveyId: string;
+  respondentType?: string;
   answers: SurveyAnswers;
-  willingness: string;
+  willingness?: string;
   contact?: string;
   contactType?: string;
   turnstileToken: string;
 }): Promise<SurveyActionResult> {
   try {
+    // Look up survey config — reject unknown survey IDs
+    const surveyConfig = surveyConfigs[data.surveyId];
+    if (!surveyConfig) return VALIDATION_ERROR;
+
     // Verify Turnstile — single-use token, one check for entire submission
-    const captchaOk = await verifyCaptcha(data.turnstileToken);
+    const captchaOk = await verifyCaptcha(data.turnstileToken, data.surveyId);
     if (!captchaOk) return VERIFICATION_ERROR;
 
     // Check survey status — fail closed: no row or non-active = reject
@@ -100,7 +105,7 @@ export async function submitSurvey(data: {
     const { data: meta, error: metaError } = await supabase
       .from("survey_meta")
       .select("status")
-      .eq("survey_id", config.surveyId)
+      .eq("survey_id", data.surveyId)
       .single();
 
     if (metaError || !meta || meta.status !== "active") {
@@ -110,24 +115,36 @@ export async function submitSurvey(data: {
       return SURVEY_CLOSED_ERROR;
     }
 
-    // Validate respondentType against config
-    const respondentTypeConfig = config.respondentTypes.find(
-      (rt) => rt.value === data.respondentType
-    );
-    if (!respondentTypeConfig) return VALIDATION_ERROR;
+    // ── Respondent type handling ────────────────────────────────────────────
+    let respondentType: string;
+    let applicableQuestions: typeof surveyConfig.questions;
 
-    const respondentSection: SurveySection = respondentTypeConfig.section;
+    if (data.respondentType !== undefined) {
+      // Multi-page: validate respondentType against config
+      const respondentTypeConfig = surveyConfig.respondentTypes?.find(
+        (rt) => rt.value === data.respondentType
+      );
+      if (!respondentTypeConfig) return VALIDATION_ERROR;
+
+      const respondentSection: SurveySection = respondentTypeConfig.section;
+      respondentType = data.respondentType;
+
+      applicableQuestions = surveyConfig.questions.filter(
+        (q) =>
+          q.storageTarget === "responses" &&
+          q.id !== "respondent_type" &&
+          (q.section === respondentSection || q.section === "everyone")
+      );
+    } else {
+      // Single-page: no section filtering, respondentType is "anonymous"
+      respondentType = "anonymous";
+
+      applicableQuestions = surveyConfig.questions.filter(
+        (q) => q.storageTarget === "responses"
+      );
+    }
 
     // ── Validate & build survey_responses ──────────────────────────────────
-
-    // Questions applicable to this respondent in survey_responses
-    // Excludes 'respondent_type' (stored as a column, not in JSONB answers)
-    const applicableQuestions = config.questions.filter(
-      (q) =>
-        q.storageTarget === "responses" &&
-        q.id !== "respondent_type" &&
-        (q.section === respondentSection || q.section === "everyone")
-    );
 
     // Reject oversized answer payloads
     if (Object.keys(data.answers).length > applicableQuestions.length) {
@@ -154,7 +171,7 @@ export async function submitSurvey(data: {
       if (missing) return VALIDATION_ERROR;
     }
 
-    // Validate enum values for single-select and multi-select
+    // Validate enum values for single-select and multi-select; range for scale
     for (const q of applicableQuestions) {
       const val = data.answers[q.id];
       if (val === undefined || val === "" || val === null) continue;
@@ -167,10 +184,19 @@ export async function submitSurvey(data: {
 
       if (q.type === "multi-select" && q.options) {
         const arr = Array.isArray(val) ? val : [val];
-        if (!arr.every((v) => typeof v === "string" && q.options!.includes(v))) {
+        if (!arr.every((v) => typeof v === "string" && q.options!.includes(v as string))) {
           return VALIDATION_ERROR;
         }
       }
+
+      if (q.type === "scale" && q.min != null && q.max != null) {
+        if (typeof val !== "string") return VALIDATION_ERROR;
+        const num = parseInt(val, 10);
+        if (isNaN(num) || num < q.min || num > q.max) {
+          return VALIDATION_ERROR;
+        }
+      }
+
     }
 
     // Validate text length — explicit maxLength or 500-char default for short-answer
@@ -186,7 +212,7 @@ export async function submitSurvey(data: {
 
     // Build JSONB answers — encrypt designated fields
     // Encrypted values stored as "iv_hex:ciphertext_hex" (single string, no JSON wrapper)
-    const jsonbAnswers: Record<string, string | string[]> = {};
+    const jsonbAnswers: Record<string, string | string[] | Record<string, string>> = {};
     for (const q of applicableQuestions) {
       const val = data.answers[q.id];
       if (val === undefined || val === null || val === "") continue;
@@ -201,15 +227,25 @@ export async function submitSurvey(data: {
 
     // ── Validate & build survey_sensitive ──────────────────────────────────
 
-    // Validate willingness against config options
-    const willingnessQuestion = config.questions.find((q) => q.id === "willingness");
-    if (!willingnessQuestion?.options?.length) {
-      console.error("[survey/actions] willingness question missing from config or has no options");
-      return GENERIC_ERROR;
+    // Find the sensitive single-select question (willingness equivalent)
+    const sensitiveQuestion = surveyConfig.questions.find(
+      (q) => q.storageTarget === "sensitive" && q.type === "single-select"
+    );
+
+    let willingnessValue: string | null = null;
+
+    if (sensitiveQuestion) {
+      // Survey has a sensitive question — validate willingness
+      if (!sensitiveQuestion.options?.length) {
+        console.error("[survey/actions] sensitive question missing options in config");
+        return GENERIC_ERROR;
+      }
+      if (!data.willingness || !sensitiveQuestion.options.includes(data.willingness)) {
+        return VALIDATION_ERROR;
+      }
+      willingnessValue = data.willingness;
     }
-    if (!willingnessQuestion.options.includes(data.willingness)) {
-      return VALIDATION_ERROR;
-    }
+    // If no sensitive question: willingnessValue stays null → RPC skips survey_sensitive insert
 
     // Validate contactType if contact is provided
     const contactRaw = data.contact?.trim() ?? "";
@@ -246,13 +282,17 @@ export async function submitSurvey(data: {
       }
     }
 
+    // Employment status: "anonymous" for single-page, respondentType for multi-page
+    const employmentStatus =
+      data.respondentType !== undefined ? data.respondentType : "anonymous";
+
     // ── Atomic insert via RPC — both rows succeed or neither does ────────
     const { error: rpcError } = await supabase.rpc("submit_survey", {
-      p_survey_id: config.surveyId,
-      p_respondent_type: data.respondentType,
+      p_survey_id: data.surveyId,
+      p_respondent_type: respondentType,
       p_answers: jsonbAnswers,
-      p_employment_status: data.respondentType,
-      p_willingness: data.willingness,
+      p_employment_status: employmentStatus,
+      p_willingness: willingnessValue,
       p_encrypted_contact: encryptedContact,
       p_contact_iv: contactIv,
       p_contact_type: contactType,

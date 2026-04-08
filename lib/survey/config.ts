@@ -2,12 +2,13 @@ import type { SurveyConfig } from "./types";
 
 const companyName = process.env.NEXT_PUBLIC_SURVEY_COMPANY_NAME ?? "";
 
-const config: SurveyConfig = {
+const layoffSurvey: SurveyConfig = {
   surveyId: "layoff-survey-2026",
   companyName,
   title: "Worker Experience Survey",
   description:
     "Help us understand what workers are going through and connect those who want to take collective action. Your answers are private — we do not collect your name, IP address, or any identifying information unless you choose to share contact details.",
+  layout: "multi-page",
 
   respondentTypes: [
     {
@@ -215,4 +216,37 @@ const config: SurveyConfig = {
   ],
 };
 
-export default config;
+const severanceNegotiationSurvey: SurveyConfig = {
+  surveyId: "severance-negotiation-2026",
+  companyName,
+  title: "Severance Negotiation Survey",
+  description:
+    "Help us understand your experience with the proposed severance package. Your answers are private and anonymous.",
+  layout: "single-page",
+
+  questions: [
+    {
+      id: "satisfaction",
+      type: "scale",
+      section: "main",
+      label:
+        "How satisfied are you with the proposed severance, as outlined in the Severance FAQ?",
+      required: false,
+      storageTarget: "responses",
+      encrypted: false,
+      min: 1,
+      max: 5,
+      minLabel: "Very unhappy",
+      maxLabel: "Very happy",
+    },
+  ],
+};
+
+export const surveyConfigs: Record<string, SurveyConfig> = {
+  "layoff-survey-2026": layoffSurvey,
+  "severance-negotiation-2026": severanceNegotiationSurvey,
+};
+
+export const DEFAULT_SURVEY_ID = "severance-negotiation-2026";
+
+export default surveyConfigs[DEFAULT_SURVEY_ID];

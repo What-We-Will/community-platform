@@ -9,8 +9,10 @@ import { SurveySection } from "./survey-section";
 import { SurveyExplainer } from "./survey-explainer";
 import { SurveyTrustSection } from "./survey-trust-section";
 import { submitSurvey } from "@/lib/actions/survey";
-import config from "@/lib/survey/config";
+import { surveyConfigs } from "@/lib/survey/config";
 import type { SurveyAnswers, SurveyStep, SurveySection as SurveySectionType } from "@/lib/survey/types";
+
+const config = surveyConfigs["layoff-survey-2026"];
 
 const STORAGE_KEY = `survey_submitted_${config.surveyId}`;
 
@@ -105,7 +107,7 @@ export function SurveyForm() {
   const respondentTypeValue =
     typeof answers.respondent_type === "string" ? answers.respondent_type : "";
   const respondentSection =
-    config.respondentTypes.find((rt) => rt.value === respondentTypeValue)?.section ?? null;
+    (config.respondentTypes ?? []).find((rt) => rt.value === respondentTypeValue)?.section ?? null;
 
   function handleChange(id: string, value: string | string[]) {
     setAnswers((prev) => ({ ...prev, [id]: value }));
@@ -176,6 +178,7 @@ export function SurveyForm() {
 
       const willingness = typeof answers.willingness === "string" ? answers.willingness : "";
       const result = await submitSurvey({
+        surveyId: config.surveyId,
         respondentType: respondentTypeValue,
         answers: responsesAnswers,
         willingness,
@@ -282,7 +285,7 @@ export function SurveyForm() {
         answers={answers}
         errors={errors}
         companyName={config.companyName}
-        respondentTypes={config.respondentTypes}
+        respondentTypes={config.respondentTypes ?? []}
         onChange={handleChange}
       />
 
