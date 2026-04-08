@@ -2,16 +2,17 @@
 
 import { createServiceClient } from "@/lib/supabase/service";
 import { encrypt, hashDomain } from "@/lib/survey/crypto";
+import { loadSecrets } from "@/lib/survey/secrets";
 import config from "@/lib/survey/config";
 import type { SurveyActionResult, SurveyAnswers, SurveySection } from "@/lib/survey/types";
 
 // Validate required env vars on first cold start (prod only).
 // Fails fast with a clear error in Vercel logs rather than silently
 // losing user submissions when a var is missing.
+// Note: SURVEY_ENCRYPTION_KEY and SURVEY_DOMAIN_SALT are loaded from
+// Supabase Vault at runtime — not validated here.
 if (process.env.NODE_ENV === "production") {
   const required = [
-    "SURVEY_ENCRYPTION_KEY",
-    "SURVEY_DOMAIN_SALT",
     "TURNSTILE_SECRET_KEY",
   ] as const;
   for (const name of required) {
@@ -184,6 +185,9 @@ export async function submitSurvey(data: {
       }
     }
 
+    // Load secrets once for this submission — cached after first call
+    const secrets = await loadSecrets();
+
     // Build JSONB answers — encrypt designated fields
     // Encrypted values stored as "iv_hex:ciphertext_hex" (single string, no JSON wrapper)
     const jsonbAnswers: Record<string, string | string[]> = {};
@@ -192,7 +196,7 @@ export async function submitSurvey(data: {
       if (val === undefined || val === null || val === "") continue;
 
       if (q.encrypted && typeof val === "string" && val.length > 0) {
-        const { ciphertext, iv } = encrypt(val);
+        const { ciphertext, iv } = encrypt(val, secrets.key);
         jsonbAnswers[q.id] = `${iv}:${ciphertext}`;
       } else {
         jsonbAnswers[q.id] = val;
@@ -232,7 +236,7 @@ export async function submitSurvey(data: {
     const keyVersion = 1;
 
     if (contactRaw.length > 0 && contactType) {
-      const { ciphertext, iv } = encrypt(contactRaw, keyVersion);
+      const { ciphertext, iv } = encrypt(contactRaw, secrets.key, keyVersion);
       encryptedContact = ciphertext;
       contactIv = iv;
 
@@ -241,7 +245,7 @@ export async function submitSurvey(data: {
         const atIdx = contactRaw.lastIndexOf("@");
         if (atIdx !== -1) {
           const domain = contactRaw.slice(atIdx + 1).toLowerCase();
-          domainHash = hashDomain(domain);
+          domainHash = hashDomain(domain, secrets.salt);
         }
       }
     }
