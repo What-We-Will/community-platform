@@ -16,6 +16,22 @@ interface VaultRow {
   decrypted_secret: string;
 }
 
+// Structural type for the Supabase client's untyped .schema() path.
+// The generated types don't cover vault.decrypted_secrets, so we define
+// only the shape we actually call to avoid `as any`.
+type VaultQueryable = {
+  schema: (s: string) => {
+    from: (table: string) => {
+      select: (cols: string) => {
+        in: (col: string, vals: string[]) => Promise<{
+          data: VaultRow[] | null;
+          error: { message: string } | null;
+        }>;
+      };
+    };
+  };
+};
+
 // Promise cache — populated once per serverless instance on first use.
 // Caching a Promise (not a resolved value) prevents duplicate Vault fetches
 // under concurrent cold-start requests: all callers await the same Promise.
@@ -54,14 +70,11 @@ export function loadSecrets(): Promise<SurveySecrets> {
 async function queryVaultSecrets(
   supabase: ReturnType<typeof createServiceClient>
 ): Promise<{ rows: VaultRow[]; error: { message: string } | null }> {
-  const { data, error } = await (supabase as any)
+  const { data, error } = await (supabase as unknown as VaultQueryable)
     .schema("vault")
     .from("decrypted_secrets")
     .select("name, decrypted_secret")
-    .in("name", [VAULT_KEY_NAME, VAULT_SALT_NAME]) as {
-      data: VaultRow[] | null;
-      error: { message: string } | null;
-    };
+    .in("name", [VAULT_KEY_NAME, VAULT_SALT_NAME]);
 
   if (error) return { rows: [], error };
 
