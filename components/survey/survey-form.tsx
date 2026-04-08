@@ -323,15 +323,21 @@ export function SurveyForm() {
       )}
 
       {/* Turnstile — shown on final step */}
-      {step === "s4" && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-        <Turnstile
-          ref={turnstileRef}
-          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-          options={{ action: "survey-submit", cData: config.surveyId }}
-          onSuccess={(token) => setTurnstileToken(token)}
-          onError={() => setTurnstileToken(null)}
-          onExpire={() => setTurnstileToken(null)}
-        />
+      {step === "s4" && (
+        process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? (
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+            options={{ action: "survey-submit", cData: config.surveyId }}
+            onSuccess={(token) => setTurnstileToken(token)}
+            onError={() => setTurnstileToken(null)}
+            onExpire={() => setTurnstileToken(null)}
+          />
+        ) : (
+          <p className="text-sm text-destructive" role="alert">
+            [Config] NEXT_PUBLIC_TURNSTILE_SITE_KEY is not set — submission is disabled.
+          </p>
+        )
       )}
 
       {/* Server error */}
