@@ -457,7 +457,7 @@ export function ConversationView({
 
     if (isGroup) {
       return (
-        <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 bg-background">
+        <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 sticky top-0 z-30 bg-background">
           <Link href="/messages">
             <Button variant="ghost" size="icon" className="md:hidden -ml-1">
               <ArrowLeft className="size-5" />
@@ -542,7 +542,7 @@ export function ConversationView({
           : "text-muted-foreground";
 
     return (
-      <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 bg-background">
+      <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 sticky top-0 z-30 bg-background">
         <Link href="/messages">
           <Button variant="ghost" size="icon" className="md:hidden -ml-1">
             <ArrowLeft className="size-5" />
