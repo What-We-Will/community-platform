@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { SurveyQuestion, SurveyAnswers, RespondentType } from "@/lib/survey/types";
 
@@ -31,6 +32,14 @@ const OPTION_LABELS: Record<string, string> = {
   somewhat_interested: "Somewhat interested — tell me more",
   not_sure: "Not sure yet",
   not_interested: "Not interested at this time",
+  // severance amount
+  less_than_5000: "Less than $5,000",
+  "5000_10000": "$5,000 – $10,000",
+  "10000_20000": "$10,000 – $20,000",
+  "20000_30000": "$20,000 – $30,000",
+  "30000_40000": "$30,000 – $40,000",
+  "40000_50000": "$40,000 – $50,000",
+  more_than_50000: "More than $50,000",
   // collective negotiation
   yes: "Yes",
   no: "No",
@@ -83,13 +92,12 @@ export function SurveySection({
           <div key={q.id} className="space-y-2">
             <Label
               htmlFor={q.id}
-              className={cn(
-                "text-sm font-medium leading-snug",
-                q.required &&
-                  "after:ml-0.5 after:text-destructive after:content-['*']"
-              )}
+              className="inline text-sm font-medium leading-snug"
             >
               {label}
+              {q.required && (
+                <span className="ml-1 text-destructive">*</span>
+              )}
             </Label>
 
             {q.type === "short-answer" && (
@@ -127,7 +135,7 @@ export function SurveySection({
                 onValueChange={(v) => onChange(q.id, v)}
                 name={q.id}
                 className={cn(
-                  "space-y-1",
+                  "mt-[5px] space-y-1",
                   error && "rounded-md border border-destructive p-3"
                 )}
               >
@@ -140,15 +148,20 @@ export function SurveySection({
             )}
 
             {q.type === "scale" && q.min != null && q.max != null && (
-              <div className="space-y-2">
+              <div
+                className={cn(
+                  "flex items-center justify-center gap-3",
+                  error && "rounded-md border border-destructive p-3"
+                )}
+              >
+                {q.minLabel && (
+                  <span className="shrink-0 text-sm font-normal text-foreground">{q.minLabel}</span>
+                )}
                 <RadioGroup
                   value={typeof value === "string" ? value : ""}
                   onValueChange={(v) => onChange(q.id, v)}
                   name={q.id}
-                  className={cn(
-                    "flex flex-row gap-4",
-                    error && "rounded-md border border-destructive p-3"
-                  )}
+                  className="flex flex-row gap-[21px]"
                 >
                   {Array.from({ length: q.max - q.min + 1 }, (_, i) => String(q.min! + i)).map((opt) => (
                     <RadioGroupItem key={opt} value={opt}>
@@ -156,13 +169,46 @@ export function SurveySection({
                     </RadioGroupItem>
                   ))}
                 </RadioGroup>
-                {(q.minLabel || q.maxLabel) && (
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{q.minLabel}</span>
-                    <span>{q.maxLabel}</span>
-                  </div>
+                {q.maxLabel && (
+                  <span className="shrink-0 text-sm font-normal text-foreground">{q.maxLabel}</span>
                 )}
               </div>
+            )}
+
+            {q.type === "dropdown" && q.options && (
+              <Select
+                value={typeof value === "string" ? value : ""}
+                onValueChange={(v) => onChange(q.id, v)}
+              >
+                <SelectTrigger
+                  id={q.id}
+                  className={cn("max-w-sm", error && "border-destructive")}
+                  aria-invalid={!!error}
+                >
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  {q.options.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {resolveOptionLabel(opt, respondentTypes)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {q.type === "numeric" && (
+              <Input
+                id={q.id}
+                type="number"
+                inputMode="numeric"
+                value={typeof value === "string" ? value : ""}
+                onChange={(e) => onChange(q.id, e.target.value)}
+                min={q.min}
+                max={q.max}
+                aria-invalid={!!error}
+                className={cn("w-[75px]", error && "border-destructive")}
+              />
             )}
 
             {q.type === "matrix-radio" && q.rows && q.columns && (

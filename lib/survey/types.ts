@@ -16,7 +16,7 @@ export interface RespondentType {
 
 export type SurveySection = "everyone" | "laid_off" | "current_employee" | "closing" | "main";
 
-export type QuestionType = "single-select" | "multi-select" | "short-answer" | "free-text" | "scale" | "matrix-radio";
+export type QuestionType = "single-select" | "multi-select" | "short-answer" | "free-text" | "scale" | "matrix-radio" | "dropdown" | "numeric";
 
 export type StorageTarget = "responses" | "sensitive";
 
@@ -51,4 +51,4 @@ export interface SurveyFormState {
   answers: SurveyAnswers;
 }
 
-export type SurveyActionResult = { ok: true } | { ok: false; error: string };
+export type SurveyActionResult = { ok: true } | { ok: false; error: string; fieldErrors?: Record<string, string> };

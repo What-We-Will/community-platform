@@ -197,6 +197,7 @@ export async function submitSurvey(data: {
     }
 
     // Validate required fields
+    const requiredErrors: Record<string, string> = {};
     for (const q of applicableQuestions) {
       if (!q.required) continue;
       const val = sanitizedAnswers[q.id];
@@ -205,7 +206,16 @@ export async function submitSurvey(data: {
         val === null ||
         val === "" ||
         (Array.isArray(val) && val.length === 0);
-      if (missing) return VALIDATION_ERROR;
+      if (missing) {
+        requiredErrors[q.id] = "This field is required.";
+      }
+    }
+    if (Object.keys(requiredErrors).length > 0) {
+      return {
+        ok: false,
+        error: "Please complete the required fields.",
+        fieldErrors: requiredErrors,
+      };
     }
 
     // Validate enum values for single-select and multi-select; range for scale
@@ -223,6 +233,24 @@ export async function submitSurvey(data: {
         const arr = Array.isArray(val) ? val : [val];
         if (!arr.every((v) => typeof v === "string" && q.options!.includes(v as string))) {
           return VALIDATION_ERROR;
+        }
+      }
+
+      if (q.type === "dropdown" && q.options) {
+        if (typeof val !== "string" || !q.options.includes(val)) {
+          return VALIDATION_ERROR;
+        }
+      }
+
+      if (q.type === "numeric" && q.min != null && q.max != null) {
+        if (typeof val !== "string") return VALIDATION_ERROR;
+        const num = parseInt(val, 10);
+        if (isNaN(num) || num < q.min || num > q.max) {
+          return {
+            ok: false,
+            error: "Invalid submission. Please check your answers.",
+            fieldErrors: { [q.id]: `Please enter a number between ${q.min} and ${q.max}.` },
+          };
         }
       }
 
@@ -300,7 +328,11 @@ export async function submitSurvey(data: {
         return GENERIC_ERROR;
       }
       if (sensitiveQuestion.required && !data.willingness) {
-        return VALIDATION_ERROR;
+        return {
+          ok: false,
+          error: "Please complete the required fields.",
+          fieldErrors: { [sensitiveQuestion.id]: "This field is required." },
+        };
       }
       if (data.willingness && !sensitiveQuestion.options.includes(data.willingness)) {
         return VALIDATION_ERROR;

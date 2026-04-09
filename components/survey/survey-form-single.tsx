@@ -3,22 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { SurveySection } from "./survey-section";
 import { SurveyExplainer } from "./survey-explainer";
 import { SurveyTrustSection } from "./survey-trust-section";
 import { submitSurvey } from "@/lib/actions/survey";
 import type { SurveyConfig, SurveyAnswers } from "@/lib/survey/types";
-
-const CONTACT_TYPE_OPTIONS = [
-  { value: "email", label: "Email" },
-  { value: "phone", label: "Phone" },
-  { value: "signal", label: "Signal" },
-  { value: "other", label: "Other" },
-] as const;
-
-type ContactTypeValue = "email" | "phone" | "signal" | "other";
 
 interface SurveyFormSingleProps {
   config: SurveyConfig;
@@ -31,7 +23,8 @@ export function SurveyFormSingle({ config }: SurveyFormSingleProps) {
   const [submitted, setSubmitted] = useState(false);
   const [answers, setAnswers] = useState<SurveyAnswers>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [contactType, setContactType] = useState<ContactTypeValue | "">("");
+  const [contactOptIn, setContactOptIn] = useState(false);
+  const [contactEmail, setContactEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -60,6 +53,26 @@ export function SurveyFormSingle({ config }: SurveyFormSingleProps) {
       return;
     }
 
+    // Client-side required field validation
+    const fieldErrors: Record<string, string> = {};
+    for (const q of config.questions) {
+      if (!q.required) continue;
+      const val = answers[q.id];
+      const missing =
+        val === undefined ||
+        val === null ||
+        val === "" ||
+        (Array.isArray(val) && val.length === 0);
+      if (missing) {
+        fieldErrors[q.id] = "This field is required.";
+      }
+    }
+    if (Object.keys(fieldErrors).length > 0) {
+      setErrors(fieldErrors);
+      setSubmitError("Please complete the required fields.");
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -72,8 +85,8 @@ export function SurveyFormSingle({ config }: SurveyFormSingleProps) {
         ? (typeof answers[sensitiveQ.id] === "string" ? (answers[sensitiveQ.id] as string) : undefined)
         : undefined;
 
-      // Extract contact value (sensitive short-answer)
-      const contact = typeof answers.contact === "string" ? answers.contact.trim() : "";
+      // Extract contact value — only if user opted in
+      const contact = contactOptIn ? contactEmail.trim() : "";
 
       // Build responses-only answers (exclude sensitive questions)
       const sensitiveIds = new Set(
@@ -89,12 +102,15 @@ export function SurveyFormSingle({ config }: SurveyFormSingleProps) {
         answers: responsesAnswers,
         willingness,
         contact: contact || undefined,
-        contactType: contact && contactType ? contactType : undefined,
+        contactType: contact ? "email" : undefined,
         turnstileToken,
       });
 
       if (!result.ok) {
         setSubmitError(result.error);
+        if (result.fieldErrors) {
+          setErrors(result.fieldErrors);
+        }
         turnstileRef.current?.reset();
         setTurnstileToken(null);
         return;
@@ -144,48 +160,55 @@ export function SurveyFormSingle({ config }: SurveyFormSingleProps) {
       <SurveyTrustSection />
 
       <SurveySection
-        questions={config.questions}
+        questions={config.questions.filter((q) => q.id !== "contact" && q.id !== "impact_story")}
         answers={answers}
         errors={errors}
         companyName={config.companyName}
         onChange={handleChange}
       />
 
-      {/* Contact type selector — shown when contact field has a value */}
-      {typeof answers.contact === "string" && answers.contact.trim().length > 0 && (
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">
-            What type of contact did you provide?
-            <span className="ml-0.5 text-destructive">*</span>
-          </Label>
-          <RadioGroup
-            value={contactType}
-            onValueChange={(v) => {
-              setContactType(v as ContactTypeValue);
-              if (errors.contactType) {
-                setErrors((prev) => {
-                  const next = { ...prev };
-                  delete next.contactType;
-                  return next;
-                });
+      {/* Contact opt-in: checkbox + conditional email field */}
+      <div className="space-y-3">
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="contact-opt-in"
+            checked={contactOptIn}
+            onCheckedChange={(checked) => {
+              const isChecked = checked === true;
+              setContactOptIn(isChecked);
+              if (!isChecked) {
+                setContactEmail("");
               }
             }}
-            name="contactType"
-            className="flex flex-wrap gap-4"
+            className="mt-0.5"
+          />
+          <Label
+            htmlFor="contact-opt-in"
+            className="cursor-pointer text-sm font-medium leading-snug"
           >
-            {CONTACT_TYPE_OPTIONS.map((opt) => (
-              <RadioGroupItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </RadioGroupItem>
-            ))}
-          </RadioGroup>
-          {errors.contactType && (
-            <p className="text-sm text-destructive" role="alert">
-              {errors.contactType}
-            </p>
-          )}
+            Can we reach out to you about our plans and progress?
+          </Label>
         </div>
-      )}
+        {contactOptIn && (
+          <Input
+            id="contact-email"
+            type="email"
+            placeholder="Your email address"
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            maxLength={100}
+            className="max-w-sm"
+          />
+        )}
+      </div>
+
+      <SurveySection
+        questions={config.questions.filter((q) => q.id === "impact_story")}
+        answers={answers}
+        errors={errors}
+        companyName={config.companyName}
+        onChange={handleChange}
+      />
 
       {siteKey ? (
         <Turnstile
