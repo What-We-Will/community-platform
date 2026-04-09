@@ -161,7 +161,11 @@ describe("submitSurvey — collective_negotiation is required for severance-nego
       turnstileToken: TURNSTILE_TOKEN,
     });
 
-    // Assert
-    expect(result).toEqual({ ok: false, error: "Invalid submission. Please check your answers." });
+    // Assert — required field missing returns field-level errors
+    expect(result).toEqual({
+      ok: false,
+      error: "Please complete the required fields.",
+      fieldErrors: { collective_negotiation: "This field is required." },
+    });
   });
 });
