@@ -46,3 +46,11 @@ next-env.d.ts
 
 #pnpm lock file
 pnpm-lock.yaml
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
