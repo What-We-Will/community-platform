@@ -241,6 +241,7 @@ export function SurveyForm() {
     return (
       <div className="space-y-6">
         <SurveyExplainer
+          title={config.title}
           companyName={config.companyName}
           description={config.description}
         />

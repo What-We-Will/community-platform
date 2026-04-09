@@ -60,6 +60,7 @@ describe("submitSurvey — matrix-radio partial fill acceptance", () => {
     const result = await (submitSurvey as any)({
       surveyId: "severance-negotiation-2026",
       answers: { clauses_assessment: { non_disparaging: "negotiate" } },
+      willingness: "yes",
       turnstileToken: TURNSTILE_TOKEN,
     });
 
@@ -77,6 +78,7 @@ describe("submitSurvey — matrix-radio partial fill acceptance", () => {
     const result = await (submitSurvey as any)({
       surveyId: "severance-negotiation-2026",
       answers: { clauses_assessment: {} },
+      willingness: "yes",
       turnstileToken: TURNSTILE_TOKEN,
     });
 
@@ -133,6 +135,7 @@ describe("submitSurvey — matrix-radio JSONB storage", () => {
     const result = await (submitSurvey as any)({
       surveyId: "severance-negotiation-2026",
       answers: { clauses_assessment: matrixAnswer },
+      willingness: "yes",
       turnstileToken: TURNSTILE_TOKEN,
     });
 

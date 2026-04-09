@@ -31,6 +31,10 @@ const OPTION_LABELS: Record<string, string> = {
   somewhat_interested: "Somewhat interested — tell me more",
   not_sure: "Not sure yet",
   not_interested: "Not interested at this time",
+  // collective negotiation
+  yes: "Yes",
+  no: "No",
+  maybe: "Maybe",
 };
 
 function resolveOptionLabel(value: string, respondentTypes?: RespondentType[]): string {

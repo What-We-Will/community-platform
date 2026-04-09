@@ -134,6 +134,7 @@ describe("submitSurvey — single-page surveys use 'anonymous' as respondent typ
     const result = await (submitSurvey as any)({
       surveyId: "severance-negotiation-2026",
       answers: {},
+      willingness: "yes",
       turnstileToken: TURNSTILE_TOKEN,
     });
 
@@ -146,11 +147,11 @@ describe("submitSurvey — single-page surveys use 'anonymous' as respondent typ
   });
 });
 
-describe("submitSurvey — conditional survey_sensitive insert", () => {
-  it("should call the RPC with p_willingness null when the survey has no sensitive question", async () => {
-    // Arrange — severance-negotiation-2026 in Phase 1 has no sensitive question yet
+describe("submitSurvey — collective_negotiation is required for severance-negotiation-2026", () => {
+  it("should return a validation error when collective_negotiation is not answered", async () => {
+    // Arrange — collective_negotiation is required; omitting willingness must be rejected
     mockTurnstile("severance-negotiation-2026");
-    const rpc = makeMockSupabase();
+    makeMockSupabase();
 
     // Act
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,10 +162,6 @@ describe("submitSurvey — conditional survey_sensitive insert", () => {
     });
 
     // Assert
-    expect(result).toEqual({ ok: true });
-    expect(rpc).toHaveBeenCalledWith(
-      "submit_survey",
-      expect.objectContaining({ p_willingness: null })
-    );
+    expect(result).toEqual({ ok: false, error: "Invalid submission. Please check your answers." });
   });
 });

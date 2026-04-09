@@ -256,15 +256,18 @@ export async function submitSurvey(data: {
     let willingnessValue: string | null = null;
 
     if (sensitiveQuestion) {
-      // Survey has a sensitive question — validate willingness
+      // Survey has a sensitive question — validate willingness if provided
       if (!sensitiveQuestion.options?.length) {
         console.error("[survey/actions] sensitive question missing options in config");
         return GENERIC_ERROR;
       }
-      if (!data.willingness || !sensitiveQuestion.options.includes(data.willingness)) {
+      if (sensitiveQuestion.required && !data.willingness) {
         return VALIDATION_ERROR;
       }
-      willingnessValue = data.willingness;
+      if (data.willingness && !sensitiveQuestion.options.includes(data.willingness)) {
+        return VALIDATION_ERROR;
+      }
+      willingnessValue = data.willingness ?? null;
     }
     // If no sensitive question: willingnessValue stays null → RPC skips survey_sensitive insert
 

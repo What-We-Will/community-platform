@@ -15,10 +15,9 @@ export function SurveyTrustSection() {
         <li className="flex gap-2">
           <span className="mt-0.5 shrink-0 text-green-600">✓</span>
           <span>
-            Your survey answers (grievances, team, stories) are stored separately from your
-            contact information. Anyone with access to our stored data cannot connect your
-            answers to your identity. If you have a platform account, submit from a private
-            window.
+            Your survey answers are stored separately from your contact information. Anyone
+            with access to our stored data cannot connect your answers to your identity. If
+            you have a platform account, submit from a private window.
           </span>
         </li>
         <li className="flex gap-2">
@@ -30,9 +29,9 @@ export function SurveyTrustSection() {
         <li className="flex gap-2">
           <span className="mt-0.5 shrink-0 text-green-600">✓</span>
           <span>
-            Your interest level and employment status are stored alongside your contact info
-            so we can reach the right people. Your grievance answers are stored in a separate
-            table with no connection to your contact.
+            Your willingness response and contact info are stored together so we can reach
+            the right people. Your survey answers are stored in a separate table with no
+            connection to your contact.
           </span>
         </li>
         <li className="flex gap-2">

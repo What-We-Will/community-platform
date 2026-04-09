@@ -1,13 +1,14 @@
 interface SurveyExplainerProps {
+  title: string;
   companyName: string;
   description: string;
 }
 
-export function SurveyExplainer({ companyName, description }: SurveyExplainerProps) {
+export function SurveyExplainer({ title, companyName, description }: SurveyExplainerProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Worker Experience Survey</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         <p className="mt-2 text-muted-foreground">{description}</p>
       </div>
 
