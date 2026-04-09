@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-const CHECK_INTERVAL_MS = 30_000; // check every 30 seconds
+const CHECK_INTERVAL_MS = 3_000; // check every 3 seconds
 
 export default function PendingApprovalPage() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function PendingApprovalPage() {
     }
   }
 
-  // Poll for approval every 30 seconds
+  // Poll for approval every 3 seconds
   useEffect(() => {
     checkApprovalStatus();
     const interval = setInterval(checkApprovalStatus, CHECK_INTERVAL_MS);
