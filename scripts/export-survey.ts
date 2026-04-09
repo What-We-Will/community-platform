@@ -19,6 +19,7 @@ import { createDecipheriv } from "crypto";
 import { config } from "dotenv";
 import { writeFileSync, mkdirSync } from "fs";
 import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 import { surveyConfigs } from "@/lib/survey/config";
 
 // ── CLI args ────────────────────────────────────────────────────────────────
@@ -175,7 +176,7 @@ async function fetchAll<T extends Record<string, unknown>>(
 }
 
 async function main() {
-  const outputDir = resolve(dirname(new URL(import.meta.url).pathname), "output");
+  const outputDir = resolve(dirname(fileURLToPath(import.meta.url)), "output");
   mkdirSync(outputDir, { recursive: true });
 
   console.log(`Supabase URL: ${supabaseUrl}`);
