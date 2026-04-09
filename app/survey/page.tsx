@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { SurveyForm } from "@/components/survey/survey-form";
 import { SurveyFormSingle } from "@/components/survey/survey-form-single";
 import { surveyConfigs, DEFAULT_SURVEY_ID } from "@/lib/survey/config";
+
+function getSurveyConfig(id: string | undefined) {
+  // No id param → use default survey
+  if (!id) return surveyConfigs[DEFAULT_SURVEY_ID];
+  // Explicit id → must match a known survey or 404
+  return surveyConfigs[id] ?? null;
+}
 
 export async function generateMetadata({
   searchParams,
@@ -11,7 +19,8 @@ export async function generateMetadata({
   searchParams: Promise<{ id?: string }>;
 }): Promise<Metadata> {
   const { id } = await searchParams;
-  const config = surveyConfigs[id ?? ""] ?? surveyConfigs[DEFAULT_SURVEY_ID];
+  const config = getSurveyConfig(id);
+  if (!config) return { title: "Survey Not Found | What We Will" };
   return {
     title: `${config.title} | What We Will`,
     description: config.description,
@@ -30,7 +39,8 @@ export default async function SurveyPage({
   searchParams: Promise<{ id?: string }>;
 }) {
   const { id } = await searchParams;
-  const config = surveyConfigs[id ?? ""] ?? surveyConfigs[DEFAULT_SURVEY_ID];
+  const config = getSurveyConfig(id);
+  if (!config) notFound();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">

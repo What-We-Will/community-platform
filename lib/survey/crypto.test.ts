@@ -45,6 +45,33 @@ describe("encrypt → decrypt round-trip", () => {
   });
 });
 
+describe("AAD (additional authenticated data)", () => {
+  it("should decrypt successfully with matching AAD context", () => {
+    const plaintext = "user@example.com";
+    const aad = "contact:severance-negotiation-2026";
+    const { ciphertext, iv, keyVersion } = encrypt(plaintext, 1, aad);
+    expect(decrypt(ciphertext, iv, keyVersion, aad)).toBe(plaintext);
+  });
+
+  it("should throw when AAD context does not match", () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const plaintext = "user@example.com";
+    const aad = "contact:severance-negotiation-2026";
+    const { ciphertext, iv, keyVersion } = encrypt(plaintext, 1, aad);
+    expect(() => decrypt(ciphertext, iv, keyVersion, "wrong:context")).toThrow();
+    jest.restoreAllMocks();
+  });
+
+  it("should throw when AAD was used for encrypt but omitted for decrypt", () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const plaintext = "user@example.com";
+    const aad = "contact:severance-negotiation-2026";
+    const { ciphertext, iv, keyVersion } = encrypt(plaintext, 1, aad);
+    expect(() => decrypt(ciphertext, iv, keyVersion)).toThrow();
+    jest.restoreAllMocks();
+  });
+});
+
 describe("tamper detection", () => {
   beforeEach(() => {
     jest.spyOn(console, "error").mockImplementation(() => {});
@@ -78,7 +105,7 @@ describe("key misconfiguration", () => {
 
   it("should throw when SURVEY_ENCRYPTION_KEY is not set", () => {
     delete process.env.SURVEY_ENCRYPTION_KEY;
-    expect(() => encrypt("test")).toThrow("SURVEY_ENCRYPTION_KEY is not set");
+    expect(() => encrypt("test")).toThrow("SURVEY_ENCRYPTION_KEY is required and not set");
   });
 
   it("should throw when SURVEY_ENCRYPTION_KEY is not 32 bytes", () => {

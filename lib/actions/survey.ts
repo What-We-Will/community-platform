@@ -41,7 +41,11 @@ const VALIDATION_ERROR: SurveyActionResult = {
   error: "Invalid submission. Please check your answers.",
 };
 
-async function verifyCaptcha(token: string, surveyId: string): Promise<boolean> {
+async function verifyCaptcha(
+  token: string,
+  surveyId: string,
+  expectedAction: string,
+): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
     console.error("[survey/actions] TURNSTILE_SECRET_KEY is not set");
@@ -60,12 +64,35 @@ async function verifyCaptcha(token: string, surveyId: string): Promise<boolean> 
       success: boolean;
       action?: string;
       cdata?: string;
+      hostname?: string;
     };
     if (!result.success) return false;
-    // Verify the token was issued for this specific action and survey.
-    // Test/dummy keys don't return action/cdata — only enforce when present.
-    if (result.action && result.action !== "survey-submit") return false;
-    if (result.cdata && result.cdata !== surveyId) return false;
+    // Hard-assert action and cdata — reject if missing or mismatched.
+    // Test/dummy Turnstile keys may not return these fields; set
+    // TURNSTILE_SKIP_ACTION_CHECK=1 in dev/test environments only.
+    if (!process.env.TURNSTILE_SKIP_ACTION_CHECK) {
+      if (result.action !== expectedAction) {
+        console.error(
+          `[survey/actions] Turnstile action mismatch: expected=${expectedAction} got=${result.action}`
+        );
+        return false;
+      }
+      if (result.cdata !== surveyId) {
+        console.error(
+          `[survey/actions] Turnstile cdata mismatch: expected=${surveyId} got=${result.cdata}`
+        );
+        return false;
+      }
+    }
+    // Hostname pinning: reject tokens issued for other domains.
+    // Set TURNSTILE_ALLOWED_HOSTNAME per environment (e.g. "www.whatwewill.org").
+    const allowedHostname = process.env.TURNSTILE_ALLOWED_HOSTNAME;
+    if (allowedHostname && result.hostname !== allowedHostname) {
+      console.error(
+        `[survey/actions] Turnstile hostname mismatch: expected=${allowedHostname} got=${result.hostname}`
+      );
+      return false;
+    }
     return true;
   } catch (err) {
     const name = err instanceof Error ? err.constructor.name : "UnknownError";
@@ -90,6 +117,7 @@ export async function submitSurvey(data: {
   contact?: string;
   contactType?: string;
   turnstileToken: string;
+  sessionToken?: string;
 }): Promise<SurveyActionResult> {
   try {
     // Look up survey config — reject unknown survey IDs
@@ -97,7 +125,7 @@ export async function submitSurvey(data: {
     if (!surveyConfig) return VALIDATION_ERROR;
 
     // Verify Turnstile — single-use token, one check for entire submission
-    const captchaOk = await verifyCaptcha(data.turnstileToken, data.surveyId);
+    const captchaOk = await verifyCaptcha(data.turnstileToken, data.surveyId, "survey-submit");
     if (!captchaOk) return VERIFICATION_ERROR;
 
     // Check survey status — fail closed: no row or non-active = reject
@@ -159,10 +187,19 @@ export async function submitSurvey(data: {
       }
     }
 
+    // Defense-in-depth: reconstruct answers using only allowed keys.
+    // The raw submitted object must never reach the DB insert directly.
+    const sanitizedAnswers: SurveyAnswers = {};
+    for (const key of allowedKeys) {
+      if (key in data.answers) {
+        sanitizedAnswers[key] = data.answers[key];
+      }
+    }
+
     // Validate required fields
     for (const q of applicableQuestions) {
       if (!q.required) continue;
-      const val = data.answers[q.id];
+      const val = sanitizedAnswers[q.id];
       const missing =
         val === undefined ||
         val === null ||
@@ -173,7 +210,7 @@ export async function submitSurvey(data: {
 
     // Validate enum values for single-select and multi-select; range for scale
     for (const q of applicableQuestions) {
-      const val = data.answers[q.id];
+      const val = sanitizedAnswers[q.id];
       if (val === undefined || val === "" || val === null) continue;
 
       if (q.type === "single-select" && q.options) {
@@ -223,7 +260,7 @@ export async function submitSurvey(data: {
     // Validate text length — explicit maxLength or 500-char default for short-answer
     const SHORT_ANSWER_MAX = 500;
     for (const q of applicableQuestions) {
-      const val = data.answers[q.id];
+      const val = sanitizedAnswers[q.id];
       if (typeof val !== "string") continue;
       const limit = q.maxLength ?? (q.type === "short-answer" ? SHORT_ANSWER_MAX : 0);
       if (limit > 0 && val.length > limit) {
@@ -235,11 +272,12 @@ export async function submitSurvey(data: {
     // Encrypted values stored as "iv_hex:ciphertext_hex" (single string, no JSON wrapper)
     const jsonbAnswers: Record<string, string | string[] | Record<string, string>> = {};
     for (const q of applicableQuestions) {
-      const val = data.answers[q.id];
+      const val = sanitizedAnswers[q.id];
       if (val === undefined || val === null || val === "") continue;
 
       if (q.encrypted && typeof val === "string" && val.length > 0) {
-        const { ciphertext, iv } = encrypt(val);
+        const aadContext = `${q.id}:${data.surveyId}`;
+        const { ciphertext, iv } = encrypt(val, 1, aadContext);
         jsonbAnswers[q.id] = `${iv}:${ciphertext}`;
       } else {
         jsonbAnswers[q.id] = val;
@@ -292,7 +330,8 @@ export async function submitSurvey(data: {
     const keyVersion = 1;
 
     if (contactRaw.length > 0 && contactType) {
-      const { ciphertext, iv } = encrypt(contactRaw, keyVersion);
+      const contactAad = `contact:${data.surveyId}`;
+      const { ciphertext, iv } = encrypt(contactRaw, keyVersion, contactAad);
       encryptedContact = ciphertext;
       contactIv = iv;
 
@@ -322,9 +361,17 @@ export async function submitSurvey(data: {
       p_contact_type: contactType,
       p_domain_hash: domainHash,
       p_key_version: keyVersion,
+      p_session_token: data.sessionToken ?? null,
     });
 
     if (rpcError) {
+      // Postgres 23505 = unique_violation → duplicate session_token
+      if (rpcError.code === "23505") {
+        return {
+          ok: false,
+          error: "You have already submitted this survey.",
+        };
+      }
       console.error(
         `[survey/actions] submit_survey RPC failed: ${rpcError.message}`
       );

@@ -1,5 +1,11 @@
 import { createCipheriv, createDecipheriv, createHmac, randomBytes } from "crypto";
 
+// Fail fast at module load — never allow plaintext fallback.
+// Skipped in test env where the key is set per-test in beforeEach.
+if (process.env.NODE_ENV !== "test" && !process.env.SURVEY_ENCRYPTION_KEY) {
+  throw new Error("SURVEY_ENCRYPTION_KEY is required and not set");
+}
+
 // AES-256-GCM auth tag length in bytes
 const AUTH_TAG_BYTES = 16;
 // IV length in bytes for GCM (96-bit recommended)
@@ -9,7 +15,7 @@ function getEncryptionKey(keyVersion: number): Buffer {
   if (keyVersion === 1) {
     const raw = process.env.SURVEY_ENCRYPTION_KEY;
     if (!raw) {
-      throw new Error("SURVEY_ENCRYPTION_KEY is not set");
+      throw new Error("SURVEY_ENCRYPTION_KEY is required and not set");
     }
     const key = Buffer.from(raw, "hex");
     if (key.length !== 32) {
@@ -29,12 +35,16 @@ function getEncryptionKey(keyVersion: number): Buffer {
  */
 export function encrypt(
   plaintext: string,
-  keyVersion: number = 1
+  keyVersion: number = 1,
+  aadContext?: string,
 ): { ciphertext: string; iv: string; keyVersion: number } {
   const key = getEncryptionKey(keyVersion);
   const iv = randomBytes(IV_BYTES);
 
   const cipher = createCipheriv("aes-256-gcm", key, iv);
+  if (aadContext) {
+    cipher.setAAD(Buffer.from(aadContext, "utf8"));
+  }
   const encrypted = Buffer.concat([
     cipher.update(plaintext, "utf8"),
     cipher.final(),
@@ -59,7 +69,8 @@ export function encrypt(
 export function decrypt(
   ciphertext: string,
   iv: string,
-  keyVersion: number
+  keyVersion: number,
+  aadContext?: string,
 ): string {
   try {
     const key = getEncryptionKey(keyVersion);
@@ -70,6 +81,9 @@ export function decrypt(
     const encrypted = combined.subarray(0, combined.length - AUTH_TAG_BYTES);
 
     const decipher = createDecipheriv("aes-256-gcm", key, ivBuffer);
+    if (aadContext) {
+      decipher.setAAD(Buffer.from(aadContext, "utf8"));
+    }
     decipher.setAuthTag(authTag);
 
     const decrypted = Buffer.concat([
