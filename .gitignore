@@ -21,6 +21,9 @@
 # production
 /build
 
+# export script output for surveys
+/scripts/output/
+
 # misc
 .DS_Store
 *.pem
