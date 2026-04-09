@@ -21,6 +21,25 @@ if (process.env.NODE_ENV === "production") {
   }
 }
 
+function logSubmission(
+  surveyId: string,
+  status: "ok" | "rejected" | "error",
+  reason?: string,
+) {
+  const entry = {
+    event: "survey_submission",
+    surveyId,
+    status,
+    ...(reason && { reason }),
+    ts: new Date().toISOString(),
+  };
+  if (status === "ok") {
+    console.log(JSON.stringify(entry));
+  } else {
+    console.error(JSON.stringify(entry));
+  }
+}
+
 const GENERIC_ERROR: SurveyActionResult = {
   ok: false,
   error: "Submission failed. Please try again.",
@@ -40,6 +59,11 @@ const VALIDATION_ERROR: SurveyActionResult = {
   ok: false,
   error: "Invalid submission. Please check your answers.",
 };
+
+function validationError(surveyId: string, detail: string): SurveyActionResult {
+  logSubmission(surveyId, "rejected", `validation:${detail}`);
+  return VALIDATION_ERROR;
+}
 
 async function verifyCaptcha(
   token: string,
@@ -122,11 +146,17 @@ export async function submitSurvey(data: {
   try {
     // Look up survey config — reject unknown survey IDs
     const surveyConfig = surveyConfigs[data.surveyId];
-    if (!surveyConfig) return VALIDATION_ERROR;
+    if (!surveyConfig) {
+      logSubmission(data.surveyId, "rejected", "unknown_survey_id");
+      return VALIDATION_ERROR;
+    }
 
     // Verify Turnstile — single-use token, one check for entire submission
     const captchaOk = await verifyCaptcha(data.turnstileToken, data.surveyId, "survey-submit");
-    if (!captchaOk) return VERIFICATION_ERROR;
+    if (!captchaOk) {
+      logSubmission(data.surveyId, "rejected", "turnstile_failed");
+      return VERIFICATION_ERROR;
+    }
 
     // Check survey status — fail closed: no row or non-active = reject
     const supabase = createServiceClient();
@@ -137,9 +167,7 @@ export async function submitSurvey(data: {
       .single();
 
     if (metaError || !meta || meta.status !== "active") {
-      console.error(
-        `[survey/actions] submitSurvey: survey not active — status=${meta?.status ?? "no row"} error=${metaError?.message ?? "none"}`
-      );
+      logSubmission(data.surveyId, "rejected", `survey_not_active:${meta?.status ?? "no_row"}`);
       return SURVEY_CLOSED_ERROR;
     }
 
@@ -152,7 +180,7 @@ export async function submitSurvey(data: {
       const respondentTypeConfig = surveyConfig.respondentTypes?.find(
         (rt) => rt.value === data.respondentType
       );
-      if (!respondentTypeConfig) return VALIDATION_ERROR;
+      if (!respondentTypeConfig) return validationError(data.surveyId, "invalid_respondent_type");
 
       const respondentSection: SurveySection = respondentTypeConfig.section;
       respondentType = data.respondentType;
@@ -176,14 +204,14 @@ export async function submitSurvey(data: {
 
     // Reject oversized answer payloads
     if (Object.keys(data.answers).length > applicableQuestions.length) {
-      return VALIDATION_ERROR;
+      return validationError(data.surveyId, "oversized_payload");
     }
 
     // Reject any answer keys not in the applicable set
     const allowedKeys = new Set(applicableQuestions.map((q) => q.id));
     for (const key of Object.keys(data.answers)) {
       if (!allowedKeys.has(key)) {
-        return VALIDATION_ERROR;
+        return validationError(data.surveyId, `unknown_key:${key}`);
       }
     }
 
@@ -211,6 +239,7 @@ export async function submitSurvey(data: {
       }
     }
     if (Object.keys(requiredErrors).length > 0) {
+      logSubmission(data.surveyId, "rejected", `required_fields:${Object.keys(requiredErrors).join(",")}`);
       return {
         ok: false,
         error: "Please complete the required fields.",
@@ -399,22 +428,22 @@ export async function submitSurvey(data: {
     if (rpcError) {
       // Postgres 23505 = unique_violation → duplicate session_token
       if (rpcError.code === "23505") {
+        logSubmission(data.surveyId, "rejected", "duplicate_submission");
         return {
           ok: false,
           error: "You have already submitted this survey.",
         };
       }
-      console.error(
-        `[survey/actions] submit_survey RPC failed: ${rpcError.message}`
-      );
+      logSubmission(data.surveyId, "error", `rpc_failed:${rpcError.message}`);
       return GENERIC_ERROR;
     }
 
+    logSubmission(data.surveyId, "ok");
     return { ok: true };
   } catch (err) {
     const name = err instanceof Error ? err.constructor.name : "UnknownError";
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`[survey/actions] submitSurvey unexpected error: ${name}: ${message}`);
+    logSubmission(data.surveyId, "error", `unexpected:${name}:${message}`);
     return GENERIC_ERROR;
   }
 }
