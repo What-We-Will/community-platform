@@ -3,15 +3,13 @@ import { expect, type Page } from "@playwright/test";
 type LoginWithPasswordParams = {
   email: string;
   password: string;
-  redirectTo?: string;
 };
 
 export async function loginWithPassword(
   page: Page,
-  { email, password, redirectTo = "/dashboard" }: LoginWithPasswordParams
+  { email, password }: LoginWithPasswordParams
 ) {
-  const redirectParam = encodeURIComponent(redirectTo);
-  await page.goto(`/login?redirect=${redirectParam}`);
+  await page.goto(`/login`);
 
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill(password);
