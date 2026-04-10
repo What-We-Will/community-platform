@@ -162,9 +162,8 @@ After onboarding you’ll see the main app (dashboard, events, groups, messages,
 2. **Fork** the repo and clone your fork.
 3. **Create a branch** (e.g. `feature/your-feature` or `fix/issue-123`).
 4. **Set up locally** (see [Getting started](#getting-started)) and make your changes.
-5. **Run lint:** `npm run lint`
-6. **Run build:** `npm run build`
-7. **Open a PR** against `main` with a short description of what you changed and why.
+5. **Commit** — the pre-commit hook auto-fixes lint issues on staged files. The pre-push hook type-checks the project before pushing.
+6. **Open a PR** against `main` with a short description of what you changed and why.
 
 ### Good first contributions
 Check the Github Issues in the repo to find some good first issues to tackle.
@@ -183,6 +182,30 @@ Check the Github Issues in the repo to find some good first issues to tackle.
 
 ---
 
+## Git hooks
+
+This project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged) to enforce code quality before changes leave your machine.
+
+| Hook | What it runs | Why |
+|------|-------------|-----|
+| **pre-commit** | `lint-staged` — runs `eslint --fix` on staged `*.ts` / `*.tsx` files | Catches lint issues before they enter the commit history |
+| **pre-push** | `npx tsc --noEmit` | Type-checks the whole project so broken types never reach the remote |
+
+Hooks are installed automatically via the `prepare` script (`husky`) when you run `npm install`. They are disabled in CI (`HUSKY=0`).
+
+## CI / CD
+
+Both GitHub Actions workflows (preview and production) run the following checks:
+
+- **Lint** — `npm run lint`
+- **Type check** — `npx tsc --noEmit`
+- **Unit tests** — `npm test`
+- **Dependency audit** — `npm audit --audit-level=high` (preview workflow, non-blocking)
+
+The **preview workflow** (`preview.yml`) deploys a Vercel preview for every PR and posts the preview URL as a PR comment. The comment step validates the URL against `*.vercel.app` before posting and is skipped on non-PR triggers or when the deploy step fails.
+
+The **production workflow** (`production.yml`) deploys to production on merges to `main`.
+
 ## Scripts
 
 | Command | Description |
@@ -191,6 +214,9 @@ Check the Github Issues in the repo to find some good first issues to tackle.
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm test` | Run unit tests (Jest) |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:ci` | Run tests in CI mode (`--runInBand --ci`) |
 
 ---
 
