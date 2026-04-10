@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-const CHECK_INTERVAL_MS = 3_000; // check every 3 seconds
+const CHECK_INTERVAL_MS = 10_000; // check every 10 seconds
 
 export default function PendingApprovalPage() {
   const router = useRouter();
