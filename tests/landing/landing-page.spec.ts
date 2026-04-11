@@ -24,4 +24,3 @@ test.describe("Landing page (home)", () => {
     ).toHaveCount(2);
   });
 });
-
