@@ -170,7 +170,7 @@ After onboarding you’ll see the main app (dashboard, events, groups, messages,
 Check the Github Issues in the repo to find some good first issues to tackle.
 
 - **UI/UX:** Improve accessibility (labels, focus, contrast) or responsive behavior. If you find a bug in the UI, please create an issue ticket, and propose a way to address it.
-- **Tests:** Add tests for utilities in `lib/` or key user flows (if a test setup is added).
+- **Tests:** Add tests for utilities in `lib/` or key user flows. See the [testing standards](TESTING_STANDARDS.preamble.md) for conventions and requirements.
 - **Docs:** Improve this README or add inline comments in a tricky file.
 
 ### Where to look for work
