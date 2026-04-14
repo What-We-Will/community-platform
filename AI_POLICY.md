@@ -24,7 +24,7 @@ We can't cover every AI tool that emerges, so please request approval for use be
 
 ## Tasks that AI tools are generally helpful for:
 - Generating boilerplate, scaffolding, and repetitive code
-- Writing and improving tests
+- Writing and improving tests (follow the [testing standards](TESTING_STANDARDS.preamble.md))
 - Documentation and code comments
 - Refactoring non-sensitive code
 - Debugging pesky logic errors
