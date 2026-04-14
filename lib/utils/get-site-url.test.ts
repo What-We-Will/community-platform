@@ -25,7 +25,7 @@ describe("getSiteUrl", () => {
 
   it("Should return public site url if no window", () => {
     const { window } = global;
-    delete global.window;
+    delete (global as Partial<typeof globalThis>).window;
     process.env.NEXT_PUBLIC_SITE_URL = "https://example.wwwrise.org/";
     expect(getSiteUrl()).toBe("https://example.wwwrise.org");
     global.window = window;
@@ -33,7 +33,7 @@ describe("getSiteUrl", () => {
 
   it("Should return vercel url with https if no window or public url", () => {
     const { window } = global;
-    delete global.window;
+    delete (global as Partial<typeof globalThis>).window;
     process.env.VERCEL_URL = "example2.wwwrise.org";
     expect(getSiteUrl()).toBe("https://example2.wwwrise.org");
     global.window = window;
@@ -41,7 +41,7 @@ describe("getSiteUrl", () => {
 
   it("Should return production url otherwise", () => {
     const { window } = global;
-    delete global.window;
+    delete (global as Partial<typeof globalThis>).window;
     expect(getSiteUrl()).toBe("https://members.wwwrise.org");
     global.window = window;
   });
