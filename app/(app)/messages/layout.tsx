@@ -19,7 +19,7 @@ export default async function MessagesLayout({
   const notesId = selfNotesConversationId(user.id);
 
   return (
-    <div className="-m-4 lg:-m-6 flex h-[calc(100dvh-3.5rem)] overflow-hidden lg:h-dvh">
+    <div className="-m-4 lg:-m-6 flex h-[calc(100dvh-3.5rem)] overflow-auto lg:h-dvh">
       <div className="flex w-full shrink-0 flex-col border-r md:w-80">
         <ConversationList
           initialConversations={conversations}
@@ -27,7 +27,7 @@ export default async function MessagesLayout({
           selfNotesId={notesId}
         />
       </div>
-      <div className="hidden flex-1 flex-col min-w-0 md:flex">{children}</div>
+      <div className="hidden h-full min-h-0 flex-1 flex-col min-w-0 md:flex overflow-auto">{children}</div>
     </div>
   );
 }
