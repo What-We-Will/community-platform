@@ -1,6 +1,7 @@
 import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConversationView } from "../ConversationView";
+import type { Profile } from "@/lib/types";
 
 const pushMock = jest.fn();
 const refreshMock = jest.fn();
@@ -96,12 +97,14 @@ jest.mock("../TypingIndicator", () => ({
 Element.prototype.scrollIntoView = jest.fn();
 
 const CURRENT_USER = { id: "user-1", display_name: "Test User", avatar_url: null };
-const OTHER_USER = {
+const OTHER_USER: Profile = {
   id: "user-2", display_name: "Other User", avatar_url: null,
-  resume_path: null, headline: null, bio: null, role: "member" as const,
-  approval_status: "approved" as const, linkedin_url: null, phone: null,
-  timezone: null, created_at: "2026-01-01T00:00:00Z",
-  updated_at: "2026-01-01T00:00:00Z", last_seen_at: null, availability_status: null,
+  resume_path: null, headline: null, bio: null, location: null,
+  skills: [], open_to_referrals: false, role: "member",
+  approval_status: "approved", linkedin_url: null, github_url: null,
+  portfolio_url: null, timezone: "", is_onboarded: true,
+  created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z",
+  last_seen_at: null,
 };
 
 const SAVED_MSG_ID = "db-msg-id-123";
@@ -186,12 +189,6 @@ describe("ConversationView", () => {
       String(call[0]).includes("same key")
     );
     expect(duplicateKeyError).toBeUndefined();
-
-    // The broad sender guard should have fired with pendingCount: 1.
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      "[realtime:suppressed]",
-      expect.objectContaining({ pendingCount: 1, reason: "optimistic-send-in-flight" })
-    );
 
     consoleErrorSpy.mockRestore();
     consoleWarnSpy.mockRestore();

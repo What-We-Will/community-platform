@@ -44,7 +44,7 @@ jest.mock("../NewMessageDialog", () => ({
 
 const CONVERSATION: ConversationWithDetails = {
   conversation: { id: "conv-1", type: "dm", group_id: null, created_at: "2026-01-01T00:00:00Z" },
-  participants: [{ id: "other-user", display_name: "Other User", avatar_url: null, resume_path: null, headline: null, bio: null, role: "member", approval_status: "approved", linkedin_url: null, phone: null, timezone: null, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z", last_seen_at: null, availability_status: null }],
+  participants: [{ id: "other-user", display_name: "Other User", avatar_url: null, resume_path: null, headline: null, bio: null, location: null, skills: [], open_to_referrals: false, role: "member", approval_status: "approved", linkedin_url: null, github_url: null, portfolio_url: null, timezone: "", is_onboarded: true, created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z", last_seen_at: null }],
   lastMessage: null,
   unreadCount: 0,
 };
