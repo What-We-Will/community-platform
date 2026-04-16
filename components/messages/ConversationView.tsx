@@ -205,6 +205,11 @@ export function ConversationView({
           // here until the next page load — a stale read, not data loss.
           // If this log fires frequently, move to a replay-buffer approach.
           if (newMsg.sender_id === currentUser.id && pendingOptimisticIds.current.size > 0) {
+            console.warn("[realtime:suppressed]", {
+              suppressedMsgId: newMsg.id,
+              pendingCount: pendingOptimisticIds.current.size,
+              reason: "optimistic-send-in-flight",
+            });
             return;
           }
 

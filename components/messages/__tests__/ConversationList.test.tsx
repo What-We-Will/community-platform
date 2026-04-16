@@ -13,18 +13,23 @@ jest.mock("next/navigation", () => ({
 // Capture the Realtime INSERT callback so tests can fire it manually.
 let messagesInsertCallback: (payload: { new: Record<string, unknown> }) => void;
 
+function makeMockChannel() {
+  const self: Record<string, jest.Mock> = {
+    on: jest.fn().mockImplementation(function (_event: string, opts: unknown, cb: (...args: unknown[]) => void) {
+      const optsObj = opts as Record<string, unknown> | undefined;
+      if (optsObj?.table === "messages" && optsObj?.event === "INSERT") {
+        messagesInsertCallback = cb as typeof messagesInsertCallback;
+      }
+      return self;
+    }),
+    subscribe: jest.fn().mockReturnThis(),
+  };
+  return self;
+}
+
 jest.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
-    channel: () => ({
-      on: jest.fn().mockImplementation((_event: string, _opts: unknown, cb: (...args: unknown[]) => void) => {
-        // The second `.on()` call is the messages INSERT subscription.
-        messagesInsertCallback = cb as typeof messagesInsertCallback;
-        return {
-          on: jest.fn().mockReturnThis(),
-          subscribe: jest.fn(),
-        };
-      }),
-    }),
+    channel: () => makeMockChannel(),
     removeChannel: jest.fn(),
   }),
 }));

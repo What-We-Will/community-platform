@@ -129,6 +129,7 @@ describe("ConversationView", () => {
 
   it("does not render duplicate messages when Realtime INSERT arrives before API response", async () => {
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
     const user = userEvent.setup();
 
     render(
@@ -186,6 +187,13 @@ describe("ConversationView", () => {
     );
     expect(duplicateKeyError).toBeUndefined();
 
+    // The broad sender guard should have fired with pendingCount: 1.
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      "[realtime:suppressed]",
+      expect.objectContaining({ pendingCount: 1, reason: "optimistic-send-in-flight" })
+    );
+
     consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
   });
 });
