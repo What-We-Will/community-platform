@@ -36,6 +36,7 @@ export async function createApplication(input: JobApplicationInput): Promise<{ e
   });
   if (error) return { error: error.message };
   revalidatePath("/tracker");
+  revalidatePath("/dashboard");
   return {};
 }
 
@@ -74,6 +75,7 @@ export async function updateApplication(
     .eq("user_id", user.id);
   if (error) return { error: error.message };
   revalidatePath("/tracker");
+  revalidatePath("/dashboard");
   return {};
 }
 
@@ -108,6 +110,7 @@ export async function updateStatusDate(
     .eq("user_id", user.id);
   if (error) return { error: error.message };
   revalidatePath("/tracker");
+  revalidatePath("/dashboard");
   return {};
 }
 
@@ -192,6 +195,7 @@ export async function addInterview(
   });
   if (error) return { error: error.message };
   revalidatePath("/tracker");
+  revalidatePath("/dashboard");
   return {};
 }
 
@@ -207,6 +211,7 @@ export async function deleteInterview(id: string): Promise<{ error?: string }> {
     .eq("user_id", user.id);
   if (error) return { error: error.message };
   revalidatePath("/tracker");
+  revalidatePath("/dashboard");
   return {};
 }
 
@@ -285,5 +290,6 @@ export async function deleteApplication(id: string): Promise<{ error?: string }>
     .eq("user_id", user.id);
   if (error) return { error: error.message };
   revalidatePath("/tracker");
+  revalidatePath("/dashboard");
   return {};
 }

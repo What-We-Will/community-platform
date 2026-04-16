@@ -18,6 +18,7 @@ export async function createPath(title: string, description: string) {
   });
   if (error) return { error: error.message };
   revalidatePath("/learning");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -29,6 +30,7 @@ export async function deletePath(id: string) {
   const { error } = await supabase.from("learning_paths").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/learning");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -45,6 +47,7 @@ export async function toggleStarPath(id: string, current: boolean) {
     .from("learning_paths").update({ is_starred: !current }).eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/learning");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -87,6 +90,7 @@ export async function addPathItem(
   });
   if (error) return { error: error.message };
   revalidatePath("/learning");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -107,6 +111,7 @@ export async function deletePathItem(id: string, pathId: string) {
   const { error } = await supabase.from("learning_path_items").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/learning");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -133,6 +138,7 @@ export async function addResource(
   });
   if (error) return { error: error.message };
   revalidatePath("/learning");
+  revalidatePath("/dashboard");
   return { error: null };
 }
 
@@ -144,5 +150,6 @@ export async function deleteResource(id: string) {
   const { error } = await supabase.from("learning_resources").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/learning");
+  revalidatePath("/dashboard");
   return { error: null };
 }
