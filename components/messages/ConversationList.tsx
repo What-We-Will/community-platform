@@ -90,15 +90,16 @@ export function ConversationList({
         { event: "INSERT", schema: "public", table: "messages" },
         (payload) => {
           const newMsg = payload.new as Message;
+          let needsRefresh = false;
 
           setConversations((prev) => {
             const idx = prev.findIndex(
               (c) => c.conversation.id === newMsg.conversation_id
             );
 
-            // Unknown conversation — refresh from server as a fallback.
+            // Unknown conversation — flag for refresh after state update.
             if (idx === -1) {
-              router.refresh();
+              needsRefresh = true;
               return prev;
             }
 
@@ -114,6 +115,10 @@ export function ConversationList({
             updated.splice(idx, 1);
             return [conv, ...updated];
           });
+
+          if (needsRefresh) {
+            router.refresh();
+          }
         }
       )
       .subscribe();
