@@ -103,6 +103,7 @@ export function ConversationView({
   }, [participants, otherUser, currentUser]);
 
   const [messages, setMessages] = useState<MessageWithSender[]>(initialMessages);
+  const pendingOptimisticIds = useRef(new Set<string>());
   const [inputValue, setInputValue] = useState("");
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -194,6 +195,18 @@ export function ConversationView({
         },
         (payload) => {
           const newMsg = payload.new as Message;
+
+          // Suppress Realtime INSERTs from the current user while any send is in-flight.
+          // The optimistic entry uses a client-side UUID; the real DB id isn't known until
+          // the API responds, so we can't do per-id dedup here. The isSending guard in
+          // handleSend structurally limits pendingOptimisticIds to at most 1 entry per tab,
+          // so the suppression window is bounded to a single sub-second API round-trip.
+          // Multi-tab: a message sent from another tab during that window won't appear
+          // here until the next page load — a stale read, not data loss.
+          // If this log fires frequently, move to a replay-buffer approach.
+          if (newMsg.sender_id === currentUser.id && pendingOptimisticIds.current.size > 0) {
+            return;
+          }
 
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
@@ -333,6 +346,7 @@ export function ConversationView({
       created_at: new Date().toISOString(),
       sender: buildSenderProfile(currentUser),
     };
+    pendingOptimisticIds.current.add(optimisticId);
     setMessages((prev) => [...prev, optimisticMsg]);
 
     // Use the API route so the server can fire email notifications to other participants
@@ -361,12 +375,14 @@ export function ConversationView({
 
     if (errorMsg || !savedMsg) {
       setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
+      pendingOptimisticIds.current.delete(optimisticId);
       setSendError(errorMsg ?? "Failed to send. Try again.");
     } else {
       const confirmed: MessageWithSender = { ...savedMsg, sender: optimisticMsg.sender };
       setMessages((prev) =>
         prev.map((m) => (m.id === optimisticId ? confirmed : m))
       );
+      pendingOptimisticIds.current.delete(optimisticId);
     }
 
     setIsSending(false);
