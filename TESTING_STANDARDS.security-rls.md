@@ -85,14 +85,35 @@ supabase test db
 
 Jest and React Testing Library cannot test async Server Components — this is a [known Next.js limitation](https://nextjs.org/docs/app/guides/testing/vitest). Critical user flows that span server components, server actions, and navigation require E2E tests.
 
-### Flows requiring E2E coverage (when infrastructure exists)
+### Setup
 
-- Auth flow: login → onboarding → dashboard
-- Event RSVP: view → RSVP → confirmation
+- **Tool:** Playwright (chromium only)
+- **Test directory:** `e2e/`
+- **Config:** `playwright.config.ts` (project root)
+- **Auth helper:** `e2e/fixtures/auth.ts` — `loginWithPassword()` with `Promise.race` error detection
+- **Env vars:** Copy `.env.e2e.example` to `.env.e2e` and fill in test credentials (gitignored, separate from app env)
+
+### Scripts
+
+| Command | Use case |
+|---|---|
+| `npm run test:e2e` | Headless, CI-friendly |
+| `npm run test:e2e:headed` | Visible browser with video recording |
+| `npm run test:e2e:ui` | Interactive time-travel debugger |
+| `npm run test:e2e:debug` | Step-through debugger |
+
+### Flows requiring E2E coverage
+
+- Auth flow: login → onboarding / pending-approval / dashboard (covered)
+- Invalid credentials: stays on login, error visible (covered)
+- Event RSVP: view → RSVP → navigate away → navigate back → state persists
 - Group join / leave
 - DM creation and message send
 - Job board search and application tracking
 
-### Current status
+### Rules (until a dedicated `TESTING_STANDARDS.e2e.md` is written)
 
-E2E infrastructure is not yet in place. Until it is: these flows **must be manually verified before merge**. When Playwright is added, tests will live in `e2e/` and this section will be updated with setup instructions and CI integration details.
+- Preamble rules apply: test behavior, no `.only`/`.skip` without comment, every contributor must understand the test.
+- Use `getByRole` and `getByLabel` selectors. Fall back to `data-testid` only when no accessible selector exists.
+- Tests that need auth credentials must `test.skip` when env vars are missing — never hardcode real credentials.
+- No CI workflow yet. E2E tests are local-only. Manually run `npm run test:e2e` before merging auth or navigation changes.
