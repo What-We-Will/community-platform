@@ -33,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env.local
+.env.e2e
 
 # vercel
 .vercel
@@ -44,5 +45,8 @@ next-env.d.ts
 # vscode
 .vscode/launch.json
 
-#pnpm lock file
-pnpm-lock.yaml
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
