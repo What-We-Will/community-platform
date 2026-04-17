@@ -44,7 +44,7 @@ Optional (for Jitsi JWT / 8x8 JaaS):
 NEXT_PUBLIC_JITSI_APP_ID=your-jaas-app-id
 ```
 
-Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If you have not created a blank new Supabase project for this repo please do so now. 
+Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If you have not created a blank new Supabase project for this repo please do so now.
 
 ### 3. Database
 
@@ -86,6 +86,30 @@ Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow;
 To manually approve yourself, open Supabase > Table Editor > "profiles". You should see a row for your user. Change the "approval_status" column from "pending" to "approved".
 
 After onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
+
+
+### 5. Configure Emailing (Optional)
+
+You will need a GMail account for this to serve as the email sender.
+
+1. Ensure your GMail account has 2-Step Verification turned on:
+   1. On google.com, click your avatar in the top right and click "Manage my google account".
+   1. Go to "Security & sign-in" > "2-Step Verification"
+   1. Turn it on at the bottom of the page.
+
+1. Set up an App Password:
+   1. Use the search bar at the top of the page to navigate to "App Passwords".
+   1. Set any app name and copy the password they give you into your `.env.local` file. See below.
+
+
+1. Set the following variables in your `.env.local` file:
+```bash
+GMAIL_USER=your-gmail-address-here
+GMAIL_APP_PASSWORD=your app password goes here
+ADMIN_EMAIL=your-gmail-address-here
+```
+
+Note that as of this writing the group message notification emails are only sent if the recipient hasn't been on the platform today. You may want to comment out this `lastSeen` logic in `messages/route.ts` if you are testing locally.
 
 ---
 
@@ -159,7 +183,7 @@ After onboarding you’ll see the main app (dashboard, events, groups, messages,
 ---
 
 ## How to contribute
-1. **Read the [AI use policy](AI_POLICY.md)** 
+1. **Read the [AI use policy](AI_POLICY.md)**
 2. **Fork** the repo and clone your fork.
 3. **Create a branch** (e.g. `feature/your-feature` or `fix/issue-123`).
 4. **Set up locally** (see [Getting started](#getting-started)) and make your changes.
