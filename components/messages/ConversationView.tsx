@@ -321,20 +321,6 @@ export function ConversationView({
       messageType = "file";
     }
 
-    const optimisticId = crypto.randomUUID();
-    const optimisticMsg: MessageWithSender = {
-      id: optimisticId,
-      conversation_id: conversationId,
-      sender_id: currentUser.id,
-      content: text,
-      message_type: messageType,
-      metadata,
-      edited_at: null,
-      created_at: new Date().toISOString(),
-      sender: buildSenderProfile(currentUser),
-    };
-    setMessages((prev) => [...prev, optimisticMsg]);
-
     // Use the API route so the server can fire email notifications to other participants
     let savedMsg: Message | null = null;
     let errorMsg: string | null = null;
@@ -360,13 +346,7 @@ export function ConversationView({
     }
 
     if (errorMsg || !savedMsg) {
-      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setSendError(errorMsg ?? "Failed to send. Try again.");
-    } else {
-      const confirmed: MessageWithSender = { ...savedMsg, sender: optimisticMsg.sender };
-      setMessages((prev) =>
-        prev.map((m) => (m.id === optimisticId ? confirmed : m))
-      );
     }
 
     setIsSending(false);
