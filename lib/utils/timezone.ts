@@ -49,7 +49,6 @@ export function localTimeToUTC(
 
 /**
  * Format a UTC ISO string in a specific IANA timezone.
- * Parameter order matches date-fns-tz: (date, timezone, format).
  *
  * Example: formatInTimeZone("2026-03-26T18:00:00Z", "America/New_York", "h:mm a")
  *        → "2:00 PM"
@@ -109,7 +108,8 @@ export function prioritizeTimezones(
   maxVisible = 50
 ): string[] {
   const region = getTimezoneRegion(selectedValue);
-  if (!region) return allTimezones.slice(0, maxVisible);
+  // Flat names like "UTC" have no region — pin so they survive the cap.
+  if (!region) return pinSelected(selectedValue, allTimezones).slice(0, maxVisible);
   const sameRegion = allTimezones.filter((tz) => tz.startsWith(region + "/"));
   const others = allTimezones.filter((tz) => !tz.startsWith(region + "/"));
   const pinned = pinSelected(selectedValue, sameRegion);

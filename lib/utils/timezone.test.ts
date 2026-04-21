@@ -1,29 +1,24 @@
+/**
+ * @jest-environment node
+ */
 import {
   safeTimezone,
   localTimeToUTC,
   formatInTimeZone,
   getTimeZoneAbbreviation,
+  getTimezoneRegion,
+  prioritizeTimezones,
 } from "./timezone";
 
 describe("safeTimezone", () => {
-  it("returns valid timezone as-is", () => {
-    expect(safeTimezone("America/New_York")).toBe("America/New_York");
-  });
-
-  it("returns default for null", () => {
-    expect(safeTimezone(null)).toBe("America/Chicago");
-  });
-
-  it("returns default for undefined", () => {
-    expect(safeTimezone(undefined)).toBe("America/Chicago");
-  });
-
-  it("returns default for empty string", () => {
-    expect(safeTimezone("")).toBe("America/Chicago");
-  });
-
-  it("returns default for invalid timezone", () => {
-    expect(safeTimezone("Not/A_Zone")).toBe("America/Chicago");
+  it.each([
+    ["returns valid timezone as-is",         "America/New_York", "America/New_York"],
+    ["returns default for null",             null,               "America/Chicago"],
+    ["returns default for undefined",        undefined,          "America/Chicago"],
+    ["returns default for empty string",     "",                 "America/Chicago"],
+    ["returns default for invalid timezone", "Not/A_Zone",       "America/Chicago"],
+  ])("%s", (_desc, input, expected) => {
+    expect(safeTimezone(input)).toBe(expected);
   });
 });
 
@@ -98,19 +93,63 @@ describe("formatInTimeZone", () => {
 });
 
 describe("getTimeZoneAbbreviation", () => {
+  // Assertions accept both forms to handle ICU variance across Node builds (e.g. full
+  // ICU → "EDT", slim/system ICU → "GMT-4") — do not further relax to toContain or
+  // skip. If CI uses slim/system ICU, check that the Node image was built with
+  // --with-intl=full-icu.
   it("returns EDT for Eastern in summer", () => {
     const result = getTimeZoneAbbreviation("2026-07-15T18:00:00.000Z", "America/New_York");
-    expect(result).toBe("EDT");
+    expect(result).toMatch(/^(EDT|GMT-4)$/);
   });
 
   it("returns EST for Eastern in winter", () => {
     const result = getTimeZoneAbbreviation("2026-12-15T18:00:00.000Z", "America/New_York");
-    expect(result).toBe("EST");
+    expect(result).toMatch(/^(EST|GMT-5)$/);
   });
 
   it("returns CDT for Central in summer", () => {
     const result = getTimeZoneAbbreviation("2026-07-15T18:00:00.000Z", "America/Chicago");
-    expect(result).toBe("CDT");
+    expect(result).toMatch(/^(CDT|GMT-5)$/);
+  });
+});
+
+describe("getTimezoneRegion", () => {
+  it.each([
+    ["returns region prefix for standard IANA zone",         "America/Chicago",              "America"],
+    ["returns region prefix for another standard IANA zone", "America/New_York",             "America"],
+    ["returns region prefix for sub-region IANA zone",       "America/Indiana/Indianapolis", "America"],
+    ["returns region prefix for European zone",              "Europe/Berlin",                "Europe"],
+    ["returns region prefix for Asian zone",                 "Asia/Tokyo",                   "Asia"],
+    ["returns empty string for flat name (UTC)",             "UTC",                          ""],
+    ["returns empty string for null",                        null,                           ""],
+  ])("%s", (_desc, input, expected) => {
+    expect(getTimezoneRegion(input)).toBe(expected);
+  });
+});
+
+describe("prioritizeTimezones", () => {
+  const tzs = ["Africa/Abidjan", "America/Chicago", "America/New_York", "Europe/Berlin", "UTC"];
+
+  it("sorts selected region first", () => {
+    const result = prioritizeTimezones("America/Chicago", tzs, 10);
+    expect(result[0]).toBe("America/Chicago");
+    expect(result[1]).toBe("America/New_York");
+  });
+
+  it("pins selected value at index 0 even when not first alphabetically in its region", () => {
+    const result = prioritizeTimezones("America/New_York", tzs, 10);
+    expect(result[0]).toBe("America/New_York");
+  });
+
+  it("pins UTC (flat name, no region) at index 0", () => {
+    const result = prioritizeTimezones("UTC", tzs, 3);
+    expect(result[0]).toBe("UTC");
+    expect(result).toHaveLength(3);
+  });
+
+  it("respects maxVisible cap", () => {
+    const result = prioritizeTimezones("America/Chicago", tzs, 2);
+    expect(result).toHaveLength(2);
   });
 });
 
