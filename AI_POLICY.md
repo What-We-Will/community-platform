@@ -18,9 +18,9 @@ Disclose the AI tools used, and to what degree.
 - **Cursor** (with pre-configured `.cursorignore`)
 - **Claude Code** (with pre-configured `.claude/settings.json`)
 
-We can't cover every AI tool that emerges, so please request approval for use before using a tool not listed above.Different tools have different data retention and privacy policies, and we want to understand the policies of each tool in use. Please open an issue on Github or reach out via slack to a mod or maintainer for tool evaluation and sign off!
+We can't cover every AI tool that emerges, so please request approval for use before using a tool not listed above. Different tools have different data retention and privacy policies, and we want to understand the policies of each tool in use. Please open an issue on Github or reach out via slack to a mod or maintainer for tool evaluation and sign off.
 
-Note: Feel free to use whichever IDE or text editor you prefer! The above tools are merely a reference to which AI tool suites are pre-approved.
+Note: Feel free to use whichever IDE or text editor you prefer! The above tools are merely a reference to which AI tool suites we recommend because we have setup rules in the repo for those tools. IF you use another tool please try and mirror the same configuration/rules for your prefered tool if possible. 
 
 ---
 
