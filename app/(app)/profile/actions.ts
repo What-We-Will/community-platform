@@ -18,7 +18,7 @@ export async function updateProfile(
     github_url?: string | null;
     portfolio_url?: string | null;
     /** Opt-in weekly email: My Tools / profile reminder (no automatic Pulsar refresh). */
-    email_my_tools_reminders: boolean;
+    email_my_tools_reminders?: boolean;
     timezone?: string | null;
   }
 ): Promise<ProfileUpdateResult> {
@@ -47,7 +47,7 @@ export async function updateProfile(
       portfolio_url: data.portfolio_url || null,
       timezone: safeTimezone(data.timezone),
       is_onboarded: true,
-      email_my_tools_reminders: data.email_my_tools_reminders,
+      email_my_tools_reminders: data.email_my_tools_reminders ?? false,
     },
     { onConflict: "id" }
   );
