@@ -15,26 +15,27 @@ import {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-export default function MemberFilters({ allSkills }) {
+type MemberFiltersProps = {
+  allSkills: string[];
+};
+
+export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // make sure there is only one local state 
-  const [q, setQ] = useState(() => searchParams.get("q") ?? "");
-  const [skill, setSkill] = useState(() => searchParams.get("skill") ?? "");
-  const [referrals, setReferrals] = useState(
+  const [q, setQ] = useState<string>(() => searchParams.get("q") ?? "");
+  const [skill, setSkill] = useState<string>(() => searchParams.get("skill") ?? "");
+  const [referrals, setReferrals] = useState<boolean>(
     () => searchParams.get("referrals") === "true"
   );
 
-  //debounce only ONE value (q)
-  const [debouncedQ, setDebouncedQ] = useState(q);
+  const [debouncedQ, setDebouncedQ] = useState<string>(q);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [q]);
 
-  //sync URL (single controlled effect)
   useEffect(() => {
     const params = new URLSearchParams();
 
@@ -42,7 +43,7 @@ export default function MemberFilters({ allSkills }) {
     if (skill) params.set("skill", skill);
     if (referrals) params.set("referrals", "true");
 
-    const url = `/members${params.toString() ? `?${params}` : ""}`;
+    const url = `/members${params.toString() ? `?${params.toString()}` : ""}`;
 
     router.replace(url);
   }, [debouncedQ, skill, referrals, router]);
@@ -53,7 +54,9 @@ export default function MemberFilters({ allSkills }) {
         <Label>Search</Label>
         <Input
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setQ(e.target.value)
+          }
           placeholder="Search by name, role, or location..."
         />
       </div>
@@ -66,7 +69,7 @@ export default function MemberFilters({ allSkills }) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All skills</SelectItem>
-            {allSkills.map((s) => (
+            {allSkills.map((s: string) => (
               <SelectItem key={s} value={s}>
                 {s}
               </SelectItem>
@@ -78,7 +81,7 @@ export default function MemberFilters({ allSkills }) {
       <div className="flex items-center space-x-2">
         <Checkbox
           checked={referrals}
-          onCheckedChange={(v) => setReferrals(!!v)}
+          onCheckedChange={(v: boolean | string) => setReferrals(!!v)}
         />
         <Label>Open to Mock Interviews only</Label>
       </div>
