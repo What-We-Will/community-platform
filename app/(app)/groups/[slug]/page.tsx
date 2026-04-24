@@ -157,8 +157,8 @@ export default async function GroupHubPage({ params }: Props) {
   }
 
   let upcomingEvents: Awaited<ReturnType<typeof fetchUpcomingEvents>> = [];
-  let eventRsvpCounts: Record<string, { going: number; maybe: number; declined: number }> = {};
-  let eventUserRsvp: Record<string, { status: string }> = {};
+  const eventRsvpCounts: Record<string, { going: number; maybe: number; declined: number }> = {};
+  const eventUserRsvp: Record<string, { status: string }> = {};
   try {
     upcomingEvents = await fetchUpcomingEvents({ groupId: group.id });
     if (upcomingEvents.length > 0) {

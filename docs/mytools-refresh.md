@@ -29,7 +29,7 @@ Running matches or briefs on a schedule for every member would multiply **ATS + 
 
 ### After deploy
 
-1. Apply migration `058_profile_my_tools_email_prefs.sql` (adds `email_my_tools_reminders`, `last_my_tools_reminder_sent_at`).
+1. Apply migration `061_profile_my_tools_email_prefs.sql` (adds `email_my_tools_reminders`, `last_my_tools_reminder_sent_at`).
 2. Set `CRON_SECRET` in Vercel (generate a long random string).
 3. Confirm the cron appears under the project’s **Cron Jobs** tab.
 

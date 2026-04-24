@@ -55,7 +55,7 @@ CRON_SECRET=long-random-string                    # Vercel cron sends Authorizat
 NEXT_PUBLIC_SITE_URL=https://your-production-domain
 ```
 
-Apply migration `058_profile_my_tools_email_prefs.sql`, enable the cron in [`vercel.json`](vercel.json), and set `CRON_SECRET` in the Vercel project. Details: [`docs/mytools-refresh.md`](docs/mytools-refresh.md).
+Apply migration `061_profile_my_tools_email_prefs.sql`, enable the cron in [`vercel.json`](vercel.json), and set `CRON_SECRET` in the Vercel project. Details: [`docs/mytools-refresh.md`](docs/mytools-refresh.md).
 
 Optional admin notification for new membership applications:
 

@@ -66,6 +66,8 @@ export default async function MyToolsPage() {
 
   let matchRunAgeDays: number | null = null;
   if (latestMatchRun?.created_at) {
+    // Server component — Date.now() is safe here (runs once per request, not in a client render loop)
+    // eslint-disable-next-line react-hooks/purity
     const ms = Date.now() - new Date(latestMatchRun.created_at).getTime();
     matchRunAgeDays = Math.floor(ms / (24 * 60 * 60 * 1000));
   }
