@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { getSiteUrl } from "@/lib/utils/get-site-url";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -21,9 +22,7 @@ export default function OAuthButtons({ redirectTo = "/dashboard" }: OAuthButtons
 
     try {
       const supabase = createClient();
-      const siteUrl = (
-        process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin
-      ).replace(/\/$/, "");
+      const siteUrl = getSiteUrl();
       const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {

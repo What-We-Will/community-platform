@@ -66,7 +66,7 @@ export function ActionNetworkFormEmbed() {
       setFirstName("");
       setLastName("");
       setZipCode("");
-    } catch (_err) {
+    } catch {
       setError(
         "We couldn't reach the server. Please check your connection and try again.",
       );

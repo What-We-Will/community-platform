@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   Star, ChevronDown, ChevronRight, Trash2, Plus, ExternalLink,
   Loader2, GraduationCap, PlaySquare, BookOpen, Route, BookMarked,
-  ListTodo, Users2, X, ArrowUpRight,
+  Users2, X, ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +30,6 @@ import {
 } from "./learning-tracker-actions";
 import type { LearningPath, LearningPathItem, LearningResource, ResourceType } from "./types";
 import type { StudyGroupRow } from "./page";
-import type { TrackerItem } from "./page";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -570,7 +569,7 @@ function PathsTab({ paths, itemsByPath, currentUserId, isPlatformAdmin, studyGro
   const toggle = (id: string) =>
     setExpandedIds((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
 

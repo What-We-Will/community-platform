@@ -35,6 +35,7 @@ Create `.env.local` in the project root:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
 
 Optional (for Jitsi JWT / 8x8 JaaS):
@@ -63,7 +64,7 @@ Optional admin notification for new membership applications:
 ADMIN_EMAIL=you@example.com
 ```
 
-Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If you have not created a blank new Supabase project for this repo please do so now. 
+Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If you have not created a blank new Supabase project for this repo please do so now.
 
 ### 3. Database
 
@@ -100,7 +101,35 @@ npx supabase link
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow; after onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
+Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow;
+
+To manually approve yourself, open Supabase > Table Editor > "profiles". You should see a row for your user. Change the "approval_status" column from "pending" to "approved".
+
+After onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
+
+
+### 5. Configure Emailing (Optional)
+
+You will need a GMail account for this to serve as the email sender.
+
+1. Ensure your GMail account has 2-Step Verification turned on:
+   1. On google.com, click your avatar in the top right and click "Manage my google account".
+   1. Go to "Security & sign-in" > "2-Step Verification"
+   1. Turn it on at the bottom of the page.
+
+1. Set up an App Password:
+   1. Use the search bar at the top of the page to navigate to "App Passwords".
+   1. Set any app name and copy the password they give you into your `.env.local` file. See below.
+
+
+1. Set the following variables in your `.env.local` file:
+```bash
+GMAIL_USER=your-gmail-address-here
+GMAIL_APP_PASSWORD=your app password goes here
+ADMIN_EMAIL=your-gmail-address-here
+```
+
+Note that as of this writing the group message notification emails are only sent if the recipient hasn't been on the platform today. You may want to comment out this `lastSeen` logic in `messages/route.ts` if you are testing locally.
 
 ---
 
@@ -175,19 +204,18 @@ Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow; 
 ---
 
 ## How to contribute
-1. **Read the [AI use policy](AI_POLICY.md)** 
+1. **Read the [AI use policy](AI_POLICY.md)**
 2. **Fork** the repo and clone your fork.
 3. **Create a branch** (e.g. `feature/your-feature` or `fix/issue-123`).
 4. **Set up locally** (see [Getting started](#getting-started)) and make your changes.
-5. **Run lint:** `npm run lint`
-6. **Run build:** `npm run build`
-7. **Open a PR** against `main` with a short description of what you changed and why.
+5. **Commit** — the pre-commit hook auto-fixes lint issues on staged files. The pre-push hook type-checks the project before pushing.
+6. **Open a PR** against `main` with a short description of what you changed and why.
 
 ### Good first contributions
 Check the Github Issues in the repo to find some good first issues to tackle.
 
 - **UI/UX:** Improve accessibility (labels, focus, contrast) or responsive behavior. If you find a bug in the UI, please create an issue ticket, and propose a way to address it.
-- **Tests:** Add tests for utilities in `lib/` or key user flows (if a test setup is added).
+- **Tests:** Add tests for utilities in `lib/` or key user flows. See the [testing standards](TESTING_STANDARDS.preamble.md) for conventions and requirements.
 - **Docs:** Improve this README or add inline comments in a tricky file.
 
 ### Where to look for work
@@ -200,6 +228,30 @@ Check the Github Issues in the repo to find some good first issues to tackle.
 
 ---
 
+## Git hooks
+
+This project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged) to enforce code quality before changes leave your machine.
+
+| Hook | What it runs | Why |
+|------|-------------|-----|
+| **pre-commit** | `lint-staged` — runs `eslint --fix` on staged `*.ts` / `*.tsx` files | Catches lint issues before they enter the commit history |
+| **pre-push** | `npx tsc --noEmit` | Type-checks the whole project so broken types never reach the remote |
+
+Hooks are installed automatically via the `prepare` script (`husky`) when you run `npm install`. They are disabled in CI (`HUSKY=0`).
+
+## CI / CD
+
+Both GitHub Actions workflows (preview and production) run the following checks:
+
+- **Lint** — `npm run lint`
+- **Type check** — `npx tsc --noEmit`
+- **Unit tests** — `npm test`
+- **Dependency audit** — `npm audit --audit-level=high` (preview workflow, non-blocking)
+
+The **preview workflow** (`preview.yml`) deploys a Vercel preview for every PR and posts the preview URL as a PR comment. The comment step validates the URL against `*.vercel.app` before posting and is skipped on non-PR triggers or when the deploy step fails.
+
+The **production workflow** (`production.yml`) deploys to production on merges to `main`.
+
 ## Scripts
 
 | Command | Description |
@@ -208,6 +260,9 @@ Check the Github Issues in the repo to find some good first issues to tackle.
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
+| `npm test` | Run unit tests (Jest) |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:ci` | Run tests in CI mode (`--runInBand --ci`) |
 
 ---
 

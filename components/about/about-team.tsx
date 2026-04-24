@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { User } from "lucide-react";
 
 type TeamMember = {
   name: string;
@@ -32,17 +31,17 @@ const FOUNDING_TEAM: TeamMember[] = [
   },
   {
     name: "Helen Yang",
-    role: "Board Member, Tech Worker Organizing & Political Education",
+    role: "Co-Founder, Board Member, Tech Worker Organizing & Political Education",
     bio: "Championing worker-led organizing within workplaces, and broader tech industry activism at the Tech Workers Coalition.",
   },
   {
     name: "Charise Van Liew",
-    role: "Fundraising & Development",
+    role: "Co-Founder, Fundraising & Development",
     bio: "Strategic resource development specialist, with 20+ years of nonprofit executive leadership. Passionate about youth empowerment and social justice.",
   },
   {
     name: "Sabrina Shuss",
-    role: "Program Manager & Operations",
+    role: "Co-Founder, Program Manager & Operations",
     bio: "Project manager and operations specialist, with financial management skills. Coordinating volunteer teams and ensuring our daily programs run smoothly.",
   },
 ];

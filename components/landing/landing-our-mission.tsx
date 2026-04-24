@@ -15,7 +15,7 @@ export function OurMission() {
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-white/95 sm:text-base">
               We organize to advance &quot;Human-First&quot; AI practices
-              to empower workers' voices in decision-making, strengthen our social safety net, and fight for bold policies that ensure equitable access to quality jobs, and a dignified future of
+              to empower workers&apos; voices in decision-making, strengthen our social safety net, and fight for bold policies that ensure equitable access to quality jobs, and a dignified future of
               shared prosperity.
             </p>
           </div>

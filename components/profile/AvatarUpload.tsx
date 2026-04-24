@@ -74,6 +74,7 @@ export function AvatarUpload({
           )}
         >
           {currentAvatarUrl && !uploading ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={currentAvatarUrl} alt="" className="size-full object-cover" />
           ) : (
             <span className="text-2xl">{initials}</span>

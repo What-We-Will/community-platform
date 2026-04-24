@@ -220,5 +220,6 @@ export async function deleteEvent(eventId: string) {
 
   if (error) throw new Error(error.message);
   revalidatePath("/events");
+  revalidatePath("/dashboard");
   redirect("/events");
 }

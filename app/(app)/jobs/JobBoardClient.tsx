@@ -339,7 +339,7 @@ export function JobBoardClient({
                   </div>
                   {(isPlatformAdmin || selectedJob.posted_by === currentUserId) && (
                     <div className="flex items-center gap-1 shrink-0">
-                      <EditJobForm job={selectedJob} />
+                      <EditJobForm key={selectedJob.id} job={selectedJob} />
                       <DeleteJobButton id={selectedJob.id} />
                     </div>
                   )}

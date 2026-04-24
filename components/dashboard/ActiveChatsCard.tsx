@@ -57,7 +57,6 @@ export async function ActiveChatsCard({ userId }: ActiveChatsCardProps) {
                 lastMessage,
                 unreadCount,
                 groupName,
-                groupSlug,
               }) => {
                 const isGroup = conversation.type === "group";
                 const name = isGroup ? groupName ?? "Group" : participants[0]?.display_name ?? "Unknown";

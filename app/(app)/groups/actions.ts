@@ -43,6 +43,7 @@ export async function createGroupAction(
       input.isDiscoverable
     );
     revalidatePath("/groups");
+    revalidatePath("/dashboard");
     return { slug: group.slug };
   } catch (err) {
     console.error("[createGroupAction]", err);
@@ -65,6 +66,7 @@ export async function joinGroupAction(
     await joinGroup(groupId, user.id);
     revalidatePath("/groups");
     revalidatePath(`/groups/[slug]`, "page");
+    revalidatePath("/dashboard");
     return {};
   } catch (err) {
     console.error("[joinGroupAction]", err);
@@ -88,6 +90,7 @@ export async function leaveGroupAction(
     if (err) return { error: err };
     revalidatePath("/groups");
     revalidatePath(`/groups/[slug]`, "page");
+    revalidatePath("/dashboard");
     return {};
   } catch (err) {
     console.error("[leaveGroupAction]", err);
@@ -420,5 +423,6 @@ export async function updateGroupSettingsAction(
 
   revalidatePath("/groups");
   revalidatePath(`/groups/[slug]`, "page");
+  revalidatePath("/dashboard");
   return newSlug !== undefined ? { newSlug } : {};
 }

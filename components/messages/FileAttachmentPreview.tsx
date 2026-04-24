@@ -35,6 +35,7 @@ export function FileAttachmentPreview({
     >
       {isImage ? (
         <div className="relative size-12 shrink-0 overflow-hidden rounded bg-muted">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={URL.createObjectURL(file)}
             alt=""

@@ -1,16 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getSiteUrl } from "@/lib/utils/get-site-url";
 
 const DONATE_URL =
   "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
 
+// Server-safe initial value — must match what getSiteUrl() returns on the server
+// so the first client render is identical to the SSR HTML (avoids hydration mismatch).
+const SERVER_SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
+  "https://members.wwwrise.org";
+
 export function LandingNav({ user }: { user?: User | null }) {
+  const [siteUrl, setSiteUrl] = useState(SERVER_SITE_URL);
+
+  // After hydration, update to the actual client origin (handles dev + preview URLs)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSiteUrl(getSiteUrl());
+  }, []);
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
 
@@ -51,7 +66,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 <ChevronDown className="size-3.5 transition-transform duration-200 group-hover:rotate-180" />
               </Link>
               {/* Dropdown panel */}
-              <div className="invisible absolute left-0 top-full mt-1 w-44 rounded-md border border-border/60 bg-white py-1 shadow-md opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+              <div className="invisible absolute left-0 top-full mt-1 w-56 rounded-md border border-border/60 bg-white py-1 shadow-md opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
                 <a
                   href="https://kaizengrowth.github.io/masscall/"
                   target="_blank"
@@ -60,6 +75,12 @@ export function LandingNav({ user }: { user?: User | null }) {
                 >
                   Mass Call
                 </a>
+                <Link
+                  href="/programs/no-robo-bosses"
+                  className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
+                >
+                  No Robo Bosses
+                </Link>
               </div>
             </div>
 
@@ -71,11 +92,12 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
 
             <Link
-              href="/#our-future"
+              href="/news"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
             >
-              Our Future
+              News
             </Link>
+
           </nav>
 
           <div className="hidden items-center gap-4 md:flex">
@@ -97,7 +119,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
+                <Link href={`${siteUrl}/dashboard`}>Dashboard</Link>
               </Button>
             ) : (
               <Button
@@ -106,7 +128,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/login">Login</a>
+                <Link href={`${siteUrl}/login`}>Login</Link>
               </Button>
             )}
           </div>
@@ -129,7 +151,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/dashboard">Dashboard</a>
+                <Link href={`${siteUrl}/dashboard`}>Dashboard</Link>
               </Button>
             ) : (
               <Button
@@ -138,7 +160,7 @@ export function LandingNav({ user }: { user?: User | null }) {
                 className="rounded-md border-primary-orange/50 bg-white text-primary-orange hover:bg-primary-orange/5 hover:text-primary-orange"
                 asChild
               >
-                <a href="https://members.wwwrise.org/login">Login</a>
+                <Link href={`${siteUrl}/login`}>Login</Link>
               </Button>
             )}
 
@@ -185,18 +207,30 @@ export function LandingNav({ user }: { user?: User | null }) {
               />
             </button>
             {isProgramsOpen && (
-            <a
-              href="https://kaizengrowth.github.io/masscall/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setIsProgramsOpen(false);
-              }}
-            >
-              └ Mass Call
-            </a>
+              <>
+                <a
+                  href="https://kaizengrowth.github.io/masscall/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsProgramsOpen(false);
+                  }}
+                >
+                  └ Mass Call
+                </a>
+                <Link
+                  href="/programs/no-robo-bosses"
+                  className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsProgramsOpen(false);
+                  }}
+                >
+                  └ No Robo Bosses
+                </Link>
+              </>
             )}
 
             <Link
@@ -208,12 +242,13 @@ export function LandingNav({ user }: { user?: User | null }) {
             </Link>
 
             <Link
-              href="/#our-future"
+              href="/news"
               className="text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Our Future
+              News
             </Link>
+
           </nav>
         </div>
       )}

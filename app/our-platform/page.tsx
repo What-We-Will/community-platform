@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { Button } from "@/components/ui/button";
+import { getSiteUrl } from "@/lib/utils/get-site-url";
+import Link from "next/link";
 
 export const metadata = {
   title: "Our Platform | What We Will",
@@ -85,6 +87,8 @@ export default async function OurPlatformPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const siteUrl = getSiteUrl();
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <LandingNav user={user ?? undefined} />
@@ -109,7 +113,7 @@ export default async function OurPlatformPage() {
                 className="rounded-lg bg-primary-orange px-8 text-base font-semibold text-white shadow-md hover:bg-primary-orange-hover"
                 asChild
               >
-                <a href="https://members.wwwrise.org/login">Login to our platform</a>
+                <Link href={`${siteUrl}/login`}>Login to our platform</Link>
               </Button>
             </div>
           </div>

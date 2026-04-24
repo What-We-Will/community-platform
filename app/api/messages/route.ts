@@ -117,7 +117,8 @@ async function sendNotifications({
     lastSeenMap[p.id] = p.last_seen_at ?? null;
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://members.wwwrise.org";
+  const { getSiteUrl } = await import("@/lib/utils/get-site-url");
+  const siteUrl = getSiteUrl();
 
   for (const participant of participants) {
     if (participant.muted) continue;

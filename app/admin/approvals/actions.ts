@@ -31,7 +31,7 @@ async function ensureAdmin(): Promise<boolean> {
   return true;
 }
 
-export async function approveUser(userId: string, _formData?: FormData): Promise<void> {
+export async function approveUser(userId: string): Promise<void> {
   if (!(await ensureAdmin())) return;
 
   // Use service role to bypass RLS — admins updating other users' rows
@@ -56,7 +56,7 @@ export async function approveUser(userId: string, _formData?: FormData): Promise
   redirect("/admin/approvals");
 }
 
-export async function rejectUser(userId: string, _formData?: FormData): Promise<void> {
+export async function rejectUser(userId: string): Promise<void> {
   if (!(await ensureAdmin())) return;
 
   const serviceClient = createServiceClient();
@@ -89,9 +89,8 @@ async function sendApprovalEmail(toEmail: string) {
 
   if (!gmailUser || !gmailPass) return;
 
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "https://community-platform-x74m.vercel.app";
+  const { getSiteUrl } = await import("@/lib/utils/get-site-url");
+  const siteUrl = getSiteUrl();
 
   try {
     const transporter = nodemailer.createTransport({

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Community-run public Jitsi server (no login required). */
-const JITSI_SERVER = "jitsi.riot.im";
+const JITSI_SERVER = "meetings.wwwrise.org";
 
 interface JitsiMeetProps {
   roomName: string;
@@ -13,6 +13,7 @@ interface JitsiMeetProps {
 
 interface JitsiApi {
   addEventListener: (event: string, cb: () => void) => void;
+  executeCommand: (command: string, ...args: unknown[]) => void;
   dispose: () => void;
 }
 
@@ -83,6 +84,10 @@ export default function JitsiMeet({
 
       api.addEventListener("videoConferenceLeft", () => {
         onClose();
+      });
+      api.addEventListener("videoConferenceJoined", () => {
+        // Hide the top filmstrip by default to avoid the duplicate self-view strip.
+        api.executeCommand("toggleFilmStrip");
       });
 
       apiRef.current = api;

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/shared/UserAvatar";
-import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
+import { getAvatarColor } from "@/lib/utils/avatar";
 import { getOnlineStatus } from "@/lib/utils/status";
 import { Button } from "@/components/ui/button";
 import {
@@ -137,6 +137,7 @@ export function ConversationView({
     const interval = setInterval(fetchLastSeen, 30_000); // every 30s
     fetchLastSeen(); // run once immediately
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherUser?.id]);
 
   // Open video modal when landing with ?videoRoom= (e.g. from "Join call" in list)
@@ -322,20 +323,6 @@ export function ConversationView({
       messageType = "file";
     }
 
-    const optimisticId = crypto.randomUUID();
-    const optimisticMsg: MessageWithSender = {
-      id: optimisticId,
-      conversation_id: conversationId,
-      sender_id: currentUser.id,
-      content: text,
-      message_type: messageType,
-      metadata,
-      edited_at: null,
-      created_at: new Date().toISOString(),
-      sender: buildSenderProfile(currentUser),
-    };
-    setMessages((prev) => [...prev, optimisticMsg]);
-
     // Use the API route so the server can fire email notifications to other participants
     let savedMsg: Message | null = null;
     let errorMsg: string | null = null;
@@ -361,13 +348,7 @@ export function ConversationView({
     }
 
     if (errorMsg || !savedMsg) {
-      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       setSendError(errorMsg ?? "Failed to send. Try again.");
-    } else {
-      const confirmed: MessageWithSender = { ...savedMsg, sender: optimisticMsg.sender };
-      setMessages((prev) =>
-        prev.map((m) => (m.id === optimisticId ? confirmed : m))
-      );
     }
 
     setIsSending(false);
@@ -458,7 +439,7 @@ export function ConversationView({
 
     if (isGroup) {
       return (
-        <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 bg-background">
+        <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 sticky top-0 z-30 bg-background">
           <Link href="/messages">
             <Button variant="ghost" size="icon" className="md:hidden -ml-1">
               <ArrowLeft className="size-5" />
@@ -543,7 +524,7 @@ export function ConversationView({
           : "text-muted-foreground";
 
     return (
-      <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 bg-background">
+      <div className="flex items-center gap-2 border-b px-3 py-2.5 shrink-0 sticky top-0 z-30 bg-background">
         <Link href="/messages">
           <Button variant="ghost" size="icon" className="md:hidden -ml-1">
             <ArrowLeft className="size-5" />

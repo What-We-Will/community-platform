@@ -615,7 +615,6 @@ export function ApplicationDetailModal({ app, open, onClose, currentUserId, inte
                       <div className="space-y-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Past</p>
                         {pastIvs.map((iv) => {
-                          const isToday = iv.interview_date === todayStr;
                           return (
                             <div key={iv.id} className="flex items-start justify-between gap-2 rounded-lg px-3 py-2.5 bg-muted/20">
                               <div className="min-w-0">

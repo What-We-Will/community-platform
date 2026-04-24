@@ -18,7 +18,7 @@ import { DeleteEventButton } from "@/components/events/DeleteEventButton";
 import { eventTypeConfig } from "@/lib/utils/events";
 import type { Profile, EventRsvp } from "@/lib/types";
 
-const JITSI_BASE = "https://meet.jit.si";
+const JITSI_BASE = "https://meetings.wwwrise.org";
 
 export default async function EventDetailPage({
   params,

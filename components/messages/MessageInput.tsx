@@ -72,7 +72,7 @@ export function MessageInput({
   }
 
   return (
-    <div className="border-t bg-background px-4 py-3">
+    <div className="sticky bottom-0 z-30 border-t bg-background px-4 py-3">
       {attachment && (
         <div className="mb-2">
           <FileAttachmentPreview
