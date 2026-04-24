@@ -1,5 +1,11 @@
 {
   "git": {
     "deploymentEnabled": false
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/my-tools-reminders",
+      "schedule": "0 15 * * 1"
+    }
+  ]
 }

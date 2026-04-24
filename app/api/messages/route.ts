@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import nodemailer from "nodemailer";
+import { createGmailTransport, getMailFromHeader } from "@/lib/email";
 
 /** Returns true if the given ISO timestamp is from before today (UTC). */
 function notSeenToday(lastSeenAt: string | null): boolean {
@@ -70,9 +70,9 @@ async function sendNotifications({
   messageType: string;
   content: string;
 }) {
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-  if (!gmailUser || !gmailPass) {
+  const transporter = createGmailTransport();
+  const fromHeader = getMailFromHeader();
+  if (!transporter || !fromHeader) {
     console.warn("[messages/notify] GMAIL_USER or GMAIL_APP_PASSWORD not set — skipping email");
     return;
   }
@@ -120,11 +120,6 @@ async function sendNotifications({
   const { getSiteUrl } = await import("@/lib/utils/get-site-url");
   const siteUrl = getSiteUrl();
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: { user: gmailUser, pass: gmailPass },
-  });
-
   for (const participant of participants) {
     if (participant.muted) continue;
 
@@ -155,7 +150,7 @@ async function sendNotifications({
 
     try {
       await transporter.sendMail({
-        from: `What We Will <${gmailUser}>`,
+        from: fromHeader,
         to: recipientAuth.email,
         subject: `New message from ${senderName}`,
         html: `

@@ -96,9 +96,7 @@ export function ConversationList({
               (c) => c.conversation.id === newMsg.conversation_id
             );
 
-            // Unknown conversation — refresh from server as a fallback.
             if (idx === -1) {
-              router.refresh();
               return prev;
             }
 
@@ -114,6 +112,12 @@ export function ConversationList({
             updated.splice(idx, 1);
             return [conv, ...updated];
           });
+
+          // Unknown conversation — refresh from server as a fallback.
+          // Must be outside the updater to avoid setState-during-render warning.
+          if (!conversations.some((c) => c.conversation.id === newMsg.conversation_id)) {
+            router.refresh();
+          }
         }
       )
       .subscribe();
