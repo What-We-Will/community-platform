@@ -90,18 +90,21 @@ export function ConversationList({
         { event: "INSERT", schema: "public", table: "messages" },
         (payload) => {
           const newMsg = payload.new as Message;
-          let needsRefresh = false;
+
+          // Unknown conversation — refresh from server to fetch its metadata.
+          const isKnownConversation = conversations.some(
+            (c) => c.conversation.id === newMsg.conversation_id
+          );
+          if (!isKnownConversation) {
+            router.refresh();
+            return;
+          }
 
           setConversations((prev) => {
             const idx = prev.findIndex(
               (c) => c.conversation.id === newMsg.conversation_id
             );
-
-            // Unknown conversation — flag for refresh after state update.
-            if (idx === -1) {
-              needsRefresh = true;
-              return prev;
-            }
+            if (idx === -1) return prev;
 
             const updated = [...prev];
             const conv = { ...updated[idx] };
@@ -115,10 +118,6 @@ export function ConversationList({
             updated.splice(idx, 1);
             return [conv, ...updated];
           });
-
-          if (needsRefresh) {
-            router.refresh();
-          }
         }
       )
       .subscribe();
