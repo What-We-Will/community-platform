@@ -40,6 +40,11 @@ export function ConversationList({
     conversationsRef.current = conversations;
   }, [conversations]);
 
+  const pathnameRef = useRef(pathname);
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
   const prevInitialIdsRef = useRef(
     initialConversations.map((c) => c.conversation.id).sort().join(",")
   );
@@ -109,13 +114,12 @@ export function ConversationList({
             const idx = prev.findIndex(
               (c) => c.conversation.id === newMsg.conversation_id
             );
-            if (idx === -1) return prev;
 
             const updated = [...prev];
             const conv = { ...updated[idx] };
             conv.lastMessage = newMsg;
 
-            const isViewing = pathname === `/messages/${newMsg.conversation_id}`;
+            const isViewing = pathnameRef.current === `/messages/${newMsg.conversation_id}`;
             if (newMsg.sender_id !== currentUserId && !isViewing) {
               conv.unreadCount = (conv.unreadCount ?? 0) + 1;
             }
@@ -130,7 +134,7 @@ export function ConversationList({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentUserId, pathname, router]);
+  }, [currentUserId, router]);
 
   async function handleArchive(e: React.MouseEvent, conversationId: string) {
     e.preventDefault();

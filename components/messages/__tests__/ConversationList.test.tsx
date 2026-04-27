@@ -4,10 +4,14 @@ import type { ConversationWithDetails } from "@/lib/types";
 
 const pushMock = jest.fn();
 const refreshMock = jest.fn();
+// Keep stable — an unstable mock masks stale-closure bugs in effect deps.
+const routerMock = { push: pushMock, refresh: refreshMock };
+
+let currentPathname = "/messages";
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: pushMock, refresh: refreshMock }),
-  usePathname: () => "/messages",
+  useRouter: () => routerMock,
+  usePathname: () => currentPathname,
 }));
 
 // ConversationList binds two subscriptions on one channel (conversation_participants
@@ -102,6 +106,7 @@ function renderList() {
 
 describe("ConversationList Realtime INSERT handler", () => {
   beforeEach(() => {
+    currentPathname = "/messages";
     jest.clearAllMocks();
   });
 
@@ -120,5 +125,22 @@ describe("ConversationList Realtime INSERT handler", () => {
 
     expect(refreshMock).not.toHaveBeenCalled();
     expect(screen.getByText("new message body")).toBeInTheDocument();
+  });
+
+  it("should suppress unread count for the active conversation after navigating into it", () => {
+    const { rerender } = renderList();
+
+    currentPathname = "/messages/conv-1";
+    rerender(
+      <ConversationList
+        initialConversations={[KNOWN_CONVERSATION]}
+        currentUserId="current-user"
+        selfNotesId="self-notes"
+      />
+    );
+    simulateIncomingMessage("conv-1", "other-user", "hello");
+
+    expect(screen.getByText("hello")).toBeInTheDocument();
+    expect(screen.queryByText("1")).not.toBeInTheDocument();
   });
 });
