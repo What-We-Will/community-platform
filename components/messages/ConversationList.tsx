@@ -35,6 +35,11 @@ export function ConversationList({
   const router = useRouter();
   const [conversations, setConversations] =
     useState<ConversationWithDetails[]>(initialConversations);
+  const conversationsRef = useRef(conversations);
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
   const prevInitialIdsRef = useRef(
     initialConversations.map((c) => c.conversation.id).sort().join(",")
   );
@@ -92,7 +97,7 @@ export function ConversationList({
           const newMsg = payload.new as Message;
 
           // Unknown conversation — refresh from server to fetch its metadata.
-          const isKnownConversation = conversations.some(
+          const isKnownConversation = conversationsRef.current.some(
             (c) => c.conversation.id === newMsg.conversation_id
           );
           if (!isKnownConversation) {
