@@ -2,8 +2,11 @@ import { render, screen, act, fireEvent } from "@testing-library/react";
 import { ConversationView } from "../ConversationView";
 import type { Profile } from "@/lib/types";
 
+// Keep stable — an unstable mock masks stale-closure bugs in effect deps.
+const routerMock = { push: jest.fn(), refresh: jest.fn() };
+
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  useRouter: () => routerMock,
 }));
 
 // ConversationView binds two Realtime channels (messages and typing).
@@ -155,7 +158,7 @@ describe("ConversationView Realtime INSERT handler", () => {
     });
   });
 
-  it("does not display the sender's own message until the Realtime INSERT arrives", async () => {
+  it("should not display the sender's own message until the Realtime INSERT arrives", async () => {
     renderView();
 
     await act(async () => {
@@ -175,7 +178,7 @@ describe("ConversationView Realtime INSERT handler", () => {
     expect(screen.getByText("hello from me")).toBeInTheDocument();
   });
 
-  it("deduplicates when the same Realtime INSERT arrives twice", () => {
+  it("should deduplicate when the same Realtime INSERT arrives twice", () => {
     renderView();
 
     simulateRealtimeInsert("server-msg-1", "hello from me");
