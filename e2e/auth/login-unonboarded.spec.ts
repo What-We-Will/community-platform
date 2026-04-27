@@ -1,14 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { loginWithPassword } from "../fixtures/auth";
+import { loginWithPassword, requireE2ECredentials } from "../fixtures/auth";
 
 test.describe("Auth: unonboarded user", () => {
-  const email = process.env.PW_E2E_UNONBOARDED_EMAIL;
-  const password = process.env.PW_E2E_UNONBOARDED_PASSWORD;
-
   test("lands on onboarding page", async ({ page }) => {
-    test.skip(!email || !password, "PW_E2E_UNONBOARDED_* env vars required");
-
-    await loginWithPassword(page, { email: email!, password: password! });
+    const creds = requireE2ECredentials("UNONBOARDED");
+    await loginWithPassword(page, creds);
 
     await expect(page).toHaveURL(/\/onboarding/);
     await expect(

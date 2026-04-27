@@ -1,14 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { loginWithPassword } from "../fixtures/auth";
+import { loginWithPassword, requireE2ECredentials } from "../fixtures/auth";
 
 test.describe("Auth: approved + onboarded user", () => {
-  const email = process.env.PW_E2E_APPROVED_ONBOARDED_EMAIL;
-  const password = process.env.PW_E2E_APPROVED_ONBOARDED_PASSWORD;
-
   test("lands on dashboard with authenticated nav", async ({ page }) => {
-    test.skip(!email || !password, "PW_E2E_APPROVED_ONBOARDED_* env vars required");
-
-    await loginWithPassword(page, { email: email!, password: password! });
+    const creds = requireE2ECredentials("APPROVED_ONBOARDED");
+    await loginWithPassword(page, creds);
 
     await expect(page).toHaveURL(/\/dashboard/);
 
@@ -19,9 +15,8 @@ test.describe("Auth: approved + onboarded user", () => {
   });
 
   test("landing page shows authenticated nav after login", async ({ page }) => {
-    test.skip(!email || !password, "PW_E2E_APPROVED_ONBOARDED_* env vars required");
-
-    await loginWithPassword(page, { email: email!, password: password! });
+    const creds = requireE2ECredentials("APPROVED_ONBOARDED");
+    await loginWithPassword(page, creds);
     await page.goto("/");
 
     await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();

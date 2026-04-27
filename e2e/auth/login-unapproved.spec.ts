@@ -1,14 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { loginWithPassword } from "../fixtures/auth";
+import { loginWithPassword, requireE2ECredentials } from "../fixtures/auth";
 
 test.describe("Auth: unapproved + onboarded user", () => {
-  const email = process.env.PW_E2E_UNAPPROVED_ONBOARDED_EMAIL;
-  const password = process.env.PW_E2E_UNAPPROVED_ONBOARDED_PASSWORD;
-
   test("lands on pending-approval page", async ({ page }) => {
-    test.skip(!email || !password, "PW_E2E_UNAPPROVED_ONBOARDED_* env vars required");
-
-    await loginWithPassword(page, { email: email!, password: password! });
+    const creds = requireE2ECredentials("UNAPPROVED_ONBOARDED");
+    await loginWithPassword(page, creds);
 
     await expect(page).toHaveURL(/\/pending-approval/);
     await expect(

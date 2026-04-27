@@ -1,9 +1,31 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 type LoginParams = {
   email: string;
   password: string;
 };
+
+type CredentialKey =
+  | "APPROVED_ONBOARDED"
+  | "UNAPPROVED_ONBOARDED"
+  | "UNONBOARDED";
+
+/**
+ * Reads a PW_E2E_<KEY>_EMAIL / _PASSWORD pair from the environment.
+ * If either is missing, skips the current test with a message naming
+ * the missing var and pointing the contributor to the setup docs.
+ */
+export function requireE2ECredentials(key: CredentialKey): LoginParams {
+  const email = process.env[`PW_E2E_${key}_EMAIL`];
+  const password = process.env[`PW_E2E_${key}_PASSWORD`];
+
+  test.skip(
+    !email || !password,
+    `Missing PW_E2E_${key}_EMAIL or PW_E2E_${key}_PASSWORD in .env.e2e — see e2e/README.md for setup.`
+  );
+
+  return { email: email!, password: password! };
+}
 
 /**
  * Logs in via the password form and waits for navigation away from /login.
