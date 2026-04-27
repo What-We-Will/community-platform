@@ -242,6 +242,16 @@ The **production workflow** (`production.yml`) deploys to production on merges t
 | `npm test` | Run unit tests (Jest) |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run test:ci` | Run tests in CI mode (`--runInBand --ci`) |
+| `npm run test:e2e` | Run Playwright E2E tests (headless) |
+| `npm run test:e2e:debug` | Step through E2E tests with the inspector |
+
+---
+
+## End-to-end tests
+
+Playwright tests live in `e2e/`. They cover the landing page and authenticated user flows (approved, unapproved, unonboarded).
+
+The auth specs require test users in **your own Supabase project** — never the shared preview or production environments. See [`e2e/README.md`](e2e/README.md) for the full setup walkthrough (user creation, profile state SQL, `.env.e2e` configuration).
 
 ---
 
