@@ -9,6 +9,7 @@ if (existsSync(".env.e2e")) {
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: /.*\.spec\.[jt]sx?$/,
   timeout: 30_000,
   retries: process.env.CI ? 2 : 1,
   fullyParallel: true,
