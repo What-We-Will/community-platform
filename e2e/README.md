@@ -31,6 +31,12 @@ These aren't wired up as npm scripts because they're situational, not routine. U
   ```
   Playwright's UI mode — pick locators, re-run individual specs, time-travel through actions. Worth learning if you're writing new E2E tests; overkill if you just want to run them.
 
+- **AI-assisted test authoring (Claude Code / MCP-capable agents):**
+  ```bash
+  claude mcp add playwright npx @playwright/mcp@latest
+  ```
+  Installs the official [Playwright MCP server](https://github.com/microsoft/playwright-mcp), letting an AI agent drive a real browser to inspect the live DOM, pick locators, and verify selectors while writing tests. Optional — only useful if you use Claude Code or another MCP-capable agent.
+
 ## Reports & artifacts
 
 After a run, view the HTML report:
