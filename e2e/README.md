@@ -79,7 +79,7 @@ Use any password you'll remember — you'll put them in `.env.e2e` next.
 
 ### 3. Set the correct profile + auth state
 
-The `handle_new_user` trigger creates a profile row on signup with default state. You need to mutate two of them and confirm all three emails. Run this in the Supabase SQL editor:
+The `handle_new_user` trigger creates a profile row on signup with default state. Each test user needs an explicit profile state so the test isn't coupled to whatever the trigger defaults happen to be. Run this in the Supabase SQL editor:
 
 ```sql
 -- Confirm all three emails so sign-in works
@@ -92,19 +92,22 @@ WHERE email IN (
 )
 AND email_confirmed_at IS NULL;
 
--- Approved user: complete onboarding (default approval_status is already 'approved')
+-- Approved user: onboarded + approved, proxy routes to /dashboard
 UPDATE public.profiles
 SET is_onboarded = true
 WHERE id = (SELECT id FROM auth.users WHERE email = 'you+e2e-approved@example.com');
 
--- Unapproved user: onboarded so the approval gate is what blocks them
+-- Unapproved user: onboarded so the approval gate is what blocks them, proxy routes to /pending-approval
 UPDATE public.profiles
 SET is_onboarded = true,
     approval_status = 'pending'
 WHERE id = (SELECT id FROM auth.users WHERE email = 'you+e2e-unapproved@example.com');
 
--- Unonboarded user: profile defaults already match (is_onboarded=false, approval_status='approved')
--- No update needed.
+-- Unonboarded user: not onboarded, proxy routes to /onboarding (set explicitly so the test isn't relying on trigger defaults)
+UPDATE public.profiles
+SET is_onboarded = false,
+    approval_status = 'approved'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'you+e2e-unonboarded@example.com');
 ```
 
 **Why these states?** The `proxy.ts` router checks `is_onboarded` first, then `approval_status`. So:
