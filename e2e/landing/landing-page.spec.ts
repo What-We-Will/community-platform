@@ -2,6 +2,8 @@ import { test, expect, Page } from "@playwright/test";
 
 test.describe("Landing page (anonymous)", () => {
   test.describe("Static header elements", () => {
+    test.describe.configure({ mode: "serial" });
+
     let sharedPage: Page;
     test.beforeAll(async ({ browser }) => {
       sharedPage = await browser.newPage();
