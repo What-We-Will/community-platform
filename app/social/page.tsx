@@ -23,9 +23,9 @@ export const metadata: Metadata = {
 
 const LINKS = [
   {
-    label: "Join Our Mass Call",
-    description: "Join us for our next layoff support call",
-    href: "https://movement.wwwrise.org",
+    label: "Share Your Story",
+    description: "Tell us how AI is impacting your work",
+    href: "/share-your-story",
     icon: Megaphone,
     primary: true,
   },

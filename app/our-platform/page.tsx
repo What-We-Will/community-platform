@@ -104,7 +104,7 @@ export default async function OurPlatformPage() {
               <span>Currently launched in beta</span>
             </div>
             <p className="mt-4 text-lg leading-relaxed sm:text-xl">
-              We build infrastructure for those looking for work, navigating a crisis,
+              We build community and infrastructure for those looking for work, navigating a crisis,
               learning new skills, and organizing with others.
             </p>
             <div className="mt-6 flex justify-center">
