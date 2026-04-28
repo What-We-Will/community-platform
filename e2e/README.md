@@ -31,6 +31,12 @@ These aren't wired up as npm scripts because they're situational, not routine. U
   ```
   Playwright's UI mode — pick locators, re-run individual specs, time-travel through actions. Worth learning if you're writing new E2E tests; overkill if you just want to run them.
 
+- **Scaffold a new spec from a real browser session:**
+  ```bash
+  npx playwright codegen http://localhost:3000
+  ```
+  Playwright's recorder. Click through the flow you want to test and it emits a spec using locators that match this project's standards (role/text/testid first). The output is a starting point — clean it up against `e2e/TESTING_STANDARDS.e2e.md` before committing.
+
 - **AI-assisted test authoring (Claude Code / MCP-capable agents):**
   ```bash
   claude mcp add playwright npx @playwright/mcp@latest
@@ -50,7 +56,7 @@ Artifacts captured per-test (when applicable) live under `test-results/<test-nam
 | Artifact     | When it's captured                                            |
 | ------------ | ------------------------------------------------------------- |
 | Screenshots  | On failure (both `chromium` and `chromium-headed`)            |
-| Videos       | **Only** in `npm run test:e2e:headed` — the default run records none |
+| Videos       | **Only** when running the `chromium-headed` project (`npx playwright test --project=chromium-headed`) — the default headless run records none |
 | Traces       | On first retry (open with `npx playwright show-trace <file>`) |
 
 Both `test-results/` and `playwright-report/` are gitignored.
@@ -130,7 +136,7 @@ Fill in the six values with the emails and passwords from step 2. `.env.e2e` is 
 npm run test:e2e
 ```
 
-Expect **12 passed**. If the auth specs skip, your `PW_E2E_*` env vars aren't being picked up — check that `.env.e2e` is in the repo root.
+All specs should pass. If the auth specs skip instead, your `PW_E2E_*` env vars aren't being picked up — check that `.env.e2e` is in the repo root.
 
 ## Troubleshooting
 

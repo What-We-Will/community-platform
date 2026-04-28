@@ -1,8 +1,8 @@
 # Testing Standards — Preamble
 
-Loaded in every testing-related session. All rules below apply regardless of task type.
+Loaded in every testing-related session. Rules 1–13 apply to Jest unit/integration tests. Rule 14 is cross-cutting (Jest + Playwright). For Playwright E2E specs in `e2e/`, also load `e2e/TESTING_STANDARDS.e2e.md` for E2E-specific rules.
 
-**Last updated:** 2026-04-27 · **Applies to:** Jest 29 · **Owner:** platform lead
+**Last updated:** 2026-04-27 · **Applies to:** Jest 29 (rules 1–13), Jest + Playwright (rule 14) · **Owner:** platform lead
 
 ---
 
@@ -34,4 +34,4 @@ Loaded in every testing-related session. All rules below apply regardless of tas
 
 13. **Every contributor must understand every test.** The `describe` block should clearly document the feature or behavior under test — not mirror the function name. A reviewer should be able to read the `describe` block and `it` descriptions alone and understand the intent and what's being validated. If that's not possible without re-reading the AI conversation that produced it, the test isn't ready for review.
 
-14. **Test file naming.** Jest unit/integration tests use `*.test.ts(x)`. The `*.spec.ts` extension is reserved for Playwright E2E tests in `e2e/`. Don't use `*.spec.ts` for Jest tests, even though Jest's defaults would match it — `jest.config.mjs` is explicitly scoped to `*.test.ts(x)` so a misnamed Jest test will be silently skipped. This convention prevents Jest and Playwright from cross-picking each other's files.
+14. **Test file naming.** Jest unit/integration tests use `*.test.ts(x)`. The `*.spec.ts` extension is reserved for Playwright E2E tests in `e2e/` — see `e2e/TESTING_STANDARDS.e2e.md` for E2E-specific standards. Don't use `*.spec.ts` for Jest tests, even though Jest's defaults would match it — `jest.config.mjs` is explicitly scoped to `*.test.ts(x)` so a misnamed Jest test will be silently skipped. This convention prevents Jest and Playwright from cross-picking each other's files.

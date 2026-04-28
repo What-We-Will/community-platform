@@ -5,6 +5,7 @@ test.describe("Landing page (anonymous)", () => {
     test.describe.configure({ mode: "serial" });
 
     let sharedPage: Page;
+
     test.beforeAll(async ({ browser }) => {
       sharedPage = await browser.newPage();
       await sharedPage.goto("/");
@@ -39,6 +40,7 @@ test.describe("Landing page (anonymous)", () => {
     test.beforeEach(async ({ page }) => {
       await page.goto("/");
     });
+
     test("shows Login and hides Dashboard", async ({ page }) => {
       await expect(page.getByRole("link", { name: "Login" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
