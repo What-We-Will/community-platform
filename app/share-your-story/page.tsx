@@ -6,7 +6,7 @@ import { ShareYourStoryForm } from "@/components/landing/share-your-story-form";
 export const metadata = {
   title: "Share Your Story | What We Will",
   description:
-    "Share how workplace monitoring, AI tools, or automated decision systems affect you. Help advocate for California's No Robo Bosses bill and protections from ADS in hiring, surveillance, and terminations.",
+    "Share how AI tools, automation, workplace monitoring, and algorithmic decisions are affecting your job and community.",
 };
 
 export default async function ShareYourStoryPage() {
@@ -30,28 +30,24 @@ export default async function ShareYourStoryPage() {
             </h1>
             <div className="space-y-4 text-sm text-muted-foreground sm:text-base">
               <p>
-                California&apos;s{" "}
-                <span className="font-medium text-foreground">
-                  No Robo Bosses
-                </span>{" "}
-                bill would limit harmful uses of automated decision systems (ADS)
-                at work—including surveillance that tracks every move, pressure
-                to hit AI-driven productivity targets, and algorithms involved in
-                hiring, pay, promotions, and terminations. Lawmakers need to hear
-                from real workers to get this policy right.
+                AI and automated systems are changing workplaces, from how
+                people are hired to how work is tracked, evaluated, and assigned.
+                We want to understand how these tools are affecting workers in
+                their daily life.
               </p>
               <p>
-                Are you wary of the way you&apos;re being monitored at work, or
-                pressured to be more productive with AI tools?
+                Have you experienced AI monitoring, pressure to use new tools,
+                job loss, shifting expectations, or other major workplace
+                changes tied to AI?
               </p>
               <p>
-                Have you been impacted by automated decision systems that make
-                pay, promotion, or termination decisions at your workplace?
+                Your story can help highlight what workers need as technology
+                reshapes jobs, rights, and opportunities.
               </p>
               <p className="text-foreground">
-                Please share your story to help us advocate for policy changes in
-                California to protect all workers from ADS systems used in hiring,
-                surveillance, and terminations.
+                Please share your story so we can advocate for people-first AI
+                policies, stronger protections, and fairer outcomes for workers
+                and communities.
               </p>
             </div>
           </section>
