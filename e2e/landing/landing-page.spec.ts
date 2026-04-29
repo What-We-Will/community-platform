@@ -1,6 +1,6 @@
 import { test, expect, Page } from "@playwright/test";
 
-test.describe("Landing page (anonymous)", () => {
+test.describe("Landing page (anonymous)", { tag: "@smoke" }, () => {
   test.describe("Static header elements", () => {
     test.describe.configure({ mode: "serial" });
 

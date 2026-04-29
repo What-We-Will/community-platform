@@ -11,6 +11,7 @@
     "test:watch": "jest --watch",
     "test:ci": "jest --runInBand --ci",
     "test:e2e": "playwright test --project=chromium",
+    "test:e2e:smoke": "playwright test --project=chromium --grep @smoke",
     "test:e2e:debug": "playwright test --debug",
     "prepare": "husky"
   },

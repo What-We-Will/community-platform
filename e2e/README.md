@@ -2,16 +2,31 @@
 
 Playwright tests covering the landing page and authenticated user flows.
 
+## Prerequisites
+
+Before running **any** E2E target (including the smoke subset), you need:
+
+1. **Root project setup complete** — see [`../README.md`](../README.md). Specifically: a Supabase project of your own, `.env.local` with `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_ANON_KEY`, migrations applied, and `npm run dev` opens the app at `localhost:3000` without errors. The Playwright config starts the dev server automatically — if it can't start, the tests can't run.
+2. **Dependencies installed** — `npm install` from the project root. If you see `sh: playwright: command not found`, this step was skipped.
+3. **Playwright browser installed** — `npx playwright install chromium` (one-time, ~150MB download). Tests fail with `Executable doesn't exist` without this.
+
+Verify the dev server works (`npm run dev`) before running tests. If it crashes, tests will hang or fail with confusing errors that look like Playwright bugs but are actually app-startup bugs.
+
+The **Full setup** section below covers the *additional* steps needed only for the auth-gated specs (test users, `.env.e2e`).
+
+---
+
 ## Running
 
 E2E ("end-to-end") tests drive a real browser through the app the way a user would — clicking, typing, and waiting for pages to render. Use them to verify multi-step flows that cross navigation, auth, and data (the kinds of bugs unit tests can't catch). New to Playwright? Start with their [Writing tests](https://playwright.dev/docs/writing-tests) intro.
 
 **Default:** `npm run test:e2e`. It's the fastest and what CI runs — reach for `:debug` when a test is failing and you need to see why.
 
-| Command                  | What it does                      | When to use it                                       |
-| ------------------------ | --------------------------------- | ---------------------------------------------------- |
-| `npm run test:e2e`       | Headless, chromium only           | **Default.** Everyday runs and CI.                   |
-| `npm run test:e2e:debug` | Launches the Playwright Inspector | Step through a failing test line-by-line             |
+| Command                  | What it does                                                          | When to use it                                                                                                  |
+| ------------------------ | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `npm run test:e2e`       | Headless, chromium only — full suite                                  | **Default.** Everyday runs and CI. Requires Full setup below.                                                   |
+| `npm run test:e2e:smoke` | Only specs tagged `@smoke` — auth-free, skips the test-user setup     | Quick sanity check; contributors who haven't set up test users yet; CI gate before the full suite.              |
+| `npm run test:e2e:debug` | Launches the Playwright Inspector                                     | Step through a failing test line-by-line                                                                        |
 
 The dev server starts automatically (`reuseExistingServer: true`) — if `npm run dev` is already running, it'll reuse it.
 
@@ -55,9 +70,27 @@ Artifacts captured per-test (when applicable) live under `test-results/<test-nam
 
 Both `test-results/` and `playwright-report/` are gitignored.
 
-## First-time setup
+## Quick check (no test-user setup)
 
-The auth specs need real users in **your own Supabase project**. Never point these at the shared preview or production environments.
+If you've completed **Prerequisites** above and want to verify Playwright is working without setting up test users:
+
+```bash
+npm run test:e2e:smoke
+```
+
+This runs only the specs tagged `@smoke` — currently the anonymous landing page and the invalid-login flow. No test users and no `.env.e2e` needed. Good for:
+
+- First-time checkouts to confirm the harness works
+- Contributors not touching auth flows
+- A fast CI gate before the full suite
+
+For the full suite (including the auth-gated specs that exercise approved/unapproved/unonboarded user states), continue to **Full setup** below.
+
+---
+
+## Full setup (auth-gated tests)
+
+The auth specs need real users in **your own Supabase project**. 🛑 Never point these at the shared preview or production environments.
 
 ### 1. Point your local app at your own Supabase project
 
@@ -130,7 +163,7 @@ Fill in the six values with the emails and passwords from step 2. `.env.e2e` is 
 npm run test:e2e
 ```
 
-Expect **12 passed**. If the auth specs skip, your `PW_E2E_*` env vars aren't being picked up — check that `.env.e2e` is in the repo root.
+All specs should pass. The auth specs skip with a clear message if `.env.e2e` isn't being picked up — if you see unexpected skips, confirm `.env.e2e` is in the repo root.
 
 ## Troubleshooting
 

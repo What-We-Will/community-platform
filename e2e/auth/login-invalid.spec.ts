@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 // NOTE: Don't run these tests in a fast loop because Supabase will
 // rate-limit failed auth attempts (~30 requests in an hour)
-test.describe("Auth: invalid credentials", () => {
+test.describe("Auth: invalid credentials", { tag: "@smoke" }, () => {
   test("stays on login page with error message", async ({ page }) => {
     await page.goto("/login");
 
