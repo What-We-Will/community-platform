@@ -68,6 +68,8 @@ function buildSenderProfile(user: CurrentUser): Profile {
     approval_status: "approved",
     role: "member",
     last_seen_at: null,
+    email_my_tools_reminders: false,
+    last_my_tools_reminder_sent_at: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
