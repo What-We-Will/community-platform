@@ -38,17 +38,18 @@ const LINKS = [
     external: true,
   },
   {
-    label: "No Robo Bosses",
-    description: "Learn about the bill and get involved",
-    href: "/programs/no-robo-bosses",
-    icon: HandFist,
+    label: "Join Our Next Workshop",
+    description: "Register for our upcoming Zoom workshop",
+    href: "https://us02web.zoom.us/meeting/register/3oRyjwdfRqO6LFIXiZDiuA#/registration",
+    icon: Pointer,
     primary: false,
+    external: true,
   },
   {
     label: "Join Our Mailing List",
     description: "Stay informed with our latest updates",
     href: "/#newsletter",
-    icon: Pointer,
+    icon: HandFist,
     primary: false,
   },
   {
