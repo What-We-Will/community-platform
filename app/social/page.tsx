@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Mail, Megaphone, ArrowRight, Users } from "lucide-react";
+import { ArrowRight, Hand, Handshake, HandFist, Pointer, HandHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   BlueSkyIcon,
@@ -26,28 +26,37 @@ const LINKS = [
     label: "Share Your Story",
     description: "Tell us how AI is impacting your work",
     href: "/share-your-story",
-    icon: Megaphone,
+    icon: Hand,
     primary: true,
   },
   {
-    label: "No Robo Bosses",
-    description: "Learn about the bill and get involved",
-    href: "/programs/no-robo-bosses",
-    icon: BookOpen,
+    label: "Volunteer With Us",
+    description: "Tell us how you'd like to give back",
+    href: "https://form.jotform.com/261138031349048",
+    icon: Handshake,
     primary: false,
+    external: true,
+  },
+  {
+    label: "Join Our Next Workshop",
+    description: "Register for our upcoming Zoom workshop",
+    href: "https://us02web.zoom.us/meeting/register/3oRyjwdfRqO6LFIXiZDiuA#/registration",
+    icon: Pointer,
+    primary: false,
+    external: true,
   },
   {
     label: "Join Our Mailing List",
     description: "Stay informed with our latest updates",
     href: "/#newsletter",
-    icon: Mail,
+    icon: HandFist,
     primary: false,
   },
   {
     label: "About Us",
     description: "Learn about our mission and vision",
     href: "/about-us",
-    icon: Users,
+    icon: HandHeart,
     primary: false,
   },
 ];
@@ -94,7 +103,7 @@ export default function SocialLinksPage() {
 
           {/* ── Links ── */}
           <div className="w-full flex flex-col gap-3">
-            {LINKS.map(({ label, description, href, icon: Icon, primary }) =>
+            {LINKS.map(({ label, description, href, icon: Icon, primary, external }) =>
               primary ? (
                 <Button
                   key={href}
@@ -102,7 +111,12 @@ export default function SocialLinksPage() {
                   className="w-full rounded-xl bg-primary-orange text-white shadow-md hover:bg-primary-orange-hover h-auto py-4"
                   asChild
                 >
-                  <Link href={href} className="flex items-center gap-3">
+                  <Link
+                    href={href}
+                    target={external ? "_blank" : undefined}
+                    rel={external ? "noopener noreferrer" : undefined}
+                    className="flex items-center gap-3"
+                  >
                     <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg bg-black/15">
                       <Icon className="size-5" />
                     </span>
@@ -119,6 +133,8 @@ export default function SocialLinksPage() {
                 <Link
                   key={href}
                   href={href}
+                  target={external ? "_blank" : undefined}
+                  rel={external ? "noopener noreferrer" : undefined}
                   className="group flex items-center gap-3 rounded-xl border border-border bg-white px-5 py-4 shadow-sm transition-all hover:border-primary-orange/40 hover:shadow-md"
                 >
                   <span className="flex size-9 flex-shrink-0 items-center justify-center rounded-lg bg-primary-orange/10">
