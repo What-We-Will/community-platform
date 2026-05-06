@@ -1,0 +1,166 @@
+import { NextResponse } from "next/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { sendMyToolsReminderEmail } from "@/lib/email";
+import { getProfileCompleteness } from "@/lib/profile-completeness";
+import { missingFieldToReminderTip } from "@/lib/my-tools-reminder-tips";
+import {
+  MY_TOOLS_REMINDER_COOLDOWN_DAYS,
+  canSendReminderEmail,
+} from "@/lib/my-tools-reminder-schedule";
+
+export const dynamic = "force-dynamic";
+/** Cap per invocation to stay within serverless time limits. */
+const MAX_SEND_PER_RUN = 40;
+
+/**
+ * Weekly cron (see `vercel.json`). Sends opt-in reminder emails only.
+ * Secured with `Authorization: Bearer ${CRON_SECRET}` (set CRON_SECRET in Vercel).
+ */
+export async function GET(request: Request) {
+  const secret = process.env.CRON_SECRET;
+  const auth = request.headers.get("authorization");
+  if (!secret || auth !== `Bearer ${secret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  let service;
+  try {
+    service = createServiceClient();
+  } catch {
+    return NextResponse.json(
+      { error: "Server misconfigured (Supabase service role)" },
+      { status: 503 }
+    );
+  }
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://members.wwwrise.org";
+  const myToolsUrl = `${siteUrl.replace(/\/$/, "")}/my-tools`;
+  const profileUrl = `${siteUrl.replace(/\/$/, "")}/profile`;
+
+  const now = new Date();
+
+  const { data: candidates, error: qErr } = await service
+    .from("profiles")
+    .select(
+      "id, display_name, headline, bio, skills, linkedin_url, location, last_my_tools_reminder_sent_at, approval_status, is_onboarded, email_my_tools_reminders"
+    )
+    .eq("email_my_tools_reminders", true)
+    .eq("is_onboarded", true)
+    .eq("approval_status", "approved");
+
+  if (qErr) {
+    console.error("[cron/my-tools-reminders] query error:", qErr.message);
+    return NextResponse.json({ error: qErr.message }, { status: 500 });
+  }
+
+  const eligible = (candidates ?? [])
+    .filter((p) =>
+      canSendReminderEmail(
+        p.last_my_tools_reminder_sent_at ?? null,
+        now,
+        MY_TOOLS_REMINDER_COOLDOWN_DAYS
+      )
+    )
+    .slice(0, MAX_SEND_PER_RUN);
+
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  // Resolve auth emails concurrently to avoid serial Admin API round-trips.
+  const emailByUserId = new Map<string, string>();
+  const authLookupResults = await Promise.all(
+    eligible.map(async (row) => {
+      const { data, error } = await service.auth.admin.getUserById(row.id);
+      return {
+        id: row.id,
+        email: data.user?.email ?? null,
+        error,
+      };
+    })
+  );
+  for (const item of authLookupResults) {
+    if (item.error || !item.email) {
+      failed += 1;
+      errors.push(`no email for ${item.id}`);
+      continue;
+    }
+    emailByUserId.set(item.id, item.email);
+  }
+
+  for (const row of eligible) {
+    const recipientEmail = emailByUserId.get(row.id);
+    if (!recipientEmail) {
+      continue;
+    }
+
+    const completeness = getProfileCompleteness({
+      headline: row.headline,
+      bio: row.bio,
+      skills: row.skills,
+      linkedin_url: row.linkedin_url,
+      location: row.location,
+    });
+
+    const tips =
+      completeness.score < 80
+        ? completeness.missing.map((m) => missingFieldToReminderTip(m))
+        : [];
+
+    const previousLastSent = row.last_my_tools_reminder_sent_at ?? null;
+    const reservedAt = new Date().toISOString();
+    let reserveQuery = service
+      .from("profiles")
+      .update({ last_my_tools_reminder_sent_at: reservedAt })
+      .eq("id", row.id);
+    reserveQuery = previousLastSent
+      ? reserveQuery.eq("last_my_tools_reminder_sent_at", previousLastSent)
+      : reserveQuery.is("last_my_tools_reminder_sent_at", null);
+
+    const { data: reserveRows, error: reserveErr } = await reserveQuery
+      .select("id")
+      .limit(1);
+
+    if (reserveErr) {
+      failed += 1;
+      errors.push(`reserve ${row.id}: ${reserveErr.message}`);
+      continue;
+    }
+    if (!reserveRows || reserveRows.length === 0) {
+      // Another worker likely reserved this row first.
+      continue;
+    }
+
+    const result = await sendMyToolsReminderEmail({
+      to: recipientEmail,
+      displayName: row.display_name,
+      myToolsUrl,
+      profileUrl,
+      tips,
+    });
+
+    if (!result.ok) {
+      // Best-effort rollback so transient mail failures can retry sooner.
+      const rollbackValue = previousLastSent ? previousLastSent : null;
+      await service
+        .from("profiles")
+        .update({ last_my_tools_reminder_sent_at: rollbackValue })
+        .eq("id", row.id)
+        .eq("last_my_tools_reminder_sent_at", reservedAt);
+      failed += 1;
+      errors.push(`${recipientEmail}: ${result.reason}`);
+      continue;
+    }
+
+    sent += 1;
+  }
+
+  return NextResponse.json({
+    ok: true,
+    eligible: eligible.length,
+    sent,
+    failed,
+    errors: errors.slice(0, 10),
+  });
+}

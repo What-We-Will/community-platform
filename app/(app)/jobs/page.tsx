@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { computeJobBoardTier } from "@/lib/jobs/job-board-tier";
 import { JobBoardClient, type JobPosting } from "./JobBoardClient";
 import type { Comment } from "./JobComments";
 
@@ -116,12 +117,12 @@ export default async function JobBoardPage({
   //   1 — has direct community notes (by most recent direct note desc)
   //   2 — is community network       (by job created_at desc)
   //   3 — everything else            (by job created_at desc)
-  const jobTier = (job: JobPosting): number => {
-    if (job.offers_referral) return 0;
-    if ((rawCommentsByJob.get(job.id)?.length ?? 0) > 0) return 1;
-    if (job.is_community_network) return 2;
-    return 3;
-  };
+  const jobTier = (job: JobPosting): number =>
+    computeJobBoardTier({
+      offers_referral: job.offers_referral,
+      is_community_network: job.is_community_network,
+      directCommentCount: rawCommentsByJob.get(job.id)?.length ?? 0,
+    });
 
   filteredJobs.sort((a, b) => {
     const ta = jobTier(a);

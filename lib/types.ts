@@ -19,6 +19,9 @@ export interface Profile {
   approval_status: ApprovalStatus;
   role: ProfileRole;
   last_seen_at: string | null;
+  /** Opt-in: weekly My Tools reminder email (cron). Default false. */
+  email_my_tools_reminders: boolean;
+  last_my_tools_reminder_sent_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,6 +42,7 @@ export interface ProfileInsert {
   timezone?: string;
   is_onboarded?: boolean;
   role?: ProfileRole;
+  email_my_tools_reminders?: boolean;
 }
 
 export interface ProfileUpdate {
@@ -55,6 +59,7 @@ export interface ProfileUpdate {
   portfolio_url?: string | null;
   timezone?: string;
   is_onboarded?: boolean;
+  email_my_tools_reminders?: boolean;
 }
 
 // ─── Messaging ───────────────────────────────────────────────────────────────
