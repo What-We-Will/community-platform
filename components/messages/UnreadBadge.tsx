@@ -13,17 +13,13 @@ export function UnreadBadge({ initialCount, userId }: UnreadBadgeProps) {
   const [count, setCount] = useState(initialCount);
   const pathname = usePathname();
 
-  async function fetchUnreadCount() {
-    const supabase = createClient();
-    const { data } = await supabase.rpc("get_total_unread_count");
-    setCount(Number(data ?? 0));
-  }
-
   // Re-fetch whenever the user navigates (catches mark-as-read from conversation pages)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchUnreadCount();
-  }, [pathname]);  
+    const supabase = createClient();
+    supabase.rpc("get_total_unread_count").then(({ data }) => {
+      setCount(Number(data ?? 0));
+    });
+  }, [pathname]);
 
   // Subscribe to new messages for live increment
   useEffect(() => {
@@ -34,14 +30,17 @@ export function UnreadBadge({ initialCount, userId }: UnreadBadgeProps) {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
-        fetchUnreadCount
+        async () => {
+          const { data } = await supabase.rpc("get_total_unread_count");
+          setCount(Number(data ?? 0));
+        }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);  
+  }, [userId]);
 
   if (count === 0) return null;
 
