@@ -21,6 +21,7 @@ BEGIN
     JOIN public.conversation_participants cp
       ON cp.conversation_id = m.conversation_id
       AND cp.user_id = v_user_id
+      AND cp.archived = false
     WHERE m.conversation_id = ANY(p_conversation_ids)
       AND m.sender_id <> v_user_id
       AND (cp.last_read_at IS NULL OR m.created_at > cp.last_read_at)
@@ -73,6 +74,7 @@ BEGIN
     JOIN public.conversation_participants cp
       ON cp.conversation_id = m.conversation_id
       AND cp.user_id = v_user_id
+      AND cp.archived = false
     WHERE m.conversation_id = ANY(p_conversation_ids)
     ORDER BY m.conversation_id, m.created_at DESC;
 END;
