@@ -26,27 +26,8 @@ export default async function AppLayout({
     redirect("/onboarding");
   }
 
-  // Compute initial unread message count for the sidebar badge
-  let unreadCount = 0;
-  const { data: participations } = await supabase
-    .from("conversation_participants")
-    .select("conversation_id, last_read_at")
-    .eq("user_id", user.id);
-
-  if (participations && participations.length > 0) {
-    const counts = await Promise.all(
-      participations.map(async (p) => {
-        const { count } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", p.conversation_id)
-          .neq("sender_id", user.id)
-          .gt("created_at", p.last_read_at);
-        return count ?? 0;
-      })
-    );
-    unreadCount = counts.reduce((sum, c) => sum + c, 0);
-  }
+  const { data: total } = await supabase.rpc("get_total_unread_count");
+  const unreadCount = Number(total ?? 0);
 
   return (
     <AppShell

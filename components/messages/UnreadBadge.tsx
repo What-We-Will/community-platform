@@ -15,37 +15,15 @@ export function UnreadBadge({ initialCount, userId }: UnreadBadgeProps) {
 
   async function fetchUnreadCount() {
     const supabase = createClient();
-
-    const { data: participations } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id, last_read_at")
-      .eq("user_id", userId);
-
-    if (!participations || participations.length === 0) {
-      setCount(0);
-      return;
-    }
-
-    const counts = await Promise.all(
-      participations.map(async (p) => {
-        const { count: c } = await supabase
-          .from("messages")
-          .select("*", { count: "exact", head: true })
-          .eq("conversation_id", p.conversation_id)
-          .neq("sender_id", userId)
-          .gt("created_at", p.last_read_at);
-        return c ?? 0;
-      })
-    );
-
-    setCount(counts.reduce((sum, c) => sum + c, 0));
+    const { data } = await supabase.rpc("get_total_unread_count");
+    setCount(Number(data ?? 0));
   }
 
   // Re-fetch whenever the user navigates (catches mark-as-read from conversation pages)
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUnreadCount();
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [pathname]);  
 
   // Subscribe to new messages for live increment
   useEffect(() => {
@@ -63,7 +41,7 @@ export function UnreadBadge({ initialCount, userId }: UnreadBadgeProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId]);  
 
   if (count === 0) return null;
 
