@@ -139,7 +139,7 @@ export default function AppShell({ children, user }: AppShellProps) {
         <div className="flex h-full flex-col">
           <div className="flex h-14 items-center justify-between border-b px-4 lg:justify-center">
             <Link
-              href="/"
+              href="/dashboard"
               className="flex items-center gap-2 text-lg font-bold uppercase tracking-tight text-primary-orange"
               onClick={() => setSidebarOpen(false)}
             >
@@ -297,7 +297,7 @@ export default function AppShell({ children, user }: AppShellProps) {
             <Menu className="size-5" />
           </Button>
           <Link
-            href="/"
+            href="/dashboard"
             className="flex items-center gap-2 font-bold uppercase tracking-tight text-primary-orange"
           >
             <Image
