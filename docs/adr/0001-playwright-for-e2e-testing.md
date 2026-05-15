@@ -1,6 +1,6 @@
 # ADR-0001 — Playwright for end-to-end browser testing
 
-**Status:** Proposed 2026-04-09
+**Status:** Accepted 2026-04-27
 **TL;DR:** We adopt Playwright (chromium-only, in-repo `e2e/` directory) for end-to-end browser testing of multi-step flows that unit and integration tests cannot cover.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario

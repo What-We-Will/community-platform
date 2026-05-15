@@ -113,15 +113,11 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 
 ## Index
 
-*No ADRs yet — see [`template.md`](./template.md) to write the first one.*
-
-<!--
-When ADR-0001 lands, replace the line above with a table:
-
 | # | Title | Status | Sponsoring Lead |
 |---|---|---|---|
-| [0001](./0001-supabase-vault-for-survey-keys.md) | Supabase Vault for survey keys | Accepted 2026-MM-DD | @lead |
+| [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | @tonyrosario |
 
+<!--
 Keep the index sorted by number ascending. Superseded ADRs stay in the index
 with their status visible — they're history, not noise.
 -->
