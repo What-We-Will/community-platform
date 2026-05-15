@@ -90,11 +90,6 @@ Three leads share sponsorship duty. Route a draft ADR to the lead whose area it 
 
 Ownership areas are guidance for routing, not hard ownership. Any lead can sponsor any ADR. The table exists so a volunteer at 11pm on a Saturday knows who to @-mention without having to ask in chat first.
 
-> [!IMPORTANT]
-> **Provisional rule — resolve before merge (2026-05-06).** The 5-business-day window below has not been confirmed by all three leads. @SirFuzzyWalls @timchaffee — please confirm or propose a different value in this PR. Remove this callout once consensus lands.
-
-If no lead has self-assigned within **5 business days** of an ADR moving to `Proposed`, the author may ping all three in the PR thread to surface the routing question.
-
 ---
 
 ## Proposal and sponsorship
@@ -103,9 +98,9 @@ This is a two-track process: deliberately permissive on entry, rigorous on accep
 
 1. **Anyone can propose.** A volunteer or lead drafts an ADR using `template.md`. Status starts as `Draft YYYY-MM-DD` while the draft is in flight, then `Proposed YYYY-MM-DD` when it's open for lead review.
 2. **Author is whoever drafts it.** Volunteer or lead. Filling the `Author` field is a first-class acknowledgment of the proposer's work — it is not erased when a lead sponsors.
-3. **One of the three platform leads must sponsor.** Sponsorship means attaching their name to the `Sponsoring Lead` field. A volunteer-authored ADR may leave that field blank; a lead fills it during PR review. The Sponsoring Lead is the permanent historical contact — the person a future contributor asks "why did we decide this?" years from now. The role does *not* expire when the lead rotates to a different part of the project. Reassignment only happens if the lead leaves the project entirely.
+3. **One of the three platform leads must sponsor.** Sponsorship means attaching their name to the `Sponsoring Lead` field. A volunteer-authored ADR may leave that field blank; a lead fills it during PR review. The Sponsoring Lead is the permanent historical contact — the person a future contributor asks "why did we decide this?" years from now. The role does *not* expire when the lead rotates to a different part of the project. Reassignment happens if the lead leaves the project entirely, or if they become persistently unreachable — in the latter case, the remaining active leads may reassign sponsorship via a one-line commit to the ADR.
 4. **Major framework decisions require a second lead's review.** For ADRs touching cross-cutting concerns (testing strategy, RLS model, auth model, secrets handling, framework choices), at least one *other* lead approves the PR before merge. Routine ADRs (one-off decisions confined to a single area) need only the Sponsoring Lead's approval.
-5. **Status flips to `Accepted YYYY-MM-DD` at merge.** The Sponsoring Lead makes the edit as part of merging.
+5. **Status flips to `Accepted YYYY-MM-DD` at merge** (or, for retroactive ADRs, the date the underlying decision was committed to — see "Retroactive ADRs" above). The Sponsoring Lead makes the edit as part of merging.
 
 When a substantive design discussion concludes — in a PR, an issue, or a meeting — write an ADR. Don't wait for a formal RFC process to exist; the ADR is the record.
 
