@@ -2,7 +2,7 @@
 
 This directory holds the project's Architecture Decision Records — short, durable notes capturing decisions that are load-bearing, hard to reverse, or already came out of substantive debate.
 
-ADRs are written in [Michael Nygard's format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions), with three project-specific additions (`TL;DR`, `Author`, and `Sponsoring Lead`) and one drafting state (`Draft`) added on top of the standard status enum.
+ADRs are based on [Michael Nygard's format](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions): Title, Status, Context, Decision, and Consequences. This project adds three header fields (`TL;DR`, `Author`, and `Sponsoring Lead`), a required `Alternatives considered` body section, an optional `Open questions` body section, and one drafting status (`Draft`).
 
 ---
 
@@ -20,7 +20,7 @@ Don't write one for:
 - Implementation details confined to a single file or function.
 - Style preferences (those belong in `CONVENTIONS.md` files or lint configs).
 
-When in doubt, ask any lead before drafting. The cost of a missing ADR is high; the cost of an unnecessary one is also high (noise in the index).
+When in doubt, ask any lead before drafting. Missing ADRs lose important context; unnecessary ADRs add noise to the index.
 
 ### Retroactive ADRs
 
@@ -70,7 +70,7 @@ Numbers are permanent. If an ADR is superseded, the old file keeps its number an
 |---|---|
 | `Draft YYYY-MM-DD` | Author is still scribbling. Not yet ready for sponsorship review. |
 | `Proposed YYYY-MM-DD` | Open for lead review (in PR). |
-| `Accepted YYYY-MM-DD` | Approved and merged. The Sponsoring Lead — not the Author — makes this edit. |
+| `Accepted YYYY-MM-DD` | Approved and merged. |
 | `Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)` | A later ADR replaces this one. |
 | `Deprecated YYYY-MM-DD` | No longer applies and there is no replacement. (Rare.) |
 
@@ -98,9 +98,9 @@ This is a two-track process: deliberately permissive on entry, rigorous on accep
 
 1. **Anyone can propose.** A volunteer or lead drafts an ADR using `template.md`. Status starts as `Draft YYYY-MM-DD` while the draft is in flight, then `Proposed YYYY-MM-DD` when it's open for lead review.
 2. **Author is whoever drafts it.** Volunteer or lead. Filling the `Author` field is a first-class acknowledgment of the proposer's work — it is not erased when a lead sponsors.
-3. **One of the three platform leads must sponsor.** Sponsorship means attaching their name to the `Sponsoring Lead` field. A volunteer-authored ADR may leave that field blank; a lead fills it during PR review. The Sponsoring Lead is the permanent historical contact — the person a future contributor asks "why did we decide this?" years from now. The role does *not* expire when the lead rotates to a different part of the project. Reassignment happens if the lead leaves the project entirely, or if they become persistently unreachable — in the latter case, the remaining active leads may reassign sponsorship via a one-line commit to the ADR.
+3. **One of the three platform leads must sponsor.** Sponsorship means attaching their name to the `Sponsoring Lead` field. A volunteer-authored ADR may leave that field blank; a lead fills it during PR review. The Sponsoring Lead is the permanent historical contact — the person a future contributor asks "why did we decide this?" years from now. The role does *not* expire when the lead rotates to a different part of the project. Reassignment should be rare and should only happen when the original sponsor is no longer an appropriate project contact.
 4. **Major framework decisions require a second lead's review.** For ADRs touching cross-cutting concerns (testing strategy, RLS model, auth model, secrets handling, framework choices), at least one *other* lead approves the PR before merge. Routine ADRs (one-off decisions confined to a single area) need only the Sponsoring Lead's approval.
-5. **Status flips to `Accepted YYYY-MM-DD` at merge** (or, for retroactive ADRs, the date the underlying decision was committed to — see "Retroactive ADRs" above). The Sponsoring Lead makes the edit as part of merging.
+5. **Status flips to `Accepted YYYY-MM-DD` at merge** (or, for retroactive ADRs, the date the underlying decision was committed to — see "Retroactive ADRs" above). Either the Sponsoring Lead or the Author makes the edit as part of merging.
 
 When a substantive design discussion concludes — in a PR, an issue, or a meeting — write an ADR. Don't wait for a formal RFC process to exist; the ADR is the record.
 

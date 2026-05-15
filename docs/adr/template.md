@@ -29,8 +29,8 @@ Status:
   - "Draft YYYY-MM-DD" while the author is still scribbling and not yet ready
     for sponsorship review.
   - "Proposed YYYY-MM-DD" once the ADR is open for lead review (in PR).
-  - "Accepted YYYY-MM-DD" when the Sponsoring Lead approves and merges. The
-    Sponsoring Lead — not the Author — makes this edit.
+  - "Accepted YYYY-MM-DD" when the decision is accepted. For new ADRs, this is
+    usually the merge date. For retroactive ADRs, use the original decision date.
   - "Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)" when a later ADR replaces
     this one.
   - "Deprecated YYYY-MM-DD" when no longer applies and there is no replacement.
@@ -50,9 +50,9 @@ Sponsoring Lead: A platform lead who has attached their name to this ADR.
   A volunteer proposing an ADR may leave this field blank; one of the three
   platform leads will attach their name during PR review.
 
-Status changes (Draft → Proposed, Proposed → Accepted, Accepted → Superseded)
-are the only edits allowed to a merged ADR. For everything else, write a new
-ADR that supersedes this one.
+After an ADR is merged as `Accepted`, the only allowed edits are status
+transitions such as `Accepted → Superseded` or `Accepted → Deprecated`. For
+everything else, write a new ADR that supersedes this one.
 -->
 
 ## Context
