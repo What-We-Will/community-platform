@@ -22,6 +22,17 @@ Don't write one for:
 
 When in doubt, ask any lead before drafting. The cost of a missing ADR is high; the cost of an unnecessary one is also high (noise in the index).
 
+### Retroactive ADRs
+
+Sometimes a decision ships before its ADR is written. When documenting a decision that is already in production, date the ADR by the decision's lifecycle, not by the ADR file's creation date.
+
+- `Proposed YYYY-MM-DD` is when the proposal first surfaced, such as the GitHub issue, PR discussion, design discussion, or meeting where the decision was put on the table.
+- `Accepted YYYY-MM-DD` is when the team committed to the decision, typically the implementing PR's merge date or a documented sign-off, whichever came first.
+
+The PR that introduces the ADR record documents an already-made decision and does not reset these dates. Sponsorship and second-lead review still apply.
+
+Do not routinely backfill ADRs. Write retroactive ADRs only for load-bearing decisions where the decision context, tradeoffs, or rationale are at risk of being lost.
+
 ---
 
 ## Format
