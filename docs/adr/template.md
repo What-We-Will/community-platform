@@ -1,6 +1,6 @@
 # ADR-NNNN — [Short title in sentence case]
 
-**Status:** Draft [YYYY-MM-DD]
+**Status:** Draft YYYY-MM-DD
 **TL;DR:** [One sentence — the decision, in plain language. A volunteer reading on a Saturday should know in 10 seconds whether this affects their PR.]
 **Author:** @username
 **Sponsoring Lead:** @username
@@ -20,8 +20,8 @@ Examples:
   docs/adr/0003-jitsi-for-video.md
 
 Numbers are permanent. If an ADR is superseded, the old file keeps its number
-and gains a "Superseded by ADR-NNNN" status line; the new ADR takes the next
-unused number. Numbers are never reused.
+and gains a "Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)" status line;
+the new ADR takes the next unused number. Numbers are never reused.
 
 HEADER FIELDS
 
@@ -30,7 +30,11 @@ Status:
     for sponsorship review.
   - "Proposed YYYY-MM-DD" once the ADR is open for lead review (in PR).
   - "Accepted YYYY-MM-DD" when the decision is accepted. For new ADRs, this is
-    usually the merge date. For retroactive ADRs, use the original decision date.
+    usually the merge date. For retroactive ADRs, this is the implementing PR's
+    merge date or a documented sign-off, whichever came first.
+  - "Rejected YYYY-MM-DD" when the proposal is reviewed and not adopted. Merge
+    with this status when the debate is worth preserving as a record; otherwise
+    close the PR without merging.
   - "Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)" when a later ADR replaces
     this one.
   - "Deprecated YYYY-MM-DD" when no longer applies and there is no replacement.
@@ -44,15 +48,17 @@ Author: Whoever drafted the ADR. Can be a volunteer or a lead. Authorship is
 Sponsoring Lead: A platform lead who has attached their name to this ADR.
   This is the permanent record contact — the person a future contributor or
   lead asks "why did we decide this?" years from now. The role stays with the
-  same lead when they rotate between project areas. Reassign only if the
-  Sponsoring Lead leaves the project entirely.
+  same lead when they rotate between project areas. Reassign only when the
+  original sponsor is no longer an appropriate project contact.
 
-  A volunteer proposing an ADR may leave this field blank; one of the three
-  platform leads will attach their name during PR review.
+  A volunteer proposing an ADR may leave this field with the @username
+  placeholder; one of the three platform leads will fill in their name
+  during PR review. Do not delete the line.
 
 After an ADR is merged as `Accepted`, the only allowed edits are status
-transitions such as `Accepted → Superseded` or `Accepted → Deprecated`. For
-everything else, write a new ADR that supersedes this one.
+transitions, non-substantive corrections such as typos or broken links, or
+metadata corrections that do not change the decision record. For substantive
+changes, write a new ADR that supersedes this one.
 -->
 
 ## Context
