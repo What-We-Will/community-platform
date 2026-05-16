@@ -41,7 +41,7 @@ Every ADR uses [`template.md`](./template.md). The template has:
 
 - A four-field header: `Status`, `TL;DR`, `Author`, `Sponsoring Lead`. `Status` is Nygard's; the other three are this project's additions.
 - Body sections: `Context`, `Decision`, `Alternatives considered`, `Consequences`, and (optional) `Open questions`.
-- HTML-comment guidance inside each section that disappears in rendered output.
+- HTML-comment guidance inside each section to help the author. Strip these comments before merging — they're authoring scaffolding, not part of the decision record. The merged ADR should be prose only.
 
 Aim for **one page** where possible. Go longer when alternatives and consequences demand it, but if it runs past ~two pages it's probably a design doc — link to the design doc from the ADR's Context section and keep the ADR itself focused on the decision.
 
@@ -101,8 +101,8 @@ This is a two-track process: deliberately permissive on entry, rigorous on accep
 2. **Author is whoever drafts it.** Volunteer or lead. Filling the `Author` field is a first-class acknowledgment of the proposer's work — it is not erased when a lead sponsors.
 3. **One of the three platform leads must sponsor.** Sponsorship means attaching their name to the `Sponsoring Lead` field. A volunteer-authored ADR may leave the `@username` placeholder in place; a lead fills it during PR review (do not delete the line). The Sponsoring Lead is the permanent historical contact — the person a future contributor asks "why did we decide this?" years from now. The role does *not* expire when the lead rotates to a different part of the project. Reassignment should be rare and should only happen when the original sponsor is no longer an appropriate project contact.
 4. **Major framework decisions require a second lead's review.** For ADRs touching cross-cutting concerns (testing strategy, RLS model, auth model, secrets handling, framework choices), at least one *other* lead approves the PR before merge. Routine ADRs (one-off decisions confined to a single area) need only the Sponsoring Lead's approval. Retroactive ADRs are exempt from the second-lead requirement — the decision already shipped through normal review, and the ADR is record-keeping. The Sponsoring Lead is still required.
-5. **Status flips to `Accepted YYYY-MM-DD` at merge** (or, for retroactive ADRs, the date the underlying decision was committed to — see "Retroactive ADRs" above). Either the Sponsoring Lead or the Author makes the edit as part of merging.
-6. **Rejection is also a documented outcome.** If review concludes against adoption, merge with `Rejected YYYY-MM-DD` when the debate is worth preserving as a record; otherwise close the PR without merging.
+5. **Status flips to `Accepted YYYY-MM-DD` at merge** (or, for retroactive ADRs, the date the underlying decision was committed to — see "Retroactive ADRs" above). The same PR adds a row to the Index table at the bottom of this README. Either the Sponsoring Lead or the Author makes both edits as part of merging.
+6. **Rejection is also a documented outcome.** If review concludes against adoption, merge with `Rejected YYYY-MM-DD` (and add the row to the Index) when the debate is worth preserving as a record; otherwise close the PR without merging.
 
 When a substantive design discussion concludes — in a PR, an issue, or a meeting — write an ADR. Don't wait for a formal RFC process to exist; the ADR is the record.
 
@@ -126,8 +126,8 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | @tonyrosario |
 
 <!--
-Keep the index sorted by number ascending. Superseded ADRs stay in the index
-with their status visible — they're history, not noise.
+Keep the index sorted by number ascending. Superseded and Rejected ADRs stay
+in the index with their status visible — they're history, not noise.
 -->
 
 ---

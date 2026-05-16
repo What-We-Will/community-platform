@@ -56,6 +56,11 @@ Sponsoring Lead: A platform lead who has attached their name to this ADR.
   placeholder; one of the three platform leads will fill in their name
   during PR review. Do not delete the line.
 
+Before merging, strip ALL HTML comments from this file — including this top
+block and the comments inside each body section. They are authoring
+scaffolding, not part of the decision record. The merged ADR should be
+prose only.
+
 After an ADR is merged as `Accepted`, the only allowed edits are status
 transitions, non-substantive corrections such as typos or broken links, or
 metadata corrections that do not change the decision record. For substantive
