@@ -27,7 +27,8 @@ HEADER FIELDS
 
 Status:
   - "Draft YYYY-MM-DD" while the author is still scribbling and not yet ready
-    for sponsorship review.
+    for sponsorship review. Draft lives on a branch or fork — do not land
+    Draft on main. Open the PR when flipping to Proposed.
   - "Proposed YYYY-MM-DD" once the ADR is open for lead review (in PR).
   - "Accepted YYYY-MM-DD" when the decision is accepted. For new ADRs, this is
     usually the merge date. For retroactive ADRs, this is the implementing PR's

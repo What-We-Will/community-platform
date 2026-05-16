@@ -29,7 +29,7 @@ Sometimes a decision ships before its ADR is written. When documenting a decisio
 - `Proposed YYYY-MM-DD` is when the proposal first surfaced, such as the GitHub issue, PR discussion, design discussion, or meeting where the decision was put on the table.
 - `Accepted YYYY-MM-DD` is when the team committed to the decision, typically the implementing PR's merge date or a documented sign-off, whichever came first.
 
-The PR that introduces the ADR record documents an already-made decision and does not reset these dates. Sponsorship still applies; second-lead review does not (see "Proposal and sponsorship" below).
+The PR follows the standard `Proposed → Accepted` transition: open the PR with `Status: Proposed YYYY-MM-DD` (the original-proposal date above) and flip to `Status: Accepted YYYY-MM-DD` (the original-decision date above) on merge. The PR that introduces the ADR record documents an already-made decision and does not reset these dates. Sponsorship still applies; second-lead review does not (see "Proposal and sponsorship" below).
 
 Do not routinely backfill ADRs. Write retroactive ADRs only for load-bearing decisions where the decision context, tradeoffs, or rationale are at risk of being lost.
 
