@@ -9,13 +9,43 @@ export type Article = {
   body?: ArticleSection[];
 };
 
+import { layoffsAccelerateOracleSeveranceBody } from "@/lib/news/layoffs-accelerate-oracle-severance-body";
+
+export type ArticleInline =
+  | string
+  | { link: string; href: string }
+  | { bold: string };
+
+export type ListItem = string | ArticleInline[];
+
 export type ArticleSection =
   | { type: "paragraph"; text: string }
+  | { type: "paragraph"; parts: ArticleInline[] }
   | { type: "heading"; text: string }
   | { type: "pullquote"; text: string; attribution?: string }
-  | { type: "list"; items: string[] };
+  | { type: "list"; items: ListItem[] }
+  | { type: "sublist"; items: ListItem[] }
+  | { type: "button"; label: string; href: string }
+  | {
+      type: "image";
+      src: string;
+      alt: string;
+      caption?: string;
+      size?: "small";
+    };
 
 export const ARTICLES: Article[] = [
+  {
+    slug: "layoffs-accelerate-oracle-severance",
+    title: "Layoffs Accelerate: Support Oracle Workers Fighting for a Fair Severance!",
+    excerpt:
+      "We've been focused for the past three weeks on a severance negotiation campaign for Oracle workers — including ones terminated on FMLA or disability leave, and cut off from healthcare while pregnant.",
+    date: "April 29, 2026",
+    category: "Community",
+    author: "WWW Editorial Team",
+    featured: true,
+    body: layoffsAccelerateOracleSeveranceBody,
+  },
   {
     slug: "build-bicycles-not-rockets",
     title: "Build Bicycles, Not Rockets: How We Take Control of AI",
@@ -24,7 +54,6 @@ export const ARTICLES: Article[] = [
     date: "March 31, 2026",
     category: "Policy & Advocacy",
     author: "WWW Editorial Team",
-    featured: true,
     body: [
       {
         type: "paragraph",
