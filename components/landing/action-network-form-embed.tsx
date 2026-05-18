@@ -6,7 +6,14 @@ function isValidUsZip(zip: string) {
   return /^\d{5}(-\d{4})?$/.test(zip);
 }
 
-export function ActionNetworkFormEmbed() {
+type ActionNetworkFormEmbedProps = {
+  variant?: "default" | "dark";
+};
+
+export function ActionNetworkFormEmbed({
+  variant = "default",
+}: ActionNetworkFormEmbedProps) {
+  const isDark = variant === "dark";
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -75,8 +82,108 @@ export function ActionNetworkFormEmbed() {
     }
   }
 
-  const inputClass =
-    "h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const inputClass = isDark
+    ? "h-11 w-full rounded-lg border-0 bg-warm-beige px-3 text-sm text-dark-blue shadow-sm placeholder:text-dark-blue/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+    : "h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+
+  const statusMessage = error ? (
+    <p className={isDark ? "text-sm text-red-300" : "text-destructive"}>
+      {error}
+    </p>
+  ) : success ? (
+    <p className={isDark ? "text-sm text-white/80" : "text-muted-foreground"}>
+      Thanks for signing up! Please check your email for confirmation.
+    </p>
+  ) : null;
+
+  if (isDark) {
+    return (
+      <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
+        <div className="grid w-full gap-3 sm:grid-cols-2">
+          <div>
+            <label htmlFor="newsletter-first-name" className="sr-only">
+              First name (optional)
+            </label>
+            <input
+              id="newsletter-first-name"
+              type="text"
+              autoComplete="given-name"
+              placeholder="First name (optional)"
+              className={inputClass}
+              value={firstName}
+              onChange={(e) => {
+                setFirstName(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isSubmitting}
+            />
+          </div>
+          <div>
+            <label htmlFor="newsletter-last-name" className="sr-only">
+              Last name (optional)
+            </label>
+            <input
+              id="newsletter-last-name"
+              type="text"
+              autoComplete="family-name"
+              placeholder="Last name (optional)"
+              className={inputClass}
+              value={lastName}
+              onChange={(e) => {
+                setLastName(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isSubmitting}
+            />
+          </div>
+          <div>
+            <label htmlFor="newsletter-email" className="sr-only">
+              Email address
+            </label>
+            <input
+              id="newsletter-email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              className={inputClass}
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isSubmitting}
+            />
+          </div>
+          <div>
+            <label htmlFor="newsletter-zip" className="sr-only">
+              Zip code (optional)
+            </label>
+            <input
+              id="newsletter-zip"
+              type="text"
+              autoComplete="postal-code"
+              placeholder="Zip (optional)"
+              className={inputClass}
+              value={zipCode}
+              onChange={(e) => {
+                setZipCode(e.target.value);
+                if (error) setError(null);
+              }}
+              disabled={isSubmitting}
+            />
+          </div>
+        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-warm-beige px-8 text-sm font-semibold text-dark-blue shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:shadow-lg active:translate-y-0 active:shadow-md disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:bg-warm-beige disabled:hover:shadow-md sm:w-auto sm:min-w-[10rem]"
+        >
+          {isSubmitting ? "Subscribing…" : "Subscribe"}
+        </button>
+        {statusMessage}
+      </form>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
@@ -164,14 +271,7 @@ export function ActionNetworkFormEmbed() {
         >
           {isSubmitting ? "Subscribing…" : "Subscribe"}
         </button>
-        <div className="w-full text-sm sm:flex-1">
-          {error && <p className="text-destructive">{error}</p>}
-          {success && !error && (
-            <p className="text-muted-foreground">
-              Thanks for signing up! Please check your email for confirmation.
-            </p>
-          )}
-        </div>
+        <div className="w-full text-sm sm:flex-1">{statusMessage}</div>
       </div>
     </form>
   );

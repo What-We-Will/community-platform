@@ -9,83 +9,44 @@ type TeamMember = {
 };
 
 const FOUNDING_TEAM: TeamMember[] = [
+
+];
+
+const CORE_TEAM: TeamMember[] = [
   {
     name: "Kaitlin Cort",
-    role: "Co-Founder, Executive Director",
+    role: "Founder, Executive Director",
     bio: "Lead organizer shaping strategy, programs, partnerships, and platform. Software engineer and educator, with background in labor organizing, policy research, government leadership, and 20+ years in nonprofit management.",
   },
   {
+    name: "Charise Van Liew",
+    role: "Fundraising & Development",
+    bio: "Strategic resource development specialist, with 20+ years of nonprofit executive leadership. Passionate about youth empowerment and social justice.",
+  },
+  {
     name: "Daniel Buk",
-    role: "Co-Founder, Partnerships Research & Digital Outreach",
+    role: "Partnerships Research & Digital Outreach",
     bio: "Research specialist leading digital outreach and prospective partnerships. M.A. in Labor Studies from CUNY School of Labor and Urban Studies.",
   },
   {
     name: "Kyle Albasi",
-    role: "Co-Founder, Creative Director & Media Strategy",
+    role: "Creative Director & Media Strategy",
     bio: "Creative Director shaping our visual identity, narrative content, and creative media campaigns. Video producer, graphic designer, and writer.",
   },
   {
+    name: "Sabrina Shuss",
+    role: "Program Manager & Operations",
+    bio: "Project manager and operations specialist, with financial management skills. Coordinating volunteer teams and ensuring our daily programs run smoothly.",
+  },
+  {
     name: "Jennifer Tovar",
-    role: "Co-Founder, Curriculum Developer & Early Career Worker Support",
+    role: "Curriculum Developer & Early Career Worker Support",
     bio: "Helping entry-level workers and youth in our community with relevant skill-building and career resources.",
   },
   {
     name: "Helen Yang",
-    role: "Co-Founder, Board Member, Tech Worker Organizing & Political Education",
+    role: "Board Member, Tech Worker Organizing & Political Education",
     bio: "Championing worker-led organizing within workplaces, and broader tech industry activism at the Tech Workers Coalition.",
-  },
-  {
-    name: "Charise Van Liew",
-    role: "Co-Founder, Fundraising & Development",
-    bio: "Strategic resource development specialist, with 20+ years of nonprofit executive leadership. Passionate about youth empowerment and social justice.",
-  },
-  {
-    name: "Sabrina Shuss",
-    role: "Co-Founder, Program Manager & Operations",
-    bio: "Project manager and operations specialist, with financial management skills. Coordinating volunteer teams and ensuring our daily programs run smoothly.",
-  },
-];
-
-const CORE_ORGANIZING_TEAM: TeamMember[] = [
-  {
-    name: "Shannon W.",
-    role: "Lead Organizer - Policy & Advocacy Team",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "Hope J.",
-    role: "Lead Organizer - Digital Organizing & Social Media Team",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "Abdulhadi Z.",
-    role: "Lead Organizer - Community Job Support Program",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "Simon M.",
-    role: "Lead Organizer - WWW Tech Worker Cooperative",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "George D.",
-    role: "Co-Lead Organizer - Layoff Crisis Response Team",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "Sonia J.",
-    role: "Co-Lead Organizer - Participatory Research Team",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "Simantha P.",
-    role: "Co-Lead Organizer - Participatory Research Team",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
-  },
-  {
-    name: "Margaret G.",
-    role: "Co-Lead - Job Support & Participatory Research Teams",
-    bio: "Leads storytelling and outreach. Connects our work to the broader movement for worker power.",
   },
 ];
 
@@ -152,9 +113,6 @@ export function AboutTeam() {
     <section className="border-t bg-white px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl space-y-16">
         <div>
-          <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-            Founding Team
-          </h2>
           <TeamGrid members={FOUNDING_TEAM} />
         </div>
 
@@ -162,7 +120,7 @@ export function AboutTeam() {
           <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
             Core Team
           </h2>
-          <TeamGrid members={CORE_ORGANIZING_TEAM} showBio={false} />
+          <TeamGrid members={CORE_TEAM} />
         </div>
       </div>
     </section>
