@@ -52,7 +52,7 @@ Aim for **one page** where possible. Go longer when alternatives and consequence
 Save ADRs as `docs/adr/NNNN-kebab-case-title.md`, where:
 
 - `NNNN` is the next available 4-digit number, zero-padded (`0001`, `0002`, …, `0042`).
-- `kebab-case-title` is a short, lowercase, hyphen-separated slug of the title. Aim for 3–6 words. Drop articles ("the", "a") and filler verbs ("use", "adopt", "we") where it doesn't change meaning.
+- `kebab-case-title` is a short, lowercase, hyphen-separated slug derived from the title. Aim for 3–6 words. Cut anything that doesn't help a future reader find the file — articles, filler verbs ("use", "adopt", "we"), and redundant nouns. Standard engineering abbreviations (`e2e`, `rls`, `ci`, `cd`) are fine.
 
 Examples:
 
