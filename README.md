@@ -73,7 +73,7 @@ Link to your Supabase project, selecting the appropriate project:
 npx supabase link
 ```
 
-**NOTE**:Migrations live in `supabase/migrations/` and run in order (e.g. `001_profiles.sql` → `014_events.sql`).
+**NOTE**: Migrations live in `supabase/migrations/`. The legacy range `001_*.sql` → `057_*.sql` runs first in numeric order; new migrations are timestamp-named (`YYYYMMDDHHMMSS_<slug>.sql`) and sort after. See [`supabase/migrations/CONVENTIONS.md`](supabase/migrations/CONVENTIONS.md).
 
 ### 4. Run the app
 
@@ -152,6 +152,10 @@ Note that as of this writing the group message notification emails are only sent
 │   └── utils.ts                  # cn() etc.
 ├── supabase/
 │   └── migrations/               # SQL migrations (profiles, messaging, groups, polls, events, storage)
+├── docs/
+│   └── adr/                      # Architecture Decision Records
+├── scripts/
+│   └── ci/                       # CI helper scripts (migration collision gate, etc.)
 └── proxy.ts                      # Next.js proxy (not middleware)
 ```
 
@@ -179,6 +183,28 @@ Note that as of this writing the group message notification emails are only sent
 - **Supabase:** Server code uses `createClient()` from `@/lib/supabase/server`; client code uses `@/lib/supabase/client`.
 - **Styling:** Tailwind + shadcn. Reuse `UserAvatar`, `formatRelativeTime`, `eventTypeConfig`, etc. from `lib/` and `components/shared/`.
 - **New UI:** Add components via `npx shadcn@latest add <component>` when you need a new primitive.
+
+---
+
+## Working with migrations
+
+Author migrations on your own machine against your personal Supabase project (set up in [Getting started](#getting-started)) — never against the shared preview DB. Migrations reach the shared preview DB only via merged PRs on `main`.
+
+Scaffold a new migration with:
+
+```bash
+supabase migration new <slug>
+```
+
+This produces a timestamped filename like `YYYYMMDDHHMMSS_<slug>.sql`. Edit the generated SQL file, then apply it to your own Supabase project:
+
+```bash
+npx supabase db push
+```
+
+For naming rules, required-column rules, and the legacy 001–057 range, see [`supabase/migrations/CONVENTIONS.md`](supabase/migrations/CONVENTIONS.md).
+
+If you hit pain (filename collision, semantic conflict, contention on the shared preview DB, slow apply cycles), file a GitHub issue with the `migration-pain-signal` label.
 
 ---
 
