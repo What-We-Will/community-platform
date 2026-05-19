@@ -65,7 +65,7 @@ jobs:
         if: steps.changes.outputs.migrations == 'true'
         uses: supabase/setup-cli@v1
         with:
-          version: "2.81.3"
+          version: "2.92.1"
 
       - name: Link to Preview project
         if: steps.changes.outputs.migrations == 'true'
