@@ -37,7 +37,7 @@ jobs:
         with:
           filters: |
             migrations:
-              - 'supabase/migrations/**'
+              - 'supabase/migrations/**/*.sql'
 
       - name: Setup Node
         uses: actions/setup-node@v4
