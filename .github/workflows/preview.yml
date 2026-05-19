@@ -26,6 +26,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Detect migration changes
+        id: changes
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d  # v4.0.1
+        with:
+          filters: |
+            migrations:
+              - 'supabase/migrations/**'
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -49,14 +57,17 @@ jobs:
         continue-on-error: true
 
       - name: Setup Supabase CLI
+        if: steps.changes.outputs.migrations == 'true'
         uses: supabase/setup-cli@v1
         with:
           version: latest
 
       - name: Link to Preview project
+        if: steps.changes.outputs.migrations == 'true'
         run: supabase link --project-ref ${{ secrets.PREVIEW_SUPABASE_PROJECT_ID }}
 
       - name: Push Supabase migrations to PREVIEW DB
+        if: steps.changes.outputs.migrations == 'true'
         run: supabase db push
 
       - name: Install Vercel CLI
