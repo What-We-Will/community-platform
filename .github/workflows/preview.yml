@@ -22,6 +22,7 @@ jobs:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.PREVIEW_SUPABASE_ACCESS_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
     timeout-minutes: 10
     steps:
@@ -67,7 +68,9 @@ jobs:
 
       - name: Link to Preview project
         if: steps.changes.outputs.migrations == 'true'
-        run: supabase link --project-ref ${{ secrets.PREVIEW_SUPABASE_PROJECT_ID }}
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.PREVIEW_SUPABASE_PROJECT_ID }}
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Push Supabase migrations to PREVIEW DB
         if: steps.changes.outputs.migrations == 'true'
@@ -77,7 +80,7 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Pull Vercel env
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=preview
 
       # WHY ENV IS NEEDED HERE
       # - Next.js injects NEXT_PUBLIC_* variables at build time
@@ -87,7 +90,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build
 
       # WHY ENV IS NEEDED HERE:
       # - Vercel attaches runtime env vars to serverless/edge functions
@@ -99,7 +102,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
         run: |
-          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --prebuilt)
           echo "preview_url=$url" >> $GITHUB_OUTPUT
 
       - name: Comment PR with URL

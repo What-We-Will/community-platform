@@ -6,6 +6,7 @@ on:
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
   HUSKY: 0
 
 permissions:
@@ -40,21 +41,32 @@ jobs:
         run: npm install -g vercel@latest
 
       - name: Pull Vercel env
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
 
       - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod
 
       - name: Deploy to production
         id: deploy
         run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --prebuilt --prod)
           echo "production_url=$url" >> $GITHUB_OUTPUT
 
       - name: Comment PR with URL
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
+        env:
+          PRODUCTION_URL: ${{ steps.deploy.outputs.production_url }}
         with:
           script: |
+            const url = process.env.PRODUCTION_URL || '';
+            if (!url) {
+              core.warning('production_url is empty — skipping PR comment');
+              return;
+            }
+            if (!/^https:\/\/[a-z0-9.-]+\.vercel\.app\b/.test(url)) {
+              core.setFailed(`Unexpected production URL: ${url}`);
+              return;
+            }
             const { data: prs } = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -69,6 +81,6 @@ jobs:
                 issue_number: merged.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: '✅ Production deployed: ${{ steps.deploy.outputs.production_url }}'
+                body: `✅ Production deployed: ${url}`,
               });
             }
