@@ -191,6 +191,12 @@ jobs:
           /tmp/gitleaks version
           /tmp/gitleaks detect --no-banner --redact --log-opts "${BASE_SHA}..HEAD"
 
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: "24.x"
+          cache: "npm"
+
       - name: Hidden character scan
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -202,12 +208,6 @@ jobs:
             exit 0
           fi
           node scripts/scan-hidden-chars.mjs "${files[@]}"
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
-        with:
-          node-version: "24.x"
-          cache: "npm"
 
       - name: Audit dependencies
         run: npm ci --ignore-scripts && npm audit --audit-level=high
