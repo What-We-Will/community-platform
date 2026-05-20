@@ -40,7 +40,7 @@ jobs:
               - 'supabase/migrations/**/*.sql'
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: "24.x"
           cache: "npm"
@@ -59,7 +59,7 @@ jobs:
 
       - name: Setup Supabase CLI
         if: steps.changes.outputs.migrations == 'true'
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@b60b5899c73b63a2d2d651b1e90db8d4c9392f51  # v1.6.0
         with:
           version: "2.92.1"
 
@@ -102,7 +102,7 @@ jobs:
 
       - name: Comment PR with URL
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
         env:
           PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
         with:
@@ -183,6 +183,12 @@ jobs:
             exit 0
           fi
           node scripts/scan-hidden-chars.mjs "${files[@]}"
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: "24.x"
+          cache: "npm"
 
       - name: Audit dependencies
         run: npm ci --ignore-scripts && npm audit --audit-level=high
