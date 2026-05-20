@@ -1,7 +1,7 @@
 # ADR-NNNN — [Short title in sentence case]
 
 **Status:** Draft YYYY-MM-DD
-**TL;DR:** [One sentence — the decision, in plain language. A volunteer reading on a Saturday should know in 10 seconds whether this affects their PR.]
+**TL;DR:** [One sentence by default; up to three when the decision has multiple parallel parts. State the decision, in plain language. A volunteer reading on a Saturday should know in 10 seconds whether this affects their PR.]
 **Author:** @username
 **Sponsoring Lead:** @username
 
@@ -41,7 +41,10 @@ Status:
   - "Deprecated YYYY-MM-DD" when no longer applies and there is no replacement.
     (Rare; usually decisions get superseded, not deprecated.)
 
-TL;DR: One sentence. Plain language. State the decision, not the reasoning.
+TL;DR: One sentence by default; up to three when the decision has multiple
+  parallel parts (e.g., several adoptions plus a deferral). Plain language.
+  Lead with what's adopted; state the decision, not the reasoning. Defer
+  rationale to Context and Decision.
 
 Author: Whoever drafted the ADR. Can be a volunteer or a lead. Authorship is
   not erased when a Sponsoring Lead attaches their name.
