@@ -18,12 +18,6 @@ jobs:
       contents: read
       pull-requests: write
 
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.PREVIEW_SUPABASE_ACCESS_TOKEN }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -69,17 +63,24 @@ jobs:
       - name: Link to Preview project
         if: steps.changes.outputs.migrations == 'true'
         env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PREVIEW_SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.PREVIEW_SUPABASE_PROJECT_ID }}
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Push Supabase migrations to PREVIEW DB
         if: steps.changes.outputs.migrations == 'true'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.PREVIEW_SUPABASE_ACCESS_TOKEN }}
         run: supabase db push
 
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
       - name: Pull Vercel env
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: vercel pull --yes --environment=preview
 
       # WHY ENV IS NEEDED HERE
@@ -87,6 +88,9 @@ jobs:
       # - The build output must point to the correct Supabase branch
       - name: Build app (using branch DB env)
         env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
@@ -98,6 +102,9 @@ jobs:
       - name: Deploy preview
         id: deploy
         env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.PREVIEW_SUPABASE_URL_BASE }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PREVIEW_SUPABASE_PUB_KEY }}
