@@ -35,7 +35,7 @@ jobs:
         run: npm test
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@54.2.0
 
       - name: Pull Vercel env
         env:
