@@ -16,7 +16,12 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/about",
-        destination: "https://wwwrise.org",
+        destination: "/about-us",
+        permanent: true,
+      },
+      {
+        source: "/mass-call",
+        destination: "https://movement.wwwrise.org",
         permanent: true,
       },
     ];

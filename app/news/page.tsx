@@ -4,11 +4,13 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { NewsHero } from "@/components/news/news-hero";
 import { NewsGrid } from "@/components/news/news-grid";
+import { canonicalPath } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "News & Updates | What We Will",
+  title: "News & Updates",
   description:
     "Stay up to date with the latest from What We Will — organizing wins, policy updates, resources, and stories from workers on the front lines.",
+  alternates: canonicalPath("/news"),
 };
 
 export default async function NewsPage() {

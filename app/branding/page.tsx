@@ -5,10 +5,14 @@ import { LandingFooter } from "@/components/landing/landing-footer";
 import { BrandColors } from "@/components/branding/BrandColors";
 import { Button } from "@/components/ui/button";
 
-export const metadata = {
-  title: "Branding | What We Will",
+import type { Metadata } from "next";
+import { NOINDEX_METADATA } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Branding",
   description:
     "Mission, voice, talking points, logos, colors, typography, and iconography for the What We Will brand.",
+  ...NOINDEX_METADATA,
 };
 
 export default async function BrandingPage() {

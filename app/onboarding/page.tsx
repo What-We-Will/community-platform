@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { NOINDEX_METADATA } from "@/lib/seo";
 import OnboardingForm from "./onboarding-form";
+
+export const metadata: Metadata = NOINDEX_METADATA;
 
 export default async function OnboardingPage() {
   const supabase = await createClient();

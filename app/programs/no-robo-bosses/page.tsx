@@ -14,10 +14,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-export const metadata = {
-  title: "No Robo Bosses Act | What We Will",
+import type { Metadata } from "next";
+import { canonicalPath } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "No Robo Bosses Act",
   description:
     "California's No Robo Bosses Act (SB 947) demands human oversight of AI decisions affecting workers' jobs. Learn about the bill, why it matters, and how to get involved.",
+  alternates: canonicalPath("/programs/no-robo-bosses"),
 };
 
 export default async function NoRoboBossesPage() {

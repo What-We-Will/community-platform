@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { NOINDEX_METADATA } from "@/lib/seo";
 import AppShell from "./app-shell";
+
+export const metadata: Metadata = NOINDEX_METADATA;
 
 export default async function AppLayout({
   children,

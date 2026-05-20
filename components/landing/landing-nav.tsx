@@ -6,7 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSiteUrl } from "@/lib/utils/get-site-url";
+import { MASS_CALL_URL } from "@/lib/seo";
+import { DEFAULT_SITE_URL, getSiteUrl } from "@/lib/utils/get-site-url";
 
 const DONATE_URL =
   "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
@@ -14,8 +15,7 @@ const DONATE_URL =
 // Server-safe initial value — must match what getSiteUrl() returns on the server
 // so the first client render is identical to the SSR HTML (avoids hydration mismatch).
 const SERVER_SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://members.wwwrise.org";
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? DEFAULT_SITE_URL;
 
 export function LandingNav({ user }: { user?: User | null }) {
   const [siteUrl, setSiteUrl] = useState(SERVER_SITE_URL);
@@ -68,7 +68,7 @@ export function LandingNav({ user }: { user?: User | null }) {
               {/* Dropdown panel */}
               <div className="invisible absolute left-0 top-full mt-1 w-56 rounded-md border border-border/60 bg-white py-1 shadow-md opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
                 <a
-                  href="https://kaizengrowth.github.io/masscall/"
+                  href={MASS_CALL_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
@@ -209,7 +209,7 @@ export function LandingNav({ user }: { user?: User | null }) {
             {isProgramsOpen && (
               <>
                 <a
-                  href="https://kaizengrowth.github.io/masscall/"
+                  href={MASS_CALL_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
