@@ -149,13 +149,20 @@ export function ConversationList({
 
     const supabase = createClient();
 
-    await supabase
-      .from("conversation_participants")
-      .update({
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("conversation_id", conversationId)
-      .eq("user_id", currentUserId);
+  const { error } = await supabase
+    .from("conversation_participants")
+    .update({
+      deleted_at: new Date().toISOString(),
+    })
+    .eq("conversation_id", conversationId)
+    .eq("user_id", currentUserId);
+
+  setIsDeleting(null);
+
+if (error) {
+  console.error("[conversation] delete failed:", error);
+  return;
+}
 
     setConversations((prev) =>
       prev.filter((c) => c.conversation.id !== conversationId),
@@ -164,9 +171,6 @@ export function ConversationList({
     if (pathname === `/messages/${conversationId}`) {
       router.push("/messages");
     }
-
-    router.refresh();
-
     setIsDeleting(null);
   }
 
@@ -185,7 +189,6 @@ export function ConversationList({
     if (pathname === `/messages/${conversationId}`) {
       router.push("/messages");
     }
-    router.refresh();
   }
 
   return (
@@ -253,7 +256,6 @@ export function ConversationList({
                 lastMessage,
                 unreadCount,
                 groupName,
-                groupSlug,
               }) => {
                 const isActive = pathname === `/messages/${conversation.id}`;
                 const hasUnread = unreadCount > 0;
@@ -471,6 +473,22 @@ export function ConversationList({
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>Archive conversation</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 shrink-0"
+                            disabled={isDeleting === conversation.id}
+                            onClick={(e) => handleDelete(e, conversation.id)}
+                            >
+                          <Trash2 className="size-4" />
+                          </Button>
+                        </TooltipTrigger>
+                         <TooltipContent>Delete conversation</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>

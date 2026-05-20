@@ -78,12 +78,12 @@ export default async function ConversationPage({
     avatar_url: currentUserProfile?.avatar_url ?? null,
   };
 
-  const { data: deletions } = await supabase
-    .from("message_deletions")
-    .select("message_id")
-    .eq("user_id", user.id);
+  // const { data: deletions } = await supabase
+  //   .from("message_deletions")
+  //   .select("message_id")
+  //   .eq("user_id", user.id);
 
-  const deletedMessageIds = new Set((deletions ?? []).map((d) => d.message_id));
+  // const deletedMessageIds = new Set((deletions ?? []).map((d) => d.message_id));
 
   // ── Group conversation ────────────────────────────────────────────────────
   if (conversation.type === "group") {
@@ -131,6 +131,23 @@ export default async function ConversationPage({
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
       .limit(50);
+
+    const { data: deletions, error: deletionsError } = await supabase
+      .from("message_deletions")
+      .select("message_id")
+      .eq("user_id", user.id)
+      .in("message_id", (rawMessages ?? []).map((m) => m.id));
+
+    if (deletionsError) {
+      console.error(
+        "[conversation] deletions fetch error:",
+        deletionsError,
+      );
+    }
+
+    const deletedMessageIds = new Set(
+      (deletions ?? []).map((d) => d.message_id),
+    );
 
     const messages: MessageWithSender[] = (rawMessages ?? [])
       .filter((msg) => !deletedMessageIds.has(msg.id))
@@ -211,6 +228,23 @@ export default async function ConversationPage({
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(50);
+
+  const { data: deletions, error: deletionsError } = await supabase
+    .from("message_deletions")
+    .select("message_id")
+    .eq("user_id", user.id)
+    .in("message_id", (rawMessages ?? []).map((m) => m.id));
+
+  if (deletionsError) {
+    console.error(
+      "[conversation] deletions fetch error:",
+      deletionsError,
+    );
+  }
+
+  const deletedMessageIds = new Set(
+    (deletions ?? []).map((d) => d.message_id),
+  );
 
   const profileCache = new Map<string, Profile>([
     [user.id, currentUserProfile as Profile],

@@ -6,3 +6,11 @@ CREATE TABLE IF NOT EXISTS message_deletions (
 
   UNIQUE(message_id, user_id)
 );
+
+ALTER TABLE message_deletions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "users manage own deletions"
+  ON message_deletions
+  FOR ALL
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
