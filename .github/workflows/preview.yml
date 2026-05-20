@@ -127,17 +127,24 @@ jobs:
 
       - name: Slack notify success
         if: success()
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data "{\"text\":\"PR #${{ github.event.number }} preview deployed: ${{ steps.deploy.outputs.preview_url }}\"}" \
-          ${{ secrets.SLACK_WEBHOOK_URL }}
+            --data "{\"text\":\"PR #${PR_NUMBER} preview deployed: ${PREVIEW_URL}\"}" \
+            "$SLACK_WEBHOOK_URL"
 
       - name: Slack notify failure
         if: failure()
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data "{\"text\":\"❌ PR #${{ github.event.number }} preview failed.\"}" \
-          ${{ secrets.SLACK_WEBHOOK_URL }}
+            --data "{\"text\":\"❌ PR #${PR_NUMBER} preview failed.\"}" \
+            "$SLACK_WEBHOOK_URL"
 
   security-scan:
     if: github.event.action != 'closed'
