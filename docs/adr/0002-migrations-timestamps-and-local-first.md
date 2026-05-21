@@ -1,6 +1,6 @@
 # ADR-0002 — Timestamp-based migrations and local-first authoring
 
-**Status:** Proposed 2026-05-19
+**Status:** Accepted 2026-05-19
 **TL;DR:** New migrations are timestamp-named (`YYYYMMDDHHMMSS_<slug>.sql`) and authored against each contributor's own personal Supabase project. CI gates filename collisions.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @timchaffee
