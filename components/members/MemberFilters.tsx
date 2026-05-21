@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,31 +22,21 @@ interface MemberFiltersProps {
 export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [searchInput, setSearchInput] = useState(
-    () => searchParams.get("q") ?? ""
-  );
-  const [debouncedSearch, setDebouncedSearch] = useState(
-    () => searchParams.get("q") ?? ""
-  );
 
-  // Sync local state when URL changes (e.g. browser back/forward)
+  const inputRef = useRef<HTMLInputElement>(null);
+  const lastPushedQ = useRef(searchParams.get("q") ?? "");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   useEffect(() => {
     const q = searchParams.get("q") ?? "";
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSearchInput(q);
-    setDebouncedSearch(q);
+    if (q !== lastPushedQ.current) {
+      if (inputRef.current) inputRef.current.value = q;
+      lastPushedQ.current = q;
+    }
   }, [searchParams]);
 
   const skill = searchParams.get("skill") ?? "";
   const referrals = searchParams.get("referrals") === "true";
-
-  // Debounce search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-    }, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [searchInput]);
 
   const updateParams = useCallback(
     (updates: { q?: string; skill?: string; referrals?: string }) => {
@@ -68,24 +58,29 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
     [router, searchParams]
   );
 
-  // Sync URL when debounced search changes
-  useEffect(() => {
-    const currentQ = searchParams.get("q") ?? "";
-    if (debouncedSearch !== currentQ) {
-      updateParams({ q: debouncedSearch });
-    }
-  }, [debouncedSearch, updateParams, searchParams]);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(() => {
+        lastPushedQ.current = value;
+        updateParams({ q: value });
+      }, SEARCH_DEBOUNCE_MS);
+    },
+    [updateParams]
+  );
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
       <div className="flex-1 space-y-2">
         <Label htmlFor="search">Search</Label>
         <Input
+          ref={inputRef}
           id="search"
           type="search"
           placeholder="Search by name, role, or location..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          defaultValue={searchParams.get("q") ?? ""}
+          onChange={handleSearchChange}
         />
       </div>
       <div className="space-y-2">
