@@ -124,6 +124,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | # | Title | Status | Sponsoring Lead |
 |---|---|---|---|
 | [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | @tonyrosario |
+| [0002](./0002-migrations-timestamps-and-local-first.md) | Timestamp-based migrations and local-first authoring | Accepted 2026-05-19 | @timchaffee |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay
