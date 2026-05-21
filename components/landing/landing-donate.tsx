@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 
 const DONATE_URL =
-  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
+  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will-fund-our-organizers";
 
 export function LandingDonate() {
   return (

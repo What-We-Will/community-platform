@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getSiteUrl } from "@/lib/utils/get-site-url";
 
 const DONATE_URL =
-  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
+  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will-fund-our-organizers";
 
 // Server-safe initial value — must match what getSiteUrl() returns on the server
 // so the first client render is identical to the SSR HTML (avoids hydration mismatch).
