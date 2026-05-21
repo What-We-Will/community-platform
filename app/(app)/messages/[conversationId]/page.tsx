@@ -78,13 +78,6 @@ export default async function ConversationPage({
     avatar_url: currentUserProfile?.avatar_url ?? null,
   };
 
-  // const { data: deletions } = await supabase
-  //   .from("message_deletions")
-  //   .select("message_id")
-  //   .eq("user_id", user.id);
-
-  // const deletedMessageIds = new Set((deletions ?? []).map((d) => d.message_id));
-
   // ── Group conversation ────────────────────────────────────────────────────
   if (conversation.type === "group") {
     // Fetch group info

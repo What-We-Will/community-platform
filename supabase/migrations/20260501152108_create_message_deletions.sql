@@ -14,3 +14,4 @@ CREATE POLICY "users manage own deletions"
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
+  
