@@ -27,6 +27,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   const lastPushedQ = useRef(searchParams.get("q") ?? "");
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // External navigation sync (back / forward only)
   useEffect(() => {
     const q = searchParams.get("q") ?? "";
     if (q !== lastPushedQ.current) {
@@ -34,6 +35,11 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
       lastPushedQ.current = q;
     }
   }, [searchParams]);
+
+  // Cancels any pending debounce timer when the component unmounts
+  useEffect(() => {
+    return () => clearTimeout(debounceTimer.current);
+  }, []);
 
   const skill = searchParams.get("skill") ?? "";
   const referrals = searchParams.get("referrals") === "true";
@@ -58,16 +64,23 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
     [router, searchParams]
   );
 
+  // Ref always pointing at the latest updateParams so the debounce timer
+  // callback never closes over a stale searchParams snapshot.
+  const updateParamsRef = useRef(updateParams);
+  useEffect(() => {
+    updateParamsRef.current = updateParams;
+  }, [updateParams]);
+
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(() => {
         lastPushedQ.current = value;
-        updateParams({ q: value });
+        updateParamsRef.current({ q: value });
       }, SEARCH_DEBOUNCE_MS);
     },
-    [updateParams]
+    [] // stable — intentionally no deps; freshness comes from the ref
   );
 
   return (
