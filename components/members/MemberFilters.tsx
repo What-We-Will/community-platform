@@ -63,7 +63,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
         if (updates.referrals === "true") params.set("referrals", "true");
         else params.delete("referrals");
       }
-      router.push(`/members${params.toString() ? `?${params.toString()}` : ""}`);
+      router.replace(`/members${params.toString() ? `?${params.toString()}` : ""}`);
     },
     [router, searchParams]
   );
