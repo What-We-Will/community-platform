@@ -110,10 +110,10 @@ When a substantive design discussion concludes — in a PR, an issue, or a meeti
 
 ## Where else conventions live
 
-ADRs capture **decisions**. Day-to-day conventions (file layout, naming, lint rules, schema patterns) live in:
+ADRs capture **decisions**. Day-to-day conventions live in:
 
-- [`CLAUDE.md`](../../CLAUDE.md) — project-wide guidance for contributors and AI tools, with pointers into the conventions tree.
-- [`plans/local/CONVENTIONS.md`](../../plans/local/CONVENTIONS.md) — milestone and planning-doc structure.
+- [`supabase/migrations/CONVENTIONS.md`](../../supabase/migrations/CONVENTIONS.md) — migration naming, the `seed_id` rule, in-flight PR guidance.
+- [`TESTING_STANDARDS.preamble.md`](../../TESTING_STANDARDS.preamble.md) — testing standards, with task-specific files alongside.
 
 If a convention conflicts with an accepted ADR, the ADR wins until a new ADR supersedes it.
 
