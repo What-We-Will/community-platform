@@ -42,7 +42,7 @@ describe("getSiteUrl", () => {
   it("Should return production url otherwise", () => {
     const { window } = global;
     delete (global as Partial<typeof globalThis>).window;
-    expect(getSiteUrl()).toBe("https://members.wwwrise.org");
+    expect(getSiteUrl()).toBe("https://wwwrise.org");
     global.window = window;
   });
 });
