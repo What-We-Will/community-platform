@@ -15,13 +15,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Bug } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface BugReportDialogProps {
   /** Pre-fill the reporter email (e.g. for logged-in users) */
   reporterEmail?: string;
+  triggerClassName?: string;
 }
 
-export function BugReportDialog({ reporterEmail }: BugReportDialogProps) {
+export function BugReportDialog({
+  reporterEmail,
+  triggerClassName,
+}: BugReportDialogProps) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState(reporterEmail ?? "");
   const [description, setDescription] = useState("");
@@ -71,7 +76,13 @@ export function BugReportDialog({ reporterEmail }: BugReportDialogProps) {
       }}
     >
       <DialogTrigger asChild>
-        <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <button
+          className={cn(
+            "flex items-center gap-1.5 text-sm transition-colors",
+            triggerClassName ??
+              "text-muted-foreground hover:text-foreground",
+          )}
+        >
           <Bug className="size-3.5" />
           Report a bug
         </button>

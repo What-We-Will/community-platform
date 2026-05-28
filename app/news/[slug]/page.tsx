@@ -5,7 +5,8 @@ import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
-import { ARTICLES, getArticleBySlug, type ArticleSection } from "@/lib/news";
+import { ARTICLES, getArticleBySlug } from "@/lib/news";
+import { ArticleBody } from "@/components/news/article-body";
 
 export async function generateStaticParams() {
   return ARTICLES.map((a) => ({ slug: a.slug }));
@@ -33,66 +34,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   Research: "bg-dark-blue/10 text-dark-blue",
   Announcement: "bg-primary-orange/10 text-primary-orange",
 };
-
-function ArticleBody({ sections }: { sections: ArticleSection[] }) {
-  return (
-    <div className="space-y-6">
-      {sections.map((section, i) => {
-        if (section.type === "paragraph") {
-          return (
-            <p key={i} className="text-base leading-relaxed text-foreground">
-              {section.text}
-            </p>
-          );
-        }
-
-        if (section.type === "heading") {
-          return (
-            <h2
-              key={i}
-              className="pt-4 font-bebas text-2xl text-dark-blue sm:text-3xl"
-            >
-              {section.text}
-            </h2>
-          );
-        }
-
-        if (section.type === "pullquote") {
-          return (
-            <blockquote
-              key={i}
-              className="border-l-4 border-primary-orange bg-warm-beige px-6 py-5 rounded-r-xl"
-            >
-              <p className="text-base font-medium italic leading-relaxed text-dark-blue">
-                {section.text}
-              </p>
-              {section.attribution && (
-                <footer className="mt-2 text-sm text-muted-foreground">
-                  {section.attribution}
-                </footer>
-              )}
-            </blockquote>
-          );
-        }
-
-        if (section.type === "list") {
-          return (
-            <ul key={i} className="space-y-2 pl-2">
-              {section.items.map((item, j) => (
-                <li key={j} className="flex gap-3 text-base text-foreground">
-                  <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary-orange" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          );
-        }
-
-        return null;
-      })}
-    </div>
-  );
-}
 
 function ComingSoon({ article }: { article: { title: string; excerpt: string } }) {
   return (
