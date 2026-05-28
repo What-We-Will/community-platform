@@ -24,15 +24,22 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   const searchParams = useSearchParams();
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const lastPushedQ = useRef(searchParams.get("q") ?? "");
+  // Last q we wrote to the URL via push OR replace — lets the external-nav
+  // sync below distinguish back/forward from our own writes.
+  const lastUrlQ = useRef(searchParams.get("q") ?? "");
+  // Last q committed via push (Enter / blur / filter change). commitSearch
+  // dedupes against this — not against lastUrlQ — so Enter after a
+  // debounce-replace still creates a real history entry.
+  const lastCommittedQ = useRef(searchParams.get("q") ?? "");
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // External navigation sync (back / forward only)
   useEffect(() => {
     const q = searchParams.get("q") ?? "";
-    if (q !== lastPushedQ.current) {
+    if (q !== lastUrlQ.current) {
       if (inputRef.current) inputRef.current.value = q;
-      lastPushedQ.current = q;
+      lastUrlQ.current = q;
+      lastCommittedQ.current = q;
     }
   }, [searchParams]);
 
@@ -45,7 +52,10 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   const referrals = searchParams.get("referrals") === "true";
 
   const updateParams = useCallback(
-    (updates: { q?: string; skill?: string; referrals?: string }) => {
+    (
+      updates: { q?: string; skill?: string; referrals?: string },
+      navMethod: "push" | "replace" = "push"
+    ) => {
       const params = new URLSearchParams(searchParams.toString());
       if (updates.q !== undefined) {
         if (updates.q) params.set("q", updates.q);
@@ -59,7 +69,8 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
         if (updates.referrals === "true") params.set("referrals", "true");
         else params.delete("referrals");
       }
-      router.push(`/members${params.toString() ? `?${params.toString()}` : ""}`);
+      const url = `/members${params.toString() ? `?${params.toString()}` : ""}`;
+      router[navMethod](url, { scroll: false });
     },
     [router, searchParams]
   );
@@ -71,16 +82,51 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
     updateParamsRef.current = updateParams;
   }, [updateParams]);
 
+  // Debounced fire while typing: replace (no history entry per keystroke pause).
+  // Updates only lastUrlQ; lastCommittedQ stays reserved for push.
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       clearTimeout(debounceTimer.current);
       debounceTimer.current = setTimeout(() => {
-        lastPushedQ.current = value;
-        updateParamsRef.current({ q: value });
+        lastUrlQ.current = value;
+        updateParamsRef.current({ q: value }, "replace");
       }, SEARCH_DEBOUNCE_MS);
     },
     [] // stable — intentionally no deps; freshness comes from the ref
+  );
+
+  // Commit (blur / Enter): cancel pending debounce, then push to add history.
+  const commitSearch = useCallback(() => {
+    clearTimeout(debounceTimer.current);
+    const value = inputRef.current?.value ?? "";
+    if (value === lastCommittedQ.current) return;
+    lastCommittedQ.current = value;
+    lastUrlQ.current = value;
+    updateParamsRef.current({ q: value }, "push");
+  }, []);
+
+  // Skill / referrals changes capture the live input value so any in-progress
+  // typing isn't dropped by the stale searchParams snapshot.
+  const updateFilter = useCallback(
+    (updates: { skill?: string; referrals?: string }) => {
+      clearTimeout(debounceTimer.current);
+      const value = inputRef.current?.value ?? "";
+      lastCommittedQ.current = value;
+      lastUrlQ.current = value;
+      updateParamsRef.current({ ...updates, q: value }, "push");
+    },
+    []
+  );
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        commitSearch();
+      }
+    },
+    [commitSearch]
   );
 
   return (
@@ -94,13 +140,15 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           placeholder="Search by name, role, or location..."
           defaultValue={searchParams.get("q") ?? ""}
           onChange={handleSearchChange}
+          onBlur={commitSearch}
+          onKeyDown={handleSearchKeyDown}
         />
       </div>
       <div className="space-y-2">
         <Label>Skill</Label>
         <Select
           value={skill || "all"}
-          onValueChange={(v) => updateParams({ skill: v === "all" ? "" : v })}
+          onValueChange={(v) => updateFilter({ skill: v === "all" ? "" : v })}
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All skills" />
@@ -120,7 +168,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           id="referrals"
           checked={referrals}
           onCheckedChange={(checked) =>
-            updateParams({ referrals: checked ? "true" : "" })
+            updateFilter({ referrals: checked ? "true" : "" })
           }
         />
         <Label

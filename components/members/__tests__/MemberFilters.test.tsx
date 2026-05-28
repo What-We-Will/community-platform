@@ -1,18 +1,20 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import MemberFilters from "../MemberFilters";
 
 const pushMock = jest.fn();
+const replaceMock = jest.fn();
 let currentSearchParams = new URLSearchParams();
 
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, replace: replaceMock }),
   useSearchParams: () => currentSearchParams,
 }));
 
 describe("MemberFilters", () => {
   beforeEach(() => {
     pushMock.mockReset();
+    replaceMock.mockReset();
     currentSearchParams = new URLSearchParams("q=al");
   });
 
@@ -26,5 +28,105 @@ describe("MemberFilters", () => {
     rerender(<MemberFilters allSkills={[]} />);
 
     expect(screen.getByLabelText(/search/i)).toHaveValue("alice");
+  });
+
+  it("commits on Enter via router.push", () => {
+    render(<MemberFilters allSkills={[]} />);
+
+    const search = screen.getByLabelText(/search/i);
+    fireEvent.change(search, { target: { value: "alice" } });
+    fireEvent.keyDown(search, { key: "Enter" });
+
+    expect(pushMock).toHaveBeenCalledWith(
+      "/members?q=alice",
+      expect.objectContaining({ scroll: false })
+    );
+  });
+
+  it("debounced typing navigates via router.replace, not push", () => {
+    jest.useFakeTimers();
+    try {
+      render(<MemberFilters allSkills={[]} />);
+
+      const search = screen.getByLabelText(/search/i);
+      fireEvent.change(search, { target: { value: "alice" } });
+
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(replaceMock).toHaveBeenCalledWith(
+        "/members?q=alice",
+        expect.objectContaining({ scroll: false })
+      );
+      expect(pushMock).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("Enter after a debounce-replace still commits via router.push", () => {
+    jest.useFakeTimers();
+    try {
+      render(<MemberFilters allSkills={[]} />);
+
+      const search = screen.getByLabelText(/search/i);
+      fireEvent.change(search, { target: { value: "alice" } });
+
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(replaceMock).toHaveBeenCalledTimes(1);
+      expect(pushMock).not.toHaveBeenCalled();
+
+      fireEvent.keyDown(search, { key: "Enter" });
+
+      expect(pushMock).toHaveBeenCalledWith(
+        "/members?q=alice",
+        expect.objectContaining({ scroll: false })
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("Enter before debounce fires cancels the pending replace", () => {
+    jest.useFakeTimers();
+    try {
+      render(<MemberFilters allSkills={[]} />);
+
+      const search = screen.getByLabelText(/search/i);
+      fireEvent.change(search, { target: { value: "alice" } });
+      fireEvent.keyDown(search, { key: "Enter" });
+
+      expect(pushMock).toHaveBeenCalledWith(
+        "/members?q=alice",
+        expect.objectContaining({ scroll: false })
+      );
+
+      act(() => {
+        jest.advanceTimersByTime(300);
+      });
+
+      expect(replaceMock).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("toggling referrals after typing preserves the in-progress q", () => {
+    render(<MemberFilters allSkills={[]} />);
+
+    const search = screen.getByLabelText(/search/i);
+    fireEvent.change(search, { target: { value: "alice" } });
+
+    const referrals = screen.getByLabelText(/open to mock interviews/i);
+    fireEvent.click(referrals);
+
+    expect(pushMock).toHaveBeenCalledWith(
+      expect.stringMatching(/\/members\?(?=.*q=alice)(?=.*referrals=true)/),
+      expect.objectContaining({ scroll: false })
+    );
   });
 });
