@@ -7,7 +7,7 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { getArticleJsonLd } from "@/lib/article-json-ld";
 import { ARTICLES, getArticleBySlug, type ArticleSection } from "@/lib/news";
-import { canonicalPath, OG_IMAGE } from "@/lib/seo";
+import { canonicalPath, OG_IMAGE, serializeJsonLd } from "@/lib/seo";
 
 export async function generateStaticParams() {
   return ARTICLES.map((a) => ({ slug: a.slug }));
@@ -154,7 +154,7 @@ export default async function ArticlePage({
     <div className="flex min-h-screen flex-col bg-background">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
       />
       <LandingNav user={user ?? undefined} />
 

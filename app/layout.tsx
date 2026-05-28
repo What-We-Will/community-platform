@@ -5,7 +5,7 @@ import {
   ORGANIZATION_DESCRIPTION,
   ORGANIZATION_NAME,
 } from "@/lib/organization-json-ld";
-import { OG_IMAGE } from "@/lib/seo";
+import { OG_IMAGE, serializeJsonLd } from "@/lib/seo";
 import { getServerSiteUrl } from "@/lib/utils/get-site-url";
 import "./globals.css";
 
@@ -61,7 +61,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd),
+            __html: serializeJsonLd(organizationJsonLd),
           }}
         />
       </head>

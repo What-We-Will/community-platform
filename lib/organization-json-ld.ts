@@ -1,4 +1,4 @@
-import { getSiteUrl } from "@/lib/utils/get-site-url";
+import { getServerSiteUrl } from "@/lib/utils/get-site-url";
 
 export const ORGANIZATION_NAME = "What We Will";
 
@@ -15,7 +15,7 @@ export const ORGANIZATION_SAME_AS = [
 ] as const;
 
 export function getOrganizationJsonLd() {
-  const siteUrl = getSiteUrl();
+  const siteUrl = getServerSiteUrl();
 
   return {
     "@context": "https://schema.org",
