@@ -3,7 +3,7 @@ import { ARTICLES } from "@/lib/news";
 import { getServerSiteUrl } from "@/lib/utils/get-site-url";
 
 const PUBLIC_ROUTES: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
-  { path: "", priority: 1, changeFrequency: "weekly" },
+  { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/about-us", priority: 0.8, changeFrequency: "monthly" },
   { path: "/news", priority: 0.9, changeFrequency: "weekly" },
   { path: "/our-platform", priority: 0.8, changeFrequency: "monthly" },
