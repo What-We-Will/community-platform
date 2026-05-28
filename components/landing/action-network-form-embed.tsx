@@ -82,8 +82,11 @@ export function ActionNetworkFormEmbed({
     }
   }
 
+  const darkInteractive =
+    "transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0";
+
   const inputClass = isDark
-    ? "h-11 w-full rounded-lg border-0 bg-warm-beige px-3 text-sm text-dark-blue shadow-sm placeholder:text-dark-blue/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+    ? `h-11 w-full rounded-lg border-0 bg-white px-3 text-sm text-dark-blue shadow-sm placeholder:text-dark-blue/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:hover:translate-y-0 disabled:hover:shadow-sm ${darkInteractive}`
     : "h-11 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   const statusMessage = error ? (
@@ -176,7 +179,7 @@ export function ActionNetworkFormEmbed({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-warm-beige px-8 text-sm font-semibold text-dark-blue shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:shadow-lg active:translate-y-0 active:shadow-md disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:bg-warm-beige disabled:hover:shadow-md sm:w-auto sm:min-w-[10rem]"
+          className={`inline-flex h-11 w-full items-center justify-center rounded-lg bg-white px-8 text-sm font-semibold text-dark-blue shadow-md hover:bg-warm-beige active:shadow-md disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:bg-white disabled:hover:shadow-md sm:w-auto sm:min-w-[10rem] ${darkInteractive}`}
         >
           {isSubmitting ? "Subscribing…" : "Subscribe"}
         </button>

@@ -27,7 +27,7 @@ export function LandingCtaBlock() {
                 href={DONATE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-lg bg-warm-beige px-8 py-3 text-base font-semibold text-dark-blue shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-white hover:shadow-lg active:translate-y-0 active:shadow-md"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 text-base font-semibold text-dark-blue shadow-md transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-warm-beige hover:shadow-lg active:translate-y-0 active:shadow-md"
               >
                 Donate Now
               </Link>

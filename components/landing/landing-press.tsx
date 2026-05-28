@@ -13,7 +13,7 @@ export function LandingPress() {
           In the Press
         </h2>
         <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">
-          Coverage of our mutual aid and basic income programs for workers
+          Select media coverage of our layoff support and basic income programs for workers
           impacted by AI-driven layoffs.
         </p>
 

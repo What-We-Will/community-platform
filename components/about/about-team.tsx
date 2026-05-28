@@ -9,24 +9,15 @@ type TeamMember = {
 };
 
 const FOUNDING_TEAM: TeamMember[] = [
-
-];
-
-const CORE_TEAM: TeamMember[] = [
   {
     name: "Kaitlin Cort",
-    role: "Founder, Executive Director",
-    bio: "Lead organizer shaping strategy, programs, partnerships, and platform. Software engineer and educator, with background in labor organizing, policy research, government leadership, and 20+ years in nonprofit management.",
+    role: "Founder/Co-Director, Lead Organizer & Platform Engineer",
+    bio: "Shaping vision, strategy, programs and partnerships. Software engineer with background in government executive leadership, policy research, and labor organizing.",
   },
   {
     name: "Charise Van Liew",
-    role: "Fundraising & Development",
+    role: "Co-Director, Fundraising & Development",
     bio: "Strategic resource development specialist, with 20+ years of nonprofit executive leadership. Passionate about youth empowerment and social justice.",
-  },
-  {
-    name: "Daniel Buk",
-    role: "Partnerships Research & Digital Outreach",
-    bio: "Research specialist leading digital outreach and prospective partnerships. M.A. in Labor Studies from CUNY School of Labor and Urban Studies.",
   },
   {
     name: "Kyle Albasi",
@@ -39,14 +30,67 @@ const CORE_TEAM: TeamMember[] = [
     bio: "Project manager and operations specialist, with financial management skills. Coordinating volunteer teams and ensuring our daily programs run smoothly.",
   },
   {
-    name: "Jennifer Tovar",
-    role: "Curriculum Developer & Early Career Worker Support",
-    bio: "Helping entry-level workers and youth in our community with relevant skill-building and career resources.",
+    name: "Daniel Buk",
+    role: "Partnerships Research & Digital Outreach",
+    bio: "Research specialist leading digital outreach and prospective partnerships. M.A. in Labor Studies from CUNY School of Labor and Urban Studies.",
   },
   {
     name: "Helen Yang",
-    role: "Board Member, Tech Worker Organizing & Political Education",
+    role: "Tech Worker Organizing & Political Education",
     bio: "Championing worker-led organizing within workplaces, and broader tech industry activism at the Tech Workers Coalition.",
+  },
+];
+
+const CORE_TEAM: TeamMember[] = [
+  {
+    name: "Joshua S-R.",
+    role: "Movement-Building, Policy & Research",
+    bio: "",
+  },
+  {
+    name: "Andrew M.",
+    role: "Lead Organizer - Policy & Advocacy Working Group",
+    bio: "",
+  },
+  {
+    name: "Sonia J.",
+    role: "Lead Organizer - Participatory Action Research Working Group",
+    bio: "",
+  },
+  {
+    name: "Margaret G.",
+    role: "Researcher & Policy Analysis",
+    bio: "",
+  },
+  {
+    name: "Isaac L.",
+    role: "Lead Organizer - Community Job Support Program",
+    bio: "",
+  },
+  {
+    name: "Tony R.",
+    role: "Lead Platform Engineer, WWW Tech Worker Cooperative",
+    bio: "",
+  },
+  {
+    name: "Tim C.",
+    role: "Lead Platform Engineer, WWW Tech Worker Cooperative",
+    bio: "",
+  },
+  {
+    name: "Annette S.",
+    role: "Product Manager - Layoff Crisis Support",
+    bio: "",
+  },
+  {
+    name: "Allen P.",
+    role: "Media & Newsletter",
+    bio: "",
+  },
+  {
+    name: "Warren L.",
+    role: "Education & Curriculum-Development",
+    bio: "",
   },
 ];
 
@@ -113,14 +157,17 @@ export function AboutTeam() {
     <section className="border-t bg-white px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl space-y-16">
         <div>
+          <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
+            Founding Members
+          </h2>
           <TeamGrid members={FOUNDING_TEAM} />
         </div>
 
         <div>
           <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-            Core Team
+            Core Organizers
           </h2>
-          <TeamGrid members={CORE_TEAM} />
+          <TeamGrid members={CORE_TEAM} showBio={false} />
         </div>
       </div>
     </section>

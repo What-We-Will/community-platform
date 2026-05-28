@@ -20,6 +20,34 @@ export const PRESS_ITEMS: PressItem[] = [
     logoAlt: "TIME",
   },
   {
+    id: "business-insider-ubi",
+    publisher: "Business Insider",
+    title:
+      "I'm an early participant in a UBI program that helps workers displaced by AI, and the support is life-changing",
+    url: "https://www.businessinsider.com/ubi-program-for-workers-displaced-by-ai-its-a-lifeline-2026-5",
+    date: "May 14, 2026",
+    logoSrc: "/images/press/business-insider.svg",
+    logoAlt: "Business Insider",
+  },
+  {
+    id: "blood-in-the-machine",
+    publisher: "Blood in the Machine",
+    title: "The first basic income for workers impacted by AI has begun sending out $1,000 monthly payments",
+    url: "https://www.bloodinthemachine.com/p/the-first-basic-income-for-workers",
+    date: "March 24 2026",
+    logoSrc: "/images/press/blood-in-the-machine.svg",
+    logoAlt: "Blood in the Machine",
+  },
+  {
+    id: "ny-times-tech-layoffs",
+    publisher: "The New York Times",
+    title: "The Morale of Tech Workers Is Plunging as Layoffs Mount",
+    url: "https://www.nytimes.com/2026/05/19/business/tech-layoffs-blind.html",
+    date: "May 19, 2026",
+    logoSrc: "/images/press/ny-times.svg",
+    logoAlt: "The New York Times",
+  },
+  {
     id: "fast-company",
     publisher: "Fast Company",
     title:
@@ -38,14 +66,5 @@ export const PRESS_ITEMS: PressItem[] = [
     date: "March 25, 2026",
     logoSrc: "/images/press/gizmodo.svg",
     logoAlt: "Gizmodo",
-  },
-  {
-    id: "blood-in-the-machine",
-    publisher: "Blood in the Machine",
-    title: "The first basic income for workers impacted by AI has begun sending out $1,000 monthly payments",
-    url: "https://www.bloodinthemachine.com/p/the-first-basic-income-for-workers",
-    date: "March 24 2026",
-    logoSrc: "/images/press/blood-in-the-machine.svg",
-    logoAlt: "Blood in the Machine",
   },
 ];

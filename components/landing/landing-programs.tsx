@@ -1,70 +1,73 @@
 "use client";
 
-import { useState } from "react";
-import { Plus } from "lucide-react";
+import { useState, useEffect, type ComponentType } from "react";
+import Link from "next/link";
+import {
+  Plus,
+  Check,
+  ArrowRight,
+  HandFist,
+  HandHelping,
+  Handshake,
+  HeartHandshake,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { corePrograms, type ProgramIconKey } from "@/lib/programs";
 
-const programs = [
-  {
-    title: "Layoff Support",
-    description: [
-      "Crisis support for people facing layoffs: benefits and severance guidance, legal and immigration referrals, and peer support.",
-      "We use WARN filings to reach workers early and connect them with job pipelines and collective action.",
-    ],
-    barClass: "bg-primary-orange",
-    textClass: "text-white",
-    iconClass: "text-white",
-  },
-  {
-    title: "Workforce Development",
-    description:
-      "Project-based learning that connects workers with local businesses and government to build community technology while practicing forward-deployed AI skills. We also provide evidence-based resources and counseling for moves into healthcare, social servics, and skilled trades.",
-    barClass: "bg-accent-gold",
-    textClass: "text-dark-blue",
-    iconClass: "text-dark-blue",
-  },
-  {
-    title: "Research & Media",
-    description: [
-      "Participatory action research on changing work conditions and effective supports.",
-      "We host discussion, evaluate policy proposals, and publish findings for broader public engagement.",
-    ],
-    barClass: "bg-accent-green",
-    textClass: "text-dark-blue",
-    iconClass: "text-dark-blue",
-  },
-  {
-    title: "Organizing & Advocacy",
-    description:
-      "We track policy at state and federal levels and help members become informed organizers—advocating with officials, shaping media narratives, and organizing campaigns for stronger layoff protections, income stabilization, and worker voice in AI policy.",
-    barClass: "bg-accent-blue",
-    textClass: "text-white",
-    iconClass: "text-white",
-  },
-] as const;
+const programIcons = {
+  heartHandshake: HeartHandshake,
+  handshake: Handshake,
+  handHelping: HandHelping,
+  handFist: HandFist,
+} satisfies Record<ProgramIconKey, ComponentType<{ className?: string }>>;
+
+function indexFromHash(hash: string): number | null {
+  const id = hash.replace(/^#/, "");
+  if (!id.startsWith("program-")) return null;
+  const idx = corePrograms.findIndex((p) => `program-${p.id}` === id);
+  return idx >= 0 ? idx : null;
+}
 
 export function Programs() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
+  useEffect(() => {
+    const syncFromHash = () => {
+      const idx = indexFromHash(window.location.hash);
+      if (idx !== null) setOpenIndex(idx);
+    };
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, []);
+
   return (
     <section id="programs" className="scroll-mt-20 border-t border-border px-4 py-16 md:py-24">
-      <div className="mx-auto max-w-6xl">
-        <h2 className="text-center font-bebas text-5xl text-dark-blue">
+      <div className="mx-auto max-w-7xl">
+        <p className="text-center text-xs font-semibold uppercase tracking-widest text-primary-orange">
+          What We Do
+        </p>
+        <h2 className="text-center font-bebas text-5xl text-dark-blue md:text-6xl">
           Our Core Programs
         </h2>
-        <p className="mx-auto mt-2 max-w-2xl text-center text-muted-foreground">
-          We are a new organization, seeking funding to scale our capacity for
-          fostering mutual aid. The following programs are seeking additional
-          volunteers.
+        <p className="mx-auto mt-3 max-w-2xl text-center text-muted-foreground md:text-lg">
+          We organize workers displaced by AI through immediate crisis support,
+          career transition resources, and collective action—building power from
+          the ground up.
         </p>
 
-        <div className="mt-12 flex flex-col gap-1">
-          {programs.map((program, index) => {
+        <div className="mt-12 flex flex-col">
+          {corePrograms.map((program, index) => {
             const isOpen = openIndex === index;
             const panelId = `program-panel-${index}`;
+            const Icon = programIcons[program.icon];
 
             return (
-              <div key={program.title} className="overflow-hidden">
+              <article
+                key={program.id}
+                id={`program-${program.id}`}
+                className="scroll-mt-24 overflow-hidden rounded-lg border border-border/60 shadow-sm"
+              >
                 <button
                   type="button"
                   id={`program-trigger-${index}`}
@@ -72,17 +75,34 @@ export function Programs() {
                   aria-controls={panelId}
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-4 px-6 py-4 text-left transition-opacity hover:opacity-95 md:px-8 md:py-5",
+                    "flex w-full items-start gap-5 px-6 py-6 text-left transition-opacity hover:opacity-95 md:gap-6 md:px-12 md:py-8",
                     program.barClass,
                     program.textClass,
                   )}
                 >
-                  <span className="font-bebas text-xl tracking-wide uppercase md:text-3xl">
-                    {program.title}
+                  <Icon
+                    className={cn(
+                      "mt-1 size-7 shrink-0 md:mt-2 md:size-9",
+                      program.iconClass,
+                    )}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-bebas text-2xl leading-none tracking-wide uppercase md:text-4xl">
+                      {program.title}
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-1.5 block text-sm font-normal normal-case opacity-90 md:mt-2 md:text-lg",
+                        program.textClass,
+                      )}
+                    >
+                      {program.tagline}
+                    </span>
                   </span>
                   <Plus
                     className={cn(
-                      "size-6 shrink-0 transition-transform duration-200 md:size-7",
+                      "mt-1 size-7 shrink-0 transition-transform duration-200 md:mt-2 md:size-9",
                       program.iconClass,
                       isOpen && "rotate-45",
                     )}
@@ -95,20 +115,88 @@ export function Programs() {
                     id={panelId}
                     role="region"
                     aria-labelledby={`program-trigger-${index}`}
-                    className="border-t border-border/30 bg-white px-6 py-5 text-sm leading-relaxed text-foreground md:px-8 md:py-6 md:text-base"
+                    className="border-t border-border/40 bg-white"
                   >
-                    {Array.isArray(program.description) ? (
-                      program.description.map((para, i) => (
-                        <p key={i} className={i > 0 ? "mt-3" : undefined}>
-                          {para}
-                        </p>
-                      ))
-                    ) : (
-                      <p>{program.description}</p>
-                    )}
+                    <div
+                      className={cn(
+                        "border-b px-6 py-6 md:px-12 md:py-8",
+                        program.panelAccentClass,
+                      )}
+                    >
+                      <p className="text-base leading-relaxed text-foreground md:text-lg">
+                        {program.summary}
+                      </p>
+                    </div>
+
+                    <div className="space-y-8 px-6 py-8 md:px-12 md:py-10">
+                      {program.highlights.length > 0 && (
+                        <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+                          {program.highlights.map((item) => (
+                            <li
+                              key={item}
+                              className="flex gap-3 text-sm leading-relaxed text-foreground md:text-base"
+                            >
+                              <Check
+                                className="mt-0.5 size-4 shrink-0 text-primary-orange"
+                                aria-hidden
+                              />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {program.campaigns && program.campaigns.length > 0 && (
+                        <div>
+                          <h3 className="font-bebas text-lg tracking-wide text-dark-blue uppercase md:text-xl">
+                            Active Campaigns
+                          </h3>
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            {program.campaigns.map((campaign) => {
+                              const inner = (
+                                <>
+                                  <span className="text-xs font-semibold uppercase tracking-wide text-primary-orange">
+                                    {campaign.location}
+                                  </span>
+                                  <p className="mt-1 font-semibold text-dark-blue">
+                                    {campaign.title}
+                                  </p>
+                                  <p className="mt-1 text-xs text-muted-foreground">
+                                    {campaign.status}
+                                  </p>
+                                  {campaign.href && (
+                                    <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary-orange">
+                                      Learn more
+                                      <ArrowRight className="size-3" />
+                                    </span>
+                                  )}
+                                </>
+                              );
+
+                              return campaign.href ? (
+                                <Link
+                                  key={campaign.title}
+                                  href={campaign.href}
+                                  className="block rounded-lg border border-border/60 bg-white p-4 transition-colors hover:border-primary-orange/40 hover:bg-primary-orange/5"
+                                >
+                                  {inner}
+                                </Link>
+                              ) : (
+                                <div
+                                  key={campaign.title}
+                                  className="rounded-lg border border-border/60 bg-white p-4"
+                                >
+                                  {inner}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-              </div>
+              </article>
             );
           })}
         </div>
