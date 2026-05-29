@@ -6,11 +6,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MASS_CALL_URL } from "@/lib/seo";
+import { navProgramLinks } from "@/lib/programs";
 import { DEFAULT_SITE_URL, getSiteUrl } from "@/lib/utils/get-site-url";
 
 const DONATE_URL =
-  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
+  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will-fund-our-organizers";
 
 // Server-safe initial value — must match what getSiteUrl() returns on the server
 // so the first client render is identical to the SSR HTML (avoids hydration mismatch).
@@ -56,7 +56,6 @@ export function LandingNav({ user }: { user?: User | null }) {
               About Us
             </Link>
 
-            {/* Our Programs dropdown */}
             <div className="group relative">
               <Link
                 href="/#programs"
@@ -65,22 +64,28 @@ export function LandingNav({ user }: { user?: User | null }) {
                 Our Programs
                 <ChevronDown className="size-3.5 transition-transform duration-200 group-hover:rotate-180" />
               </Link>
-              {/* Dropdown panel */}
               <div className="invisible absolute left-0 top-full mt-1 w-56 rounded-md border border-border/60 bg-white py-1 shadow-md opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <a
-                  href={MASS_CALL_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
-                >
-                  Mass Call
-                </a>
-                <Link
-                  href="/programs/no-robo-bosses"
-                  className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
-                >
-                  No Robo Bosses
-                </Link>
+                {navProgramLinks.map((item) =>
+                  item.external ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
+                    >
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary-orange/5 hover:text-primary-orange"
+                    >
+                      {item.label}
+                    </Link>
+                  ),
+                )}
               </div>
             </div>
 
@@ -195,7 +200,6 @@ export function LandingNav({ user }: { user?: User | null }) {
               About Us
             </Link>
 
-            {/* Our Programs with collapsible submenu */}
             <button
               type="button"
               className="flex items-center justify-end gap-1 text-sm font-medium text-foreground transition-colors hover:text-primary-orange"
@@ -208,28 +212,35 @@ export function LandingNav({ user }: { user?: User | null }) {
             </button>
             {isProgramsOpen && (
               <>
-                <a
-                  href={MASS_CALL_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    setIsProgramsOpen(false);
-                  }}
-                >
-                  └ Mass Call
-                </a>
-                <Link
-                  href="/programs/no-robo-bosses"
-                  className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    setIsProgramsOpen(false);
-                  }}
-                >
-                  └ No Robo Bosses
-                </Link>
+                {navProgramLinks.map((item) =>
+                  item.external ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsProgramsOpen(false);
+                      }}
+                    >
+                      └ {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="text-sm font-medium text-primary-orange/80 transition-colors hover:text-primary-orange"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsProgramsOpen(false);
+                      }}
+                    >
+                      └ {item.label}
+                    </Link>
+                  ),
+                )}
               </>
             )}
 

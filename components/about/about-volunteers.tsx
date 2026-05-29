@@ -1,27 +1,27 @@
 const WORKING_GROUPS = [
   {
-    name: "Policy & Advocacy Team",
-    volunteers: ["Shannon W.", "George D.", "Simantha P.", "Hope J.", "Cody S.", "Roxie T.", "Michael I.", "Joseph S.", "Abdul Z."],
+    name: "Policy & Advocacy",
+    volunteers: ["Andrew M.", "Daniel B.", "Michael I.", "Dean G.",  "Anne H", "Dieu H.", "Cody S.", "Sabrina S.", "Kyle A.", "Kaitlin C."],
   },
   {
-    name: "Community Job Support Team",
-    volunteers: ["Sabrina S.", "Abdul Z.", "Margaret G.", "Simantha P.", "Warren L.", "Roxie T.", "Henry I.", "Mary F.", "Isaac L.", "Simon M."],
+    name: "Community Job Support",
+    volunteers: ["Sabrina S.", "Isaac L.", "Margaret G.", "Warren L.", "Charise V.", "Henry I.", "Mary F.", "Dieu H.", "Kaitlin C."],
   },
   {
-    name: "Layoff Crisis Support Team",
-    volunteers: ["Kaitlin C.","George D.", "Marc T.", "Sai N.", "Simon M.", "Summer N.", "Liping H.", "Hope J.", "Abdul Z."],
+    name: "Layoff Crisis Support",
+    volunteers: ["Annette S.", "Sai M.", "Meredith M.", "David P.", "Dieu H.", "George D.", "Beth K.", "Marc T.", "Jennifer T.", "Kaitlin C."],
   },
   {
-    name: "Participatory Action Research Team",
-    volunteers: ["Sonia J.", "Simantha J.", "Lara G.", "Shannon W.", "Michael I.", "Margaret G.", "Joseph S.", "Adbul Z."],
+    name: "Participatory Action Research",
+    volunteers: ["Sonia J.", "Margaret G.", "Josh S-R", "Lara G.", "Simanta P.", "Kaitlin C."],
   },
   {
-    name: "Media & Digital Organizing Team",
-    volunteers: ["Kyle A.","Hope J.", "Cody S.", "Sonia J.", "Allen P."],
+    name: "Media & Digital Organizing",
+    volunteers: ["Kyle A.", "Allen P.", "Hope J.", "Cody S.", "Jennifer T.", "Kaitlin C."],
   },
   {
     name: "Platform Engineering Team & WWW Tech Worker Cooperative",
-    volunteers: ["Kaitlin C.", "Simon M.", "Tim C.", "Andrew W.", "Roxie T."],
+    volunteers: [ "Tony R.", "Tim C.", "Daniel M.", "Kyle A.", "Dean G.", "George D.", "Sabrina S.", "Kaitlin C."],
   },
 ];
 
@@ -58,7 +58,7 @@ export function AboutVolunteers() {
     <section className="border-t bg-white px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
         <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-          Program Volunteers
+          Working Group Members
         </h2>
         <div className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2">
           {WORKING_GROUPS.map((group) => (

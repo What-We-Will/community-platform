@@ -41,9 +41,9 @@ const LINKS = [
     external: true,
   },
   {
-    label: "Join Our Next Workshop",
-    description: "Register for our upcoming Zoom workshop",
-    href: "https://us02web.zoom.us/meeting/register/3oRyjwdfRqO6LFIXiZDiuA#/registration",
+    label: "Watch Our Past Workshops",
+    description: "Check out our most recent workshops",
+    href: "https://www.youtube.com/playlist?list=PLNlQ1uwiLdQDPRV_DQXtNjc5fKNe95b8c",
     icon: Pointer,
     primary: false,
     external: true,
