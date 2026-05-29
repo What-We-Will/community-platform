@@ -16,8 +16,8 @@ export function UnreadBadge({ initialCount, userId }: UnreadBadgeProps) {
   // Re-fetch whenever the user navigates (catches mark-as-read from conversation pages)
   useEffect(() => {
     const supabase = createClient();
-    supabase.rpc("get_total_unread_count").then(({ data }) => {
-      setCount(Number(data ?? 0));
+    supabase.rpc("get_total_unread_count").then(({ data, error }) => {
+      if (!error) setCount(Number(data ?? 0));
     });
   }, [pathname]);
 
@@ -31,8 +31,8 @@ export function UnreadBadge({ initialCount, userId }: UnreadBadgeProps) {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages" },
         async () => {
-          const { data } = await supabase.rpc("get_total_unread_count");
-          setCount(Number(data ?? 0));
+          const { data, error } = await supabase.rpc("get_total_unread_count");
+          if (!error) setCount(Number(data ?? 0));
         }
       )
       .subscribe();
