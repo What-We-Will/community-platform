@@ -61,7 +61,6 @@ export function NewMessageDialog() {
     setResults([]);
     setOpening(false);
     router.push(`/messages/${conversationId}`);
-    router.refresh();
   }
 
   return (
