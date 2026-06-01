@@ -4,26 +4,27 @@ on:
   workflow_dispatch:
 
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
   HUSKY: 0
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
         with:
           node-version: '24.x'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       
       - name: Lint
         run: npm run lint
@@ -35,24 +36,47 @@ jobs:
         run: npm test
 
       - name: Install Vercel CLI
-        run: npm install -g vercel@latest
+        run: npm install -g vercel@54.2.0
 
       - name: Pull Vercel env
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production
 
       - name: Build
-        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod
 
       - name: Deploy to production
         id: deploy
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
-          url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          url=$(vercel deploy --prebuilt --prod)
           echo "production_url=$url" >> $GITHUB_OUTPUT
 
       - name: Comment PR with URL
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
+        env:
+          PRODUCTION_URL: ${{ steps.deploy.outputs.production_url }}
         with:
           script: |
+            const url = process.env.PRODUCTION_URL || '';
+            if (!url) {
+              core.warning('production_url is empty — skipping PR comment');
+              return;
+            }
+            if (!/^https:\/\/[a-z0-9.-]+\.vercel\.app\b/.test(url)) {
+              core.setFailed(`Unexpected production URL: ${url}`);
+              return;
+            }
             const { data: prs } = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -67,6 +91,6 @@ jobs:
                 issue_number: merged.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: '✅ Production deployed: ${{ steps.deploy.outputs.production_url }}'
+                body: `✅ Production deployed: ${url}`,
               });
             }
