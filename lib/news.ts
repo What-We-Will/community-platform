@@ -2,7 +2,10 @@ export type Article = {
   slug: string;
   title: string;
   excerpt: string;
+  /** Human-readable display date */
   date: string;
+  /** ISO 8601 date for SEO / structured data */
+  datePublished: string;
   category: string;
   author: string;
   featured?: boolean;
@@ -41,6 +44,7 @@ export const ARTICLES: Article[] = [
     excerpt:
       "We've been focused for the past three weeks on a severance negotiation campaign for Oracle workers — including ones terminated on FMLA or disability leave, and cut off from healthcare while pregnant.",
     date: "April 29, 2026",
+    datePublished: "2026-04-29",
     category: "Community",
     author: "WWW Editorial Team",
     featured: true,
@@ -52,6 +56,7 @@ export const ARTICLES: Article[] = [
     excerpt:
       "Labor and capital are now openly fighting over who gets to write the rules on AI. We recap the AFL-CIO Workers First AI Summit, spotlight the hidden labor behind AI systems, and ask what it really means for workers to own the technology.",
     date: "March 31, 2026",
+    datePublished: "2026-03-31",
     category: "Policy & Advocacy",
     author: "WWW Editorial Team",
     body: [
@@ -129,6 +134,7 @@ export const ARTICLES: Article[] = [
     excerpt:
       "Oracle, Meta, and Atlassian are explicitly citing AI rebalancing as they cut tens of thousands of jobs. We look at what's driving these cuts, what the CWA is doing about it, and why our name comes from an 1863 labor organizer.",
     date: "March 24, 2026",
+    datePublished: "2026-03-24",
     category: "Policy & Advocacy",
     author: "WWW Editorial Team",
     body: [
@@ -202,6 +208,7 @@ export const ARTICLES: Article[] = [
     excerpt:
       "We're joining the California Labor Federation in their week of action for SB947, the No Robo Bosses Act of 2026 — legislation that would require human oversight of AI systems in hiring, management, and discipline. And one worker's story shows exactly why it matters.",
     date: "March 17, 2026",
+    datePublished: "2026-03-17",
     category: "Campaign Update",
     author: "Organizing Team",
     body: [
@@ -263,6 +270,7 @@ export const ARTICLES: Article[] = [
     excerpt:
       "After weeks of building, our beta community platform is open. Secure messaging for laid-off workers, a community job board, skill-sharing groups, and more. We're also welcoming a key new organizer to our team.",
     date: "March 10, 2026",
+    datePublished: "2026-03-10",
     category: "Announcement",
     author: "WWW Editorial Team",
     body: [
@@ -337,6 +345,7 @@ export const ARTICLES: Article[] = [
     excerpt:
       "Over 500 people registered for our Mass Call on February 22nd — laid-off tech workers, allies, students, and organizers from across the country. Here's what they told us, and the four working groups we're launching in response.",
     date: "February 25, 2026",
+    datePublished: "2026-02-25",
     category: "Community",
     author: "WWW Editorial Team",
     body: [

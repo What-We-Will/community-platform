@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Bebas_Neue, Montserrat } from "next/font/google";
+import {
+  getOrganizationJsonLd,
+  ORGANIZATION_DESCRIPTION,
+  ORGANIZATION_NAME,
+} from "@/lib/organization-json-ld";
+import { OG_IMAGE, serializeJsonLd } from "@/lib/seo";
+import { getServerSiteUrl } from "@/lib/utils/get-site-url";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -20,8 +27,25 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "What We Will",
-  description: "Community membership platform",
+  metadataBase: new URL(`${getServerSiteUrl()}/`),
+  title: {
+    default: ORGANIZATION_NAME,
+    template: `%s | ${ORGANIZATION_NAME}`,
+  },
+  description: ORGANIZATION_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: ORGANIZATION_NAME,
+    title: ORGANIZATION_NAME,
+    description: ORGANIZATION_DESCRIPTION,
+    images: [OG_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: ORGANIZATION_NAME,
+    description: ORGANIZATION_DESCRIPTION,
+    images: [OG_IMAGE.url],
+  },
 };
 
 export const viewport = {
@@ -34,8 +58,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const organizationJsonLd = getOrganizationJsonLd();
+
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: serializeJsonLd(organizationJsonLd),
+          }}
+        />
+      </head>
       <body
         className={`${geistMono.variable} ${bebasNeue.variable} ${montserrat.variable} antialiased`}
         suppressHydrationWarning

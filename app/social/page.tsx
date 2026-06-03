@@ -12,10 +12,13 @@ import {
 } from "@/components/social/social-icons";
 import type { Metadata } from "next";
 
+import { canonicalPath } from "@/lib/seo";
+
 export const metadata: Metadata = {
-  title: "What We Will | Links",
+  title: "Links",
   description:
     "Find all of our resources, events, and community links in one place.",
+  alternates: canonicalPath("/social"),
 };
 
 // ─── Configuration ──────────────────────────────────────────────────────────

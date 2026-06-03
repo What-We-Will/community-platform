@@ -6,10 +6,14 @@ import { Button } from "@/components/ui/button";
 import { getSiteUrl } from "@/lib/utils/get-site-url";
 import Link from "next/link";
 
-export const metadata = {
-  title: "Our Platform | What We Will",
+import type { Metadata } from "next";
+import { canonicalPath } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Our Platform",
   description:
     "A quick visual tour of the What We Will membership platform—directory, groups, events, and more.",
+  alternates: canonicalPath("/our-platform"),
 };
 
 const FEATURES = [

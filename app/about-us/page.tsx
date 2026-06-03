@@ -7,10 +7,14 @@ import { AboutTeam } from "@/components/about/about-team";
 import { AboutAdvisoryBoard } from "@/components/about/about-advisory-board";
 import { AboutVolunteers } from "@/components/about/about-volunteers";
 
-export const metadata = {
-  title: "About Us | What We Will",
+import type { Metadata } from "next";
+import { canonicalPath } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "About Us",
   description:
     "Learn about What We Will—our mission, our organization, and the people building worker power in the age of AI.",
+  alternates: canonicalPath("/about-us"),
 };
 
 export default async function AboutPage() {

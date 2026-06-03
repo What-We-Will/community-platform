@@ -3,10 +3,14 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
 import { ShareYourStoryForm } from "@/components/landing/share-your-story-form";
 
-export const metadata = {
-  title: "Share Your Story | What We Will",
+import type { Metadata } from "next";
+import { canonicalPath } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Share Your Story",
   description:
     "Share how AI tools, automation, workplace monitoring, and algorithmic decisions are affecting your job and community.",
+  alternates: canonicalPath("/share-your-story"),
 };
 
 export default async function ShareYourStoryPage() {

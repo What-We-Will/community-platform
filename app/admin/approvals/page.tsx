@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { approveUser, rejectUser } from "./actions";
@@ -17,22 +16,6 @@ import { Badge } from "@/components/ui/badge";
 export default async function ApprovalsPage() {
   const supabase = await createClient();
 
-  // Guard: must be logged in and an admin
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { data: callerProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (callerProfile?.role !== "admin") redirect("/dashboard");
-
-  // Fetch all pending profiles
   const { data: pendingProfiles } = await supabase
     .from("profiles")
     .select("id, display_name, linkedin_url, created_at")

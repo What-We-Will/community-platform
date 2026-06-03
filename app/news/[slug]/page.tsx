@@ -5,7 +5,9 @@ import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { LandingNav } from "@/components/landing/landing-nav";
 import { LandingFooter } from "@/components/landing/landing-footer";
+import { getArticleJsonLd } from "@/lib/article-json-ld";
 import { ARTICLES, getArticleBySlug } from "@/lib/news";
+import { canonicalPath, OG_IMAGE, serializeJsonLd } from "@/lib/seo";
 import { ArticleBody } from "@/components/news/article-body";
 
 export async function generateStaticParams() {
@@ -21,8 +23,16 @@ export async function generateMetadata({
   const article = getArticleBySlug(slug);
   if (!article) return {};
   return {
-    title: `${article.title} | What We Will`,
+    title: article.title,
     description: article.excerpt,
+    alternates: canonicalPath(`/news/${slug}`),
+    openGraph: {
+      type: "article",
+      title: article.title,
+      description: article.excerpt,
+      publishedTime: article.datePublished,
+      images: [OG_IMAGE],
+    },
   };
 }
 
@@ -79,8 +89,14 @@ export default async function ArticlePage({
     (a) => a.slug !== article.slug && a.category === article.category
   ).slice(0, 2);
 
+  const articleJsonLd = getArticleJsonLd(article);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(articleJsonLd) }}
+      />
       <LandingNav user={user ?? undefined} />
 
       <main className="flex-1">

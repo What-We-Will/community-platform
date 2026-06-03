@@ -7,7 +7,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { navProgramLinks } from "@/lib/programs";
-import { getSiteUrl } from "@/lib/utils/get-site-url";
+import { DEFAULT_SITE_URL, getSiteUrl } from "@/lib/utils/get-site-url";
 
 const DONATE_URL =
   "https://secure.givelively.org/donate/equity-tech-collective/what-we-will-fund-our-organizers";
@@ -15,8 +15,7 @@ const DONATE_URL =
 // Server-safe initial value — must match what getSiteUrl() returns on the server
 // so the first client render is identical to the SSR HTML (avoids hydration mismatch).
 const SERVER_SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-  "https://members.wwwrise.org";
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? DEFAULT_SITE_URL;
 
 export function LandingNav({ user }: { user?: User | null }) {
   const [siteUrl, setSiteUrl] = useState(SERVER_SITE_URL);
