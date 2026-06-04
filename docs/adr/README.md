@@ -126,6 +126,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | @tonyrosario |
 | [0002](./0002-migrations-timestamps-and-local-first.md) | Timestamp-based migrations and local-first authoring | Accepted 2026-05-19 | @timchaffee |
 | [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Proposed 2026-05-20 | @tonyrosario |
+| [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay
