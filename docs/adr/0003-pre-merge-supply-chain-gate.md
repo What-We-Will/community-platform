@@ -1,6 +1,6 @@
 # ADR-0003 — Pre-merge supply-chain security gate
 
-**Status:** Proposed 2026-05-20
+**Status:** Accepted 2026-06-04
 **TL;DR:** Add a blocking pre-merge `security-scan` job (gitleaks, in-house hidden-character scanner, blocking `npm audit`) as a required check on `main`, and adopt a workflow-hardening baseline (SHA-pinned actions, step-level secrets, `npm ci --ignore-scripts`, pinned Vercel CLI) for both `preview.yml` and `production.yml`. The two are bundled because they share one threat model — the gate is undermined without the baseline.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
@@ -25,7 +25,7 @@ We will gate every PR on a blocking `security-scan` job, and we will adopt a wor
 - `scripts/scan-hidden-chars.mjs` — in-house scanner covering 17 codepoints (bidirectional override controls, zero-width characters, line and paragraph separators), scoped to changed JS/TS files.
 - `npm ci --ignore-scripts && npm audit --audit-level=high` — blocking, replacing the prior silent-pass step.
 
-The job is configured as a required check on `main` via branch protection (a manual settings change, not workflow-defined).
+The job is configured as a required check on `main` via the `Protect main` repository ruleset (a manual settings change, not workflow-defined).
 
 **Workflow-hardening baseline** (applied to both `preview.yml` and `production.yml`):
 
@@ -62,7 +62,7 @@ The job is configured as a required check on `main` via branch protection (a man
 
 **New manual work.**
 
-- Branch-protection settings on `main` need to add `security-scan` as a required check after the implementing PR merges. This is admin-only and not workflow-defined; it must be done out-of-band.
+- The `Protect main` ruleset's required-status-checks rule for `security-scan` is a manual, out-of-band setting (admin-only, not workflow-defined). It must be kept in sync with the job name — renaming the `security-scan` job without updating the rule would leave every PR blocked on a check that never reports.
 - SHA-pin maintenance falls on contributors. The gitleaks binary version and Vercel CLI version are free-form strings in `run:` blocks and are outside Dependabot's reach; they will drift unless someone re-pins them periodically. Action SHA pins likewise need periodic refresh.
 
 **Contributor workflow change.** From this PR forward, a failing `security-scan` job blocks merge. Contributors will see new failure modes (secret detected by gitleaks, hidden character in a diff, high-severity advisory in a transitive dependency) that previously would have passed silently or been caught only by manual review.
