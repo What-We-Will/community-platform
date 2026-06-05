@@ -1,11 +1,13 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  // Resolve the `@/*` alias from tsconfig.json natively — the same source of truth
-  // Jest used via moduleNameMapper. (Replaces the vite-tsconfig-paths plugin.)
-  resolve: { tsconfigPaths: true },
+  // Mirror jest.config.mjs moduleNameMapper (`^@/(.*)$` → `<rootDir>/$1`): map `@/*`
+  // to the repo root. Vite does not read tsconfig.json paths by default, so this alias
+  // is required for `@/...` imports to resolve in tests.
+  resolve: { alias: { '@': path.resolve(__dirname, '.') } },
   test: {
     // Keep describe/it/expect/vi global so the migration doesn't add an import to every file.
     globals: true,

@@ -9,7 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ci": "vitest run",
+    "test:ci": "vitest run --reporter=verbose",
     "test:e2e": "playwright test --project=chromium",
     "test:e2e:smoke": "playwright test --project=chromium --grep @smoke",
     "test:e2e:debug": "playwright test --debug",
