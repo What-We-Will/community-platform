@@ -17,5 +17,15 @@ export default defineConfig({
     // Mirror jest.config.mjs: only *.test.ts(x) — *.spec.ts stays reserved for Playwright (e2e/).
     include: ['**/*.test.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/.next/**', 'e2e/**'],
+    // Reporting only — no thresholds enforced yet. The TESTING_STANDARDS ≥80% lib/ target
+    // is aspirational; current baseline is well below it. Run via `npm run test:coverage`.
+    coverage: {
+      provider: 'v8',
+      // Scope to the documented metric (lib/). `include` forces untested files into the
+      // denominator so the percentage is honest, not inflated by only-imported files.
+      include: ['lib/**'],
+      exclude: ['**/*.test.{ts,tsx}', '**/__tests__/**', '**/*.d.ts'],
+      reporter: ['text-summary', 'text', 'html'],
+    },
   },
 });

@@ -55,7 +55,7 @@ If a lint rule above is missing from the ESLint config, that is a gap to close �
 
 | Rule | Target | Status | Mechanism |
 |---|---|---|---|
-| Line coverage (`lib/`) | ≥ 80% | **Pending CI** | `test.coverage.thresholds` in `vitest.config.ts` (requires `@vitest/coverage-v8`) — runs locally, not blocking |
+| Line coverage (`lib/`) | ≥ 80% (target) | **Reporting only** | `vitest.config.ts` `test.coverage` via `@vitest/coverage-v8` — run `npm run test:coverage`. No thresholds enforced yet; current baseline is well below target |
 | Mutation score — critical paths | ≥ 70% | **Deferred** | Blocked on 80% line coverage baseline |
 | Mutation score — standard features | ≥ 50% | **Deferred** | Blocked on 80% line coverage baseline |
 | No forbidden lint patterns | See table above | **Partial** | `@vitest/eslint-plugin` + `@typescript-eslint` — local only, not in CI |
@@ -65,7 +65,8 @@ If a lint rule above is missing from the ESLint config, that is a gap to close �
 
 ### Line coverage
 
-- Target: ≥ 80% line coverage for `lib/`
+- Target: ≥ 80% line coverage for `lib/` (aspirational — not yet enforced)
+- Generate the report with `npm run test:coverage` (`@vitest/coverage-v8`, scoped to `lib/`). Reporting only — no thresholds gate the run or CI today.
 - Line coverage is a **floor**, not a quality signal. High coverage with low understanding is worse than low coverage with high understanding.
 
 ### Mutation testing
