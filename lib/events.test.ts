@@ -1,7 +1,8 @@
-jest.mock("@/lib/supabase/server", () => ({
-  createClient: jest.fn(),
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(),
 }));
 
+import type { Mock } from "vitest";
 import { createClient } from "@/lib/supabase/server";
 import { fetchEventWithDetails } from "./events";
 
@@ -56,12 +57,12 @@ function buildClientWithSequentialRsvps(
   let callIndex = 0;
 
   const mockClient = {
-    from: jest.fn((table: string) => {
+    from: vi.fn((table: string) => {
       if (table === "events") {
         return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
             data: eventData,
             error: eventError,
           }),
@@ -73,14 +74,14 @@ function buildClientWithSequentialRsvps(
       callIndex++;
       if (callIndex === 1) {
         return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({ data: allRsvps, error: null }),
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({ data: allRsvps, error: null }),
         };
       }
       return {
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockReturnThis(),
-        maybeSingle: jest.fn().mockResolvedValue({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({
           data: userRsvp,
           error: null,
         }),
@@ -91,13 +92,13 @@ function buildClientWithSequentialRsvps(
 }
 
 beforeEach(() => {
-  jest.clearAllMocks();
-  jest.useFakeTimers();
-  jest.setSystemTime(NOW);
+  vi.clearAllMocks();
+  vi.useFakeTimers();
+  vi.setSystemTime(NOW);
 });
 
 afterEach(() => {
-  jest.useRealTimers();
+  vi.useRealTimers();
 });
 
 // ── fetchEventWithDetails ─────────────────────────────────────────────────────
@@ -109,7 +110,7 @@ describe("fetchEventWithDetails", () => {
     const mock = buildClientWithSequentialRsvps(
       null, [], null, { message: "Not found" }
     );
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("nonexistent", "user-1");
     expect(result).toBeNull();
@@ -117,7 +118,7 @@ describe("fetchEventWithDetails", () => {
 
   it("returns null when event data is null (no error but no row)", async () => {
     const mock = buildClientWithSequentialRsvps(null, []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result).toBeNull();
@@ -128,7 +129,7 @@ describe("fetchEventWithDetails", () => {
   it("counts rsvps correctly with all three statuses present", async () => {
     const rsvps = makeRsvps({ going: 3, maybe: 2, declined: 1 });
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), rsvps, null);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.rsvpCounts).toEqual({ going: 3, maybe: 2, declined: 1 });
@@ -136,7 +137,7 @@ describe("fetchEventWithDetails", () => {
 
   it("returns zero counts when there are no rsvps", async () => {
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.rsvpCounts).toEqual({ going: 0, maybe: 0, declined: 0 });
@@ -145,7 +146,7 @@ describe("fetchEventWithDetails", () => {
   it("counts only 'going' rsvps correctly", async () => {
     const rsvps = makeRsvps({ going: 5 });
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), rsvps);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.rsvpCounts.going).toBe(5);
@@ -159,7 +160,7 @@ describe("fetchEventWithDetails", () => {
       { status: "unknown_status", user_id: "u2", event_id: "event-1" },
     ] as RsvpRow[];
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), rsvps);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.rsvpCounts).toEqual({ going: 1, maybe: 0, declined: 0 });
@@ -170,7 +171,7 @@ describe("fetchEventWithDetails", () => {
   it("isLive is true when NOW is between starts_at and ends_at", async () => {
     // NOW = 2026-03-11T15:00Z, event = 14:00–16:00 UTC
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.isLive).toBe(true);
@@ -182,7 +183,7 @@ describe("fetchEventWithDetails", () => {
       ends_at: "2026-03-11T17:00:00.000Z",
     });
     const mock = buildClientWithSequentialRsvps(event, []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.isLive).toBe(false);
@@ -194,7 +195,7 @@ describe("fetchEventWithDetails", () => {
       ends_at: "2026-03-11T14:00:00.000Z",
     });
     const mock = buildClientWithSequentialRsvps(event, []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.isLive).toBe(false);
@@ -206,7 +207,7 @@ describe("fetchEventWithDetails", () => {
       ends_at: "2026-03-11T16:00:00.000Z",
     });
     const mock = buildClientWithSequentialRsvps(event, []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.isLive).toBe(true);
@@ -220,7 +221,7 @@ describe("fetchEventWithDetails", () => {
       ends_at: "2026-03-11T14:00:00.000Z",
     });
     const mock = buildClientWithSequentialRsvps(event, []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.isPast).toBe(true);
@@ -229,7 +230,7 @@ describe("fetchEventWithDetails", () => {
   it("isPast is false when ends_at is after NOW", async () => {
     // Event ends 16:00, NOW is 15:00
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.isPast).toBe(false);
@@ -237,7 +238,7 @@ describe("fetchEventWithDetails", () => {
 
   it("isPast is false when event is currently live", async () => {
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     // isLive and isPast are mutually exclusive when live
@@ -250,7 +251,7 @@ describe("fetchEventWithDetails", () => {
   it("returns the user's rsvp when found", async () => {
     const userRsvp = { status: "going", user_id: "user-1", event_id: "event-1" };
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), makeRsvps({ going: 1 }), userRsvp);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.currentUserRsvp).toEqual(userRsvp);
@@ -258,7 +259,7 @@ describe("fetchEventWithDetails", () => {
 
   it("returns null for currentUserRsvp when user has not RSVPed", async () => {
     const mock = buildClientWithSequentialRsvps(makeBaseEvent(), [], null);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.currentUserRsvp).toBeNull();
@@ -269,7 +270,7 @@ describe("fetchEventWithDetails", () => {
   it("includes all base event fields in the returned object", async () => {
     const event = makeBaseEvent({ title: "My Event", location: "Room 101" });
     const mock = buildClientWithSequentialRsvps(event, []);
-    (createClient as jest.Mock).mockResolvedValue(mock);
+    (createClient as Mock).mockResolvedValue(mock);
 
     const result = await fetchEventWithDetails("event-1", "user-1");
     expect(result?.title).toBe("My Event");

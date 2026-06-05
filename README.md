@@ -265,9 +265,9 @@ The **production workflow** (`production.yml`) deploys to production on merges t
 | `npm run build` | Production build |
 | `npm run start` | Start production server |
 | `npm run lint` | Run ESLint |
-| `npm test` | Run unit tests (Jest) |
+| `npm test` | Run unit tests (Vitest) |
 | `npm run test:watch` | Run tests in watch mode |
-| `npm run test:ci` | Run tests in CI mode (`--runInBand --ci`) |
+| `npm run test:ci` | Run tests once (CI mode) |
 | `npm run test:e2e` | Run Playwright E2E tests (headless) |
 | `npm run test:e2e:debug` | Step through E2E tests with the inspector |
 

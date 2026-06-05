@@ -1,44 +1,45 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
-jest.mock("@/lib/supabase/server", () => ({ createClient: jest.fn() }));
-jest.mock("@/lib/groups", () => ({
-  isSlugAvailable: jest.fn().mockResolvedValue(true),
-  normalizeSlug: jest.fn().mockImplementation((s: string) => s),
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("@/lib/groups", () => ({
+  isSlugAvailable: vi.fn().mockResolvedValue(true),
+  normalizeSlug: vi.fn().mockImplementation((s: string) => s),
 }));
 
+import type { MockedFunction } from "vitest";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizeSlug, isSlugAvailable } from "@/lib/groups";
 import { updateGroupSettingsAction } from "./actions";
 
-const mockRevalidatePath = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
-const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>;
-const mockNormalizeSlug = normalizeSlug as jest.MockedFunction<typeof normalizeSlug>;
-const mockIsSlugAvailable = isSlugAvailable as jest.MockedFunction<typeof isSlugAvailable>;
+const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
+const mockCreateClient = createClient as MockedFunction<typeof createClient>;
+const mockNormalizeSlug = normalizeSlug as MockedFunction<typeof normalizeSlug>;
+const mockIsSlugAvailable = isSlugAvailable as MockedFunction<typeof isSlugAvailable>;
 
 function makeClient(userId: string | null) {
   const chain: Record<string, any> = {};
   ["select", "update", "eq", "single"].forEach((m) => {
-    chain[m] = jest.fn().mockReturnValue(chain);
+    chain[m] = vi.fn().mockReturnValue(chain);
   });
-  chain.single = jest.fn().mockResolvedValue({ data: { role: "member" }, error: null });
+  chain.single = vi.fn().mockResolvedValue({ data: { role: "member" }, error: null });
   chain.then = (r: any, j: any) => Promise.resolve({ error: null }).then(r, j);
   chain.catch = (j: any) => Promise.resolve({ error: null }).catch(j);
   return {
     auth: {
-      getUser: jest.fn().mockResolvedValue({
+      getUser: vi.fn().mockResolvedValue({
         data: { user: userId ? { id: userId } : null },
       }),
     },
-    from: jest.fn().mockReturnValue(chain),
+    from: vi.fn().mockReturnValue(chain),
   };
 }
 
 describe("updateGroupSettingsAction — revalidates affected pages", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);

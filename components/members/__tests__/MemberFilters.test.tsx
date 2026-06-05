@@ -2,11 +2,11 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import MemberFilters from "../MemberFilters";
 
-const pushMock = jest.fn();
-const replaceMock = jest.fn();
+const pushMock = vi.fn();
+const replaceMock = vi.fn();
 let currentSearchParams = new URLSearchParams();
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, replace: replaceMock }),
   useSearchParams: () => currentSearchParams,
 }));
@@ -44,7 +44,7 @@ describe("MemberFilters", () => {
   });
 
   it("debounced typing navigates via router.replace, not push", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       render(<MemberFilters allSkills={[]} />);
 
@@ -52,7 +52,7 @@ describe("MemberFilters", () => {
       fireEvent.change(search, { target: { value: "alice" } });
 
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       expect(replaceMock).toHaveBeenCalledWith(
@@ -61,12 +61,12 @@ describe("MemberFilters", () => {
       );
       expect(pushMock).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("Enter after a debounce-replace still commits via router.push", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       render(<MemberFilters allSkills={[]} />);
 
@@ -74,7 +74,7 @@ describe("MemberFilters", () => {
       fireEvent.change(search, { target: { value: "alice" } });
 
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       expect(replaceMock).toHaveBeenCalledTimes(1);
@@ -87,12 +87,12 @@ describe("MemberFilters", () => {
         expect.objectContaining({ scroll: false })
       );
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("Enter before debounce fires cancels the pending replace", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       render(<MemberFilters allSkills={[]} />);
 
@@ -106,12 +106,12 @@ describe("MemberFilters", () => {
       );
 
       act(() => {
-        jest.advanceTimersByTime(300);
+        vi.advanceTimersByTime(300);
       });
 
       expect(replaceMock).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 

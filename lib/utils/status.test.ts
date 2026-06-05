@@ -4,12 +4,12 @@ describe('getOnlineStatus', () => {
   const now = new Date('2024-01-01T12:00:00Z');
 
   beforeAll(() => {
-    jest.useFakeTimers();
-    jest.setSystemTime(now);
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
   });
 
   afterAll(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   const minutesAgo = (minutes: number) =>

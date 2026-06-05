@@ -1,15 +1,16 @@
+import type { Mock } from "vitest";
 import { render, act, screen } from "@testing-library/react";
 import { ConversationList } from "../ConversationList";
 import type { ConversationWithDetails } from "@/lib/types";
 
-const pushMock = jest.fn();
-const refreshMock = jest.fn();
+const pushMock = vi.fn();
+const refreshMock = vi.fn();
 // Keep stable — an unstable mock masks stale-closure bugs in effect deps.
 const routerMock = { push: pushMock, refresh: refreshMock };
 
 let currentPathname = "/messages";
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => routerMock,
   usePathname: () => currentPathname,
 }));
@@ -20,31 +21,31 @@ jest.mock("next/navigation", () => ({
 let onMessagesInsert: (payload: { new: Record<string, unknown> }) => void;
 
 function makeMockChannel() {
-  const self: Record<string, jest.Mock> = {
-    on: jest.fn().mockImplementation(function (_event: string, opts: unknown, cb: (...args: unknown[]) => void) {
+  const self: Record<string, Mock> = {
+    on: vi.fn().mockImplementation(function (_event: string, opts: unknown, cb: (...args: unknown[]) => void) {
       const optsObj = opts as Record<string, unknown> | undefined;
       if (optsObj?.table === "messages" && optsObj?.event === "INSERT") {
         onMessagesInsert = cb as typeof onMessagesInsert;
       }
       return self;
     }),
-    subscribe: jest.fn().mockReturnThis(),
+    subscribe: vi.fn().mockReturnThis(),
   };
   return self;
 }
 
-jest.mock("@/lib/supabase/client", () => ({
+vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     channel: () => makeMockChannel(),
-    removeChannel: jest.fn(),
+    removeChannel: vi.fn(),
   }),
 }));
 
-jest.mock("@/components/shared/LiveStatusAvatar", () => ({
+vi.mock("@/components/shared/LiveStatusAvatar", () => ({
   LiveStatusAvatar: () => <div data-testid="avatar" />,
 }));
 
-jest.mock("../NewMessageDialog", () => ({
+vi.mock("../NewMessageDialog", () => ({
   NewMessageDialog: () => <div data-testid="new-message-dialog" />,
 }));
 
@@ -107,7 +108,7 @@ function renderList() {
 describe("ConversationList Realtime INSERT handler", () => {
   beforeEach(() => {
     currentPathname = "/messages";
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("refreshes from the server when the message belongs to a conversation not in local state", () => {

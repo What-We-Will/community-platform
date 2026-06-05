@@ -1,21 +1,22 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
-jest.mock("@/lib/supabase/server", () => ({ createClient: jest.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
+import type { MockedFunction } from "vitest";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { addResource, deleteResource } from "./learning-actions";
 
-const mockRevalidatePath = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
-const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>;
+const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
+const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 
 function makeChain(thenResult = { error: null }) {
   const chain: Record<string, any> = {};
   ["select", "insert", "update", "delete", "eq", "order", "limit"].forEach((m) => {
-    chain[m] = jest.fn().mockReturnValue(chain);
+    chain[m] = vi.fn().mockReturnValue(chain);
   });
   chain.then = (r: any, j: any) => Promise.resolve(thenResult).then(r, j);
   chain.catch = (j: any) => Promise.resolve(thenResult).catch(j);
@@ -23,12 +24,12 @@ function makeChain(thenResult = { error: null }) {
 }
 
 describe("addResource — revalidates affected pages", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
-      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
     } as any);
 
     // Act
@@ -42,8 +43,8 @@ describe("addResource — revalidates affected pages", () => {
   it("should revalidate on successful add", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
-      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
-      from: jest.fn().mockReturnValue(makeChain()),
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
+      from: vi.fn().mockReturnValue(makeChain()),
     } as any);
 
     // Act
@@ -57,12 +58,12 @@ describe("addResource — revalidates affected pages", () => {
 });
 
 describe("deleteResource — revalidates affected pages", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
-      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
     } as any);
 
     // Act
@@ -76,8 +77,8 @@ describe("deleteResource — revalidates affected pages", () => {
   it("should revalidate on successful deletion", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
-      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
-      from: jest.fn().mockReturnValue(makeChain()),
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }) },
+      from: vi.fn().mockReturnValue(makeChain()),
     } as any);
 
     // Act
