@@ -201,7 +201,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          mapfile -d '' -t files < <(git diff -z --name-only "$BASE_SHA"..HEAD \
+          # --diff-filter=d excludes deleted paths (nothing at HEAD to scan)
+          mapfile -d '' -t files < <(git diff -z --name-only --diff-filter=d "$BASE_SHA"..HEAD \
             -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs')
           if [ ${#files[@]} -eq 0 ]; then
             echo "No changed source files to scan."
