@@ -4,9 +4,9 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  // Mirror jest.config.mjs moduleNameMapper (`^@/(.*)$` → `<rootDir>/$1`): map `@/*`
-  // to the repo root. Vite does not read tsconfig.json paths by default, so this alias
-  // is required for `@/...` imports to resolve in tests.
+  // Map `@/*` to the repo root, matching the tsconfig `paths` alias. Vite does not read
+  // tsconfig.json `paths` by default, so this explicit alias is required for `@/...`
+  // imports to resolve in tests.
   resolve: { alias: { '@': path.resolve(__dirname, '.') } },
   test: {
     // Keep describe/it/expect/vi global so the migration doesn't add an import to every file.
@@ -14,7 +14,7 @@ export default defineConfig({
     // Default environment; per-file override via a `@vitest-environment node` docblock.
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    // Mirror jest.config.mjs: only *.test.ts(x) — *.spec.ts stays reserved for Playwright (e2e/).
+    // Only *.test.ts(x) — *.spec.ts stays reserved for Playwright (e2e/).
     include: ['**/*.test.{ts,tsx}'],
     exclude: ['**/node_modules/**', '**/.next/**', 'e2e/**'],
     // Reporting only — no thresholds enforced yet. The TESTING_STANDARDS ≥80% lib/ target
