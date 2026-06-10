@@ -152,7 +152,7 @@ All factories live in `lib/__tests__/factories.ts`. Use overrides to vary only w
 
 ## Assertion rules
 
-- Use Vitest matchers (Jest-compatible API): `toBe()`, `toEqual()`, `toMatchObject()`
+- Use Vitest's built-in matchers: `toBe()`, `toEqual()`, `toMatchObject()` (the API mirrors Jest's by design — these are native, not a compat shim)
 - Async errors: `await expect(fn()).rejects.toThrow(...)`
 - Never rely solely on `toHaveBeenCalled()` — also assert the return value, state change, or argument passed
 - Components: prefer `screen.getByRole()` over `getByTestId()`
