@@ -2,7 +2,7 @@
 
 Load this file for AI-assisted sessions, PR review, and pre-merge quality gates. Assumes preamble is loaded.
 
-**Last updated:** 2026-06-04 · **Applies to:** Vitest 4 · **Owner:** platform lead
+**Last updated:** 2026-06-06 · **Applies to:** Vitest 4 · **Owner:** platform lead
 
 ---
 
@@ -35,7 +35,7 @@ The following are banned in all test files.
 |---|---|---|
 | `any` type in test files | Undermines type-safety guarantees | `@typescript-eslint/no-explicit-any` (lint) |
 | `// @ts-ignore` without justification comment | Masks real type errors | `@typescript-eslint/ban-ts-comment` (lint) |
-| `setTimeout` / `sleep` in tests | Creates flaky, slow tests | `vitest/no-restricted-matchers` + review |
+| `setTimeout` / `sleep` in tests | Creates flaky, slow tests | review |
 | Testing getters, setters, or type-only exports | Tests framework, not behavior | review |
 | `console.log` left in test files | Noise in CI output | `no-console` scoped to `**/*.test.*` (lint) |
 | Snapshot tests without platform lead approval | AI generates snapshots that lock in broken UI | `vitest/no-large-snapshots` + review |
@@ -58,9 +58,9 @@ If a lint rule above is missing from the ESLint config, that is a gap to close �
 | Line coverage (`lib/`) | ≥ 80% (target) | **Reporting only** | `vitest.config.ts` `test.coverage` via `@vitest/coverage-v8` — run `npm run test:coverage`. No thresholds enforced yet; current baseline is well below target |
 | Mutation score — critical paths | ≥ 70% | **Deferred** | Blocked on 80% line coverage baseline |
 | Mutation score — standard features | ≥ 50% | **Deferred** | Blocked on 80% line coverage baseline |
-| No forbidden lint patterns | See table above | **Partial** | `@vitest/eslint-plugin` + `@typescript-eslint` — local only, not in CI |
+| No forbidden lint patterns | See table above | **Partial** | `vitest/*` rules wired into `eslint.config.mjs` (runs with `npm run lint`); `no-console` test-scoping still a gap |
 | Naming convention | `should X when Y` | **Manual** | PR review only |
-| No `.only` / `.skip` | Zero | **Partial** | `vitest/no-focused-tests`, `vitest/no-disabled-tests` — local only |
+| No `.only` / `.skip` | Zero | **Active** | `vitest/no-focused-tests` (error), `vitest/no-disabled-tests` (warn) — wired into `eslint.config.mjs` |
 | pgTAP for every RLS migration | One test per migration | **Manual** | PR review |
 
 ### Line coverage
