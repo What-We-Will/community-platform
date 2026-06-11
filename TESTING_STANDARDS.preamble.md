@@ -2,7 +2,7 @@
 
 Loaded in every testing-related session. All rules below apply regardless of task type.
 
-**Last updated:** 2026-04-27 · **Applies to:** Jest 29 · **Owner:** platform lead
+**Last updated:** 2026-06-04 · **Applies to:** Vitest 4 · **Owner:** platform lead
 
 ---
 
@@ -24,7 +24,7 @@ Loaded in every testing-related session. All rules below apply regardless of tas
 
 8. **Naming.** Test cases: `it("should [expected outcome] when [condition]")`. Describe blocks match the exported function name.
 
-9. **`jest.clearAllMocks()` in `beforeEach`.** Not `afterEach` — a failing test can skip afterEach cleanup. Required in any file that uses mocks.
+9. **`vi.clearAllMocks()` in `beforeEach`.** Not `afterEach` — a failing test can skip afterEach cleanup. Required in any file that uses mocks.
 
 10. **Test the unauthenticated case.** Every server action and data helper must have a test asserting it returns an error or redirects when called without a valid session.
 
@@ -34,4 +34,4 @@ Loaded in every testing-related session. All rules below apply regardless of tas
 
 13. **Every contributor must understand every test.** The `describe` block should clearly document the feature or behavior under test — not mirror the function name. A reviewer should be able to read the `describe` block and `it` descriptions alone and understand the intent and what's being validated. If that's not possible without re-reading the AI conversation that produced it, the test isn't ready for review.
 
-14. **Test file naming.** Jest unit/integration tests use `*.test.ts(x)`. The `*.spec.ts` extension is reserved for Playwright E2E tests in `e2e/`. Don't use `*.spec.ts` for Jest tests, even though Jest's defaults would match it — `jest.config.mjs` is explicitly scoped to `*.test.ts(x)` so a misnamed Jest test will be silently skipped. This convention prevents Jest and Playwright from cross-picking each other's files.
+14. **Test file naming.** Vitest unit/integration tests use `*.test.ts(x)`. The `*.spec.ts` extension is reserved for Playwright E2E tests in `e2e/`. Don't use `*.spec.ts` for Vitest tests — `vitest.config.ts` `include` is explicitly scoped to `*.test.ts(x)` (and excludes `e2e/`) so a misnamed unit test will be silently skipped. This convention prevents Vitest and Playwright from cross-picking each other's files.

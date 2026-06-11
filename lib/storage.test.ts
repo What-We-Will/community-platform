@@ -19,9 +19,9 @@ if (typeof File === 'undefined') {
   };
 }
 
-const createClientMock = jest.fn();
+const createClientMock = vi.fn();
 
-jest.mock('@/lib/supabase/client', () => ({
+vi.mock('@/lib/supabase/client', () => ({
   createClient: () => createClientMock(),
 }));
 
@@ -56,17 +56,17 @@ describe('validateFile', () => {
 
 describe('storage Supabase wrappers', () => {
   const storageMock = {
-    from: jest.fn(),
+    from: vi.fn(),
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     createClientMock.mockReturnValue({ storage: storageMock });
     storageMock.from.mockReset();
   });
 
   it('uploadPublicFile returns error message on failure', async () => {
-    const upload = jest.fn().mockResolvedValue({
+    const upload = vi.fn().mockResolvedValue({
       data: null,
       error: { message: 'upload failed' },
     });
@@ -80,7 +80,7 @@ describe('storage Supabase wrappers', () => {
   });
 
   it('deleteFile returns boolean based on Supabase error', async () => {
-    const remove = jest
+    const remove = vi
       .fn()
       .mockResolvedValueOnce({ error: null })
       .mockResolvedValueOnce({ error: { message: 'failed' } });
@@ -91,7 +91,7 @@ describe('storage Supabase wrappers', () => {
   });
 
   it('getSignedUrl returns null when Supabase errors', async () => {
-    const createSignedUrl = jest
+    const createSignedUrl = vi
       .fn()
       .mockResolvedValue({ data: null, error: { message: 'failed' } });
     storageMock.from.mockReturnValue({ createSignedUrl });

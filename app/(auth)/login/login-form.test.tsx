@@ -2,19 +2,19 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LoginForm from './login-form';
 
-const pushMock = jest.fn();
-const refreshMock = jest.fn();
+const pushMock = vi.fn();
+const refreshMock = vi.fn();
 
-jest.mock('next/navigation', () => ({
+vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: pushMock,
     refresh: refreshMock,
   }),
 }));
 
-const signInWithPasswordMock = jest.fn();
+const signInWithPasswordMock = vi.fn();
 
-jest.mock('@/lib/supabase/client', () => ({
+vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
       signInWithPassword: signInWithPasswordMock,

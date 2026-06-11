@@ -1,18 +1,19 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
-jest.mock("@/lib/supabase/server", () => ({ createClient: jest.fn() }));
-jest.mock("@/lib/groups", () => ({
-  generateSlug: jest.fn().mockResolvedValue("test-slug"),
-  createGroup: jest.fn().mockResolvedValue({ slug: "test-slug", id: "group-1" }),
-  joinGroup: jest.fn().mockResolvedValue(undefined),
-  leaveGroup: jest.fn().mockResolvedValue(null),
-  isSlugAvailable: jest.fn().mockResolvedValue(true),
-  normalizeSlug: jest.fn().mockReturnValue("test-slug"),
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("@/lib/groups", () => ({
+  generateSlug: vi.fn().mockResolvedValue("test-slug"),
+  createGroup: vi.fn().mockResolvedValue({ slug: "test-slug", id: "group-1" }),
+  joinGroup: vi.fn().mockResolvedValue(undefined),
+  leaveGroup: vi.fn().mockResolvedValue(null),
+  isSlugAvailable: vi.fn().mockResolvedValue(true),
+  normalizeSlug: vi.fn().mockReturnValue("test-slug"),
 }));
 
+import type { MockedFunction } from "vitest";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -21,30 +22,30 @@ import {
   leaveGroupAction,
 } from "./actions";
 
-const mockRevalidatePath = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
-const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>;
+const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
+const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 
 function makeClient(userId: string | null) {
   const chain: Record<string, any> = {};
   ["select", "update", "insert", "delete", "eq", "single"].forEach((m) => {
-    chain[m] = jest.fn().mockReturnValue(chain);
+    chain[m] = vi.fn().mockReturnValue(chain);
   });
   chain.then = (r: any, j: any) => Promise.resolve({ error: null }).then(r, j);
   chain.catch = (j: any) => Promise.resolve({ error: null }).catch(j);
   return {
     auth: {
-      getUser: jest.fn().mockResolvedValue({
+      getUser: vi.fn().mockResolvedValue({
         data: { user: userId ? { id: userId } : null },
       }),
     },
-    from: jest.fn().mockReturnValue(chain),
+    from: vi.fn().mockReturnValue(chain),
   };
 }
 
 describe("createGroupAction — revalidates affected pages", () => {
   const input = { name: "Test Group", description: null, isPrivate: false, isDiscoverable: true };
 
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     // Arrange
@@ -73,7 +74,7 @@ describe("createGroupAction — revalidates affected pages", () => {
 });
 
 describe("joinGroupAction — revalidates affected pages", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     // Arrange
@@ -102,7 +103,7 @@ describe("joinGroupAction — revalidates affected pages", () => {
 });
 
 describe("leaveGroupAction — revalidates affected pages", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     // Arrange

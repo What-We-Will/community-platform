@@ -3,9 +3,9 @@ import { ConversationView } from "../ConversationView";
 import type { Profile } from "@/lib/types";
 
 // Keep stable — an unstable mock masks stale-closure bugs in effect deps.
-const routerMock = { push: jest.fn(), refresh: jest.fn() };
+const routerMock = { push: vi.fn(), refresh: vi.fn() };
 
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => routerMock,
 }));
 
@@ -20,7 +20,7 @@ function makeQueryChain() {
   chain.update = self;
   chain.select = self;
   chain.eq = self;
-  chain.maybeSingle = jest.fn().mockResolvedValue({ data: null });
+  chain.maybeSingle = vi.fn().mockResolvedValue({ data: null });
   chain.then = (resolve: (v: unknown) => unknown) =>
     Promise.resolve({ data: null, error: null }).then(resolve);
   return chain;
@@ -28,7 +28,7 @@ function makeQueryChain() {
 
 function makeChannel() {
   const channel: Record<string, unknown> = {};
-  channel.on = jest.fn(
+  channel.on = vi.fn(
     (
       _event: string,
       opts: Record<string, unknown> | undefined,
@@ -40,30 +40,30 @@ function makeChannel() {
       return channel;
     }
   );
-  channel.subscribe = jest.fn(() => channel);
-  channel.presenceState = jest.fn(() => ({}));
-  channel.track = jest.fn();
-  channel.untrack = jest.fn();
+  channel.subscribe = vi.fn(() => channel);
+  channel.presenceState = vi.fn(() => ({}));
+  channel.track = vi.fn();
+  channel.untrack = vi.fn();
   return channel;
 }
 
-jest.mock("@/lib/supabase/client", () => ({
+vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     from: () => makeQueryChain(),
     channel: () => makeChannel(),
-    removeChannel: jest.fn(),
+    removeChannel: vi.fn(),
   }),
 }));
 
 // Render message content as plain text so assertions can query by it.
-jest.mock("../MessageBubble", () => ({
+vi.mock("../MessageBubble", () => ({
   MessageBubble: ({ message }: { message: { content: string | null } }) => (
     <div data-testid="bubble">{message.content}</div>
   ),
 }));
 
 // Expose onSend via a click so tests can trigger handleSend directly.
-jest.mock("../MessageInput", () => ({
+vi.mock("../MessageInput", () => ({
   MessageInput: ({ onSend }: { onSend: (content: string) => void }) => (
     <button data-testid="send-trigger" onClick={() => onSend("hello from me")}>
       send
@@ -71,15 +71,15 @@ jest.mock("../MessageInput", () => ({
   ),
 }));
 
-jest.mock("../TypingIndicator", () => ({
+vi.mock("../TypingIndicator", () => ({
   TypingIndicator: () => null,
 }));
 
-jest.mock("@/components/video/VideoCallModal", () => ({
+vi.mock("@/components/video/VideoCallModal", () => ({
   VideoCallModal: () => null,
 }));
 
-jest.mock("@/components/shared/UserAvatar", () => ({
+vi.mock("@/components/shared/UserAvatar", () => ({
   UserAvatar: () => <div data-testid="avatar" />,
 }));
 
@@ -141,9 +141,9 @@ function renderView() {
 
 describe("ConversationView Realtime INSERT handler", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    Element.prototype.scrollIntoView = jest.fn();
-    (global as { fetch: unknown }).fetch = jest.fn().mockResolvedValue({
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+    (global as { fetch: unknown }).fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         id: "server-msg-1",

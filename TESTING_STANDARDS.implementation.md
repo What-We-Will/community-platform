@@ -2,7 +2,7 @@
 
 Load this file when writing or generating test code. Assumes preamble is loaded.
 
-**Last updated:** 2026-03-29 · **Applies to:** Jest 29 · **Owner:** platform lead
+**Last updated:** 2026-06-04 · **Applies to:** Vitest 4 · **Owner:** platform lead
 
 ---
 
@@ -13,10 +13,10 @@ Load this file when writing or generating test code. Assumes preamble is loaded.
 | Boundary | Mock with |
 |---|---|
 | Supabase client | `buildMockSupabaseClient()` from `lib/__tests__/supabase-mock.ts` |
-| `next/headers` (cookies) | `jest.mock("next/headers")` |
-| `next/cache` (revalidatePath) | `jest.mock("next/cache")` |
-| `next/navigation` (redirect) | `jest.mock("next/navigation")` |
-| External HTTP APIs (Action Network, etc.) | `jest.spyOn(global, "fetch")` |
+| `next/headers` (cookies) | `vi.mock("next/headers")` |
+| `next/cache` (revalidatePath) | `vi.mock("next/cache")` |
+| `next/navigation` (redirect) | `vi.mock("next/navigation")` |
+| External HTTP APIs (Action Network, etc.) | `vi.spyOn(global, "fetch")` |
 | Environment variables | `process.env` override in `beforeEach` / `afterEach` |
 
 ### What is not a boundary (do not mock)
@@ -32,7 +32,7 @@ Load this file when writing or generating test code. Assumes preamble is loaded.
 | Source location | Test approach | Mocking allowed | Property-based |
 |---|---|---|---|
 | `lib/utils/*.ts` | Pure unit tests. No mocks. | None | Recommended (fast-check) |
-| `lib/*.ts` (data helpers) | Mocked Supabase client | `jest.mock("@/lib/supabase/server")` | Where applicable |
+| `lib/*.ts` (data helpers) | Mocked Supabase client | `vi.mock("@/lib/supabase/server")` | Where applicable |
 | `lib/actions/*.ts` | Mocked Supabase + external deps | Supabase client + external APIs | No |
 | `lib/supabase/*.ts` | Mocked cookies + Supabase auth | `next/headers`, Supabase client | No |
 | `components/**/*.tsx` | React Testing Library | Supabase, `next/navigation`, server actions | No |
@@ -57,13 +57,13 @@ it("should never return a negative duration", () => {
 
 ---
 
-## Jest environment
+## Vitest environment
 
 The global default is `jsdom`. Server-side test files must declare the node environment — required because `crypto.randomUUID()` is not available in jsdom.
 
 ```typescript
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 ```
 
@@ -102,7 +102,7 @@ describe("fetchEvent", () => {
 
   beforeEach(() => {
     mockSupabase = buildMockSupabaseClient();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 });
 ```
@@ -124,12 +124,12 @@ afterEach(() => {
 **Fake timers** — always restore after use:
 
 ```typescript
-beforeEach(() => jest.useFakeTimers());
-afterEach(() => jest.useRealTimers());
+beforeEach(() => vi.useFakeTimers());
+afterEach(() => vi.useRealTimers());
 ```
 
 **Additional isolation rules:**
-- Never rely on test execution order — Jest may shuffle or parallelize.
+- Never rely on test execution order — Vitest may shuffle or parallelize.
 - Never share mutable state between `it()` blocks outside of `beforeEach` setup.
 
 ---
@@ -152,7 +152,7 @@ All factories live in `lib/__tests__/factories.ts`. Use overrides to vary only w
 
 ## Assertion rules
 
-- Use Jest matchers: `toBe()`, `toEqual()`, `toMatchObject()`
+- Use Vitest's built-in matchers: `toBe()`, `toEqual()`, `toMatchObject()` (the API mirrors Jest's by design — these are native, not a compat shim)
 - Async errors: `await expect(fn()).rejects.toThrow(...)`
 - Never rely solely on `toHaveBeenCalled()` — also assert the return value, state change, or argument passed
 - Components: prefer `screen.getByRole()` over `getByTestId()`

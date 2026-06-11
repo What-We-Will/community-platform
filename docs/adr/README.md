@@ -60,7 +60,9 @@ Examples:
 - `docs/adr/0002-rls-fixtures-via-seed-id.md`
 - `docs/adr/0003-jitsi-for-video.md`
 
-Numbers are permanent. If an ADR is superseded, the old file keeps its number and gains a `Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)` status line; the new ADR takes the next unused number. **Numbers are never reused.**
+**Drafts carry no number.** While an ADR is in `Draft`, the file is `docs/adr/<slug>.md` (no `NNNN-` prefix) and the H1 is the bare title. The number is claimed when the PR opens and the status flips to `Proposed`: take the lowest unused number, rename the file to `NNNN-<slug>.md`, and prepend `ADR-NNNN — ` to the H1. Not pre-assigning numbers keeps concurrent drafts from colliding or forcing renumbering across files — the documented practice in both [AWS Prescriptive Guidance](https://docs.aws.amazon.com/prescriptive-guidance/latest/architectural-decision-records/adr-process.html) and [MADR](https://adr.github.io/).
+
+Once a number is assigned (at `Proposed`), it is permanent. If an ADR is superseded, the old file keeps its number and gains a `Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)` status line; the new ADR takes the next unused number. **Numbers are never reused.**
 
 ---
 
@@ -68,8 +70,8 @@ Numbers are permanent. If an ADR is superseded, the old file keeps its number an
 
 | Status | Meaning |
 |---|---|
-| `Draft YYYY-MM-DD` | Author is still scribbling. Not yet ready for sponsorship review. |
-| `Proposed YYYY-MM-DD` | Open for lead review (in PR). |
+| `Draft YYYY-MM-DD` | Author is still scribbling. Not yet ready for sponsorship review. Carries no number — file is `<slug>.md`. |
+| `Proposed YYYY-MM-DD` | Open for lead review (in PR). The number is assigned here and is permanent from this point. |
 | `Accepted YYYY-MM-DD` | Approved and merged. |
 | `Rejected YYYY-MM-DD` | Reviewed and not adopted. Merge with this status when the debate is worth preserving as a record; otherwise close the PR without merging. |
 | `Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)` | A later ADR replaces this one. |
@@ -127,6 +129,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0002](./0002-migrations-timestamps-and-local-first.md) | Timestamp-based migrations and local-first authoring | Accepted 2026-05-19 | @timchaffee |
 | [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Proposed 2026-05-20 | @tonyrosario |
 | [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | @tonyrosario |
+| [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay

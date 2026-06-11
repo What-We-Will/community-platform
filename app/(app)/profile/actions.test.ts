@@ -1,16 +1,17 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
-jest.mock("@/lib/supabase/server", () => ({ createClient: jest.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
+import type { MockedFunction } from "vitest";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { updateProfile } from "./actions";
 
-const mockRevalidatePath = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
-const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>;
+const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
+const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 
 const validInput = {
   display_name: "Jane Doe",
@@ -20,13 +21,13 @@ const validInput = {
 
 describe("updateProfile — revalidates affected pages", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("should not revalidate when user is not authenticated", async () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
-      auth: { getUser: jest.fn().mockResolvedValue({ data: { user: null } }) },
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
     } as any);
 
     // Act
@@ -41,10 +42,10 @@ describe("updateProfile — revalidates affected pages", () => {
     // Arrange
     mockCreateClient.mockResolvedValue({
       auth: {
-        getUser: jest.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }),
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }),
       },
-      from: jest.fn().mockReturnValue({
-        upsert: jest.fn().mockResolvedValue({ error: null }),
+      from: vi.fn().mockReturnValue({
+        upsert: vi.fn().mockResolvedValue({ error: null }),
       }),
     } as any);
 

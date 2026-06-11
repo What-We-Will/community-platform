@@ -2,7 +2,7 @@
 
 Load this file for AI-assisted sessions, PR review, and pre-merge quality gates. Assumes preamble is loaded.
 
-**Last updated:** 2026-03-31 · **Applies to:** Jest 29 · **Owner:** platform lead
+**Last updated:** 2026-06-06 · **Applies to:** Vitest 4 · **Owner:** platform lead
 
 ---
 
@@ -35,15 +35,15 @@ The following are banned in all test files.
 |---|---|---|
 | `any` type in test files | Undermines type-safety guarantees | `@typescript-eslint/no-explicit-any` (lint) |
 | `// @ts-ignore` without justification comment | Masks real type errors | `@typescript-eslint/ban-ts-comment` (lint) |
-| `setTimeout` / `sleep` in tests | Creates flaky, slow tests | `jest/no-restricted-matchers` + review |
+| `setTimeout` / `sleep` in tests | Creates flaky, slow tests | review |
 | Testing getters, setters, or type-only exports | Tests framework, not behavior | review |
 | `console.log` left in test files | Noise in CI output | `no-console` scoped to `**/*.test.*` (lint) |
-| Snapshot tests without platform lead approval | AI generates snapshots that lock in broken UI | `jest/no-large-snapshots` + review |
+| Snapshot tests without platform lead approval | AI generates snapshots that lock in broken UI | `vitest/no-large-snapshots` + review |
 | Test + implementation in same AI prompt/response | Breaks TDD | review |
 | Deleting or weakening a test to make implementation pass | Destroys coverage intentionally | review |
 | Mocking internal functions that are not boundaries | Tests implementation, not behavior | review |
-| `.only` left in committed tests | Silently skips entire test suite | `jest/no-focused-tests` (lint) |
-| `.skip` without a tracking comment | Tests disappear without explanation | `jest/no-disabled-tests` (lint) |
+| `.only` left in committed tests | Silently skips entire test suite | `vitest/no-focused-tests` (lint) |
+| `.skip` without a tracking comment | Tests disappear without explanation | `vitest/no-disabled-tests` (lint) |
 
 If a lint rule above is missing from the ESLint config, that is a gap to close — this document is the spec, the config is the enforcement.
 
@@ -55,24 +55,25 @@ If a lint rule above is missing from the ESLint config, that is a gap to close �
 
 | Rule | Target | Status | Mechanism |
 |---|---|---|---|
-| Line coverage (`lib/`) | ≥ 80% | **Pending CI** | `coverageThreshold` in `jest.config.mjs` — runs locally, not blocking |
+| Line coverage (`lib/`) | ≥ 80% (target) | **Reporting only** | `vitest.config.ts` `test.coverage` via `@vitest/coverage-v8` — run `npm run test:coverage`. No thresholds enforced yet; current baseline is well below target |
 | Mutation score — critical paths | ≥ 70% | **Deferred** | Blocked on 80% line coverage baseline |
 | Mutation score — standard features | ≥ 50% | **Deferred** | Blocked on 80% line coverage baseline |
-| No forbidden lint patterns | See table above | **Partial** | `eslint-plugin-jest` + `@typescript-eslint` — local only, not in CI |
+| No forbidden lint patterns | See table above | **Partial** | `vitest/*` rules wired into `eslint.config.mjs` (runs with `npm run lint`); `no-console` test-scoping still a gap |
 | Naming convention | `should X when Y` | **Manual** | PR review only |
-| No `.only` / `.skip` | Zero | **Partial** | `jest/no-focused-tests`, `jest/no-disabled-tests` — local only |
+| No `.only` / `.skip` | Zero | **Active** | `vitest/no-focused-tests` (error), `vitest/no-disabled-tests` (warn) — wired into `eslint.config.mjs` |
 | pgTAP for every RLS migration | One test per migration | **Manual** | PR review |
 
 ### Line coverage
 
-- Target: ≥ 80% line coverage for `lib/`
+- Target: ≥ 80% line coverage for `lib/` (aspirational — not yet enforced)
+- Generate the report with `npm run test:coverage` (`@vitest/coverage-v8`, scoped to `lib/`). Reporting only — no thresholds gate the run or CI today.
 - Line coverage is a **floor**, not a quality signal. High coverage with low understanding is worse than low coverage with high understanding.
 
 ### Mutation testing
 
 Mutation testing is the real quality signal — it modifies source code and checks whether tests catch the change. A surviving mutant is a gap in your tests.
 
-- **Tool:** [StrykerJS](https://stryker-mutator.io/) with `@stryker-mutator/jest-runner` and `@stryker-mutator/typescript-checker`
+- **Tool:** [StrykerJS](https://stryker-mutator.io/) with `@stryker-mutator/vitest-runner` and `@stryker-mutator/typescript-checker`
 - **Critical paths** (auth, RLS, data mutations): ≥ 70% mutation score
 - **Standard features:** ≥ 50% mutation score
 - **Deferred** until line coverage reaches 80% across `lib/`
@@ -91,14 +92,14 @@ Before marking any test task done or submitting a PR:
 - [ ] Every `it()` follows `"should [outcome] when [condition]"`
 - [ ] Tests assert behavior, not implementation details
 - [ ] Correct layer convention (no Supabase mocks in pure util tests)
-- [ ] `@jest-environment node` docblock on all server-side test files
+- [ ] `@vitest-environment node` docblock on all server-side test files
 - [ ] Factory functions used for all test data
 - [ ] AAA layout with blank lines between sections
 - [ ] Happy path covered
 - [ ] Primary failure / not-found case covered
 - [ ] At least one edge case (null, boundary, invalid input)
 - [ ] Unauthenticated case tested (server actions and data helpers)
-- [ ] `jest.clearAllMocks()` in `beforeEach` for any file using mocks
+- [ ] `vi.clearAllMocks()` in `beforeEach` for any file using mocks
 - [ ] Environment variable overrides restored in `afterEach`
 - [ ] No forbidden patterns (no `.only`, no `.skip` without comment, no `console.log`)
 - [ ] Every test can be explained without re-reading the AI conversation that produced it

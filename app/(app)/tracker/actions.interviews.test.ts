@@ -1,21 +1,22 @@
 /**
- * @jest-environment node
+ * @vitest-environment node
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
-jest.mock("@/lib/supabase/server", () => ({ createClient: jest.fn() }));
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
+import type { MockedFunction } from "vitest";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createApplication, addInterview, deleteInterview } from "./actions";
 
-const mockRevalidatePath = revalidatePath as jest.MockedFunction<typeof revalidatePath>;
-const mockCreateClient = createClient as jest.MockedFunction<typeof createClient>;
+const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
+const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 
 function makeChain(thenResult = { error: null }) {
   const chain: Record<string, any> = {};
   ["select", "insert", "delete", "eq", "single"].forEach((m) => {
-    chain[m] = jest.fn().mockReturnValue(chain);
+    chain[m] = vi.fn().mockReturnValue(chain);
   });
   chain.then = (r: any, j: any) => Promise.resolve(thenResult).then(r, j);
   chain.catch = (j: any) => Promise.resolve(thenResult).catch(j);
@@ -25,18 +26,18 @@ function makeChain(thenResult = { error: null }) {
 function makeClient(userId: string | null) {
   return {
     auth: {
-      getUser: jest.fn().mockResolvedValue({
+      getUser: vi.fn().mockResolvedValue({
         data: { user: userId ? { id: userId } : null },
       }),
     },
-    from: jest.fn().mockReturnValue(makeChain()),
+    from: vi.fn().mockReturnValue(makeChain()),
   };
 }
 
 describe("createApplication — revalidates affected pages", () => {
   const input = { company: "ACME", position: "Engineer", status: "applied" as const };
 
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
@@ -59,7 +60,7 @@ describe("createApplication — revalidates affected pages", () => {
 });
 
 describe("addInterview — revalidates affected pages", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);
@@ -82,7 +83,7 @@ describe("addInterview — revalidates affected pages", () => {
 });
 
 describe("deleteInterview — revalidates affected pages", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it("should not revalidate when user is not authenticated", async () => {
     mockCreateClient.mockResolvedValue(makeClient(null) as any);

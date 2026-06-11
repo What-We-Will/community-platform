@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { selfNotesConversationId, findExistingDM } from "./messages";
 
 // ── selfNotesConversationId ───────────────────────────────────────────────────
@@ -51,21 +52,21 @@ describe("selfNotesConversationId", () => {
 
 // ── findExistingDM ────────────────────────────────────────────────────────────
 
-jest.mock("@/lib/supabase/server", () => ({
-  createClient: jest.fn(),
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(),
 }));
 
 import { createClient } from "@/lib/supabase/server";
 
 function makeMockSupabase(overrides: Record<string, unknown> = {}) {
   const chain = {
-    from: jest.fn().mockReturnThis(),
-    select: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockReturnThis(),
-    in: jest.fn().mockReturnThis(),
-    limit: jest.fn().mockReturnThis(),
-    maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
-    insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    insert: vi.fn().mockResolvedValue({ data: null, error: null }),
     ...overrides,
   };
   return chain;
@@ -73,7 +74,7 @@ function makeMockSupabase(overrides: Record<string, unknown> = {}) {
 
 describe("findExistingDM", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("returns null immediately when userId1 === userId2 (self-messaging guard)", async () => {
@@ -86,20 +87,20 @@ describe("findExistingDM", () => {
   it("returns null when user1 has no conversations", async () => {
     const mock = makeMockSupabase();
     // First query (user1 participations) returns empty
-    mock.eq = jest.fn().mockReturnThis();
-    mock.select = jest.fn().mockReturnThis();
+    mock.eq = vi.fn().mockReturnThis();
+    mock.select = vi.fn().mockReturnThis();
 
     // We need per-call return values because there are multiple query chains
     let callCount = 0;
     const originalFrom = mock.from.bind(mock);
-    mock.from = jest.fn().mockImplementation((table: string) => {
+    mock.from = vi.fn().mockImplementation((table: string) => {
       callCount++;
       if (callCount === 1) {
         // First call: conversation_participants for user1
         return {
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          then: jest.fn(),
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          then: vi.fn(),
         };
       }
       return originalFrom(table);
@@ -108,15 +109,15 @@ describe("findExistingDM", () => {
     // Simpler approach: mock createClient to return a chainable that ultimately
     // resolves to empty on the first real query
     const mockClient = {
-      from: jest.fn(() => ({
-        select: jest.fn().mockReturnThis(),
-        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
-        in: jest.fn().mockReturnThis(),
-        limit: jest.fn().mockReturnThis(),
-        maybeSingle: jest.fn().mockResolvedValue({ data: null, error: null }),
+      from: vi.fn(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockResolvedValue({ data: [], error: null }),
+        in: vi.fn().mockReturnThis(),
+        limit: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
       })),
     };
-    (createClient as jest.Mock).mockResolvedValue(mockClient);
+    (createClient as Mock).mockResolvedValue(mockClient);
 
     const result = await findExistingDM("user1", "user2");
     expect(result).toBeNull();
@@ -124,21 +125,21 @@ describe("findExistingDM", () => {
 
   it("returns null when users share no conversations", async () => {
     const mockClient = {
-      from: jest.fn()
+      from: vi.fn()
         .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({
             data: [{ conversation_id: "conv-1" }],
             error: null,
           }),
         })
         .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          in: jest.fn().mockResolvedValue({ data: [], error: null }),
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({ data: [], error: null }),
         }),
     };
-    (createClient as jest.Mock).mockResolvedValue(mockClient);
+    (createClient as Mock).mockResolvedValue(mockClient);
 
     const result = await findExistingDM("user1", "user2");
     expect(result).toBeNull();
@@ -146,34 +147,34 @@ describe("findExistingDM", () => {
 
   it("returns the conversation ID when a shared DM conversation is found", async () => {
     const mockClient = {
-      from: jest.fn()
+      from: vi.fn()
         .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockResolvedValue({
             data: [{ conversation_id: "conv-abc" }],
             error: null,
           }),
         })
         .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          in: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockResolvedValue({
             data: [{ conversation_id: "conv-abc" }],
             error: null,
           }),
         })
         .mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockReturnThis(),
-          in: jest.fn().mockReturnThis(),
-          limit: jest.fn().mockReturnThis(),
-          maybeSingle: jest.fn().mockResolvedValue({
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          in: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          maybeSingle: vi.fn().mockResolvedValue({
             data: { id: "conv-abc" },
             error: null,
           }),
         }),
     };
-    (createClient as jest.Mock).mockResolvedValue(mockClient);
+    (createClient as Mock).mockResolvedValue(mockClient);
 
     const result = await findExistingDM("user1", "user2");
     expect(result).toBe("conv-abc");

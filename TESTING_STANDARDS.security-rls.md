@@ -2,7 +2,7 @@
 
 Load this file for RLS migrations, auth work, and security-sensitive features. Assumes preamble is loaded.
 
-**Last updated:** 2026-03-29 · **Applies to:** Jest 29 + pgTAP · **Owner:** platform lead
+**Last updated:** 2026-06-04 · **Applies to:** Vitest 4 + pgTAP · **Owner:** platform lead
 
 ---
 
@@ -18,7 +18,7 @@ Auth and data access code is flagged for human review in this project. Tests in 
 
 ## RLS policy testing with pgTAP
 
-Mocking the Supabase client in Jest confirms that your application code passes the right arguments. It does **not** confirm that the database enforces the policy. These are different claims. Both must be tested.
+Mocking the Supabase client in Vitest confirms that your application code passes the right arguments. It does **not** confirm that the database enforces the policy. These are different claims. Both must be tested.
 
 ### Requirements
 
@@ -83,7 +83,7 @@ supabase test db
 
 ## E2E testing
 
-Jest and React Testing Library cannot test async Server Components — this is a [known Next.js limitation](https://nextjs.org/docs/app/guides/testing/vitest). Critical user flows that span server components, server actions, and navigation require E2E tests.
+Vitest and React Testing Library cannot test async Server Components — this is a [known Next.js limitation](https://nextjs.org/docs/app/guides/testing/vitest). Critical user flows that span server components, server actions, and navigation require E2E tests.
 
 ### Flows requiring E2E coverage (when infrastructure exists)
 
