@@ -71,7 +71,9 @@ jobs:
               core.warning('production_url is empty — skipping PR comment');
               return;
             }
-            if (!/^https:\/\/[a-z0-9.-]+\.vercel\.app\b/.test(url)) {
+            // Scheme-only check: prod may resolve to a custom domain, not *.vercel.app.
+            // The deploy script already rejects non-https output before it reaches here.
+            if (!/^https:\/\//.test(url)) {
               core.setFailed(`Unexpected production URL: ${url}`);
               return;
             }
