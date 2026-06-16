@@ -139,20 +139,26 @@ jobs:
           PR_NUMBER: ${{ github.event.number }}
           PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        # Non-fatal: a Slack hiccup must never flip a good deploy to failed.
+        # jq builds the JSON so values are escaped regardless of content.
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"PR #${PR_NUMBER} preview deployed: ${PREVIEW_URL}\"}" \
-            "$SLACK_WEBHOOK_URL"
+          payload="$(jq -cn --arg text "PR #${PR_NUMBER} preview deployed: ${PREVIEW_URL}" '{text: $text}')"
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --max-time 10 --retry 2 --retry-delay 2 \
+            --data "$payload" "$SLACK_WEBHOOK_URL" || true
 
       - name: Slack notify failure
         if: failure()
         env:
           PR_NUMBER: ${{ github.event.number }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        # Non-fatal: never let a Slack hiccup drop the failure alert silently.
+        # jq builds the JSON so values are escaped regardless of content.
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\":\"❌ PR #${PR_NUMBER} preview failed.\"}" \
-            "$SLACK_WEBHOOK_URL"
+          payload="$(jq -cn --arg text "❌ PR #${PR_NUMBER} preview failed." '{text: $text}')"
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --max-time 10 --retry 2 --retry-delay 2 \
+            --data "$payload" "$SLACK_WEBHOOK_URL" || true
 
   security-scan:
     if: github.event.action != 'closed'

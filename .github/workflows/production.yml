@@ -92,3 +92,17 @@ jobs:
                 body: `✅ Production deployed: ${url}`,
               });
             }
+
+      - name: Slack notify failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        # Non-fatal: never let a Slack hiccup mask the deploy result.
+        # jq builds the JSON so values are escaped regardless of content.
+        run: |
+          payload="$(jq -cn --arg text "❌ PRODUCTION deploy failed for ${COMMIT_SHA}. Run: ${RUN_URL}" '{text: $text}')"
+          curl -sS -X POST -H 'Content-type: application/json' \
+            --max-time 10 --retry 2 --retry-delay 2 \
+            --data "$payload" "$SLACK_WEBHOOK_URL" || true
