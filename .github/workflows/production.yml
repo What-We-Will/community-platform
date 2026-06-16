@@ -58,9 +58,7 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: |
-          url=$(vercel deploy --prebuilt --prod)
-          echo "production_url=$url" >> $GITHUB_OUTPUT
+        run: bash scripts/ci/vercel-deploy-with-retry.sh production_url --prebuilt --prod
 
       - name: Comment PR with URL
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b  # v7.1.0
