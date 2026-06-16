@@ -27,6 +27,13 @@ if ! [[ "$attempts" =~ ^[0-9]+$ ]] || [ "$attempts" -lt 1 ]; then
   exit 1
 fi
 
+# base_delay feeds shell arithmetic in the backoff `sleep` below; guard it the same
+# way so a non-numeric value fails fast and clearly instead of mid-retry-loop.
+if ! [[ "$base_delay" =~ ^[0-9]+$ ]] || [ "$base_delay" -lt 1 ]; then
+  echo "::error::DEPLOY_RETRY_BASE_DELAY must be a positive integer (got: ${base_delay})" >&2
+  exit 1
+fi
+
 for i in $(seq 1 "$attempts"); do
   # The deploy runs in the `if` condition, so errexit is suspended for it: a failed
   # attempt is handled by the loop instead of aborting the script. Command
