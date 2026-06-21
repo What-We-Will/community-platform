@@ -2,7 +2,7 @@
 
 Loaded in every testing-related session. All rules below apply regardless of task type.
 
-**Last updated:** 2026-06-04 · **Applies to:** Vitest 4 · **Owner:** platform lead
+**Last updated:** 2026-06-21 · **Applies to:** Vitest 4 · **Owner:** platform lead
 
 ---
 
@@ -14,7 +14,7 @@ Loaded in every testing-related session. All rules below apply regardless of tas
 
 3. **Litmus test.** If a refactor changes zero behavior but breaks a test, the test was wrong.
 
-4. **Mock boundaries only.** Never mock internal functions or utilities from `lib/utils/`. Mock only: Supabase client, `next/headers`, `next/cache`, `next/navigation`, `fetch`, and environment variables.
+4. **Mock boundaries only.** Never mock internal functions or utilities from `lib/utils/`. Mock only: Supabase client, `next/headers`, `next/cache`, `next/navigation`, `fetch`, the `nodemailer` transport, and environment variables. The `nodemailer` transport is a network (SMTP) boundary like `fetch`; mock it and assert on the outbound email envelope (the observable side effect), never on internal call order.
 
 5. **Use factory functions.** All test data comes from `lib/__tests__/factories.ts`. Never construct test objects inline.
 
