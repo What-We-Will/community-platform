@@ -136,7 +136,7 @@ jobs:
       - name: Slack notify success
         if: success()
         env:
-          PR_NUMBER: ${{ github.event.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           PREVIEW_URL: ${{ steps.deploy.outputs.preview_url }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -151,7 +151,7 @@ jobs:
       - name: Slack notify failure
         if: failure()
         env:
-          PR_NUMBER: ${{ github.event.number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_URL: ${{ github.event.pull_request.html_url }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         # Non-fatal: never let a Slack hiccup drop the failure alert silently.
