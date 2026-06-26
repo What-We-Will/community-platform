@@ -21,6 +21,7 @@ import {
   ListTodo,
   GitFork,
   ExternalLink,
+  Globe,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -57,6 +58,7 @@ const resourcesNavItems = [
   { href: "/learning",     label: "Group Learning", icon: BookMarked },
   { href: "/projects",     label: "Projects",       icon: GitFork },
   { href: "/links",        label: "Resource Hub",   icon: Link2 },
+  { href: "https://warn-tracker.streamlit.app/", label: "WARN Tracker", icon: Globe },
 ];
 
 const profileNavItems = [
@@ -202,17 +204,31 @@ export default function AppShell({ children, user }: AppShellProps) {
             <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
               Resources
             </p>
-            {resourcesNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <item.icon className="size-5 shrink-0" />
-                {item.label}
-              </Link>
-            ))}
+            {resourcesNavItems.map((item) =>
+              item.href.startsWith("http") ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <item.icon className="size-5 shrink-0" />
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <item.icon className="size-5 shrink-0" />
+                  {item.label}
+                </Link>
+              )
+            )}
             <a
               href="https://techworkersco.slack.com"
               target="_blank"
