@@ -1,5 +1,13 @@
 name: PR Preview Vercel Deploy with Supabase preview DB
 
+# PR preview deploy. Split into three jobs so untrusted fork code can never share
+# a job with a secret.
+#
+# INVARIANT: every `secrets.*` reference lives in preview-deploy, which is gated off
+# for forks by a single job-level `if:`. Keep verify and security-scan secret-free
+# (they run fork code), and don't move a secret-bearing step — or a `run:` of a repo
+# script — out of preview-deploy.
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -11,14 +19,20 @@ permissions:
   contents: read
 
 jobs:
-  pr-preview:
+  # Secret-free checks; runs for every PR, forks included, so fork code is safe here.
+  # The migrations output is consumed by preview-deploy.
+  # Required check: the branch-protection ruleset must point at this job. If you
+  # rename it, update the ruleset — preview-deploy never runs for forks, so the
+  # required check must be one that always runs.
+  verify:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
-      pull-requests: write
+    outputs:
+      migrations: ${{ steps.changes.outputs.migrations }}
 
-    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
@@ -54,21 +68,107 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+  # Its own job, not folded into verify, so it runs in parallel with a tighter
+  # permission set and separate timeout.
+  security-scan:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+
+      # Using the gitleaks binary rather than gitleaks/gitleaks-action because the
+      # wrapper requires GITLEAKS_LICENSE for organization repos. Revisit if/when
+      # a license is approved — the swap is one step + the secret.
+      #
+      # Manual update: bump GITLEAKS_VERSION, then fetch the new SHA256 from
+      # https://github.com/gitleaks/gitleaks/releases/download/v<VERSION>/gitleaks_<VERSION>_checksums.txt
+      # and replace GITLEAKS_SHA256. Dependabot does not watch free-form version
+      # strings in run blocks, so this is a manual ritual.
+      - name: Secrets scan (gitleaks)
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          curl -sSfL -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum --check
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks version
+          /tmp/gitleaks detect --no-banner --redact --log-opts "${BASE_SHA}..HEAD"
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: "24.x"
+          cache: "npm"
+
+      - name: Hidden character scan
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          # --diff-filter=d excludes deleted paths (nothing at HEAD to scan)
+          mapfile -d '' -t files < <(git diff -z --name-only --diff-filter=d "$BASE_SHA"..HEAD \
+            -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs')
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No changed source files to scan."
+            exit 0
+          fi
+          node scripts/scan-hidden-chars.mjs "${files[@]}"
+
+      - name: Audit dependencies
+        run: npm ci --ignore-scripts && npm audit --audit-level=high
+
+  # Every secret-bearing step lives here. The job-level `if:` below is the fork gate;
+  # `needs: verify` makes the deploy wait on green checks and exposes the migrations
+  # paths-filter result.
+  preview-deploy:
+    needs: verify
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
+        with:
+          node-version: "24.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
       - name: Setup Supabase CLI
-        if: steps.changes.outputs.migrations == 'true'
+        if: needs.verify.outputs.migrations == 'true'
         uses: supabase/setup-cli@b60b5899c73b63a2d2d651b1e90db8d4c9392f51  # v1.6.0
         with:
           version: "2.92.1"
 
       - name: Link to Preview project
-        if: steps.changes.outputs.migrations == 'true'
+        if: needs.verify.outputs.migrations == 'true'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.PREVIEW_SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.PREVIEW_SUPABASE_PROJECT_ID }}
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
       - name: Push Supabase migrations to PREVIEW DB
-        if: steps.changes.outputs.migrations == 'true'
+        if: needs.verify.outputs.migrations == 'true'
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.PREVIEW_SUPABASE_ACCESS_TOKEN }}
         run: supabase db push
@@ -161,60 +261,3 @@ jobs:
           curl -sS -X POST -H 'Content-type: application/json' \
             --max-time 10 --retry 2 --retry-delay 2 \
             --data "$payload" "$SLACK_WEBHOOK_URL" || true
-
-  security-scan:
-    if: github.event.action != 'closed'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-        with:
-          fetch-depth: 0
-
-      # Using the gitleaks binary rather than gitleaks/gitleaks-action because the
-      # wrapper requires GITLEAKS_LICENSE for organization repos. Revisit if/when
-      # a license is approved — the swap is one step + the secret.
-      #
-      # Manual update: bump GITLEAKS_VERSION, then fetch the new SHA256 from
-      # https://github.com/gitleaks/gitleaks/releases/download/v<VERSION>/gitleaks_<VERSION>_checksums.txt
-      # and replace GITLEAKS_SHA256. Dependabot does not watch free-form version
-      # strings in run blocks, so this is a manual ritual.
-      - name: Secrets scan (gitleaks)
-        env:
-          GITLEAKS_VERSION: "8.30.1"
-          GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          set -euo pipefail
-          curl -sSfL -o /tmp/gitleaks.tar.gz \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          echo "${GITLEAKS_SHA256}  /tmp/gitleaks.tar.gz" | sha256sum --check
-          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
-          /tmp/gitleaks version
-          /tmp/gitleaks detect --no-banner --redact --log-opts "${BASE_SHA}..HEAD"
-
-      - name: Setup Node
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0
-        with:
-          node-version: "24.x"
-          cache: "npm"
-
-      - name: Hidden character scan
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          # --diff-filter=d excludes deleted paths (nothing at HEAD to scan)
-          mapfile -d '' -t files < <(git diff -z --name-only --diff-filter=d "$BASE_SHA"..HEAD \
-            -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs')
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No changed source files to scan."
-            exit 0
-          fi
-          node scripts/scan-hidden-chars.mjs "${files[@]}"
-
-      - name: Audit dependencies
-        run: npm ci --ignore-scripts && npm audit --audit-level=high
