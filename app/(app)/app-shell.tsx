@@ -253,7 +253,11 @@ export default function AppShell({ children, user }: AppShellProps) {
           </nav>
 
           <div className="sticky bottom-0 z-30 border-t bg-background p-4">
-            <Link href="/profile" className="flex items-center gap-3 rounded-lg px-3 py-2">
+            <Link
+                href="/profile"
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-3 py-2"
+              >
               <UserAvatar
                 avatarUrl={user.avatarUrl}
                 displayName={user.displayName}
