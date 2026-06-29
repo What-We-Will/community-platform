@@ -48,9 +48,13 @@ updates:
         patterns:
           - "@dnd-kit/*"
       supabase:
+        # Runtime client stack — supabase-js + ssr move together for SSR auth.
+        # The `supabase` CLI is intentionally NOT grouped here: it's a dev tool on
+        # its own release track (github.com/supabase/cli), unrelated to the SDK's
+        # versioning. It flows through dev-minor-patch; majors come as individual
+        # reviewable PRs (we stay current on the CLI rather than holding majors).
         patterns:
           - "@supabase/*"
-          - "supabase"
       tailwind:
         patterns:
           - "tailwindcss"
