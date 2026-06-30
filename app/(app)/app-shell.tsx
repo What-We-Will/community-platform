@@ -214,14 +214,14 @@ export default function AppShell({ children, user }: AppShellProps) {
               </Link>
             ))}
             <a
-              href="https://techworkersco.slack.com"
+              href="https://join.slack.com/t/whatwewill/shared_invite/zt-3zxh2f0x0-~zvous3lLva6Pi8IJQ0T8A"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               <ExternalLink className="size-5 shrink-0" />
-              TWC Slack
+              Join Slack
             </a>
 
             <Separator className="my-2" />
