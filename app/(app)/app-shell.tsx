@@ -253,21 +253,25 @@ export default function AppShell({ children, user }: AppShellProps) {
           </nav>
 
           <div className="sticky bottom-0 z-30 border-t bg-background p-4">
-            <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+            <Link
+              href="/profile"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent group"
+            >
               <UserAvatar
                 avatarUrl={user.avatarUrl}
                 displayName={user.displayName}
                 size="md"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
+                <p className="truncate text-sm font-medium group-hover:underline">
                   {user.displayName}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
                   {user.email}
                 </p>
               </div>
-            </div>
+            </Link>
             <Separator className="my-3" />
             <div className="px-3 pb-1">
               <BugReportDialog reporterEmail={user.email} />
