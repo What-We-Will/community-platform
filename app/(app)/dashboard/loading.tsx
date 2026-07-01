@@ -46,9 +46,6 @@ export default function DashboardLoading() {
       <DashboardCardSkeleton />
       <DashboardCardSkeleton />
       <DashboardCardSkeleton />
-      <DashboardCardSkeleton />
-      <DashboardCardSkeleton />
-      <DashboardCardSkeleton />
     </div>
   );
 }

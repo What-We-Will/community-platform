@@ -1,4 +1,3 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { getVideoRoomName } from "@/lib/utils/video";
 
@@ -16,38 +15,6 @@ export async function getViewerTimezone(userId: string): Promise<string> {
     .eq("id", userId)
     .single();
   return data?.timezone ?? DEFAULT_TIMEZONE;
-}
-
-export async function upsertGoogleCalendarEvent(
-  supabase: SupabaseClient,
-  event: {
-    google_event_id: string;
-    title: string;
-    description?: string;
-    starts_at: string;
-    ends_at: string;
-    location?: string;
-    join_url?: string;
-    timezone?: string;
-  }
-) {
-  return supabase
-    .from("events")
-    .upsert(
-      {
-        google_event_id: event.google_event_id,
-        title: event.title,
-        description: event.description ?? null,
-        starts_at: event.starts_at,
-        ends_at: event.ends_at,
-        location: event.location ?? event.join_url ?? "Online",
-        event_type: "other",
-        timezone: event.timezone ?? DEFAULT_TIMEZONE,
-      },
-      { onConflict: "google_event_id" }
-    )
-    .select()
-    .single();
 }
 
 export async function createEvent(data: {

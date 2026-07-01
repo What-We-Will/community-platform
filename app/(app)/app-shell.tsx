@@ -7,9 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   UserSearch,
-  UsersRound,
   Calendar,
-  MessageSquare,
   UserCircle,
   Menu,
   LogOut,
@@ -32,18 +30,18 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { UnreadBadge } from "@/components/messages/UnreadBadge";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { updateLastSeen } from "@/app/(app)/profile/actions";
 import { syncBrowserTimezone } from "@/lib/actions/timezone";
 
 const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
 
+const SLACK_INVITE_URL =
+  "https://join.slack.com/t/whatwewill/shared_invite/zt-3zxh2f0x0-~zvous3lLva6Pi8IJQ0T8A";
+
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/events", label: "Events", icon: Calendar },
-  { href: "/groups", label: "Groups", icon: UsersRound },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/members", label: "Members", icon: UserSearch },
 ];
 
@@ -70,7 +68,6 @@ interface AppShellProps {
     email: string;
     displayName: string;
     avatarUrl: string | null;
-    unreadCount: number;
     isAdmin?: boolean;
   };
 }
@@ -173,14 +170,19 @@ export default function AppShell({ children, user }: AppShellProps) {
               >
                 <item.icon className="size-5 shrink-0" />
                 {item.label}
-                {item.href === "/messages" && (
-                  <UnreadBadge
-                    initialCount={user.unreadCount}
-                    userId={user.id}
-                  />
-                )}
               </Link>
             ))}
+
+            <a
+              href={SLACK_INVITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <ExternalLink className="size-5 shrink-0" />
+              Join Slack
+            </a>
 
             <Separator className="my-2" />
             <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -213,16 +215,6 @@ export default function AppShell({ children, user }: AppShellProps) {
                 {item.label}
               </Link>
             ))}
-            <a
-              href="https://join.slack.com/t/whatwewill/shared_invite/zt-3zxh2f0x0-~zvous3lLva6Pi8IJQ0T8A"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <ExternalLink className="size-5 shrink-0" />
-              Join Slack
-            </a>
 
             <Separator className="my-2" />
             {profileNavItems.map((item) => (

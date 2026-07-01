@@ -208,7 +208,6 @@ export interface Event {
   group_id: string | null;
   location: string | null;
   video_room_name: string | null;
-  google_event_id: string | null;
   starts_at: string;
   ends_at: string;
   max_attendees: number | null;
