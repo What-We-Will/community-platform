@@ -1,0 +1,138 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    versioning-strategy: increase-if-necessary
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # --- Version-locked families (NO update-types filter: a major stays atomic) ---
+      # First match wins, so every family must sit ABOVE the catch-alls below.
+      react:
+        # @types/react* track react's version, not their own cadence
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      next:
+        # eslint-config-next tracks next's version, not eslint's
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      vitest:
+        # @vitest/coverage-v8 is lockstep with vitest's version
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+      date-fns:
+        # date-fns-tz tracks date-fns' major
+        patterns:
+          - "date-fns"
+          - "date-fns-tz"
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+          - "radix-ui"
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      supabase:
+        # Runtime client stack — supabase-js + ssr move together for SSR auth.
+        # The `supabase` CLI is intentionally NOT grouped here: it's a dev tool on
+        # its own release track (github.com/supabase/cli), unrelated to the SDK's
+        # versioning. It flows through dev-minor-patch; majors come as individual
+        # reviewable PRs (we stay current on the CLI rather than holding majors).
+        patterns:
+          - "@supabase/*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "tailwind-merge"
+          - "tw-animate-css"
+      # --- Category groups ---
+      testing:
+        # not version-locked to each other; majors come as individual reviewable PRs
+        patterns:
+          - "@playwright/*"
+          - "@testing-library/*"
+          - "playwright"
+        update-types:
+          - minor
+          - patch
+      eslint:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+      types:
+        patterns:
+          - "@types/*"
+        exclude-patterns:
+          - "@types/react"
+          - "@types/react-dom"
+      # --- Catch-alls (dependency-type only; must stay LAST) ---
+      dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      prod-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: eslint-config-next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react-dom
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@types/react"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@types/react-dom"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@supabase/supabase-js"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@supabase/ssr"
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - "*"
