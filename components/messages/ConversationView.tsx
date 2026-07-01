@@ -652,6 +652,7 @@ export function ConversationView({
               key={msg.id}
               message={msg}
               isOwn={msg.sender_id === currentUser.id}
+              isGroup={isGroup}
               showSenderInfo={showSenderInfo}
               onJoinVideoCall={
                 msg.message_type === "video_invite"
