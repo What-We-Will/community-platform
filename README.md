@@ -87,6 +87,8 @@ Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow;
 
 To manually approve yourself, open Supabase > Table Editor > "profiles". You should see a row for your user. Change the "approval_status" column from "pending" to "approved".
 
+For local volunteer setup, add `LOCAL_DEV_AUTO_ADMIN=true` to `.env.local` to skip manual approval and grant admin on first onboarding.
+
 After onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
 
 **NOTE:** If local onboarding fails with `permission denied for table profiles`, your Supabase project may be missing grants for the authenticated role.
