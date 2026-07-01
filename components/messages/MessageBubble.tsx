@@ -20,11 +20,11 @@ function SenderProfileLink({
   children: ReactNode;
 }) {
   if (!isGroup || !senderId) {
-    return <>{children}</>;
+    return <span className={className}>{children}</span>;
   }
 
   return (
-    <Link href={`/members/${senderId}`} className={className}>
+    <Link href={`/members/${senderId}`} className={cn(className, "hover:underline")}>
       {children}
     </Link>
   );
@@ -117,7 +117,7 @@ function FileMessageBubble({
           <SenderProfileLink
             senderId={senderId}
             isGroup={isGroup}
-            className="text-xs text-muted-foreground mb-1 ml-1 hover:underline"
+            className="text-xs text-muted-foreground mb-1 ml-1"
           >
             {senderName}
           </SenderProfileLink>
@@ -322,7 +322,7 @@ export function MessageBubble({
           <SenderProfileLink
             senderId={message.sender_id}
             isGroup={isGroup}
-            className="text-xs text-muted-foreground mb-1 ml-1 hover:underline"
+            className="text-xs text-muted-foreground mb-1 ml-1"
           >
             {senderName}
           </SenderProfileLink>
