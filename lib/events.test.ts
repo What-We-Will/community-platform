@@ -3,6 +3,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import type { Mock } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { fetchEventWithDetails, upsertGoogleCalendarEvent } from "./events";
 
@@ -287,7 +288,7 @@ describe("upsertGoogleCalendarEvent", () => {
     const select = vi.fn().mockReturnValue({ single });
     const upsert = vi.fn().mockReturnValue({ select });
     const from = vi.fn().mockReturnValue({ upsert });
-    return { client: { from }, upsert, select, single };
+    return { client: { from } as unknown as SupabaseClient, upsert, select, single };
   }
 
   it("upserts with google_event_id conflict key and required event fields", async () => {
