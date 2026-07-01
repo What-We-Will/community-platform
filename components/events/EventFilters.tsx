@@ -16,13 +16,13 @@ export function EventFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const view = searchParams.get("view") ?? "list";
+  const view = searchParams.get("view") ?? "calendar";
   const type = searchParams.get("type") ?? "all";
 
   function updateParams(updates: { view?: string; type?: string }) {
     const params = new URLSearchParams(searchParams.toString());
     if (updates.view !== undefined) {
-      if (updates.view !== "list") params.set("view", updates.view);
+      if (updates.view !== "calendar") params.set("view", updates.view);
       else params.delete("view");
     }
     if (updates.type !== undefined) {
@@ -57,21 +57,23 @@ export function EventFilters() {
         </Button>
       </div>
 
-      <Select
-        value={type}
-        onValueChange={(v) => updateParams({ type: v })}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Event type" />
-        </SelectTrigger>
-        <SelectContent>
-          {eventTypeOptions.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {view === "list" && (
+        <Select
+          value={type}
+          onValueChange={(v) => updateParams({ type: v })}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Event type" />
+          </SelectTrigger>
+          <SelectContent>
+            {eventTypeOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }

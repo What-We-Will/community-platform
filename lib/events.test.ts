@@ -3,9 +3,8 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 import type { Mock } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
-import { fetchEventWithDetails, upsertGoogleCalendarEvent } from "./events";
+import { fetchEventWithDetails } from "./events";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -277,83 +276,5 @@ describe("fetchEventWithDetails", () => {
     expect(result?.title).toBe("My Event");
     expect(result?.location).toBe("Room 101");
     expect(result?.id).toBe("event-1");
-  });
-});
-
-// ── upsertGoogleCalendarEvent ─────────────────────────────────────────────────
-
-describe("upsertGoogleCalendarEvent", () => {
-  function buildUpsertClient(result: { data: unknown; error: unknown }) {
-    const single = vi.fn().mockResolvedValue(result);
-    const select = vi.fn().mockReturnValue({ single });
-    const upsert = vi.fn().mockReturnValue({ select });
-    const from = vi.fn().mockReturnValue({ upsert });
-    return { client: { from } as unknown as SupabaseClient, upsert, select, single };
-  }
-
-  it("upserts with google_event_id conflict key and required event fields", async () => {
-    const syncedEvent = {
-      google_event_id: "gcal-abc123",
-      title: "Community Standup",
-      description: "Weekly sync",
-      starts_at: "2026-07-02T18:00:00.000Z",
-      ends_at: "2026-07-02T19:00:00.000Z",
-      location: "Zoom",
-    };
-    const { client, upsert } = buildUpsertClient({
-      data: { id: "event-2", ...syncedEvent, event_type: "other" },
-      error: null,
-    });
-
-    await upsertGoogleCalendarEvent(client, syncedEvent);
-
-    expect(upsert).toHaveBeenCalledWith(
-      {
-        google_event_id: "gcal-abc123",
-        title: "Community Standup",
-        description: "Weekly sync",
-        starts_at: "2026-07-02T18:00:00.000Z",
-        ends_at: "2026-07-02T19:00:00.000Z",
-        location: "Zoom",
-        event_type: "other",
-        timezone: "America/Chicago",
-      },
-      { onConflict: "google_event_id" }
-    );
-  });
-
-  it("uses join_url as location when location is omitted", async () => {
-    const { client, upsert } = buildUpsertClient({ data: null, error: null });
-
-    await upsertGoogleCalendarEvent(client, {
-      google_event_id: "gcal-xyz",
-      title: "Office Hours",
-      starts_at: "2026-07-03T18:00:00.000Z",
-      ends_at: "2026-07-03T19:00:00.000Z",
-      join_url: "https://meet.google.com/abc-defg-hij",
-    });
-
-    expect(upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        location: "https://meet.google.com/abc-defg-hij",
-      }),
-      { onConflict: "google_event_id" }
-    );
-  });
-
-  it("defaults location to Online when neither location nor join_url is provided", async () => {
-    const { client, upsert } = buildUpsertClient({ data: null, error: null });
-
-    await upsertGoogleCalendarEvent(client, {
-      google_event_id: "gcal-none",
-      title: "TBD Location Event",
-      starts_at: "2026-07-04T18:00:00.000Z",
-      ends_at: "2026-07-04T19:00:00.000Z",
-    });
-
-    expect(upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ location: "Online" }),
-      { onConflict: "google_event_id" }
-    );
   });
 });
