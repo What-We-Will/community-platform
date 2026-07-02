@@ -40,6 +40,8 @@ export default async function OnboardingPage() {
           skills: profile?.skills ?? [],
           open_to_referrals: profile?.open_to_referrals ?? false,
           linkedin_url: profile?.linkedin_url ?? "",
+          github_url: profile?.github_url ?? "",
+          portfolio_url: profile?.portfolio_url ?? "",
         }}
         userId={user.id}
       />
