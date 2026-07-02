@@ -17,6 +17,8 @@ export async function completeOnboarding(
     skills: string[];
     open_to_referrals: boolean;
     linkedin_url?: string | null;
+    github_url?: string | null;
+    portfolio_url?: string | null;
     timezone?: string;
   }
 ): Promise<OnboardingResult> {
@@ -30,8 +32,15 @@ export async function completeOnboarding(
     return { error: "You must be signed in to complete onboarding." };
   }
 
-  if (!data.linkedin_url?.trim()) {
-    return { error: "LinkedIn URL is required to verify your background." };
+  const linkedinUrl = data.linkedin_url?.trim() || null;
+  const githubUrl = data.github_url?.trim() || null;
+  const portfolioUrl = data.portfolio_url?.trim() || null;
+
+  if (!linkedinUrl && !githubUrl && !portfolioUrl) {
+    return {
+      error:
+        "Please provide at least one of LinkedIn, GitHub, or a personal website so we can verify your background.",
+    };
   }
 
   const { error } = await supabase.from("profiles").upsert(
@@ -44,7 +53,9 @@ export async function completeOnboarding(
       bio: data.bio || null,
       skills: data.skills,
       open_to_referrals: data.open_to_referrals,
-      linkedin_url: data.linkedin_url || null,
+      linkedin_url: linkedinUrl,
+      github_url: githubUrl,
+      portfolio_url: portfolioUrl,
       timezone: safeTimezone(data.timezone),
       is_onboarded: true,
       approval_status: "pending",
@@ -59,7 +70,9 @@ export async function completeOnboarding(
   // Notify admin that a new account needs review
   await notifyAdminOfNewApplication({
     displayName: data.display_name,
-    linkedinUrl: data.linkedin_url,
+    linkedinUrl,
+    githubUrl,
+    portfolioUrl,
     userEmail: user.email ?? "unknown",
   });
 
@@ -70,10 +83,14 @@ export async function completeOnboarding(
 async function notifyAdminOfNewApplication({
   displayName,
   linkedinUrl,
+  githubUrl,
+  portfolioUrl,
   userEmail,
 }: {
   displayName: string;
-  linkedinUrl: string;
+  linkedinUrl: string | null;
+  githubUrl: string | null;
+  portfolioUrl: string | null;
   userEmail: string;
 }) {
   const gmailUser = process.env.GMAIL_USER;
@@ -91,6 +108,19 @@ async function notifyAdminOfNewApplication({
     const { getSiteUrl } = await import("@/lib/utils/get-site-url");
     const approvalUrl = `${getSiteUrl()}/admin/approvals`;
 
+    const links = [
+      { label: "LinkedIn", url: linkedinUrl },
+      { label: "GitHub", url: githubUrl },
+      { label: "Website", url: portfolioUrl },
+    ].filter((link): link is { label: string; url: string } => Boolean(link.url));
+
+    const linksHtml = links
+      .map(
+        (link) =>
+          `<p><strong>${link.label}:</strong> <a href="${link.url}">${link.url}</a></p>`
+      )
+      .join("\n        ");
+
     await transporter.sendMail({
       from: `What We Will <${gmailUser}>`,
       to: adminEmail,
@@ -99,7 +129,7 @@ async function notifyAdminOfNewApplication({
         <h2>New Membership Application</h2>
         <p><strong>Name:</strong> ${displayName}</p>
         <p><strong>Email:</strong> ${userEmail}</p>
-        <p><strong>LinkedIn:</strong> <a href="${linkedinUrl}">${linkedinUrl}</a></p>
+        ${linksHtml}
         <br />
         <a href="${approvalUrl}" style="background:#000;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
           Review in Admin Panel
