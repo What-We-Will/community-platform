@@ -3,17 +3,11 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { NewMembersCard } from "@/components/dashboard/NewMembersCard";
-import { ActiveChatsCard } from "@/components/dashboard/ActiveChatsCard";
 import { PollsCardWrapper } from "@/components/dashboard/PollsCardWrapper";
-import { UpcomingEventsCard } from "@/components/dashboard/UpcomingEventsCard";
-import { JobTrackerCard } from "@/components/dashboard/JobTrackerCard";
-import { MyGroupsCard } from "@/components/dashboard/MyGroupsCard";
-import { LearningCard } from "@/components/dashboard/LearningCard";
 import { LeetcodeCard } from "@/components/dashboard/LeetcodeCard";
 import { WeeklyScheduleCard } from "@/components/dashboard/WeeklyScheduleCard";
 import { AnnouncementsCard } from "@/components/dashboard/AnnouncementsCard";
 import { CardSkeleton } from "@/components/dashboard/CardSkeleton";
-import { InterviewHelpCard } from "@/components/dashboard/InterviewHelpCard";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -35,33 +29,12 @@ export default async function DashboardPage() {
       <AnnouncementsCard />
       <WeeklyScheduleCard rows={scheduleRows ?? []} isPlatformAdmin={isPlatformAdmin} />
 
-      {/* First row: My Groups, Upcoming Events, Help Requests */}
-      <Suspense fallback={<CardSkeleton />}>
-        <MyGroupsCard userId={user.id} />
-      </Suspense>
-      <UpcomingEventsCard />
-      <Suspense fallback={<CardSkeleton />}>
-        <InterviewHelpCard currentUserId={user.id} />
-      </Suspense>
-
-      {/* Second row: Job Tracker, LeetCode, Learning */}
-      <Suspense fallback={<CardSkeleton />}>
-        <JobTrackerCard userId={user.id} />
-      </Suspense>
-      <Suspense fallback={<CardSkeleton />}>
-        <LearningCard userId={user.id} />
-      </Suspense>
       <LeetcodeCard />
-      <Suspense fallback={<CardSkeleton />}>
-        <ActiveChatsCard userId={user.id} />
-      </Suspense>
 
-      {/* Community Polls */}
       <Suspense fallback={<CardSkeleton />}>
         <PollsCardWrapper userId={user.id} />
       </Suspense>
 
-      {/* New Members */}
       <Suspense fallback={<CardSkeleton />}>
         <NewMembersCard />
       </Suspense>
