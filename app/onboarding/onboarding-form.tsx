@@ -29,6 +29,8 @@ interface OnboardingFormProps {
     skills: string[];
     open_to_referrals: boolean;
     linkedin_url: string;
+    github_url: string;
+    portfolio_url: string;
   };
   userId: string;
 }
@@ -51,6 +53,10 @@ export default function OnboardingForm({
   const [linkedinUrl, setLinkedinUrl] = useState(
     initialData.linkedin_url ?? ""
   );
+  const [githubUrl, setGithubUrl] = useState(initialData.github_url ?? "");
+  const [portfolioUrl, setPortfolioUrl] = useState(
+    initialData.portfolio_url ?? ""
+  );
   const [timezone, setTimezone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"
   );
@@ -61,6 +67,12 @@ export default function OnboardingForm({
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (!linkedinUrl.trim() && !githubUrl.trim() && !portfolioUrl.trim()) {
+      setError("Provide at least one link so we can verify your background.");
+      setLoading(false);
+      return;
+    }
 
     const skills = skillsInput
       .split(",")
@@ -85,6 +97,8 @@ export default function OnboardingForm({
         skills,
         open_to_referrals: openToReferrals,
         linkedin_url: linkedinUrl || null,
+        github_url: githubUrl || null,
+        portfolio_url: portfolioUrl || null,
         timezone,
       });
 
@@ -205,21 +219,44 @@ export default function OnboardingForm({
               Open to Mock Interviews
             </Label>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="linkedin_url">
-              LinkedIn URL <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="linkedin_url"
-              type="url"
-              placeholder="https://linkedin.com/in/username"
-              value={linkedinUrl}
-              onChange={(e) => setLinkedinUrl(e.target.value)}
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              Required to verify your background as a tech worker
-            </p>
+          <div className="space-y-3 rounded-md border p-4">
+            <div>
+              <p className="text-sm font-medium">Verification link</p>
+              <p className="text-xs text-muted-foreground">
+                Provide at least one so we can verify your background as a
+                tech worker
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+              <Input
+                id="linkedin_url"
+                type="url"
+                placeholder="https://linkedin.com/in/username"
+                value={linkedinUrl}
+                onChange={(e) => setLinkedinUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="github_url">GitHub URL</Label>
+              <Input
+                id="github_url"
+                type="url"
+                placeholder="https://github.com/username"
+                value={githubUrl}
+                onChange={(e) => setGithubUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="portfolio_url">Website URL</Label>
+              <Input
+                id="portfolio_url"
+                type="url"
+                placeholder="https://yourportfolio.com"
+                value={portfolioUrl}
+                onChange={(e) => setPortfolioUrl(e.target.value)}
+              />
+            </div>
           </div>
         </CardContent>
         <CardFooter>
