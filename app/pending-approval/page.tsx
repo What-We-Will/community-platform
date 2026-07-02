@@ -63,8 +63,8 @@ export default function PendingApprovalPage() {
           Membership pending approval
         </h1>
         <p className="mt-3 text-muted-foreground">
-          Thanks for applying to What We Will! We&apos;ll review your LinkedIn
-          profile to verify your background as a tech worker.
+          Thanks for applying to What We Will! We&apos;ll review the link you
+          provided to verify your background as a tech worker.
         </p>
         <p className="mt-2 text-muted-foreground">
           You&apos;ll receive an email within 24 hours once your membership is
