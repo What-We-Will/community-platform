@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, Users, UsersRound, MessageSquare } from "lucide-react";
+import { Users } from "lucide-react";
 import type { Profile } from "@/lib/types";
+import { featureFlags } from "@/lib/feature-flags";
 
 const MOTIVATIONAL_LINES = [
   "Together, we can take steps forward.",
@@ -45,30 +46,25 @@ export function WelcomeBanner({ profile }: WelcomeBannerProps) {
             <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm" asChild>
-                <Link href="/jobs">
-                  <Briefcase className="size-4" />
-                  Browse Jobs
-                </Link>
+            {featureFlags.ghostJobBoard && (
+              <Button
+                size="sm"
+                asChild
+                className="bg-primary-orange text-white hover:bg-primary-orange-hover"
+              >
+                <Link href="/jobs">Report a Ghost Job</Link>
               </Button>
-              <Button variant="secondary" size="sm" asChild>
-                <Link href="/members">
-                  <Users className="size-4" />
-                  Find Members
-                </Link>
-              </Button>
-              <Button variant="secondary" size="sm" asChild>
-                <Link href="/groups">
-                  <UsersRound className="size-4" />
-                  My Groups
-                </Link>
-              </Button>
-              <Button variant="secondary" size="sm" asChild>
-                <Link href="/messages">
-                  <MessageSquare className="size-4" />
-                  New Message
-                </Link>
-              </Button>
+            )}
+            <Button
+              size="sm"
+              asChild
+              className="bg-accent-green/10 text-accent-green hover:bg-accent-green/15 dark:bg-accent-green/15 dark:hover:bg-accent-green/25"
+            >
+              <Link href="/members">
+                <Users className="size-4" />
+                Connect with Members
+              </Link>
+            </Button>
           </div>
         </div>
       </CardContent>
