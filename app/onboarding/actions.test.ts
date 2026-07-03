@@ -137,3 +137,45 @@ describe("completeOnboarding — requires at least one verification link", () =>
     );
   });
 });
+
+describe("completeOnboarding — rejects non-http(s) or malformed URLs", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejects a javascript: URL", async () => {
+    const upsert = mockSupabaseClient();
+
+    const result = await completeOnboarding({
+      ...baseInput,
+      linkedin_url: "javascript:alert(1)",
+    });
+
+    expect(result.error).toBeDefined();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a data: URL", async () => {
+    const upsert = mockSupabaseClient();
+
+    const result = await completeOnboarding({
+      ...baseInput,
+      github_url: "data:text/html,<script>alert(1)</script>",
+    });
+
+    expect(result.error).toBeDefined();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed URL", async () => {
+    const upsert = mockSupabaseClient();
+
+    const result = await completeOnboarding({
+      ...baseInput,
+      portfolio_url: "not-a-url",
+    });
+
+    expect(result.error).toBeDefined();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+});
