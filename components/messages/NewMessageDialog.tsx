@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PenSquare, Loader2 } from "lucide-react";
+import { PenSquare } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { getOrCreateDM } from "@/lib/actions/messages";
 import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import type { Profile } from "@/lib/types";
@@ -24,8 +23,6 @@ export function NewMessageDialog() {
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [opening, setOpening] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function handleSearch(query: string) {
     setSearch(query);
@@ -47,20 +44,13 @@ export function NewMessageDialog() {
     setLoading(false);
   }
 
-  async function handleSelectUser(userId: string) {
-    setOpening(true);
-    setError(null);
-    const conversationId = await getOrCreateDM(userId);
-    if (!conversationId) {
-      setError("Could not open conversation. Please try again.");
-      setOpening(false);
-      return;
-    }
+  function handleSelectUser(userId: string) {
     setOpen(false);
     setSearch("");
     setResults([]);
-    setOpening(false);
-    router.push(`/messages/${conversationId}`);
+    // The destination resolves (or creates) the DM and redirects server-side,
+    // avoiding the client-side push/refresh race this used to hit.
+    router.push(`/messages?new=${userId}`);
   }
 
   return (
@@ -83,40 +73,27 @@ export function NewMessageDialog() {
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             autoFocus
-            disabled={opening}
           />
 
-          {error && (
-            <p className="text-sm text-destructive text-center py-2">{error}</p>
-          )}
-
-          {opening && (
-            <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" />
-              Opening conversation…
-            </div>
-          )}
-
-          {!opening && loading && (
+          {loading && (
             <p className="text-sm text-muted-foreground text-center py-4">
               Searching…
             </p>
           )}
 
-          {!opening && !loading && search.length > 0 && results.length === 0 && (
+          {!loading && search.length > 0 && results.length === 0 && (
             <p className="text-sm text-muted-foreground text-center py-4">
               No members found for &ldquo;{search}&rdquo;
             </p>
           )}
 
-          {!opening && results.length > 0 && (
+          {results.length > 0 && (
             <div className="space-y-0.5 max-h-72 overflow-y-auto -mx-1">
               {results.map((profile) => (
                 <button
                   key={profile.id}
                   onClick={() => handleSelectUser(profile.id)}
-                  disabled={opening}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-accent transition-colors disabled:opacity-50"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-accent transition-colors"
                 >
                   <div
                     className={cn(
