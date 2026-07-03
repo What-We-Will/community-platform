@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import OnboardingForm from "./onboarding-form";
+import type { completeOnboarding } from "./actions";
 
 // TimezoneCombobox renders a Radix popover, which needs ResizeObserver — absent in jsdom.
 global.ResizeObserver = class {
@@ -9,10 +10,12 @@ global.ResizeObserver = class {
   disconnect() {}
 };
 
-const completeOnboardingMock = vi.fn();
+const completeOnboardingMock = vi.hoisted(() =>
+  vi.fn<typeof completeOnboarding>()
+);
 
 vi.mock("./actions", () => ({
-  completeOnboarding: (...args: unknown[]) => completeOnboardingMock(...args),
+  completeOnboarding: completeOnboardingMock,
 }));
 
 vi.mock("@/app/(app)/profile/actions", () => ({
