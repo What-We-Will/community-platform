@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
+import { featureFlags } from "@/lib/feature-flags";
 import { ListTodo } from "lucide-react";
 import { LearningTrackerClient } from "./LearningTrackerClient";
 import type { TrackerItem } from "../page";
@@ -20,6 +22,14 @@ export default async function LearningTrackerPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  if (!featureFlags.learningTracker) {
+    return (
+      <div className="mx-auto max-w-7xl">
+        <FeatureComingSoon />
+      </div>
+    );
+  }
 
   // ── Tracker items ────────────────────────────────────────────────────────────
   const { data: raw } = await supabase

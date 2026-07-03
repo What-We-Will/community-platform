@@ -15,9 +15,7 @@ import {
   Briefcase,
   ClipboardList,
   Link2,
-  BookMarked,
   ListTodo,
-  GitFork,
   ExternalLink,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -33,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { updateLastSeen } from "@/app/(app)/profile/actions";
 import { syncBrowserTimezone } from "@/lib/actions/timezone";
+import { featureFlags } from "@/lib/feature-flags";
 
 const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
 
@@ -51,10 +50,10 @@ const myToolsNavItems = [
 ];
 
 const resourcesNavItems = [
-  { href: "/jobs",         label: "Job Board",      icon: Briefcase },
-  { href: "/learning",     label: "Group Learning", icon: BookMarked },
-  { href: "/projects",     label: "Projects",       icon: GitFork },
-  { href: "/links",        label: "Resource Hub",   icon: Link2 },
+  ...(featureFlags.ghostJobBoard
+    ? [{ href: "/jobs" as const, label: "Ghost Job Board", icon: Briefcase }]
+    : []),
+  { href: "/links", label: "Resource Hub", icon: Link2 },
 ];
 
 const profileNavItems = [
@@ -184,21 +183,25 @@ export default function AppShell({ children, user }: AppShellProps) {
               Join Slack
             </a>
 
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              My Tools
-            </p>
-            {myToolsNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <item.icon className="size-5 shrink-0" />
-                {item.label}
-              </Link>
-            ))}
+            {featureFlags.myToolsNav && (
+              <>
+                <Separator className="my-2" />
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  My Tools
+                </p>
+                {myToolsNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <item.icon className="size-5 shrink-0" />
+                    {item.label}
+                  </Link>
+                ))}
+              </>
+            )}
 
             <Separator className="my-2" />
             <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">

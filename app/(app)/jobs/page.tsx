@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
+import { featureFlags } from "@/lib/feature-flags";
 import { JobBoardClient, type JobPosting } from "./JobBoardClient";
 import type { Comment } from "./JobComments";
 
@@ -9,14 +11,22 @@ export default async function JobBoardPage({
 }: {
   searchParams: Promise<{ role?: string; referral?: string; community?: string; notes?: string }>;
 }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  if (!featureFlags.ghostJobBoard) {
+    return (
+      <div className="mx-auto max-w-7xl">
+        <FeatureComingSoon />
+      </div>
+    );
+  }
+
   const { role: roleFilter, referral, community, notes } = await searchParams;
   const referralFilter = referral === "true";
   const communityFilter = community === "true";
   const notesFilter = notes === "true";
-
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
 
   let jobQuery = supabase
     .from("job_postings")
