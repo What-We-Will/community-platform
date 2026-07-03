@@ -4,8 +4,22 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
 import { safeTimezone } from "@/lib/utils/timezone";
+import { escapeHtml } from "@/lib/utils/html";
 
 export type OnboardingResult = { error?: string };
+
+function validateHttpUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return "Please provide a valid URL starting with http:// or https://";
+    }
+  } catch {
+    return "Please provide a valid URL (e.g. https://github.com/username)";
+  }
+  return null;
+}
 
 export async function completeOnboarding(
   data: {
@@ -41,6 +55,15 @@ export async function completeOnboarding(
       error:
         "Please provide at least one of LinkedIn, GitHub, or a personal website so we can verify your background.",
     };
+  }
+
+  const urlValidationErrors = [
+    validateHttpUrl(linkedinUrl),
+    validateHttpUrl(githubUrl),
+    validateHttpUrl(portfolioUrl),
+  ].filter((e): e is string => e !== null);
+  if (urlValidationErrors.length > 0) {
+    return { error: urlValidationErrors[0] };
   }
 
   const { error } = await supabase.from("profiles").upsert(
@@ -117,18 +140,18 @@ async function notifyAdminOfNewApplication({
     const linksHtml = links
       .map(
         (link) =>
-          `<p><strong>${link.label}:</strong> <a href="${link.url}">${link.url}</a></p>`
+          `<p><strong>${link.label}:</strong> <a href="${escapeHtml(link.url)}">${escapeHtml(link.url)}</a></p>`
       )
       .join("\n        ");
 
     await transporter.sendMail({
       from: `What We Will <${gmailUser}>`,
       to: adminEmail,
-      subject: `[New Application] ${displayName} is requesting membership`,
+      subject: `[New Application] ${escapeHtml(displayName.replace(/[\r\n]/g, ""))} is requesting membership`,
       html: `
         <h2>New Membership Application</h2>
-        <p><strong>Name:</strong> ${displayName}</p>
-        <p><strong>Email:</strong> ${userEmail}</p>
+        <p><strong>Name:</strong> ${escapeHtml(displayName)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(userEmail)}</p>
         ${linksHtml}
         <br />
         <a href="${approvalUrl}" style="background:#000;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">
