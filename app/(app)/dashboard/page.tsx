@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { NewMembersCard } from "@/components/dashboard/NewMembersCard";
 import { PollsCardWrapper } from "@/components/dashboard/PollsCardWrapper";
-import { LeetcodeCard } from "@/components/dashboard/LeetcodeCard";
+import { RecentVideosCard } from "@/components/dashboard/RecentVideosCard";
 import { WeeklyScheduleCard } from "@/components/dashboard/WeeklyScheduleCard";
 import { AnnouncementsCard } from "@/components/dashboard/AnnouncementsCard";
 import { CardSkeleton } from "@/components/dashboard/CardSkeleton";
@@ -32,7 +32,7 @@ export default async function DashboardPage() {
       <AnnouncementsCard />
       <WeeklyScheduleCard rows={scheduleRows ?? []} isPlatformAdmin={isPlatformAdmin} />
 
-      <LeetcodeCard />
+      <RecentVideosCard />
 
       <Suspense fallback={<CardSkeleton />}>
         <PollsCardWrapper userId={user.id} />
