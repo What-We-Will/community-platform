@@ -2,30 +2,47 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { ScheduleCategory } from "@/lib/utils/weekly-schedule";
 
 async function requireAdmin() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
   if (profile?.role !== "admin") throw new Error("Not authorized");
+
   return supabase;
 }
 
-export async function createScheduleRow(
-  row: { name: string; days: string; time: string; zoom_url: string; position: number }
-): Promise<{ error?: string }> {
+export async function createScheduleRow(row: {
+  name: string;
+  days: string;
+  time: string;
+  zoom_url: string;
+  position: number;
+  category: ScheduleCategory;
+}): Promise<{ error?: string }> {
   try {
     const supabase = await requireAdmin();
-    const { error } = await supabase.from("weekly_schedule").insert({
-      ...row,
-      zoom_url: row.zoom_url.trim() || null,
-    });
+    const { data, error } = await supabase
+      .from("weekly_schedule")
+      .insert({
+        ...row,
+        zoom_url: row.zoom_url.trim() || null,
+      })
+      .select("id")
+      .single();
+
     if (error) return { error: error.message };
+    if (!data) return { error: "Insert failed — no row returned" };
+
     revalidatePath("/dashboard");
     return {};
   } catch (e) {
@@ -35,15 +52,31 @@ export async function createScheduleRow(
 
 export async function updateScheduleRow(
   id: string,
-  row: { name: string; days: string; time: string; zoom_url: string }
+  row: {
+    name: string;
+    days: string;
+    time: string;
+    zoom_url: string;
+  }
 ): Promise<{ error?: string }> {
   try {
     const supabase = await requireAdmin();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("weekly_schedule")
-      .update({ ...row, zoom_url: row.zoom_url.trim() || null, updated_at: new Date().toISOString() })
-      .eq("id", id);
+      .update({
+        name: row.name,
+        days: row.days,
+        time: row.time,
+        zoom_url: row.zoom_url.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select("id")
+      .single();
+
     if (error) return { error: error.message };
+    if (!data) return { error: "Update failed — row not found" };
+
     revalidatePath("/dashboard");
     return {};
   } catch (e) {
@@ -54,8 +87,16 @@ export async function updateScheduleRow(
 export async function deleteScheduleRow(id: string): Promise<{ error?: string }> {
   try {
     const supabase = await requireAdmin();
-    const { error } = await supabase.from("weekly_schedule").delete().eq("id", id);
+    const { data, error } = await supabase
+      .from("weekly_schedule")
+      .delete()
+      .eq("id", id)
+      .select("id")
+      .single();
+
     if (error) return { error: error.message };
+    if (!data) return { error: "Delete failed — row not found" };
+
     revalidatePath("/dashboard");
     return {};
   } catch (e) {
