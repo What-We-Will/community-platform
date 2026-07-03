@@ -98,7 +98,7 @@ export function PollsCard({ userId, initialPoll }: PollsCardProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <BarChart3 className="size-4" />
-            Community Polls
+            Community Poll
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -118,7 +118,7 @@ export function PollsCard({ userId, initialPoll }: PollsCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <BarChart3 className="size-4" />
-          Community Polls
+          Community Poll
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
