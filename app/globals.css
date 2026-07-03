@@ -152,3 +152,36 @@ html {
     @apply bg-background text-foreground font-sans;
   }
 }
+
+/* Weekly schedule tabs — uses brand tokens from :root (wwwrise.org/branding) */
+@layer components {
+  .schedule-tab-active-primary {
+    @apply bg-primary-orange text-white shadow-sm hover:bg-primary-orange-hover;
+  }
+  .schedule-tab-inactive-primary {
+    @apply bg-primary-orange/10 text-primary-orange hover:bg-primary-orange/15 dark:bg-primary-orange/15 dark:hover:bg-primary-orange/25;
+  }
+  .schedule-join-primary {
+    @apply bg-primary-orange/10 text-primary-orange hover:bg-primary-orange/15 dark:bg-primary-orange/15 dark:hover:bg-primary-orange/25;
+  }
+
+  .schedule-tab-active-green {
+    @apply bg-accent-green text-white shadow-sm hover:opacity-90;
+  }
+  .schedule-tab-inactive-green {
+    @apply bg-accent-green/10 text-accent-green hover:bg-accent-green/15 dark:bg-accent-green/15 dark:hover:bg-accent-green/25;
+  }
+  .schedule-join-green {
+    @apply bg-accent-green/10 text-accent-green hover:bg-accent-green/15 dark:bg-accent-green/15 dark:hover:bg-accent-green/25;
+  }
+
+  .schedule-tab-active-tertiary {
+    @apply bg-accent-blue text-white shadow-sm;
+  }
+  .schedule-tab-inactive-tertiary {
+    @apply bg-accent-blue/10 text-accent-blue hover:bg-accent-blue/15 dark:bg-accent-blue/20 dark:hover:bg-accent-blue/30;
+  }
+  .schedule-join-tertiary {
+    @apply bg-accent-blue/10 text-accent-blue hover:bg-accent-blue/15 dark:bg-accent-blue/20 dark:hover:bg-accent-blue/30;
+  }
+}
