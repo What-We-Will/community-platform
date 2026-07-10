@@ -41,6 +41,34 @@ function emptyForm(category: ScheduleCategory): RowForm {
   return { name: "", days: "", time: "", zoom_url: "", category };
 }
 
+function CategorySelect({
+  value,
+  onChange,
+}: {
+  value: ScheduleCategory;
+  onChange: (value: ScheduleCategory) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as ScheduleCategory)}>
+      <SelectTrigger className="h-7 w-full text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {SCHEDULE_CATEGORIES.map((cat) => (
+          <SelectItem key={cat.value} value={cat.value} className="text-xs">
+            {cat.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function CategorySpacer({ adding }: { adding: boolean }) {
+  if (!adding) return null;
+  return <td className="px-4 py-2" aria-hidden />;
+}
+
 export function WeeklyScheduleAdmin({
   rows: initialRows,
   activeCategory,
@@ -150,34 +178,6 @@ export function WeeklyScheduleAdmin({
     router.refresh();
   }
 
-  function CategorySelect({
-    value,
-    onChange,
-  }: {
-    value: ScheduleCategory;
-    onChange: (value: ScheduleCategory) => void;
-  }) {
-    return (
-      <Select value={value} onValueChange={(v) => onChange(v as ScheduleCategory)}>
-        <SelectTrigger className="h-7 w-full text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {SCHEDULE_CATEGORIES.map((cat) => (
-            <SelectItem key={cat.value} value={cat.value} className="text-xs">
-              {cat.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  }
-
-  function CategorySpacer() {
-    if (!adding) return null;
-    return <td className="px-4 py-2" aria-hidden />;
-  }
-
   const rowColSpan = adding ? 6 : 5;
 
   return (
@@ -210,7 +210,7 @@ export function WeeklyScheduleAdmin({
                 autoFocus
               />
             </td>
-            <CategorySpacer />
+            <CategorySpacer adding={adding} />
             <td className="px-4 py-2">
               <Input
                 value={editRow.days}
@@ -267,7 +267,7 @@ export function WeeklyScheduleAdmin({
         ) : (
           <tr key={row.id} className="group border-b hover:bg-muted/20">
             <td className="px-4 py-2.5 text-sm font-medium">{row.name}</td>
-            <CategorySpacer />
+            <CategorySpacer adding={adding} />
             <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.days}</td>
             <td className="px-4 py-2.5 text-sm text-muted-foreground">{row.time}</td>
             <td className="px-4 py-2.5 text-sm">
