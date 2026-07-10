@@ -19,11 +19,16 @@ import {
   ListTodo,
   GitFork,
   ExternalLink,
+  MessageSquare,
+  UsersRound,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const BugReportDialog = dynamic(
-  () => import("@/components/shared/BugReportDialog").then((m) => ({ default: m.BugReportDialog })),
+  () =>
+    import("@/components/shared/BugReportDialog").then((m) => ({
+      default: m.BugReportDialog,
+    })),
   { ssr: false },
 );
 import { createClient } from "@/lib/supabase/client";
@@ -33,6 +38,7 @@ import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/shared/UserAvatar";
 import { updateLastSeen } from "@/app/(app)/profile/actions";
 import { syncBrowserTimezone } from "@/lib/actions/timezone";
+import { UnreadBadge } from "@/components/messages/UnreadBadge";
 
 const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
 
@@ -42,19 +48,21 @@ const SLACK_INVITE_URL =
 const mainNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/events", label: "Events", icon: Calendar },
+  { href: "/groups", label: "Groups", icon: UsersRound },
+  { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/members", label: "Members", icon: UserSearch },
 ];
 
 const myToolsNavItems = [
-  { href: "/tracker",          label: "Job Application Tracker", icon: ClipboardList },
-  { href: "/learning/tracker", label: "Learning Tracker",        icon: ListTodo },
+  { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList },
+  { href: "/learning/tracker", label: "Learning Tracker", icon: ListTodo },
 ];
 
 const resourcesNavItems = [
-  { href: "/jobs",         label: "Job Board",      icon: Briefcase },
-  { href: "/learning",     label: "Group Learning", icon: BookMarked },
-  { href: "/projects",     label: "Projects",       icon: GitFork },
-  { href: "/links",        label: "Resource Hub",   icon: Link2 },
+  { href: "/jobs", label: "Job Board", icon: Briefcase },
+  { href: "/learning", label: "Group Learning", icon: BookMarked },
+  { href: "/projects", label: "Projects", icon: GitFork },
+  { href: "/links", label: "Resource Hub", icon: Link2 },
 ];
 
 const profileNavItems = [
@@ -68,6 +76,7 @@ interface AppShellProps {
     email: string;
     displayName: string;
     avatarUrl: string | null;
+    unreadCount: number;
     isAdmin?: boolean;
   };
 }
@@ -109,8 +118,7 @@ export default function AppShell({ children, user }: AppShellProps) {
     await supabase.auth.signOut();
     // Clear the onboarding cache cookie so the next user on this browser
     // gets a fresh check instead of inheriting the previous session's state.
-    document.cookie =
-      "profile_onboarded=; path=/; max-age=0; samesite=lax";
+    document.cookie = "profile_onboarded=; path=/; max-age=0; samesite=lax";
     router.push("/login");
     router.refresh();
   }
@@ -130,7 +138,7 @@ export default function AppShell({ children, user }: AppShellProps) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 transform border-r bg-card transition-transform duration-200 ease-in-out lg:static lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <div className="flex h-full flex-col">
@@ -170,6 +178,12 @@ export default function AppShell({ children, user }: AppShellProps) {
               >
                 <item.icon className="size-5 shrink-0" />
                 {item.label}
+                {item.href === "/messages" && (
+                  <UnreadBadge
+                    initialCount={user.unreadCount}
+                    userId={user.id}
+                  />
+                )}
               </Link>
             ))}
 
