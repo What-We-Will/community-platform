@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
+import { featureFlags } from "@/lib/feature-flags";
 import { TrackerClient, type Application, type CommunityNote } from "./TrackerClient";
 import type { Interview, HelpRequest } from "./actions";
 
@@ -7,6 +9,14 @@ export default async function TrackerPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  if (!featureFlags.jobApplicationTracker) {
+    return (
+      <div className="mx-auto max-w-7xl">
+        <FeatureComingSoon />
+      </div>
+    );
+  }
 
   const [{ data: rawApplications }, { data: rawInterviews }, { data: rawHelp }] = await Promise.all([
     supabase

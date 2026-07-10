@@ -165,9 +165,9 @@ export function JobBoardClient({
       {/* ── Top bar ── */}
       <div className="shrink-0 flex items-center justify-between gap-4 border-b bg-background px-4 py-3 lg:px-6">
         <div>
-          <h1 className="text-xl font-bold">Community Job Board</h1>
+          <h1 className="text-xl font-bold">Ghost Job Board</h1>
           <p className="text-xs text-muted-foreground">
-            Add a job to your Job Tracker wishlist and share Community Notes.
+            Anonymously share your experience here.
           </p>
         </div>
         <PostJobForm />
