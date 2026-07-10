@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
+import Link from "next/link";
 import { Video, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils/time";
@@ -6,6 +7,28 @@ import { UserAvatar } from "@/components/shared/UserAvatar";
 import { getSignedUrl } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import type { MessageWithSender } from "@/lib/types";
+
+function SenderProfileLink({
+  senderId,
+  isGroup,
+  className,
+  children,
+}: {
+  senderId: string | null | undefined;
+  isGroup: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  if (!isGroup || !senderId) {
+    return <span className={className}>{children}</span>;
+  }
+
+  return (
+    <Link href={`/members/${senderId}`} className={cn(className, "hover:underline")}>
+      {children}
+    </Link>
+  );
+}
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -15,7 +38,9 @@ function formatFileSize(bytes: number): string {
 
 function FileMessageBubble({
   isOwn,
+  isGroup,
   showSenderInfo,
+  senderId,
   senderName,
   senderAvatarUrl,
   content,
@@ -26,7 +51,9 @@ function FileMessageBubble({
   isImage,
 }: {
   isOwn: boolean;
+  isGroup: boolean;
   showSenderInfo: boolean;
+  senderId: string | null;
   senderName: string;
   senderAvatarUrl: string | null;
   content: string;
@@ -66,11 +93,17 @@ function FileMessageBubble({
       {!isOwn && (
         <div className="w-7 shrink-0 self-end">
           {showSenderInfo && (
-            <UserAvatar
-              avatarUrl={senderAvatarUrl}
-              displayName={senderName}
-              size="xs"
-            />
+            <SenderProfileLink
+              senderId={senderId}
+              isGroup={isGroup}
+              className="block rounded-full hover:opacity-80"
+            >
+              <UserAvatar
+                avatarUrl={senderAvatarUrl}
+                displayName={senderName}
+                size="xs"
+              />
+            </SenderProfileLink>
           )}
         </div>
       )}
@@ -81,9 +114,13 @@ function FileMessageBubble({
         )}
       >
         {!isOwn && showSenderInfo && (
-          <span className="text-xs text-muted-foreground mb-1 ml-1">
+          <SenderProfileLink
+            senderId={senderId}
+            isGroup={isGroup}
+            className="text-xs text-muted-foreground mb-1 ml-1"
+          >
             {senderName}
-          </span>
+          </SenderProfileLink>
         )}
         <div
           className={cn(
@@ -148,6 +185,7 @@ function FileMessageBubble({
 interface MessageBubbleProps {
   message: MessageWithSender;
   isOwn: boolean;
+  isGroup?: boolean;
   showSenderInfo: boolean;
   onJoinVideoCall?: (roomName: string) => void;
 }
@@ -155,6 +193,7 @@ interface MessageBubbleProps {
 export function MessageBubble({
   message,
   isOwn,
+  isGroup = false,
   showSenderInfo,
   onJoinVideoCall,
 }: MessageBubbleProps) {
@@ -229,7 +268,9 @@ export function MessageBubble({
     return (
       <FileMessageBubble
         isOwn={isOwn}
+        isGroup={isGroup}
         showSenderInfo={showSenderInfo}
+        senderId={message.sender_id}
         senderName={message.sender?.display_name ?? "Unknown"}
         senderAvatarUrl={message.sender?.avatar_url ?? null}
         content={message.content}
@@ -256,11 +297,17 @@ export function MessageBubble({
       {!isOwn && (
         <div className="w-7 shrink-0 self-end">
           {showSenderInfo && (
-            <UserAvatar
-              avatarUrl={message.sender?.avatar_url ?? null}
-              displayName={senderName}
-              size="xs"
-            />
+            <SenderProfileLink
+              senderId={message.sender_id}
+              isGroup={isGroup}
+              className="block rounded-full hover:opacity-80"
+            >
+              <UserAvatar
+                avatarUrl={message.sender?.avatar_url ?? null}
+                displayName={senderName}
+                size="xs"
+              />
+            </SenderProfileLink>
           )}
         </div>
       )}
@@ -272,9 +319,13 @@ export function MessageBubble({
         )}
       >
         {!isOwn && showSenderInfo && (
-          <span className="text-xs text-muted-foreground mb-1 ml-1">
+          <SenderProfileLink
+            senderId={message.sender_id}
+            isGroup={isGroup}
+            className="text-xs text-muted-foreground mb-1 ml-1"
+          >
             {senderName}
-          </span>
+          </SenderProfileLink>
         )}
 
         <div
