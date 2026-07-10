@@ -15,7 +15,7 @@ import { Calendar, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventFilters } from "@/components/events/EventFilters";
 import { EventCard } from "@/components/events/EventCard";
-import { EventsCalendarClient } from "@/components/events/EventsCalendarClient";
+import { GoogleCalendarEmbed } from "@/components/events/GoogleCalendarEmbed";
 import { fetchUpcomingEvents, fetchPastEvents } from "@/lib/events";
 import type { Profile } from "@/lib/types";
 
@@ -77,14 +77,25 @@ export default async function EventsPage({
   searchParams: Promise<{ view?: string; type?: string }>;
 }) {
   const params = await searchParams;
-  const view = params.view ?? "list";
-  const typeParam = params.type ?? "all";
+  const view = params.view ?? "calendar";
 
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  if (view === "calendar") {
+    return (
+      <div className="space-y-6">
+        <EventsPageHeader />
+        <EventFilters />
+        <GoogleCalendarEmbed />
+      </div>
+    );
+  }
+
+  const typeParam = params.type ?? "all";
 
   const [viewerProfileResult, upcomingRaw, pastRaw] = await Promise.all([
     supabase.from("profiles").select("timezone").eq("id", user.id).single(),
@@ -145,55 +156,50 @@ export default async function EventsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-          <Calendar className="size-6" />
-          Events
-        </h1>
-        <Button asChild>
-          <Link href="/events/create" className="gap-2">
-            <Plus className="size-4" />
-            Create Event
-          </Link>
-        </Button>
-      </div>
-
+      <EventsPageHeader />
       <EventFilters />
 
-      {view === "calendar" ? (
-        <EventsCalendarClient
-          events={upcomingWithDetails}
-          currentUserId={user.id}
-          viewerTimezone={viewerTimezone}
-        />
-      ) : (
-        <>
-          <div className="space-y-6">
-            {sections.map((section) => (
-              <section key={section.key}>
-                <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
-                  {section.label}
-                </h2>
-                <ul className="space-y-3">
-                  {section.events.map((event) => (
-                    <li key={event.id}>
-                      <EventCard
-                        event={event}
-                        rsvpCounts={event.rsvpCounts}
-                        currentUserRsvp={event.currentUserRsvp}
-                        currentUserId={user.id}
-                        viewerTimezone={viewerTimezone}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+      <div className="space-y-6">
+        {sections.map((section) => (
+          <section key={section.key}>
+            <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
+              {section.label}
+            </h2>
+            <ul className="space-y-3">
+              {section.events.map((event) => (
+                <li key={event.id}>
+                  <EventCard
+                    event={event}
+                    rsvpCounts={event.rsvpCounts}
+                    currentUserRsvp={event.currentUserRsvp}
+                    currentUserId={user.id}
+                    viewerTimezone={viewerTimezone}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
+      </div>
 
-          <PastEventsSection past={past} currentUserId={user.id} viewerTimezone={viewerTimezone} />
-        </>
-      )}
+      <PastEventsSection past={past} currentUserId={user.id} viewerTimezone={viewerTimezone} />
+    </div>
+  );
+}
+
+function EventsPageHeader() {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+        <Calendar className="size-6" />
+        Events
+      </h1>
+      <Button asChild>
+        <Link href="/events/create" className="gap-2">
+          <Plus className="size-4" />
+          Create Event
+        </Link>
+      </Button>
     </div>
   );
 }
