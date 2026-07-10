@@ -83,17 +83,13 @@ npx supabase link
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow;
+Open [http://localhost:3000](http://localhost:3000). Sign up via the auth flow, then complete onboarding. New accounts start as `approval_status = pending` (same as production).
 
-To manually approve yourself, open Supabase > Table Editor > "profiles". You should see a row for your user. Change the "approval_status" column from "pending" to "approved".
+#### Troubleshooting: `permission denied for table profiles`
 
-For local volunteer setup, add `LOCAL_DEV_AUTO_ADMIN=true` to `.env.local` to skip manual approval and grant admin on first onboarding.
+If local onboarding fails with `permission denied for table profiles`, your Supabase project may be missing grants for the authenticated role.
 
-After onboarding you’ll see the main app (dashboard, events, groups, messages, members, profile).
-
-**NOTE:** If local onboarding fails with `permission denied for table profiles`, your Supabase project may be missing grants for the authenticated role.
-
-You can check the current permissions with the following command in your local/dev Supabase SQL editor:
+Check permissions in your local/dev Supabase SQL editor:
 
 ```sql
 select
@@ -102,11 +98,33 @@ select
   has_table_privilege('authenticated', 'public.profiles', 'UPDATE') as can_update;
 ```
 
-If any of those return `false`, run this in your local/dev Supabase SQL editor:
+If any of those return `false`, run:
 
 ```sql
 GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
 ```
+
+#### Promote your local user (approve + optional admin)
+
+After onboarding succeeds, promote yourself in **your own** local/dev Supabase project — do not put privilege grants in app code or env flags.
+
+**Option 1 — SQL Editor (recommended):**
+
+```sql
+-- Replace the email with the account you just created.
+UPDATE public.profiles
+SET approval_status = 'approved',
+    role = 'admin'
+WHERE id = (
+  SELECT id FROM auth.users WHERE email = 'you@example.com'
+);
+```
+
+Omit `role = 'admin'` if you only need membership approval (not admin UI).
+
+**Option 2 — Table Editor:** open Supabase → Table Editor → `profiles`, find your row, set `approval_status` to `approved`, and set `role` to `admin` if you need admin features.
+
+After promoting, refresh the app — you should land on `/dashboard` (and `/admin/approvals` if you granted admin). From there you’ll see the main app (dashboard, events, groups, messages, members, profile).
 
 ### 5. Configure Emailing (Optional)
 

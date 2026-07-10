@@ -34,8 +34,6 @@ export async function completeOnboarding(
     return { error: "LinkedIn URL is required to verify your background." };
   }
 
-  const localDevAutoAdmin = process.env.LOCAL_DEV_AUTO_ADMIN === "true";
-
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
@@ -49,9 +47,7 @@ export async function completeOnboarding(
       linkedin_url: data.linkedin_url || null,
       timezone: safeTimezone(data.timezone),
       is_onboarded: true,
-      ...(localDevAutoAdmin
-        ? { approval_status: "approved" as const, role: "admin" as const }
-        : { approval_status: "pending" as const }),
+      approval_status: "pending",
     },
     { onConflict: "id" }
   );
@@ -60,14 +56,12 @@ export async function completeOnboarding(
     return { error: error.message };
   }
 
-  if (!localDevAutoAdmin) {
-    // Notify admin that a new account needs review
-    await notifyAdminOfNewApplication({
-      displayName: data.display_name,
-      linkedinUrl: data.linkedin_url,
-      userEmail: user.email ?? "unknown",
-    });
-  }
+  // Notify admin that a new account needs review
+  await notifyAdminOfNewApplication({
+    displayName: data.display_name,
+    linkedinUrl: data.linkedin_url,
+    userEmail: user.email ?? "unknown",
+  });
 
   revalidatePath("/", "layout");
   return {};
