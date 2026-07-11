@@ -132,8 +132,8 @@ export const navProgramLinks = [
     external: true as const,
   },
   {
-    label: "No Robo Bosses",
-    href: "/programs/no-robo-bosses",
+    label: "Layoff Resource Guide",
+    href: "/resources/layoff-guide",
     external: false as const,
   },
 ];
