@@ -1,17 +1,22 @@
 /**
  * @vitest-environment node
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
 import type { MockedFunction } from "vitest";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { updateProfile } from "./actions";
+import { updateProfile, deleteResume } from "./actions";
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 const mockRevalidatePath = revalidatePath as MockedFunction<typeof revalidatePath>;
 const mockCreateClient = createClient as MockedFunction<typeof createClient>;
+
+function asClient(mock: unknown): SupabaseServerClient {
+  return mock as SupabaseServerClient;
+}
 
 const validInput = {
   display_name: "Jane Doe",
@@ -26,9 +31,11 @@ describe("updateProfile — revalidates affected pages", () => {
 
   it("should not revalidate when user is not authenticated", async () => {
     // Arrange
-    mockCreateClient.mockResolvedValue({
-      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
-    } as any);
+    mockCreateClient.mockResolvedValue(
+      asClient({
+        auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null } }) },
+      })
+    );
 
     // Act
     const result = await updateProfile(validInput);
@@ -40,14 +47,16 @@ describe("updateProfile — revalidates affected pages", () => {
 
   it("should revalidate on successful update but not /profile", async () => {
     // Arrange
-    mockCreateClient.mockResolvedValue({
-      auth: {
-        getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }),
-      },
-      from: vi.fn().mockReturnValue({
-        upsert: vi.fn().mockResolvedValue({ error: null }),
-      }),
-    } as any);
+    mockCreateClient.mockResolvedValue(
+      asClient({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }),
+        },
+        from: vi.fn().mockReturnValue({
+          upsert: vi.fn().mockResolvedValue({ error: null }),
+        }),
+      })
+    );
 
     // Act
     const result = await updateProfile(validInput);
@@ -57,6 +66,91 @@ describe("updateProfile — revalidates affected pages", () => {
     expect(mockRevalidatePath).toHaveBeenCalledWith("/members");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/events");
     expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mockRevalidatePath).not.toHaveBeenCalledWith("/profile");
+  });
+});
+
+interface DeleteMockOptions {
+  user?: { id: string } | null;
+  resumePath?: string | null;
+  updateError?: { message: string } | null;
+}
+
+function mockSupabaseForDelete({
+  user = { id: "user-1" },
+  resumePath = "user-1/resume.pdf",
+  updateError = null,
+}: DeleteMockOptions = {}) {
+  const remove = vi.fn().mockResolvedValue({ error: null });
+  const maybeSingle = vi
+    .fn()
+    .mockResolvedValue({ data: resumePath ? { resume_path: resumePath } : null });
+  const select = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle }) });
+  const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: updateError }) });
+
+  return {
+    supabase: asClient({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user } }) },
+      from: vi.fn().mockReturnValue({ select, update }),
+      storage: { from: vi.fn().mockReturnValue({ remove }) },
+    }),
+    remove,
+    update,
+  };
+}
+
+describe("deleteResume", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns an error when the user is not authenticated", async () => {
+    const { supabase, remove, update } = mockSupabaseForDelete({ user: null });
+    mockCreateClient.mockResolvedValue(supabase);
+
+    const result = await deleteResume();
+
+    expect(result).toEqual({ error: "Not authenticated" });
+    expect(remove).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("is a no-op when the profile has no resume", async () => {
+    const { supabase, remove, update } = mockSupabaseForDelete({ resumePath: null });
+    mockCreateClient.mockResolvedValue(supabase);
+
+    const result = await deleteResume();
+
+    expect(result).toEqual({});
+    expect(remove).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("removes the file from storage and clears resume_path", async () => {
+    const { supabase, remove, update } = mockSupabaseForDelete({
+      resumePath: "user-1/resume.pdf",
+    });
+    mockCreateClient.mockResolvedValue(supabase);
+
+    const result = await deleteResume();
+
+    expect(result).toEqual({});
+    expect(remove).toHaveBeenCalledWith(["user-1/resume.pdf"]);
+    expect(update).toHaveBeenCalledWith({ resume_path: null });
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/profile");
+  });
+
+  it("returns an error when clearing resume_path fails", async () => {
+    const { supabase } = mockSupabaseForDelete({
+      updateError: { message: "db down" },
+    });
+    mockCreateClient.mockResolvedValue(supabase);
+
+    const result = await deleteResume();
+
+    expect(result).toEqual({ error: "db down" });
     expect(mockRevalidatePath).not.toHaveBeenCalledWith("/profile");
   });
 });
