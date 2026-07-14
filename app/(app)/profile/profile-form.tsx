@@ -71,10 +71,15 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setSuccess(false);
     setLoading(true);
 
+    const MAX_SKILL_LENGTH = 30;
+    const MAX_SKILLS_COUNT = 20;
+
     const skills = skillsInput
-      .split(",")
+      .split(/[,/]/)
       .map((s) => s.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((s) => s.slice(0, MAX_SKILL_LENGTH))
+      .slice(0, MAX_SKILLS_COUNT);
 
     try {
       const result = await updateProfile({
@@ -195,7 +200,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               onChange={(e) => setSkillsInput(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Comma-separated list
+              Comma-separated list. Each skill max 30 characters, up to 20 skills.
             </p>
           </div>
           <div className="flex items-center space-x-2">

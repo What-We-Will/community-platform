@@ -66,7 +66,7 @@ export default function MemberCard({ profile, currentUserId }: MemberCardProps) 
         {(displaySkills.length > 0 || profile.open_to_referrals) && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {displaySkills.map((skill) => (
-              <Badge key={skill} variant="secondary" className="text-xs">
+              <Badge key={skill} variant="secondary" className="text-xs max-w-[150px] truncate">
                 {skill}
               </Badge>
             ))}
