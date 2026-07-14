@@ -4,6 +4,17 @@ import { useRef, useState } from "react";
 import { FileText, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { uploadPrivateFile, validateFile } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +28,7 @@ interface ResumeUploadProps {
   fileSize?: number | null;
   onUploadComplete: (path: string) => void;
   onViewClick: () => void;
+  onDeleteClick: () => Promise<{ error?: string } | void>;
   className?: string;
 }
 
@@ -27,12 +39,24 @@ export function ResumeUpload({
   fileSize,
   onUploadComplete,
   onViewClick,
+  onDeleteClick,
   className,
 }: ResumeUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    setError(null);
+    const result = await onDeleteClick();
+    setDeleting(false);
+    setDeleteOpen(false);
+    if (result?.error) setError(result.error);
+  }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -119,6 +143,40 @@ export function ResumeUpload({
             >
               Replace
             </Button>
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <AlertDialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete your resume?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Your resume will be permanently removed from your profile.
+                    This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDelete();
+                    }}
+                    disabled={deleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleting ? "Deleting…" : "Delete"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
           <input
             ref={inputRef}
