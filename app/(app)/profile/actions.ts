@@ -107,6 +107,31 @@ export async function updateResumePath(resumePath: string): Promise<{ error?: st
   return {};
 }
 
+export async function deleteResume(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("resume_path")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.resume_path) return {};
+
+  await supabase.storage.from("resumes").remove([profile.resume_path]);
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ resume_path: null })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/profile");
+  return {};
+}
+
 export async function getResumeSignedUrl(): Promise<string | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
