@@ -31,18 +31,19 @@ updates:
           - "next"
           - "eslint-config-next"
       vitest:
-        # @vitest/coverage-v8 is lockstep with vitest's version
+        # Core + coverage-v8 only — both share vitest's version (4.1.8).
+        # @vitest/eslint-plugin is on its own track and lives in the `eslint` group.
         patterns:
           - "vitest"
-          - "@vitest/*"
+          - "@vitest/coverage-v8"
       date-fns:
         # date-fns-tz tracks date-fns' major
         patterns:
           - "date-fns"
           - "date-fns-tz"
       radix-ui:
+        # Only the unified `radix-ui` meta-package is used; no scoped @radix-ui/* deps.
         patterns:
-          - "@radix-ui/*"
           - "radix-ui"
       dnd-kit:
         patterns:
@@ -61,26 +62,33 @@ updates:
           - "@tailwindcss/*"
           - "tailwind-merge"
           - "tw-animate-css"
-      # --- Category groups ---
+      # --- Category groups (batch minor/patch; majors surface as individual reviewable PRs) ---
       testing:
-        # not version-locked to each other; majors come as individual reviewable PRs
         patterns:
           - "@playwright/*"
           - "@testing-library/*"
-          - "playwright"
         update-types:
           - minor
           - patch
       eslint:
+        # @vitest/eslint-plugin is eslint tooling, independent of vitest core.
+        # @eslint/* is forward-looking (e.g. @eslint/js under flat config).
         patterns:
           - "eslint"
           - "@eslint/*"
+          - "@vitest/eslint-plugin"
+        update-types:
+          - minor
+          - patch
       types:
         patterns:
           - "@types/*"
         exclude-patterns:
           - "@types/react"
           - "@types/react-dom"
+        update-types:
+          - minor
+          - patch
       # --- Catch-alls (dependency-type only; must stay LAST) ---
       dev-minor-patch:
         dependency-type: development
