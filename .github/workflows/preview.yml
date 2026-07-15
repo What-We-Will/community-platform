@@ -85,8 +85,8 @@ jobs:
 
       # WHY ENV IS NEEDED HERE
       # - Next.js injects NEXT_PUBLIC_* variables at build time
-      # - The build output must point to the correct Supabase branch
-      - name: Build app (using branch DB env)
+      # - The build output must point to the correct Supabase preview project
+      - name: Build app (using preview DB env)
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
