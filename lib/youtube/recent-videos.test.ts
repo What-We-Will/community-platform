@@ -35,4 +35,25 @@ describe("parseYouTubePlaylistFeed", () => {
   it("respects the limit", () => {
     expect(parseYouTubePlaylistFeed(SAMPLE_FEED, 1)).toHaveLength(1);
   });
+
+  it("drops unparseable published dates to an empty string", () => {
+    const feed = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015">
+  <entry>
+    <id>yt:video:abc12345678</id>
+    <yt:videoId>abc12345678</yt:videoId>
+    <title>Malformed Date Workshop</title>
+    <published>not-a-real-date</published>
+  </entry>
+</feed>`;
+
+    const [video] = parseYouTubePlaylistFeed(feed);
+
+    expect(video.publishedAt).toBe("");
+  });
+
+  it("keeps a valid RFC 3339 published date", () => {
+    const [video] = parseYouTubePlaylistFeed(SAMPLE_FEED);
+    expect(video.publishedAt).toBe("2026-01-15T12:00:00+00:00");
+  });
 });

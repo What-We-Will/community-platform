@@ -33,14 +33,18 @@ export function parseYouTubePlaylistFeed(
       entry.match(/<yt:videoId>([^<]+)<\/yt:videoId>/)?.[1] ??
       entry.match(/<id>yt:video:([^<]+)<\/id>/)?.[1];
     const title = entry.match(/<title>([^<]*)<\/title>/)?.[1];
-    const publishedAt = entry.match(/<published>([^<]+)<\/published>/)?.[1];
+    const publishedRaw = entry.match(/<published>([^<]+)<\/published>/)?.[1];
 
     if (!videoId || !title) continue;
+
+    // Drop unparseable dates; an Invalid Date throws in formatDistanceToNow.
+    const publishedAt =
+      publishedRaw && !Number.isNaN(Date.parse(publishedRaw)) ? publishedRaw : "";
 
     videos.push({
       id: videoId,
       title: decodeXmlEntities(title),
-      publishedAt: publishedAt ?? "",
+      publishedAt,
       url: `https://www.youtube.com/watch?v=${videoId}`,
       thumbnailUrl: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
     });
