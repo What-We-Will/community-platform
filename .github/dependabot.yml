@@ -10,14 +10,22 @@ updates:
       timezone: America/New_York
     open-pull-requests-limit: 5
     versioning-strategy: increase-if-necessary
+    # Bake window before a version-update PR opens (measured from the release date).
+    # Version updates only — security updates are never delayed by cooldown.
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
     labels:
       - dependencies
     commit-message:
       prefix: chore
       include: scope
     groups:
-      # --- Version-locked families (NO update-types filter: a major stays atomic) ---
-      # First match wins, so every family must sit ABOVE the catch-alls below.
+      # --- Version-locked families ---
+      # No update-types filter, so a major would move the whole family atomically —
+      # but family majors are HELD in `ignore` below (taken as scheduled migrations,
+      # not bot PRs). First match wins, so families sit ABOVE the catch-alls.
       react:
         # @types/react* track react's version, not their own cadence
         patterns:
@@ -101,6 +109,8 @@ updates:
           - minor
           - patch
     ignore:
+      # Held family majors — upgrade as scheduled migrations, not bot PRs.
+      # Scoped to semver-major so SECURITY updates still flow. Review quarterly.
       - dependency-name: next
         update-types:
           - version-update:semver-major
@@ -123,6 +133,36 @@ updates:
         update-types:
           - version-update:semver-major
       - dependency-name: "@supabase/ssr"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: date-fns
+        update-types:
+          - version-update:semver-major
+      - dependency-name: date-fns-tz
+        update-types:
+          - version-update:semver-major
+      - dependency-name: radix-ui
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@dnd-kit/*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: vitest
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitest/coverage-v8"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tailwindcss
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@tailwindcss/*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tailwind-merge
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tw-animate-css
         update-types:
           - version-update:semver-major
 
