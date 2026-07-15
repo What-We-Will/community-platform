@@ -1,0 +1,186 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    versioning-strategy: increase-if-necessary
+    # Bake window before a version-update PR opens (measured from the release date).
+    # Version updates only — security updates are never delayed by cooldown.
+    cooldown:
+      semver-major-days: 30
+      semver-minor-days: 7
+      semver-patch-days: 3
+    labels:
+      - dependencies
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      # --- Version-locked families ---
+      # No update-types filter, so a major would move the whole family atomically —
+      # but family majors are HELD in `ignore` below (taken as scheduled migrations,
+      # not bot PRs). First match wins, so families sit ABOVE the catch-alls.
+      react:
+        # @types/react* track react's version, not their own cadence
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      next:
+        # eslint-config-next tracks next's version, not eslint's
+        patterns:
+          - "next"
+          - "eslint-config-next"
+      vitest:
+        # Core + coverage-v8 only — both share vitest's version (4.1.8).
+        # @vitest/eslint-plugin is on its own track and lives in the `eslint` group.
+        patterns:
+          - "vitest"
+          - "@vitest/coverage-v8"
+      date-fns:
+        # date-fns-tz tracks date-fns' major
+        patterns:
+          - "date-fns"
+          - "date-fns-tz"
+      radix-ui:
+        # Only the unified `radix-ui` meta-package is used; no scoped @radix-ui/* deps.
+        patterns:
+          - "radix-ui"
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      supabase:
+        # Runtime client stack — supabase-js + ssr move together for SSR auth.
+        # The `supabase` CLI is intentionally NOT grouped here: it's a dev tool on
+        # its own release track (github.com/supabase/cli), unrelated to the SDK's
+        # versioning. It flows through dev-minor-patch; majors come as individual
+        # reviewable PRs (we stay current on the CLI rather than holding majors).
+        patterns:
+          - "@supabase/*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+          - "tailwind-merge"
+          - "tw-animate-css"
+      # --- Category groups (batch minor/patch; majors surface as individual reviewable PRs) ---
+      testing:
+        patterns:
+          - "@playwright/*"
+          - "@testing-library/*"
+        update-types:
+          - minor
+          - patch
+      eslint:
+        # @vitest/eslint-plugin is eslint tooling, independent of vitest core.
+        # @eslint/* is forward-looking (e.g. @eslint/js under flat config).
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "@vitest/eslint-plugin"
+        update-types:
+          - minor
+          - patch
+      types:
+        patterns:
+          - "@types/*"
+        exclude-patterns:
+          - "@types/react"
+          - "@types/react-dom"
+        update-types:
+          - minor
+          - patch
+      # --- Catch-alls (dependency-type only; must stay LAST) ---
+      dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      prod-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # Held family majors — upgrade as scheduled migrations, not bot PRs.
+      # Scoped to semver-major so SECURITY updates still flow. Review quarterly.
+      - dependency-name: next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: eslint-config-next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react-dom
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@types/react"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@types/react-dom"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@supabase/supabase-js"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@supabase/ssr"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: date-fns
+        update-types:
+          - version-update:semver-major
+      - dependency-name: date-fns-tz
+        update-types:
+          - version-update:semver-major
+      - dependency-name: radix-ui
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@dnd-kit/*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: vitest
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitest/coverage-v8"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tailwindcss
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@tailwindcss/*"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tailwind-merge
+        update-types:
+          - version-update:semver-major
+      - dependency-name: tw-animate-css
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns:
+          - "*"
