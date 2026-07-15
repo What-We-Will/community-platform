@@ -20,7 +20,7 @@ const FOUNDING_TEAM: TeamMember[] = [
     bio: "Strategic resource development specialist, with 20+ years of nonprofit executive leadership. Passionate about youth empowerment and social justice.",
   },
   {
-    name: "Kyle Albasi",
+    name: "Kyle A.",
     role: "Creative Director & Media Strategy",
     bio: "Creative Director shaping our visual identity, narrative content, and creative media campaigns. Video producer, graphic designer, and writer.",
   },

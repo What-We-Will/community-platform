@@ -30,6 +30,9 @@ export default async function AppLayout({
     redirect("/onboarding");
   }
 
+  const { data: total } = await supabase.rpc("get_total_unread_count");
+  const unreadCount = Number(total ?? 0);
+
   return (
     <AppShell
       user={{
@@ -41,6 +44,7 @@ export default async function AppLayout({
           user.email ??
           "User",
         avatarUrl: profile?.avatar_url ?? null,
+        unreadCount,
         isAdmin: profile?.role === "admin",
       }}
     >
