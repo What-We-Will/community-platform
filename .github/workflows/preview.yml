@@ -68,6 +68,20 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      # Production build with placeholder, non-secret env. Catches build-time breaks
+      # (RSC serialization, route module-eval) that lint/tsc/tests miss — with no
+      # deploy secret, so it runs on Dependabot and fork PRs too. The values are dummy
+      # stand-ins; the real preview build runs in preview-deploy with branch DB env.
+      # SUPABASE_SERVICE_ROLE_KEY is set because a route constructs an admin client at
+      # module load, and page-data collection fails on an empty value.
+      - name: Production build (placeholder env)
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+        run: npm run build
+
   # Its own job, not folded into verify, so it runs in parallel with a tighter
   # permission set and separate timeout.
   security-scan:
@@ -127,13 +141,16 @@ jobs:
       - name: Audit dependencies
         run: npm ci --ignore-scripts && npm audit --audit-level=high
 
-  # Every secret-bearing step lives here. The job-level `if:` below is the fork gate;
+  # Every secret-bearing step lives here. The job-level `if:` below is the gate;
   # `needs: verify` makes the deploy wait on green checks and exposes the migrations
-  # paths-filter result.
+  # paths-filter result. Skipped for forks (can't reach secrets) AND for Dependabot
+  # (GitHub withholds secrets from Dependabot runs, so a deploy attempt only ever
+  # fails at `vercel pull` — skipping avoids a spurious red check on dependency PRs).
   preview-deploy:
     needs: verify
     if: >-
       github.event.action != 'closed' &&
+      github.actor != 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
