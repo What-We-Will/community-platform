@@ -67,6 +67,11 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.PREVIEW_SUPABASE_PROJECT_ID }}
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
 
+      # --include-all is load-bearing: the preview DB is shared across all open PRs, so
+      # migrations arrive in merge order, not timestamp order. Plain `db push` refuses a
+      # migration that sorts behind one already applied; --include-all forces it through.
+      # Don't remove without replacing the shared preview DB (ADR-0002). It does NOT fix
+      # phantom history rows from renamed/dropped migrations — that's `migration repair`.
       - name: Push Supabase migrations to PREVIEW DB
         if: steps.changes.outputs.migrations == 'true'
         env:
