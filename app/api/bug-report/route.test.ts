@@ -87,6 +87,16 @@ describe("POST /api/bug-report — validation", () => {
     await expect(response.json()).resolves.toEqual({ error: "Email is required." });
     expect(sendMail).not.toHaveBeenCalled();
   });
+
+  it("should return 400 when the anonymous reporter's email is malformed", async () => {
+    const post = await loadPost();
+    const response = await post(
+      makeRequest({ email: "bad\nBcc: evil@x.com", description: validReport.description }),
+    );
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "A valid email is required." });
+    expect(sendMail).not.toHaveBeenCalled();
+  });
 });
 
 describe("POST /api/bug-report — outbound email envelope", () => {

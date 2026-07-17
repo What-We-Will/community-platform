@@ -59,6 +59,12 @@ export async function POST(request: Request) {
       if (!email) {
         return NextResponse.json({ error: "Email is required." }, { status: 400 });
       }
+      // Reject malformed addresses. The regex also excludes the CR/LF that
+      // could otherwise inject extra headers into the admin email's replyTo
+      // or subject (this value is unverified reporter input).
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
+      }
       reporterId = null;
       reporterEmail = email;
       reporter = email;
