@@ -13,7 +13,7 @@ test.describe("Landing page (anonymous)", { tag: "@smoke" }, () => {
     test.afterAll(async () => { await sharedPage.close(); });
 
     test("Logo", async () => {
-      await expect(sharedPage.getByAltText("What We Will logo")).toBeVisible();
+      await expect(sharedPage.getByRole("link", { name: "What We Will logo", exact: true })).toBeVisible();
     });
 
     test("About Us link", async () => {
