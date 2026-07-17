@@ -8,6 +8,18 @@ const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? GMAIL_USER;
 
+// Reporter-supplied text is interpolated into the admin email's HTML body.
+// Escape it so a report can't inject markup into the admin's inbox (phishing
+// surface, not browser XSS).
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
@@ -96,12 +108,12 @@ export async function POST(request: Request) {
           subject: `[Bug Report] from ${reporter}`,
           html: `
         <h2>Bug Report</h2>
-        <p><strong>Reporter:</strong> ${reporter}</p>
-        <p><strong>Page:</strong> ${pageUrl ?? "unknown"}</p>
+        <p><strong>Reporter:</strong> ${escapeHtml(reporter)}</p>
+        <p><strong>Page:</strong> ${escapeHtml(pageUrl ?? "unknown")}</p>
         <hr />
         <h3>Description</h3>
-        <p style="white-space:pre-wrap">${description}</p>
-        ${steps ? `<h3>Steps to Reproduce</h3><p style="white-space:pre-wrap">${steps}</p>` : ""}
+        <p style="white-space:pre-wrap">${escapeHtml(description)}</p>
+        ${steps ? `<h3>Steps to Reproduce</h3><p style="white-space:pre-wrap">${escapeHtml(steps)}</p>` : ""}
       `,
         });
         emailOk = true;

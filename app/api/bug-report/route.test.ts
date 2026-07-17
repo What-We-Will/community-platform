@@ -129,4 +129,12 @@ describe("POST /api/bug-report — outbound email envelope", () => {
     await post(makeRequest(validReport));
     expect(sendMail.mock.calls[0][0].html).toContain("unknown");
   });
+
+  it("should escape HTML in reporter-supplied text so markup can't be injected", async () => {
+    const post = await loadPost();
+    await post(makeRequest({ email: validReport.email, description: "<b>x</b>" }));
+    const html = sendMail.mock.calls[0][0].html;
+    expect(html).toContain("&lt;b&gt;x&lt;/b&gt;");
+    expect(html).not.toContain("<b>x</b>");
+  });
 });
