@@ -22,6 +22,7 @@ import {
   Globe,
   MessageSquare,
   UsersRound,
+  Bug,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 
@@ -80,6 +81,7 @@ interface AppShellProps {
     avatarUrl: string | null;
     unreadCount: number;
     isAdmin?: boolean;
+    canViewReports?: boolean;
   };
 }
 
@@ -279,6 +281,20 @@ export default function AppShell({ children, user }: AppShellProps) {
                 >
                   <ShieldCheck className="size-5 shrink-0" />
                   Approvals
+                </Link>
+              </>
+            )}
+
+            {user.canViewReports && (
+              <>
+                <Separator className="my-2" />
+                <Link
+                  href="/bug-reports"
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Bug className="size-5 shrink-0" />
+                  Bug reports
                 </Link>
               </>
             )}
