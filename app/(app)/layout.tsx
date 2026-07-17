@@ -61,6 +61,7 @@ export default async function AppLayout({
         avatarUrl: profile?.avatar_url ?? null,
         unreadCount,
         isAdmin: profile?.role === "admin",
+        canViewReports: profile?.role === "admin" || profile?.role === "moderator",
       }}
       visibleFlags={visibleFlags}
     >
