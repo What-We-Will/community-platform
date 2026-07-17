@@ -108,6 +108,14 @@ export default async function BugReportsPage() {
                     Reported by {reporterName ?? "Unknown"}
                     {!report.reporter_id && " (anonymous)"}
                   </p>
+                  {report.user_agent && (
+                    <p
+                      className="truncate text-xs text-muted-foreground/70"
+                      title={report.user_agent}
+                    >
+                      {report.user_agent}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             );
