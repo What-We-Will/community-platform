@@ -73,31 +73,35 @@ export async function POST(request: Request) {
     const pageUrl = request.headers.get("referer") ?? null;
     const userAgent = request.headers.get("user-agent") ?? null;
 
-    let insertOk = false;
-    try {
-      const service = createServiceClient();
-      const insertPayload: BugReportInsert = {
-        reporter_id: reporterId,
-        reporter_email: reporterEmail,
-        description,
-        steps: steps || null,
-        page_url: pageUrl,
-        user_agent: userAgent,
-      };
-      const { error } = await service.from("bug_reports").insert(insertPayload);
-      if (error) {
-        console.error("[bug-report] insert failed", error);
-        insertOk = false;
-      } else {
-        insertOk = true;
+    // The insert and the email are independent best-effort side effects, so
+    // run them concurrently rather than adding the SMTP round-trip on top of
+    // the insert latency. Each resolves to its own success flag and never
+    // rejects, so Promise.all won't short-circuit on one failing.
+    const persist = async (): Promise<boolean> => {
+      try {
+        const service = createServiceClient();
+        const insertPayload: BugReportInsert = {
+          reporter_id: reporterId,
+          reporter_email: reporterEmail,
+          description,
+          steps: steps || null,
+          page_url: pageUrl,
+          user_agent: userAgent,
+        };
+        const { error } = await service.from("bug_reports").insert(insertPayload);
+        if (error) {
+          console.error("[bug-report] insert failed", error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error("[bug-report] insert failed", e);
+        return false;
       }
-    } catch (e) {
-      console.error("[bug-report] insert failed", e);
-      insertOk = false;
-    }
+    };
 
-    let emailOk = false;
-    if (GMAIL_USER && GMAIL_APP_PASSWORD && ADMIN_EMAIL) {
+    const notify = async (): Promise<boolean> => {
+      if (!GMAIL_USER || !GMAIL_APP_PASSWORD || !ADMIN_EMAIL) return false;
       try {
         const transporter = nodemailer.createTransport({
           service: "gmail",
@@ -122,12 +126,14 @@ export async function POST(request: Request) {
         ${steps ? `<h3>Steps to Reproduce</h3><p style="white-space:pre-wrap">${escapeHtml(steps)}</p>` : ""}
       `,
         });
-        emailOk = true;
+        return true;
       } catch (e) {
         console.error("[bug-report] email failed", e);
-        emailOk = false;
+        return false;
       }
-    }
+    };
+
+    const [insertOk, emailOk] = await Promise.all([persist(), notify()]);
 
     if (insertOk || emailOk) {
       return NextResponse.json({ success: true });
