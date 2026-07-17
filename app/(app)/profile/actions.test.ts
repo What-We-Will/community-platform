@@ -74,14 +74,16 @@ interface DeleteMockOptions {
   user?: { id: string } | null;
   resumePath?: string | null;
   updateError?: { message: string } | null;
+  removeResult?: { data: unknown[] | null; error: { message: string } | null };
 }
 
 function mockSupabaseForDelete({
   user = { id: "user-1" },
   resumePath = "user-1/resume.pdf",
   updateError = null,
+  removeResult = { data: [{ name: "resume.pdf" }], error: null },
 }: DeleteMockOptions = {}) {
-  const remove = vi.fn().mockResolvedValue({ error: null });
+  const remove = vi.fn().mockResolvedValue(removeResult);
   const maybeSingle = vi
     .fn()
     .mockResolvedValue({ data: resumePath ? { resume_path: resumePath } : null });
@@ -128,7 +130,7 @@ describe("deleteResume", () => {
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
-  it("removes the file from storage and clears resume_path", async () => {
+  it("clears resume_path before removing the file from storage", async () => {
     const { supabase, remove, update } = mockSupabaseForDelete({
       resumePath: "user-1/resume.pdf",
     });
@@ -139,11 +141,14 @@ describe("deleteResume", () => {
     expect(result).toEqual({});
     expect(remove).toHaveBeenCalledWith(["user-1/resume.pdf"]);
     expect(update).toHaveBeenCalledWith({ resume_path: null });
+    expect(update.mock.invocationCallOrder[0]).toBeLessThan(
+      remove.mock.invocationCallOrder[0]
+    );
     expect(mockRevalidatePath).toHaveBeenCalledWith("/profile");
   });
 
-  it("returns an error when clearing resume_path fails", async () => {
-    const { supabase } = mockSupabaseForDelete({
+  it("returns an error and skips storage removal when clearing resume_path fails", async () => {
+    const { supabase, remove } = mockSupabaseForDelete({
       updateError: { message: "db down" },
     });
     mockCreateClient.mockResolvedValue(supabase);
@@ -151,6 +156,43 @@ describe("deleteResume", () => {
     const result = await deleteResume();
 
     expect(result).toEqual({ error: "db down" });
+    expect(remove).not.toHaveBeenCalled();
     expect(mockRevalidatePath).not.toHaveBeenCalledWith("/profile");
+  });
+
+  it("still succeeds but logs when the storage removal errors", async () => {
+    const { supabase } = mockSupabaseForDelete({
+      removeResult: { data: null, error: { message: "storage down" } },
+    });
+    mockCreateClient.mockResolvedValue(supabase);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await deleteResume();
+
+    expect(result).toEqual({});
+    expect(consoleError).toHaveBeenCalledWith(
+      "[deleteResume] storage cleanup incomplete:",
+      "storage down"
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/profile");
+    consoleError.mockRestore();
+  });
+
+  it("still succeeds but logs when storage removes zero objects", async () => {
+    const { supabase } = mockSupabaseForDelete({
+      removeResult: { data: [], error: null },
+    });
+    mockCreateClient.mockResolvedValue(supabase);
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await deleteResume();
+
+    expect(result).toEqual({});
+    expect(consoleError).toHaveBeenCalledWith(
+      "[deleteResume] storage cleanup incomplete:",
+      "no objects removed"
+    );
+    expect(mockRevalidatePath).toHaveBeenCalledWith("/profile");
+    consoleError.mockRestore();
   });
 });

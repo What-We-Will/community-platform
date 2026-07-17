@@ -120,14 +120,24 @@ export async function deleteResume(): Promise<{ error?: string }> {
 
   if (!profile?.resume_path) return {};
 
-  await supabase.storage.from("resumes").remove([profile.resume_path]);
-
   const { error } = await supabase
     .from("profiles")
     .update({ resume_path: null })
     .eq("id", user.id);
 
   if (error) return { error: error.message };
+
+  const { data: removed, error: storageError } = await supabase.storage
+    .from("resumes")
+    .remove([profile.resume_path]);
+
+  if (storageError || removed?.length === 0) {
+    console.error(
+      "[deleteResume] storage cleanup incomplete:",
+      storageError?.message ?? "no objects removed"
+    );
+  }
+
   revalidatePath("/profile");
   return {};
 }
