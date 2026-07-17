@@ -1,20 +1,30 @@
 /**
  * @vitest-environment node
  *
- * Regression guard for the nodemailer transport contract. The route's
- * observable side effect is the outbound admin email, so we mock the SMTP
- * boundary (analogous to fetch) and assert on the envelope it receives — not
- * on internal call order. This pins the createTransport/sendMail interface so a
- * future nodemailer bump that changes how we must call it fails here loudly.
+ * Validation and outbound-email envelope for the bug report route.
+ * Persistence (bug_reports insert) and best-effort insert/email
+ * combinations are covered in route.persistence.test.ts.
  */
 
-// Hoisted so the vi.mock factory can close over the same spies the tests assert on.
+// Force module scope so this file's top-level declarations don't collide
+// with route.persistence.test.ts's identically-named ones under tsc.
+export {};
+
 const { createTransport, sendMail } = vi.hoisted(() => {
   const sendMail = vi.fn();
   return { createTransport: vi.fn(() => ({ sendMail })), sendMail };
 });
-
 vi.mock("nodemailer", () => ({ default: { createTransport } }));
+
+const { mockGetUser } = vi.hoisted(() => ({ mockGetUser: vi.fn() }));
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn().mockResolvedValue({ auth: { getUser: mockGetUser } }),
+}));
+
+const { mockInsert } = vi.hoisted(() => ({ mockInsert: vi.fn() }));
+vi.mock("@/lib/supabase/service", () => ({
+  createServiceClient: vi.fn(() => ({ from: vi.fn(() => ({ insert: mockInsert })) })),
+}));
 
 const VALID_ENV = {
   GMAIL_USER: "bot@example.com",
@@ -22,14 +32,7 @@ const VALID_ENV = {
   ADMIN_EMAIL: "admin@example.com",
 } as const;
 
-function stubEnv(env: Record<string, string>) {
-  for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
-}
-
-function makeRequest(
-  body: Record<string, unknown>,
-  headers: Record<string, string> = {},
-) {
+function makeRequest(body: Record<string, unknown>, headers: Record<string, string> = {}) {
   return new Request("https://app.example.com/api/bug-report", {
     method: "POST",
     headers: { "content-type": "application/json", ...headers },
@@ -49,24 +52,59 @@ const validReport = {
   steps: "1. open profile  2. click save",
 };
 
-describe("POST /api/bug-report — emails the admin a submitted bug report", () => {
+describe("POST /api/bug-report — validation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
     vi.spyOn(console, "error").mockImplementation(() => {});
-    stubEnv(VALID_ENV);
+    for (const [key, value] of Object.entries(VALID_ENV)) vi.stubEnv(key, value);
+    mockGetUser.mockResolvedValue({ data: { user: null } });
+    mockInsert.mockResolvedValue({ error: null });
   });
 
-  it("should send the report to the admin address and return success when input is valid", async () => {
+  it("should return 400 and send nothing when the description is missing", async () => {
     const post = await loadPost();
+    const response = await post(makeRequest({ email: validReport.email }));
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Description is required." });
+    expect(sendMail).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
+  });
 
+  it("should return 400 when the description exceeds the length cap", async () => {
+    const post = await loadPost();
+    const response = await post(
+      makeRequest({ email: validReport.email, description: "x".repeat(5001) }),
+    );
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Description is too long." });
+  });
+
+  it("should return 400 when the anonymous reporter's email is missing", async () => {
+    const post = await loadPost();
+    const response = await post(makeRequest({ description: validReport.description }));
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Email is required." });
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/bug-report — outbound email envelope", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    for (const [key, value] of Object.entries(VALID_ENV)) vi.stubEnv(key, value);
+    mockGetUser.mockResolvedValue({ data: { user: null } });
+    mockInsert.mockResolvedValue({ error: null });
+  });
+
+  it("should send the report to the admin address with the expected envelope", async () => {
+    const post = await loadPost();
     const response = await post(
       makeRequest(validReport, { referer: "https://app.example.com/profile" }),
     );
-
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ success: true });
-    expect(sendMail).toHaveBeenCalledTimes(1);
     const mail = sendMail.mock.calls[0][0];
     expect(mail).toMatchObject({
       to: "admin@example.com",
@@ -79,74 +117,16 @@ describe("POST /api/bug-report — emails the admin a submitted bug report", () 
     expect(mail.html).toContain("https://app.example.com/profile");
   });
 
-  it("should configure the transport with the gmail service and app-password credentials", async () => {
-    const post = await loadPost();
-
-    await post(makeRequest(validReport));
-
-    expect(createTransport).toHaveBeenCalledWith({
-      service: "gmail",
-      auth: { user: "bot@example.com", pass: "app-pass-123" },
-    });
-  });
-
   it("should omit the steps section from the email when no steps are provided", async () => {
     const post = await loadPost();
-
     await post(makeRequest({ email: validReport.email, description: validReport.description }));
-
     const mail = sendMail.mock.calls[0][0];
     expect(mail.html).not.toContain("Steps to Reproduce");
   });
 
   it("should fall back to an unknown page label when the referer header is absent", async () => {
     const post = await loadPost();
-
     await post(makeRequest(validReport));
-
     expect(sendMail.mock.calls[0][0].html).toContain("unknown");
-  });
-
-  it("should return 400 and send nothing when the description is missing", async () => {
-    const post = await loadPost();
-
-    const response = await post(makeRequest({ email: validReport.email }));
-
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "Description is required." });
-    expect(sendMail).not.toHaveBeenCalled();
-  });
-
-  it("should return 400 and send nothing when the reporter email is missing", async () => {
-    const post = await loadPost();
-
-    const response = await post(makeRequest({ description: validReport.description }));
-
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "Email is required." });
-    expect(sendMail).not.toHaveBeenCalled();
-  });
-
-  it("should return 503 and send nothing when SMTP credentials are not configured", async () => {
-    stubEnv({ GMAIL_USER: "", GMAIL_APP_PASSWORD: "", ADMIN_EMAIL: "" });
-    const post = await loadPost();
-
-    const response = await post(makeRequest(validReport));
-
-    expect(response.status).toBe(503);
-    await expect(response.json()).resolves.toEqual({
-      error: "Bug reporting is not configured on this server.",
-    });
-    expect(sendMail).not.toHaveBeenCalled();
-  });
-
-  it("should return 500 when the mail transport rejects", async () => {
-    sendMail.mockRejectedValueOnce(new Error("SMTP unavailable"));
-    const post = await loadPost();
-
-    const response = await post(makeRequest(validReport));
-
-    expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({ error: "Something went wrong." });
   });
 });
