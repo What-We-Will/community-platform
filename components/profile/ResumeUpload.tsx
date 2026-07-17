@@ -52,10 +52,15 @@ export function ResumeUpload({
   async function handleDelete() {
     setDeleting(true);
     setError(null);
-    const result = await onDeleteClick();
-    setDeleting(false);
-    setDeleteOpen(false);
-    if (result?.error) setError(result.error);
+    try {
+      const result = await onDeleteClick();
+      if (result?.error) setError(result.error);
+    } catch {
+      setError("Failed to delete resume. Please try again.");
+    } finally {
+      setDeleting(false);
+      setDeleteOpen(false);
+    }
   }
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
