@@ -231,3 +231,31 @@ export interface EventWithDetails extends Event {
   isLive: boolean;
   isPast: boolean;
 }
+
+// ─── Bug Reports ─────────────────────────────────────────────────────────────
+
+export interface BugReport {
+  id: string;
+  reporter_id: string | null;
+  reporter_email: string | null;
+  description: string;
+  steps: string | null;
+  page_url: string | null;
+  user_agent: string | null;
+  created_at: string;
+  seed_id: string | null;
+}
+
+export interface BugReportInsert {
+  reporter_id?: string | null;
+  reporter_email?: string | null;
+  description: string;
+  steps?: string | null;
+  page_url?: string | null;
+  user_agent?: string | null;
+  seed_id?: string | null;
+}
+
+export interface BugReportWithReporter extends BugReport {
+  reporter: { display_name: string | null } | null;
+}
