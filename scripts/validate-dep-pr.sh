@@ -16,7 +16,15 @@
 #   scripts/validate-dep-pr.sh dependabot/npm_and_yarn/next-62bc67f254
 #
 # Requires: git, node, npm. `gh` is only needed when you pass a PR number.
+# PR-number mode assumes the branch lives on `origin` (true for Dependabot PRs, this
+# script's target use case). For a fork-based PR, pass the fork's branch ref directly
+# with a remote you've already fetched — `git fetch origin <ref>` will fail otherwise.
 set -euo pipefail
+
+node_major="$(node -e 'process.stdout.write(process.version.slice(1).split(".")[0])')"
+if [ "$node_major" != "24" ]; then
+  echo "warning: local Node is v${node_major}.x, CI's verify job runs 24.x — results may not match CI." >&2
+fi
 
 if [ $# -ne 1 ]; then
   echo "usage: $0 <pr-number|branch-ref>" >&2
