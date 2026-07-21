@@ -6,14 +6,34 @@ weekly batch quickly.
 
 ## TL;DR
 
-1. Look at the **`verify`** check on the PR. Green = `npm ci` + lint + type-check + unit
-   tests + a production build all passed against the new dependency. That is the signal.
-2. Ignore `preview-deploy` on Dependabot PRs — it is **skipped** (it needs deploy secrets
+1. Read the **triage comment** the bot posts on the PR (`.github/workflows/dependabot-triage.yml`)
+   — it applies this same decision matrix automatically and labels the PR `ready to merge`
+   or `status: needs-review`. It does not merge anything; a human still clicks merge.
+2. If you want to double-check its reasoning: look at the **`verify`** check on the PR.
+   Green = `npm ci` + lint + type-check + unit tests + a production build all passed
+   against the new dependency. That is the underlying signal the bot's verdict is based on.
+3. Ignore `preview-deploy` on Dependabot PRs — it is **skipped** (it needs deploy secrets
    that GitHub withholds from Dependabot). A skipped or absent preview is expected, not a
    failure.
-3. Decide by bump type using the matrix below. Merge patch/minor with a green `verify`;
-   give majors and visual-surface bumps a closer look.
-4. Know the rollback path *before* you merge anything that auto-deploys to production.
+4. Decide by bump type using the matrix below. Merge patch/minor with a green `verify`;
+   give majors, github-actions bumps, and visual-surface bumps a closer look.
+5. Know the rollback path *before* you merge anything that auto-deploys to production.
+
+## Automated triage
+
+`dependabot-triage.yml` runs on every Dependabot PR and mirrors the matrix below:
+`scripts/ci/classify-dependabot-pr.sh` reads `dependabot/fetch-metadata` output (bump type,
+dependency type, package names, security-advisory info) and posts a verdict comment plus a
+label (`ready to merge` / `status: needs-review`). It re-runs and updates its own comment on
+every push, so the label always reflects the latest commit on the PR.
+
+What it does **not** do (yet): merge anything, or update a stale branch before merging.
+Auto-merge is a deliberate later step — see the "Ready to merge" label as "safe per the
+matrix," not "already merged."
+
+github-actions bumps always come back `needs-review` regardless of bump size — they change
+pinned workflow SHAs, which is a different risk category (CI trust, not just build
+correctness) than an npm dependency bump.
 
 ## Reading the checks
 
