@@ -9,6 +9,13 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+# Dependabot re-pushes (e.g. rebasing after a base-branch update) fire
+# `synchronize` in quick succession; without this, overlapping runs can race
+# on the same PR comment (both miss the marker, both create a duplicate).
+concurrency:
+  group: dependabot-triage-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write

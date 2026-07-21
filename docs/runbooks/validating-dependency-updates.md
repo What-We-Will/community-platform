@@ -58,8 +58,8 @@ exists has already cleared its bake window — you do not need to check release 
 |-----------|-----------------------|--------------------|
 | **Patch** (`x.y.Z`) | Safe to merge | None |
 | **Minor** (`x.Y.z`) | Safe to merge | If it touches UI (Radix, Tailwind, component libs): a quick **visual smoke** — build locally and eyeball the affected components. `verify` cannot catch visual regressions. |
-| **Major** (`X.y.z`) | Do **not** merge on green alone | Read the changelog for breaking changes; map each against how we actually use the dependency. For GitHub Actions majors, check the workflow files. Consider holding for a scheduled migration. |
-| **Dev-only** (e.g. test runner, types) | Safe to merge on green `verify` | None — not in the production bundle. For a test-runner bump, the test suite running green under the new version *is* the smoke test. |
+| **Major** (`X.y.z`) | Do **not** merge on green alone | Read the changelog for breaking changes; map each against how we actually use the dependency. For GitHub Actions majors, check the workflow files. Consider holding for a scheduled migration. Applies to dev-only deps too — a tooling major (e.g. eslint) can break lint/build rules just as easily as a runtime major. |
+| **Dev-only, patch/minor** (e.g. test runner, types) | Safe to merge on green `verify` | None — not in the production bundle. For a test-runner bump, the test suite running green under the new version *is* the smoke test. Dev-only does **not** exempt a major bump from the Major row above. |
 
 Family majors for core libraries (react, next, supabase, radix, tailwind, etc.) are held
 in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs.

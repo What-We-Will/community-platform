@@ -56,12 +56,15 @@ elif [[ "$update_type" == *semver-patch* ]]; then
   verdict="safe"
   reason="patch bump — safe to merge on a green verify check"
 elif [[ "$update_type" == *semver-minor* ]]; then
-  if [[ "$dependency_type" == "direct:development" ]]; then
-    verdict="safe"
-    reason="minor bump, dev-only dependency — green tests are the smoke test"
-  elif is_ui_surface; then
+  # UI-surface check comes first: rendered-output risk doesn't depend on
+  # whether the package happens to be a devDependency (tailwindcss and
+  # tw-animate-css are build-time devDependencies but still UI-surface).
+  if is_ui_surface; then
     verdict="needs-review"
     reason="minor bump to a UI-surface package — do a quick visual smoke before merging"
+  elif [[ "$dependency_type" == "direct:development" ]]; then
+    verdict="safe"
+    reason="minor bump, dev-only dependency — green tests are the smoke test"
   else
     verdict="safe"
     reason="minor bump — safe to merge on a green verify check"
