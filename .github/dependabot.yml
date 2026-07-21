@@ -168,6 +168,11 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    # TEMPORARY — revert once the triage trigger is settled. Points this
+    # ecosystem's PRs at ci/pr-target-test so the pull_request_target triage
+    # workflow can be exercised against a real Dependabot PR without landing a
+    # write-token workflow on main. npm is deliberately left on main.
+    target-branch: ci/pr-target-test
     schedule:
       interval: weekly
       day: monday
