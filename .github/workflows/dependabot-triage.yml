@@ -2,8 +2,13 @@ name: Dependabot PR triage
 
 # Automates reading the decision matrix in
 # docs/runbooks/validating-dependency-updates.md: classifies each Dependabot
-# PR as safe-to-merge or needs-review and posts the verdict as a comment +
-# label. Does NOT merge anything — auto-merge is a deliberate later step.
+# PR as safe-to-merge or needs-review, then writes the verdict to an artifact.
+# Does NOT post anything itself — GitHub caps Dependabot-triggered pull_request
+# runs to a read-only GITHUB_TOKEN regardless of the declared `permissions:`
+# block (confirmed empirically: a write here 403s even with issues: write
+# declared). dependabot-triage-post.yml, triggered by workflow_run, reads this
+# artifact and does the actual comment/label write with a normal token — see
+# that file for why workflow_run escapes the restriction.
 
 on:
   pull_request:
@@ -11,14 +16,13 @@ on:
 
 # Dependabot re-pushes (e.g. rebasing after a base-branch update) fire
 # `synchronize` in quick succession; without this, overlapping runs can race
-# on the same PR comment (both miss the marker, both create a duplicate).
+# on the same result artifact.
 concurrency:
   group: dependabot-triage-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   triage:
@@ -27,7 +31,6 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
-      issues: write
 
     steps:
       - name: Checkout
@@ -46,80 +49,28 @@ jobs:
           PACKAGE_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
         run: scripts/ci/classify-dependabot-pr.sh
 
-      # ready to merge / status: needs-review already exist as labels used by
-      # the project's manual triage workflow — reused here rather than adding
-      # a parallel bot-only label scheme.
-      - name: Post verdict comment and label
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+      - name: Write triage result artifact
         env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           VERDICT: ${{ steps.classify.outputs.verdict }}
           REASON: ${{ steps.classify.outputs.reason }}
           DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
           DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
+        run: |
+          jq -n \
+            --argjson prNumber "$PR_NUMBER" \
+            --arg verdict "$VERDICT" \
+            --arg reason "$REASON" \
+            --arg dependencyNames "$DEPENDENCY_NAMES" \
+            --arg updateType "$UPDATE_TYPE" \
+            --arg dependencyType "$DEPENDENCY_TYPE" \
+            '{prNumber: $prNumber, verdict: $verdict, reason: $reason, dependencyNames: $dependencyNames, updateType: $updateType, dependencyType: $dependencyType}' \
+            > triage-result.json
+
+      - name: Upload triage result
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          script: |
-            const marker = '<!-- dependabot-triage:verdict -->';
-            const verdict = process.env.VERDICT;
-            const reason = process.env.REASON;
-            const isSafe = verdict === 'safe';
-
-            const runbookUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/main/docs/runbooks/validating-dependency-updates.md`;
-
-            const body = [
-              '### 🤖 Dependency update triage',
-              '',
-              `**Verdict:** ${isSafe ? '✅ Safe to merge' : '⚠️ Needs review'}`,
-              `**Package(s):** \`${process.env.DEPENDENCY_NAMES}\``,
-              `**Bump:** ${process.env.UPDATE_TYPE} (${process.env.DEPENDENCY_TYPE})`,
-              `**Why:** ${reason}`,
-              '',
-              `_Per the [decision matrix](${runbookUrl})._`,
-              '',
-              marker,
-            ].join('\n');
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              per_page: 100,
-            });
-            const existing = comments.find((c) => c.body && c.body.includes(marker));
-
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
-
-            const addLabel = isSafe ? 'ready to merge' : 'status: needs-review';
-            const removeLabel = isSafe ? 'status: needs-review' : 'ready to merge';
-
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: [addLabel],
-            });
-
-            try {
-              await github.rest.issues.removeLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                name: removeLabel,
-              });
-            } catch (err) {
-              if (err.status !== 404) throw err;
-            }
+          name: dependabot-triage-result
+          path: triage-result.json
+          retention-days: 1
