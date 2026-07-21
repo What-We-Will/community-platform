@@ -36,6 +36,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      # TEMPORARY DIAGNOSTIC — remove once the result is recorded.
+      # Establishes which secret store a Dependabot-triggered run can actually
+      # read, which decides where a GitHub App's credentials have to live. Tests
+      # emptiness only and never echoes a value. Delete this step and both
+      # CANARY_* secrets once the answer is known.
+      - name: Secret availability canary
+        env:
+          A: ${{ secrets.CANARY_ACTIONS }}
+          D: ${{ secrets.CANARY_DEPENDABOT }}
+          ACTOR: ${{ github.actor }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          if [ -n "$A" ]; then echo "ACTIONS secret:    PRESENT"; else echo "ACTIONS secret:    EMPTY"; fi
+          if [ -n "$D" ]; then echo "DEPENDABOT secret: PRESENT"; else echo "DEPENDABOT secret: EMPTY"; fi
+          echo "actor:             $ACTOR"
+          echo "triggering_actor:  $TRIGGERING_ACTOR"
+          echo "event:             $GITHUB_EVENT_NAME"
+
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
