@@ -36,9 +36,6 @@ jobs:
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
-        with:
-          alert-lookup: true
-          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Classify
         id: classify
@@ -47,8 +44,6 @@ jobs:
           DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
           DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
           PACKAGE_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
-          ALERT_STATE: ${{ steps.metadata.outputs.alert-state }}
-          GHSA_ID: ${{ steps.metadata.outputs.ghsa-id }}
         run: scripts/ci/classify-dependabot-pr.sh
 
       # ready to merge / status: needs-review already exist as labels used by

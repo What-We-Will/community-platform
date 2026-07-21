@@ -23,9 +23,14 @@ weekly batch quickly.
 
 `dependabot-triage.yml` runs on every Dependabot PR and mirrors the matrix below:
 `scripts/ci/classify-dependabot-pr.sh` reads `dependabot/fetch-metadata` output (bump type,
-dependency type, package names, security-advisory info) and posts a verdict comment plus a
-label (`ready to merge` / `status: needs-review`). It re-runs and updates its own comment on
-every push, so the label always reflects the latest commit on the PR.
+dependency type, package names) and posts a verdict comment plus a label (`ready to merge` /
+`status: needs-review`). It re-runs and updates its own comment on every push, so the label
+always reflects the latest commit on the PR.
+
+It does not distinguish security updates from version updates — `alert-lookup` would need a
+PAT/App token (the default `GITHUB_TOKEN` can't read Dependabot alerts), and a major bump is
+`needs-review` either way, so it wasn't worth the extra credential to manage. A Dependabot
+security-update PR still gets triaged by bump type like any other.
 
 What it does **not** do (yet): merge anything, or update a stale branch before merging.
 Auto-merge is a deliberate later step — see the "Ready to merge" label as "safe per the
