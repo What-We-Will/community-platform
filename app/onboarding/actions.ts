@@ -135,7 +135,9 @@ async function notifyAdminOfNewApplication({
     await transporter.sendMail({
       from: `What We Will <${gmailUser}>`,
       to: adminEmail,
-      subject: `[New Application] ${escapeHtml(displayName.replace(/[\r\n]/g, ""))} is requesting membership`,
+      // Subject is a plain-text header — strip CRLF to block header injection,
+      // but do not HTML-escape: entities would render literally in the inbox.
+      subject: `[New Application] ${displayName.replace(/[\r\n]/g, "")} is requesting membership`,
       html: `
         <h2>New Membership Application</h2>
         <p><strong>Name:</strong> ${escapeHtml(displayName)}</p>
