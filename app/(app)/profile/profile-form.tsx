@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { updateProfile, updateAvatarUrl, updateResumePath, getResumeSignedUrl } from "./actions";
+import { updateProfile, updateAvatarUrl, updateResumePath, getResumeSignedUrl, deleteResume } from "./actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ResumeUpload } from "@/components/profile/ResumeUpload";
 import { Button } from "@/components/ui/button";
@@ -258,6 +258,15 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             onViewClick={async () => {
               const url = await getResumeSignedUrl();
               if (url) window.open(url, "_blank");
+            }}
+            onDeleteClick={async () => {
+              const res = await deleteResume();
+              if (!res.error) {
+                setSuccess(true);
+                setTimeout(() => setSuccess(false), 3000);
+                router.refresh();
+              }
+              return res;
             }}
           />
             </div>

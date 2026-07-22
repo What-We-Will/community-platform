@@ -107,6 +107,42 @@ export async function updateResumePath(resumePath: string): Promise<{ error?: st
   return {};
 }
 
+export async function deleteResume(): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { data: profile, error: selectError } = await supabase
+    .from("profiles")
+    .select("resume_path")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (selectError) return { error: selectError.message };
+  if (!profile?.resume_path) return {};
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ resume_path: null })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  const { data: removed, error: storageError } = await supabase.storage
+    .from("resumes")
+    .remove([profile.resume_path]);
+
+  if (storageError || removed?.length === 0) {
+    console.error(
+      "[deleteResume] storage cleanup incomplete:",
+      storageError?.message ?? "no objects removed"
+    );
+  }
+
+  revalidatePath("/profile");
+  return {};
+}
+
 export async function getResumeSignedUrl(): Promise<string | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
