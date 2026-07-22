@@ -55,7 +55,8 @@ export function ResumeUpload({
     try {
       const result = await onDeleteClick();
       if (result?.error) setError(result.error);
-    } catch {
+    } catch (err) {
+      console.error("[ResumeUpload] failed to delete resume:", err);
       setError("Failed to delete resume. Please try again.");
     } finally {
       setDeleting(false);
