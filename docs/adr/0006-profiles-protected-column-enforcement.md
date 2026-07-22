@@ -1,6 +1,7 @@
 # ADR-0006 — Profiles protected-column enforcement
 
 **Status:** Proposed 2026-07-21
+
 **TL;DR:** Privilege-bearing columns on `public.profiles` (`role`, `approval_status`) are protected by a `BEFORE UPDATE` trigger rather than a column `REVOKE`; the canonical way to write these columns is a `service_role` connection (`createServiceClient()`). The automated regression test is deferred until the project has database-layer test infrastructure.
 
 **Author:** @tonyrosario
