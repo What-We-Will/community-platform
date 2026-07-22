@@ -47,3 +47,10 @@ If you hit migration pain (collision, semantic conflict, contention on the share
 ## CI gate
 
 Filename collisions against `origin/main` are enforced by [`scripts/ci/check-migration-collisions.sh`](../../scripts/ci/check-migration-collisions.sh), invoked from [`.github/workflows/preview.yml`](../../.github/workflows/preview.yml) on every PR.
+
+## Shared preview DB & `db push --include-all`
+
+The preview build applies each migration-touching PR's migrations to a **single shared preview Supabase project** (per-PR Branching is deferred — see [ADR-0002](../../docs/adr/0002-migrations-timestamps-and-local-first.md)). Two consequences:
+
+- **CI runs `supabase db push --include-all`, and the flag is load-bearing.** Because the preview DB is shared, migrations arrive in *merge* order, not timestamp order — a PR authored earlier but previewed later sorts *behind* migrations already applied there. Plain `db push` refuses an out-of-order pending migration; `--include-all` forces it. Don't remove the flag without replacing the shared preview DB.
+- **Don't rename or drop a migration that has already reached preview.** Its version stays recorded in the preview history table with no matching local file, and the next PR's `db push` fails with *"Remote migration versions not found in local migrations directory."* `--include-all` does **not** fix this — repair the preview project with `supabase migration repair --status reverted <version>` (preview only; production is unaffected — `production.yml` does not push migrations).
