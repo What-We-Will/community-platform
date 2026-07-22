@@ -36,23 +36,50 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      # TEMPORARY DIAGNOSTIC — remove once the result is recorded.
-      # Establishes which secret store a Dependabot-triggered run can actually
-      # read, which decides where a GitHub App's credentials have to live. Tests
-      # emptiness only and never echoes a value. Delete this step and both
-      # CANARY_* secrets once the answer is known.
-      - name: Secret availability canary
+      # TEMPORARY DIAGNOSTIC — replaces the secret-availability canary, whose
+      # question is answered: Actions secrets are EMPTY on Dependabot runs,
+      # Dependabot secrets are readable.
+      #
+      # This isolates the one remaining unknown before any real wiring —
+      # actions/create-github-app-token#235 reports minting failing with
+      # "Integration not found" on Dependabot-triggered runs specifically. If
+      # that bites here, the GitHub App approach is dead and the fallback is a
+      # PAT. continue-on-error keeps the failure diagnosable instead of
+      # collapsing the job before the report step runs.
+      - name: Mint App token
+        id: apptoken
+        continue-on-error: true
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      # Reports presence only — no secret or token value is ever echoed. The
+      # API probe is a read, so a green result proves authentication without
+      # touching the PR.
+      - name: Report minting result
         env:
-          A: ${{ secrets.CANARY_ACTIONS }}
-          D: ${{ secrets.CANARY_DEPENDABOT }}
-          ACTOR: ${{ github.actor }}
-          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          ID: ${{ secrets.APP_ID }}
+          KEY: ${{ secrets.APP_PRIVATE_KEY }}
+          TOKEN: ${{ steps.apptoken.outputs.token }}
+          OUTCOME: ${{ steps.apptoken.outcome }}
+          GH_TOKEN: ${{ steps.apptoken.outputs.token }}
+          REPO: ${{ github.repository }}
         run: |
-          if [ -n "$A" ]; then echo "ACTIONS secret:    PRESENT"; else echo "ACTIONS secret:    EMPTY"; fi
-          if [ -n "$D" ]; then echo "DEPENDABOT secret: PRESENT"; else echo "DEPENDABOT secret: EMPTY"; fi
-          echo "actor:             $ACTOR"
-          echo "triggering_actor:  $TRIGGERING_ACTOR"
-          echo "event:             $GITHUB_EVENT_NAME"
+          if [ -n "$ID" ];  then echo "APP_ID secret:      PRESENT"; else echo "APP_ID secret:      EMPTY"; fi
+          if [ -n "$KEY" ]; then echo "APP_PRIVATE_KEY:    PRESENT"; else echo "APP_PRIVATE_KEY:    EMPTY"; fi
+          echo "mint step outcome:  $OUTCOME"
+          if [ -n "$TOKEN" ]; then echo "minted token:       PRESENT"; else echo "minted token:       EMPTY"; fi
+
+          if [ -z "$TOKEN" ]; then
+            echo "api probe:          SKIPPED (no token)"
+            exit 0
+          fi
+          if gh api "repos/$REPO" --jq .full_name >/dev/null 2>&1; then
+            echo "api probe:          OK (token authenticates)"
+          else
+            echo "api probe:          FAILED (token minted but rejected)"
+          fi
 
       - name: Fetch Dependabot metadata
         id: metadata
