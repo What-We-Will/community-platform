@@ -138,9 +138,21 @@ describe("completeOnboarding — requires at least one verification link", () =>
   });
 });
 
-describe("completeOnboarding — rejects non-http(s) or malformed URLs", () => {
+describe("completeOnboarding — rejects non-https or malformed URLs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("rejects an http: URL — the admin email renders these as live hrefs", async () => {
+    const upsert = mockSupabaseClient();
+
+    const result = await completeOnboarding({
+      ...baseInput,
+      linkedin_url: "http://linkedin.com/in/jane",
+    });
+
+    expect(result.error).toBeDefined();
+    expect(upsert).not.toHaveBeenCalled();
   });
 
   it("rejects a javascript: URL", async () => {

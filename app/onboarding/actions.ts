@@ -5,21 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
 import { safeTimezone } from "@/lib/utils/timezone";
 import { escapeHtml } from "@/lib/utils/html";
+import { validateHttpsUrl } from "@/lib/utils/url";
 
 export type OnboardingResult = { error?: string };
-
-function validateHttpUrl(url: string | null): string | null {
-  if (!url) return null;
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return "Please provide a valid URL starting with http:// or https://";
-    }
-  } catch {
-    return "Please provide a valid URL (e.g. https://github.com/username)";
-  }
-  return null;
-}
 
 export async function completeOnboarding(
   data: {
@@ -58,9 +46,9 @@ export async function completeOnboarding(
   }
 
   const urlValidationErrors = [
-    validateHttpUrl(linkedinUrl),
-    validateHttpUrl(githubUrl),
-    validateHttpUrl(portfolioUrl),
+    validateHttpsUrl(linkedinUrl),
+    validateHttpsUrl(githubUrl),
+    validateHttpsUrl(portfolioUrl),
   ].filter((e): e is string => e !== null);
   if (urlValidationErrors.length > 0) {
     return { error: urlValidationErrors[0] };
