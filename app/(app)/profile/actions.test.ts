@@ -73,6 +73,7 @@ describe("updateProfile — revalidates affected pages", () => {
 interface DeleteMockOptions {
   user?: { id: string } | null;
   resumePath?: string | null;
+  selectError?: { message: string } | null;
   updateError?: { message: string } | null;
   removeResult?: { data: unknown[] | null; error: { message: string } | null };
 }
@@ -80,13 +81,17 @@ interface DeleteMockOptions {
 function mockSupabaseForDelete({
   user = { id: "user-1" },
   resumePath = "user-1/resume.pdf",
+  selectError = null,
   updateError = null,
   removeResult = { data: [{ name: "resume.pdf" }], error: null },
 }: DeleteMockOptions = {}) {
   const remove = vi.fn().mockResolvedValue(removeResult);
   const maybeSingle = vi
     .fn()
-    .mockResolvedValue({ data: resumePath ? { resume_path: resumePath } : null });
+    .mockResolvedValue({
+      data: resumePath ? { resume_path: resumePath } : null,
+      error: selectError,
+    });
   const select = vi.fn().mockReturnValue({ eq: vi.fn().mockReturnValue({ maybeSingle }) });
   const update = vi.fn().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: updateError }) });
 
@@ -125,6 +130,21 @@ describe("deleteResume", () => {
     const result = await deleteResume();
 
     expect(result).toEqual({});
+    expect(remove).not.toHaveBeenCalled();
+    expect(update).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when the profile lookup fails", async () => {
+    const { supabase, remove, update } = mockSupabaseForDelete({
+      resumePath: null,
+      selectError: { message: "lookup failed" },
+    });
+    mockCreateClient.mockResolvedValue(supabase);
+
+    const result = await deleteResume();
+
+    expect(result).toEqual({ error: "lookup failed" });
     expect(remove).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
     expect(mockRevalidatePath).not.toHaveBeenCalled();

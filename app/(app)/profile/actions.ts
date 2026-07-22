@@ -112,12 +112,13 @@ export async function deleteResume(): Promise<{ error?: string }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
-  const { data: profile } = await supabase
+  const { data: profile, error: selectError } = await supabase
     .from("profiles")
     .select("resume_path")
     .eq("id", user.id)
     .maybeSingle();
 
+  if (selectError) return { error: selectError.message };
   if (!profile?.resume_path) return {};
 
   const { error } = await supabase
