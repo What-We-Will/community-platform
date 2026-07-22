@@ -1,22 +1,22 @@
 name: Dependabot PR triage
 
-# Automates reading the decision matrix in
-# docs/runbooks/validating-dependency-updates.md: classifies each Dependabot
-# PR as safe-to-merge or needs-review, then writes the verdict to an artifact.
-# Does NOT post anything itself — GitHub caps Dependabot-triggered pull_request
-# runs to a read-only GITHUB_TOKEN regardless of the declared `permissions:`
-# block (confirmed empirically: a write here 403s even with issues: write
-# declared). dependabot-triage-post.yml, triggered by workflow_run, reads this
-# artifact and does the actual comment/label write with a normal token — see
-# that file for why workflow_run escapes the restriction.
+# Decision matrix lives in docs/runbooks/validating-dependency-updates.md.
+#
+# Writes go through a GitHub App token rather than GITHUB_TOKEN: GitHub treats
+# Dependabot-triggered runs as fork runs, where `permissions:` can only adjust
+# read scopes and any write 403s regardless of what is declared. The App's
+# credentials must sit in the Dependabot secret store — Actions secrets resolve
+# to empty on these runs.
+#
+# pull_request_target would also lift the ceiling. ADR-0003 prohibits it.
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
 
 # Dependabot re-pushes (e.g. rebasing after a base-branch update) fire
-# `synchronize` in quick succession; without this, overlapping runs can race
-# on the same result artifact.
+# `synchronize` in quick succession; without this, overlapping runs can race on
+# the same comment.
 concurrency:
   group: dependabot-triage-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -36,50 +36,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      # TEMPORARY DIAGNOSTIC — replaces the secret-availability canary, whose
-      # question is answered: Actions secrets are EMPTY on Dependabot runs,
-      # Dependabot secrets are readable.
-      #
-      # This isolates the one remaining unknown before any real wiring —
-      # actions/create-github-app-token#235 reports minting failing with
-      # "Integration not found" on Dependabot-triggered runs specifically. If
-      # that bites here, the GitHub App approach is dead and the fallback is a
-      # PAT. continue-on-error keeps the failure diagnosable instead of
-      # collapsing the job before the report step runs.
+      # Capped here as well as at the App installation, so broadening the App for
+      # an unrelated reason can't silently widen this workflow. Requesting a
+      # permission the installation lacks fails the mint, which is intended.
       - name: Mint App token
         id: apptoken
-        continue-on-error: true
         uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
-      # Reports presence only — no secret or token value is ever echoed. The
-      # API probe is a read, so a green result proves authentication without
-      # touching the PR.
-      - name: Report minting result
-        env:
-          ID: ${{ secrets.APP_ID }}
-          KEY: ${{ secrets.APP_PRIVATE_KEY }}
-          TOKEN: ${{ steps.apptoken.outputs.token }}
-          OUTCOME: ${{ steps.apptoken.outcome }}
-          GH_TOKEN: ${{ steps.apptoken.outputs.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          if [ -n "$ID" ];  then echo "APP_ID secret:      PRESENT"; else echo "APP_ID secret:      EMPTY"; fi
-          if [ -n "$KEY" ]; then echo "APP_PRIVATE_KEY:    PRESENT"; else echo "APP_PRIVATE_KEY:    EMPTY"; fi
-          echo "mint step outcome:  $OUTCOME"
-          if [ -n "$TOKEN" ]; then echo "minted token:       PRESENT"; else echo "minted token:       EMPTY"; fi
-
-          if [ -z "$TOKEN" ]; then
-            echo "api probe:          SKIPPED (no token)"
-            exit 0
-          fi
-          if gh api "repos/$REPO" --jq .full_name >/dev/null 2>&1; then
-            echo "api probe:          OK (token authenticates)"
-          else
-            echo "api probe:          FAILED (token minted but rejected)"
-          fi
+          permission-issues: write
+          permission-pull-requests: write
 
       - name: Fetch Dependabot metadata
         id: metadata
@@ -94,28 +61,93 @@ jobs:
           PACKAGE_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
         run: scripts/ci/classify-dependabot-pr.sh
 
-      - name: Write triage result artifact
+      # Posting failures warn rather than fail the job: this validates nothing
+      # about the update, so a transient API hiccup shouldn't red-X the PR. Same
+      # reasoning as the Slack notify steps in preview.yml.
+      #
+      # Labels are the ones the manual triage workflow already uses, not a
+      # parallel bot-only scheme.
+      - name: Post verdict comment and label
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           VERDICT: ${{ steps.classify.outputs.verdict }}
           REASON: ${{ steps.classify.outputs.reason }}
           DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
           DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
-        run: |
-          jq -n \
-            --argjson prNumber "$PR_NUMBER" \
-            --arg verdict "$VERDICT" \
-            --arg reason "$REASON" \
-            --arg dependencyNames "$DEPENDENCY_NAMES" \
-            --arg updateType "$UPDATE_TYPE" \
-            --arg dependencyType "$DEPENDENCY_TYPE" \
-            '{prNumber: $prNumber, verdict: $verdict, reason: $reason, dependencyNames: $dependencyNames, updateType: $updateType, dependencyType: $dependencyType}' \
-            > triage-result.json
-
-      - name: Upload triage result
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: dependabot-triage-result
-          path: triage-result.json
-          retention-days: 1
+          github-token: ${{ steps.apptoken.outputs.token }}
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const marker = '<!-- dependabot-triage:verdict -->';
+            const isSafe = process.env.VERDICT === 'safe';
+
+            const runbookUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/main/docs/runbooks/validating-dependency-updates.md`;
+
+            const body = [
+              '### 🤖 Dependency update triage',
+              '',
+              `**Verdict:** ${isSafe ? '✅ Safe to merge' : '⚠️ Needs review'}`,
+              `**Package(s):** \`${process.env.DEPENDENCY_NAMES}\``,
+              `**Bump:** ${process.env.UPDATE_TYPE} (${process.env.DEPENDENCY_TYPE})`,
+              `**Why:** ${process.env.REASON}`,
+              '',
+              `_Per the [decision matrix](${runbookUrl})._`,
+              '',
+              marker,
+            ].join('\n');
+
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+              });
+              const existing = comments.find((c) => c.body && c.body.includes(marker));
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body,
+                });
+              }
+            } catch (err) {
+              core.warning(`Could not post triage comment on PR #${prNumber}: ${err.message}`);
+            }
+
+            const addLabel = isSafe ? 'ready to merge' : 'status: needs-review';
+            const removeLabel = isSafe ? 'status: needs-review' : 'ready to merge';
+
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: [addLabel],
+              });
+            } catch (err) {
+              core.warning(`Could not add label "${addLabel}" on PR #${prNumber}: ${err.message}`);
+            }
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                name: removeLabel,
+              });
+            } catch (err) {
+              if (err.status !== 404) {
+                core.warning(`Could not remove label "${removeLabel}" on PR #${prNumber}: ${err.message}`);
+              }
+            }
