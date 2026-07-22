@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { safeTimezone } from "@/lib/utils/timezone";
+import { validateHttpsUrl } from "@/lib/utils/url";
 
 export type ProfileUpdateResult = { error?: string };
 
@@ -28,6 +29,15 @@ export async function updateProfile(
 
   if (!user) {
     return { error: "You must be signed in to update your profile." };
+  }
+
+  const urlValidationErrors = [
+    validateHttpsUrl(data.linkedin_url),
+    validateHttpsUrl(data.github_url),
+    validateHttpsUrl(data.portfolio_url),
+  ].filter((e): e is string => e !== null);
+  if (urlValidationErrors.length > 0) {
+    return { error: urlValidationErrors[0] };
   }
 
   // Upsert: insert if profile doesn't exist, otherwise update
