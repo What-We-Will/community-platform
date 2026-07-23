@@ -130,6 +130,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | @tonyrosario |
 | [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | @tonyrosario |
 | [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | @tonyrosario |
+| [0007](./0007-url-validation-over-html-sanitizer.md) | URL scheme validation instead of an HTML-sanitizer library for user-submitted links | Proposed 2026-07-22 | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay

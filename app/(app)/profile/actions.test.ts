@@ -216,3 +216,80 @@ describe("deleteResume", () => {
     consoleError.mockRestore();
   });
 });
+
+describe("updateProfile — rejects non-https verification links", () => {
+  // Onboarding already enforces https; without the same rule here a member
+  // could store any scheme by editing their profile afterward.
+  const mockAuthedClient = () => {
+    const upsert = vi.fn().mockResolvedValue({ error: null });
+    mockCreateClient.mockResolvedValue(
+      asClient({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: { id: "user-1" } } }),
+        },
+        from: vi.fn().mockReturnValue({ upsert }),
+      })
+    );
+    return upsert;
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejects an http: linkedin_url without writing", async () => {
+    const upsert = mockAuthedClient();
+
+    const result = await updateProfile({
+      ...validInput,
+      linkedin_url: "http://linkedin.com/in/jane",
+    });
+
+    expect(result.error).toBeDefined();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a javascript: github_url without writing", async () => {
+    const upsert = mockAuthedClient();
+
+    const result = await updateProfile({
+      ...validInput,
+      github_url: "javascript:alert(1)",
+    });
+
+    expect(result.error).toBeDefined();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("rejects a malformed portfolio_url without writing", async () => {
+    const upsert = mockAuthedClient();
+
+    const result = await updateProfile({
+      ...validInput,
+      portfolio_url: "not-a-url",
+    });
+
+    expect(result.error).toBeDefined();
+    expect(upsert).not.toHaveBeenCalled();
+  });
+
+  it("accepts https links and clears omitted ones", async () => {
+    const upsert = mockAuthedClient();
+
+    const result = await updateProfile({
+      ...validInput,
+      linkedin_url: "https://linkedin.com/in/jane",
+      github_url: "https://github.com/jane",
+    });
+
+    expect(result).toEqual({});
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        linkedin_url: "https://linkedin.com/in/jane",
+        github_url: "https://github.com/jane",
+        portfolio_url: null,
+      }),
+      { onConflict: "id" }
+    );
+  });
+});

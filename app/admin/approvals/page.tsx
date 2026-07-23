@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { approveUser, rejectUser } from "./actions";
-import { ExternalLink, ArrowLeft } from "lucide-react";
+import { isHttpsUrl } from "@/lib/utils/url";
+import { ArrowLeft, Linkedin, Github, Globe } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +19,7 @@ export default async function ApprovalsPage() {
 
   const { data: pendingProfiles } = await supabase
     .from("profiles")
-    .select("id, display_name, linkedin_url, created_at")
+    .select("id, display_name, linkedin_url, github_url, portfolio_url, created_at")
     .eq("approval_status", "pending")
     .order("created_at", { ascending: true });
 
@@ -39,7 +40,7 @@ export default async function ApprovalsPage() {
         <div>
           <h1 className="text-2xl font-semibold">Pending Approvals</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Review LinkedIn profiles and approve tech workers to join the platform.
+            Review applicants&apos; LinkedIn, GitHub, or website links and approve tech workers to join the platform.
           </p>
         </div>
         <Link href="/dashboard">
@@ -58,8 +59,20 @@ export default async function ApprovalsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {profiles.map((profile) => (
-            <Card key={profile.id}>
+          {profiles.map((profile) => {
+            const links = [
+              { url: profile.linkedin_url, label: "LinkedIn", icon: Linkedin },
+              { url: profile.github_url, label: "GitHub", icon: Github },
+              { url: profile.portfolio_url, label: "Website", icon: Globe },
+            ].filter(
+              // Read-time guard: stored rows predate write-path validation and
+              // no DB constraint enforces the scheme.
+              (link): link is typeof link & { url: string } =>
+                Boolean(link.url) && isHttpsUrl(link.url)
+            );
+
+            return (
+              <Card key={profile.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
@@ -72,18 +85,23 @@ export default async function ApprovalsPage() {
                 </div>
               </CardHeader>
               <CardContent className="flex items-center justify-between gap-4 pt-0">
-                {profile.linkedin_url ? (
-                  <a
-                    href={profile.linkedin_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
-                  >
-                    <ExternalLink className="size-3.5" />
-                    View LinkedIn
-                  </a>
+                {links.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    {links.map((link) => (
+                      <a
+                        key={link.label}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
+                      >
+                        <link.icon className="size-3.5" />
+                        {link.label}
+                      </a>
+                    ))}
+                  </div>
                 ) : (
-                  <span className="text-sm text-muted-foreground">No LinkedIn provided</span>
+                  <span className="text-sm text-muted-foreground">No verification link provided</span>
                 )}
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
@@ -106,8 +124,9 @@ export default async function ApprovalsPage() {
                   </form>
                 </div>
               </CardContent>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
