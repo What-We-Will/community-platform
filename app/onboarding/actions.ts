@@ -18,6 +18,7 @@ export async function completeOnboarding(
     open_to_referrals: boolean;
     linkedin_url?: string | null;
     timezone?: string;
+    guidelines_accepted: boolean;
   }
 ): Promise<OnboardingResult> {
   const supabase = await createClient();
@@ -34,6 +35,12 @@ export async function completeOnboarding(
     return { error: "LinkedIn URL is required to verify your background." };
   }
 
+  if (!data.guidelines_accepted) {
+    return {
+      error: "You must agree to the Community Guidelines to complete onboarding.",
+    };
+  }
+
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
@@ -48,6 +55,7 @@ export async function completeOnboarding(
       timezone: safeTimezone(data.timezone),
       is_onboarded: true,
       approval_status: "pending",
+      guidelines_accepted_at: new Date().toISOString(),
     },
     { onConflict: "id" }
   );
