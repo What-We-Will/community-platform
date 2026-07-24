@@ -10,7 +10,7 @@ import { navProgramLinks } from "@/lib/programs";
 import { DEFAULT_SITE_URL, getSiteUrl } from "@/lib/utils/get-site-url";
 
 const DONATE_URL =
-  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will-fund-our-organizers";
+  "https://secure.givelively.org/donate/equity-tech-collective/what-we-will";
 
 // Server-safe initial value — must match what getSiteUrl() returns on the server
 // so the first client render is identical to the SSR HTML (avoids hydration mismatch).
