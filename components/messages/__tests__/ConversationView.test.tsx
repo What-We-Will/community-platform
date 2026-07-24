@@ -109,6 +109,7 @@ const OTHER_USER: Profile = {
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
   last_seen_at: null,
+  guidelines_accepted_at: null,
 };
 
 function simulateRealtimeInsert(id: string, content: string) {

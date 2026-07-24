@@ -68,6 +68,7 @@ function buildSenderProfile(user: CurrentUser): Profile {
     approval_status: "approved",
     role: "member",
     last_seen_at: null,
+    guidelines_accepted_at: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
