@@ -139,7 +139,7 @@ jobs:
           node scripts/scan-hidden-chars.mjs "${files[@]}"
 
       - name: Audit dependencies
-        run: npm ci --ignore-scripts && npm audit --audit-level=high
+        run: npm ci --ignore-scripts && node scripts/ci/audit-with-allowlist.mjs
 
   # Every secret-bearing step lives here. The job-level `if:` below is the gate;
   # `needs: verify` makes the deploy wait on green checks and exposes the migrations
