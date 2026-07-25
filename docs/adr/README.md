@@ -81,6 +81,12 @@ After an ADR is merged as `Accepted`, the only allowed edits are status transiti
 
 ---
 
+## Partial amendments
+
+When a later ADR revises a bounded element of an accepted ADR while leaving the rest in force, the earlier ADR remains `Accepted`; do not use `Superseded` for a partial change. The later ADR must name the amended boundary, and the earlier ADR gains a `Current application` note linking to the later record. Add the later ADR to the earlier record's `Related ADRs` index cell. These are metadata links, not a rewrite of the original decision.
+
+---
+
 ## Platform leads
 
 Three leads share sponsorship duty. Route a draft ADR to the lead whose area it most clearly touches; if the area is unclear or cross-cutting, ping any of them and they'll route it.
@@ -123,14 +129,14 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 
 ## Index
 
-| # | Title | Status | Sponsoring Lead |
-|---|---|---|---|
-| [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | @tonyrosario |
-| [0002](./0002-migrations-timestamps-and-local-first.md) | Timestamp-based migrations and local-first authoring | Accepted 2026-05-19 | @timchaffee |
-| [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | @tonyrosario |
-| [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | @tonyrosario |
-| [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | @tonyrosario |
-| [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | Time-boxed waivers for unfixable advisories | Proposed 2026-07-25 | @tonyrosario |
+| # | Title | Status | Related ADRs | Sponsoring Lead |
+|---|---|---|---|---|
+| [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | — | @tonyrosario |
+| [0002](./0002-migrations-timestamps-and-local-first.md) | Timestamp-based migrations and local-first authoring | Accepted 2026-05-19 | — | @timchaffee |
+| [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | Audit step amended by [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
+| [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | — | @tonyrosario |
+| [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | — | @tonyrosario |
+| [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | Time-boxed waivers for unfixable advisories | Proposed 2026-07-25 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay

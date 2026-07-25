@@ -13,14 +13,12 @@ export const ALLOWLIST = [
     id: 'GHSA-mh99-v99m-4gvg',
     expires: '2026-10-23',
     reason:
-      'brace-expansion DoS via unbounded expansion. Reachable only through ' +
+      'brace-expansion DoS via unbounded expansion. Affected installed paths are rooted in ' +
       'devDependencies (eslint, eslint-config-next, @vitest/eslint-plugin, shadcn) ' +
-      'and only by feeding hostile glob patterns to lint tooling; no production ' +
-      'code path. The sole patched release, 5.0.8, changed its CommonJS export ' +
-      'from a bare function to a namespace object, so it is not drop-in for the ' +
-      'minimatch 3.x/9.x consumers in the tree — an `overrides` pin breaks eslint ' +
-      'outright. eslint@10 neither clears the advisory (the eslint plugins carry ' +
-      'their own minimatch) nor keeps lint working. Blocked on upstream.',
+      'and relevant to attacker-controlled glob input in CI and development tooling. ' +
+      'This is a time-boxed exception, not a production-reachability conclusion. ' +
+      'See docs/adr/0009-time-boxed-waivers-for-unfixable-advisories.md for the ' +
+      'decision, expiry, and required re-evaluation. A compatible remediation remains required.',
   },
 ];
 

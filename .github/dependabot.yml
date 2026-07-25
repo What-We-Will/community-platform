@@ -109,12 +109,15 @@ updates:
           - minor
           - patch
     ignore:
-      # Held family majors — upgrade as scheduled migrations, not bot PRs.
-      # Scoped to semver-major so SECURITY updates still flow. Review quarterly.
+      # Held major upgrades — handle as scheduled migrations, not bot PRs.
+      # Scoped to semver-major so SECURITY updates still flow. Review in January and July.
       - dependency-name: next
         update-types:
           - version-update:semver-major
       - dependency-name: eslint-config-next
+        update-types:
+          - version-update:semver-major
+      - dependency-name: eslint
         update-types:
           - version-update:semver-major
       - dependency-name: react
