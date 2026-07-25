@@ -136,7 +136,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | Audit step amended by [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
 | [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | — | @tonyrosario |
 | [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | — | @tonyrosario |
-| [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | Time-boxed waivers for unfixable advisories | Proposed 2026-07-25 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) | @tonyrosario |
+| [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | Time-boxed waivers for unfixable advisories | Accepted 2026-07-25 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay
