@@ -5,6 +5,8 @@
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
 
+> **Current application:** [ADR-0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) amends the audit substep below. The other security-scan and workflow-hardening decisions in this record remain in force.
+
 ## Context
 
 The project accepts contributions from outside collaborators, including AI-agent contributions covered by `AI_POLICY.md`. The policy governs how AI tooling may be used in contributions, but until now there was no enforcement chain in CI to back it. PR #132 — a fork-authored AI-agent contribution — surfaced that gap and motivated this work.
