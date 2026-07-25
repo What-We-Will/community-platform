@@ -1,9 +1,9 @@
-# Time-boxed waivers for unfixable advisories
+# ADR-0009 — Time-boxed waivers for unfixable advisories
 
-**Status:** Draft 2026-07-25
+**Status:** Proposed 2026-07-25
 **TL;DR:** The blocking `npm audit` step from ADR-0003 now fails on un-waived high/critical advisories rather than on any high/critical advisory; a waiver names one advisory, carries a written rationale and an expiry date, and fails the build once expired.
 **Author:** @tonyrosario
-**Sponsoring Lead:** @username
+**Sponsoring Lead:** @tonyrosario
 
 ## Context
 
