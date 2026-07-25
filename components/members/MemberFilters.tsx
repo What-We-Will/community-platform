@@ -17,9 +17,14 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 interface MemberFiltersProps {
   allSkills: string[];
+  /** Gates the platform-role filter; the page ignores ?role= for everyone else. */
+  viewerIsAdmin?: boolean;
 }
 
-export default function MemberFilters({ allSkills }: MemberFiltersProps) {
+export default function MemberFilters({
+  allSkills,
+  viewerIsAdmin,
+}: MemberFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -50,10 +55,16 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
 
   const skill = searchParams.get("skill") ?? "";
   const referrals = searchParams.get("referrals") === "true";
+  const adminsOnly = searchParams.get("role") === "admin";
 
   const updateParams = useCallback(
     (
-      updates: { q?: string; skill?: string; referrals?: string },
+      updates: {
+        q?: string;
+        skill?: string;
+        referrals?: string;
+        role?: string;
+      },
       navMethod: "push" | "replace" = "push"
     ) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -68,6 +79,10 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
       if (updates.referrals !== undefined) {
         if (updates.referrals === "true") params.set("referrals", "true");
         else params.delete("referrals");
+      }
+      if (updates.role !== undefined) {
+        if (updates.role) params.set("role", updates.role);
+        else params.delete("role");
       }
       const url = `/members${params.toString() ? `?${params.toString()}` : ""}`;
       router[navMethod](url, { scroll: false });
@@ -109,7 +124,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   // Skill / referrals changes capture the live input value so any in-progress
   // typing isn't dropped by the stale searchParams snapshot.
   const updateFilter = useCallback(
-    (updates: { skill?: string; referrals?: string }) => {
+    (updates: { skill?: string; referrals?: string; role?: string }) => {
       clearTimeout(debounceTimer.current);
       const value = inputRef.current?.value ?? "";
       lastCommittedQ.current = value;
@@ -137,7 +152,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           ref={inputRef}
           id="search"
           type="search"
-          placeholder="Search by name, role, or location..."
+          placeholder="Search by name, job title, or location..."
           defaultValue={searchParams.get("q") ?? ""}
           onChange={handleSearchChange}
           onBlur={commitSearch}
@@ -178,6 +193,23 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           Open to Mock Interviews only
         </Label>
       </div>
+      {viewerIsAdmin && (
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="admins-only"
+            checked={adminsOnly}
+            onCheckedChange={(checked) =>
+              updateFilter({ role: checked ? "admin" : "" })
+            }
+          />
+          <Label
+            htmlFor="admins-only"
+            className="cursor-pointer text-sm font-normal"
+          >
+            Platform admins only
+          </Label>
+        </div>
+      )}
     </div>
   );
 }

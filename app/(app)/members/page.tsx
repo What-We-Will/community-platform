@@ -7,7 +7,12 @@ import { getOnlineStatus } from "@/lib/utils/status";
 import type { Profile } from "@/lib/types";
 
 type MembersPageProps = {
-  searchParams: Promise<{ q?: string; skill?: string; referrals?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    skill?: string;
+    referrals?: string;
+    role?: string;
+  }>;
 };
 
 export default async function MembersPage({ searchParams }: MembersPageProps) {
@@ -21,6 +26,20 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
   const currentUserId = user?.id ?? null;
+
+  const { data: viewerProfile } = currentUserId
+    ? await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", currentUserId)
+        .maybeSingle()
+    : { data: null };
+  const viewerIsAdmin = viewerProfile?.role === "admin";
+
+  // Platform role is an admin-only lens. Resolving the param here rather than
+  // relying on the hidden control means a hand-typed ?role= behaves the same
+  // for a non-admin as no param at all.
+  const adminsOnly = viewerIsAdmin && params.role === "admin";
 
   // Build query for profiles
   let query = supabase
@@ -38,6 +57,9 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
   }
   if (referralsOnly) {
     query = query.eq("open_to_referrals", true);
+  }
+  if (adminsOnly) {
+    query = query.eq("role", "admin");
   }
 
   const { data: profiles, error } = await query;
@@ -67,7 +89,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
     );
   }
 
-  const hasFilters = !!(q || skill || referralsOnly);
+  const hasFilters = !!(q || skill || referralsOnly || adminsOnly);
   const isEmpty = !profiles || profiles.length === 0;
   const isFilteredEmpty = hasFilters && isEmpty;
 
@@ -89,7 +111,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
       </div>
 
       <Suspense fallback={<div className="h-20 animate-pulse rounded-md bg-muted" />}>
-        <MemberFilters allSkills={allSkills} />
+        <MemberFilters allSkills={allSkills} viewerIsAdmin={viewerIsAdmin} />
       </Suspense>
 
       {isEmpty ? (
@@ -111,6 +133,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
               key={profile.id}
               profile={profile as Profile}
               currentUserId={currentUserId}
+              viewerIsAdmin={viewerIsAdmin}
             />
           ))}
         </div>
