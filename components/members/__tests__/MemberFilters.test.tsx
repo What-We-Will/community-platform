@@ -131,8 +131,6 @@ describe("MemberFilters", () => {
   });
 });
 
-// The page ignores ?role= for non-admins, so hiding the control is a UI concern
-// only — these tests cover the control, not the filtering itself.
 describe("Member filters platform-admin toggle", () => {
   const ADMINS_ONLY = /platform admins only/i;
 
@@ -142,26 +140,14 @@ describe("Member filters platform-admin toggle", () => {
     currentSearchParams = new URLSearchParams();
   });
 
-  it("should render the toggle when the viewer is an admin", () => {
-    render(<MemberFilters allSkills={[]} viewerIsAdmin />);
+  it("should render the toggle for every viewer", () => {
+    render(<MemberFilters allSkills={[]} />);
 
     expect(screen.getByLabelText(ADMINS_ONLY)).toBeInTheDocument();
   });
 
-  it("should not render the toggle when the viewer is not an admin", () => {
-    render(<MemberFilters allSkills={[]} viewerIsAdmin={false} />);
-
-    expect(screen.queryByLabelText(ADMINS_ONLY)).not.toBeInTheDocument();
-  });
-
-  it("should not render the toggle when viewerIsAdmin is not supplied at all", () => {
-    render(<MemberFilters allSkills={[]} />);
-
-    expect(screen.queryByLabelText(ADMINS_ONLY)).not.toBeInTheDocument();
-  });
-
   it("should add role=admin to the URL when checked", () => {
-    render(<MemberFilters allSkills={[]} viewerIsAdmin />);
+    render(<MemberFilters allSkills={[]} />);
 
     fireEvent.click(screen.getByLabelText(ADMINS_ONLY));
 
@@ -173,7 +159,7 @@ describe("Member filters platform-admin toggle", () => {
 
   it("should drop role from the URL when unchecked", () => {
     currentSearchParams = new URLSearchParams("role=admin");
-    render(<MemberFilters allSkills={[]} viewerIsAdmin />);
+    render(<MemberFilters allSkills={[]} />);
 
     fireEvent.click(screen.getByLabelText(ADMINS_ONLY));
 
@@ -186,13 +172,13 @@ describe("Member filters platform-admin toggle", () => {
   it("should show as checked when the URL already carries role=admin", () => {
     currentSearchParams = new URLSearchParams("role=admin");
 
-    render(<MemberFilters allSkills={[]} viewerIsAdmin />);
+    render(<MemberFilters allSkills={[]} />);
 
     expect(screen.getByLabelText(ADMINS_ONLY)).toBeChecked();
   });
 
   it("should preserve in-progress search text when toggled", () => {
-    render(<MemberFilters allSkills={[]} viewerIsAdmin />);
+    render(<MemberFilters allSkills={[]} />);
 
     fireEvent.change(screen.getByLabelText(/search/i), {
       target: { value: "alice" },

@@ -32,38 +32,22 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
 const BADGE = /platform admin/i;
 
 describe("Member card platform-role badge", () => {
-  it("should show the badge when an admin views a platform admin", () => {
-    const profile = makeProfile({ role: "admin" });
-
-    render(<MemberCard profile={profile} viewerIsAdmin />);
-
-    expect(screen.getByText(BADGE)).toBeInTheDocument();
-  });
-
-  it("should hide the badge when a non-admin views a platform admin", () => {
-    const profile = makeProfile({ role: "admin" });
-
-    render(<MemberCard profile={profile} viewerIsAdmin={false} />);
-
-    expect(screen.queryByText(BADGE)).not.toBeInTheDocument();
-  });
-
-  it("should hide the badge when viewerIsAdmin is not supplied at all", () => {
+  it("should show the badge for a platform admin", () => {
     const profile = makeProfile({ role: "admin" });
 
     render(<MemberCard profile={profile} />);
 
-    expect(screen.queryByText(BADGE)).not.toBeInTheDocument();
+    expect(screen.getByText(BADGE)).toBeInTheDocument();
   });
 
   // 'moderator' is permitted by the profiles CHECK constraint but grants no
   // platform capability, so badging it would advertise authority that does not exist.
   it.each<ProfileRole>(["member", "moderator"])(
-    "should hide the badge for a '%s' even when the viewer is an admin",
+    "should hide the badge for a '%s'",
     (role) => {
       const profile = makeProfile({ role });
 
-      render(<MemberCard profile={profile} viewerIsAdmin />);
+      render(<MemberCard profile={profile} />);
 
       expect(screen.queryByText(BADGE)).not.toBeInTheDocument();
     }
@@ -72,7 +56,7 @@ describe("Member card platform-role badge", () => {
   it("should still render the member's name when the badge is shown", () => {
     const profile = makeProfile({ role: "admin", display_name: "Jane Roe" });
 
-    render(<MemberCard profile={profile} viewerIsAdmin />);
+    render(<MemberCard profile={profile} />);
 
     expect(screen.getByText("Jane Roe")).toBeInTheDocument();
   });

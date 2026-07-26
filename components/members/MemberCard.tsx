@@ -22,15 +22,9 @@ interface MemberCardProps {
   profile: Profile;
   /** When set, this profile is shown as online if profile.id === currentUserId */
   currentUserId?: string | null;
-  /** Platform role is surfaced only to admins. */
-  viewerIsAdmin?: boolean;
 }
 
-export default function MemberCard({
-  profile,
-  currentUserId,
-  viewerIsAdmin,
-}: MemberCardProps) {
+export default function MemberCard({ profile, currentUserId }: MemberCardProps) {
   const skills = profile.skills ?? [];
   const displaySkills = skills.slice(0, 4);
   const extraCount = skills.length - 4;
@@ -59,7 +53,7 @@ export default function MemberCard({
               <h3 className="truncate font-semibold">{profile.display_name}</h3>
               {/* "Platform" is load-bearing: group membership uses a separate
                   role column that also labels its holders "Admin". */}
-              {viewerIsAdmin && profile.role === "admin" && (
+              {profile.role === "admin" && (
                 <Badge className="h-5 shrink-0 gap-1 px-1.5 text-[10px]">
                   <Crown className="size-2.5" />
                   Platform Admin

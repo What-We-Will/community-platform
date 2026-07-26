@@ -17,14 +17,9 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 interface MemberFiltersProps {
   allSkills: string[];
-  /** Gates the platform-role filter; the page ignores ?role= for everyone else. */
-  viewerIsAdmin?: boolean;
 }
 
-export default function MemberFilters({
-  allSkills,
-  viewerIsAdmin,
-}: MemberFiltersProps) {
+export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -193,23 +188,21 @@ export default function MemberFilters({
           Open to Mock Interviews only
         </Label>
       </div>
-      {viewerIsAdmin && (
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="admins-only"
-            checked={adminsOnly}
-            onCheckedChange={(checked) =>
-              updateFilter({ role: checked ? "admin" : "" })
-            }
-          />
-          <Label
-            htmlFor="admins-only"
-            className="cursor-pointer text-sm font-normal"
-          >
-            Platform admins only
-          </Label>
-        </div>
-      )}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="admins-only"
+          checked={adminsOnly}
+          onCheckedChange={(checked) =>
+            updateFilter({ role: checked ? "admin" : "" })
+          }
+        />
+        <Label
+          htmlFor="admins-only"
+          className="cursor-pointer text-sm font-normal"
+        >
+          Platform admins only
+        </Label>
+      </div>
     </div>
   );
 }

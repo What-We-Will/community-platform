@@ -27,19 +27,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
   } = await supabase.auth.getUser();
   const currentUserId = user?.id ?? null;
 
-  const { data: viewerProfile } = currentUserId
-    ? await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", currentUserId)
-        .maybeSingle()
-    : { data: null };
-  const viewerIsAdmin = viewerProfile?.role === "admin";
-
-  // Platform role is an admin-only lens. Resolving the param here rather than
-  // relying on the hidden control means a hand-typed ?role= behaves the same
-  // for a non-admin as no param at all.
-  const adminsOnly = viewerIsAdmin && params.role === "admin";
+  const adminsOnly = params.role === "admin";
 
   // Build query for profiles
   let query = supabase
@@ -111,7 +99,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
       </div>
 
       <Suspense fallback={<div className="h-20 animate-pulse rounded-md bg-muted" />}>
-        <MemberFilters allSkills={allSkills} viewerIsAdmin={viewerIsAdmin} />
+        <MemberFilters allSkills={allSkills} />
       </Suspense>
 
       {isEmpty ? (
@@ -133,7 +121,6 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
               key={profile.id}
               profile={profile as Profile}
               currentUserId={currentUserId}
-              viewerIsAdmin={viewerIsAdmin}
             />
           ))}
         </div>
