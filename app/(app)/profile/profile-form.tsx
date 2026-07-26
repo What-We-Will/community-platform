@@ -145,7 +145,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive break-words">
               {error}
             </div>
           )}
