@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import MemberCard from "@/components/members/MemberCard";
 import MemberFilters from "@/components/members/MemberFilters";
 import { getOnlineStatus } from "@/lib/utils/status";
+import { parseRoleFilter } from "@/lib/utils/roles";
 import type { Profile } from "@/lib/types";
 
 type MembersPageProps = {
@@ -27,7 +28,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
   } = await supabase.auth.getUser();
   const currentUserId = user?.id ?? null;
 
-  const adminsOnly = params.role === "admin";
+  const roleFilter = parseRoleFilter(params.role);
 
   // Build query for profiles
   let query = supabase
@@ -46,8 +47,8 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
   if (referralsOnly) {
     query = query.eq("open_to_referrals", true);
   }
-  if (adminsOnly) {
-    query = query.eq("role", "admin");
+  if (roleFilter) {
+    query = query.eq("role", roleFilter);
   }
 
   const { data: profiles, error } = await query;
@@ -77,7 +78,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
     );
   }
 
-  const hasFilters = !!(q || skill || referralsOnly || adminsOnly);
+  const hasFilters = !!(q || skill || referralsOnly || roleFilter);
   const isEmpty = !profiles || profiles.length === 0;
   const isFilteredEmpty = hasFilters && isEmpty;
 

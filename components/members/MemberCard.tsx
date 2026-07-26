@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Crown, MapPin } from "lucide-react";
+import { Crown, MapPin, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +57,18 @@ export default function MemberCard({ profile, currentUserId }: MemberCardProps) 
                 <Badge className="h-5 shrink-0 gap-1 px-1.5 text-[10px]">
                   <Crown className="size-2.5" />
                   Platform Admin
+                </Badge>
+              )}
+              {/* Moderator grants no platform capability today; the badge exists
+                  so the role filter's results are legible, and is styled
+                  subordinate to Platform Admin to avoid implying parity. */}
+              {profile.role === "moderator" && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 shrink-0 gap-1 px-1.5 text-[10px]"
+                >
+                  <Shield className="size-2.5" />
+                  Moderator
                 </Badge>
               )}
             </div>

@@ -12,6 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  PROFILE_ROLES,
+  PROFILE_ROLE_FILTER_LABELS,
+  parseRoleFilter,
+} from "@/lib/utils/roles";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -50,7 +55,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
 
   const skill = searchParams.get("skill") ?? "";
   const referrals = searchParams.get("referrals") === "true";
-  const adminsOnly = searchParams.get("role") === "admin";
+  const role = parseRoleFilter(searchParams.get("role"));
 
   const updateParams = useCallback(
     (
@@ -155,12 +160,12 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
         />
       </div>
       <div className="space-y-2">
-        <Label>Skill</Label>
+        <Label htmlFor="skill-filter">Skill</Label>
         <Select
           value={skill || "all"}
           onValueChange={(v) => updateFilter({ skill: v === "all" ? "" : v })}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger id="skill-filter" className="w-[180px]">
             <SelectValue placeholder="All skills" />
           </SelectTrigger>
           <SelectContent>
@@ -168,6 +173,25 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
             {allSkills.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="role-filter">Role</Label>
+        <Select
+          value={role ?? "all"}
+          onValueChange={(v) => updateFilter({ role: v === "all" ? "" : v })}
+        >
+          <SelectTrigger id="role-filter" className="w-[180px]">
+            <SelectValue placeholder="All roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All roles</SelectItem>
+            {PROFILE_ROLES.map((r) => (
+              <SelectItem key={r} value={r}>
+                {PROFILE_ROLE_FILTER_LABELS[r]}
               </SelectItem>
             ))}
           </SelectContent>
@@ -186,21 +210,6 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           className="cursor-pointer text-sm font-normal"
         >
           Open to Mock Interviews only
-        </Label>
-      </div>
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="admins-only"
-          checked={adminsOnly}
-          onCheckedChange={(checked) =>
-            updateFilter({ role: checked ? "admin" : "" })
-          }
-        />
-        <Label
-          htmlFor="admins-only"
-          className="cursor-pointer text-sm font-normal"
-        >
-          Platform admins only
         </Label>
       </div>
     </div>

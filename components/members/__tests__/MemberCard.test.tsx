@@ -29,31 +29,49 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
   };
 }
 
-const BADGE = /platform admin/i;
+const ADMIN_BADGE = /platform admin/i;
+const MODERATOR_BADGE = /^moderator$/i;
 
 describe("Member card platform-role badge", () => {
-  it("should show the badge for a platform admin", () => {
+  it("should show the platform admin badge for an admin", () => {
     const profile = makeProfile({ role: "admin" });
 
     render(<MemberCard profile={profile} />);
 
-    expect(screen.getByText(BADGE)).toBeInTheDocument();
+    expect(screen.getByText(ADMIN_BADGE)).toBeInTheDocument();
   });
 
-  // 'moderator' is permitted by the profiles CHECK constraint but grants no
-  // platform capability, so badging it would advertise authority that does not exist.
-  it.each<ProfileRole>(["member", "moderator"])(
-    "should hide the badge for a '%s'",
+  it("should show the moderator badge for a moderator", () => {
+    const profile = makeProfile({ role: "moderator" });
+
+    render(<MemberCard profile={profile} />);
+
+    expect(screen.getByText(MODERATOR_BADGE)).toBeInTheDocument();
+  });
+
+  it("should show no role badge for a plain member", () => {
+    const profile = makeProfile({ role: "member" });
+
+    render(<MemberCard profile={profile} />);
+
+    expect(screen.queryByText(ADMIN_BADGE)).not.toBeInTheDocument();
+    expect(screen.queryByText(MODERATOR_BADGE)).not.toBeInTheDocument();
+  });
+
+  // The two roles are distinct authorities, so a card never carries both badges.
+  it.each<ProfileRole>(["admin", "moderator"])(
+    "should show only the '%s' badge and not the other role's",
     (role) => {
       const profile = makeProfile({ role });
 
       render(<MemberCard profile={profile} />);
 
-      expect(screen.queryByText(BADGE)).not.toBeInTheDocument();
+      const other = role === "admin" ? MODERATOR_BADGE : ADMIN_BADGE;
+      expect(screen.queryByText(other)).not.toBeInTheDocument();
     }
   );
 
-  it("should still render the member's name when the badge is shown", () => {
+  it("should still render the member's name when a badge is shown", () => {
     const profile = makeProfile({ role: "admin", display_name: "Jane Roe" });
 
     render(<MemberCard profile={profile} />);

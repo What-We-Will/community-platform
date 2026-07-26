@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import MemberFilters from "../MemberFilters";
 
@@ -131,8 +132,17 @@ describe("MemberFilters", () => {
   });
 });
 
-describe("Member filters platform-admin toggle", () => {
-  const ADMINS_ONLY = /platform admins only/i;
+describe("Member filters platform-role dropdown", () => {
+  const ROLE = /^role$/i;
+
+  // Radix's Select needs pointer capture and scrollIntoView, neither of which
+  // jsdom implements.
+  beforeAll(() => {
+    Element.prototype.hasPointerCapture = vi.fn(() => false);
+    Element.prototype.setPointerCapture = vi.fn();
+    Element.prototype.releasePointerCapture = vi.fn();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
 
   beforeEach(() => {
     pushMock.mockReset();
@@ -140,28 +150,64 @@ describe("Member filters platform-admin toggle", () => {
     currentSearchParams = new URLSearchParams();
   });
 
-  it("should render the toggle for every viewer", () => {
+  it("should render the dropdown for every viewer", () => {
     render(<MemberFilters allSkills={[]} />);
 
-    expect(screen.getByLabelText(ADMINS_ONLY)).toBeInTheDocument();
+    expect(screen.getByLabelText(ROLE)).toBeInTheDocument();
   });
 
-  it("should add role=admin to the URL when checked", () => {
+  it("should show every role as selectable when opened", async () => {
+    const user = userEvent.setup();
     render(<MemberFilters allSkills={[]} />);
 
-    fireEvent.click(screen.getByLabelText(ADMINS_ONLY));
+    await user.click(screen.getByLabelText(ROLE));
+
+    expect(screen.getByRole("option", { name: /all roles/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /members/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /platform admins/i })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: /moderators/i })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["member", /^members$/i],
+    ["admin", /platform admins/i],
+    ["moderator", /moderators/i],
+  ])("should show the current selection when the URL carries role=%s", (role, label) => {
+    currentSearchParams = new URLSearchParams(`role=${role}`);
+
+    render(<MemberFilters allSkills={[]} />);
+
+    expect(screen.getByLabelText(ROLE)).toHaveTextContent(label);
+  });
+
+  it("should fall back to All roles when the URL carries an unknown role", () => {
+    currentSearchParams = new URLSearchParams("role=ADMIN");
+
+    render(<MemberFilters allSkills={[]} />);
+
+    expect(screen.getByLabelText(ROLE)).toHaveTextContent(/all roles/i);
+  });
+
+  it("should push the chosen role to the URL when a role is selected", async () => {
+    const user = userEvent.setup();
+    render(<MemberFilters allSkills={[]} />);
+
+    await user.click(screen.getByLabelText(ROLE));
+    await user.click(screen.getByRole("option", { name: /moderators/i }));
 
     expect(pushMock).toHaveBeenCalledWith(
-      "/members?role=admin",
+      "/members?role=moderator",
       expect.objectContaining({ scroll: false })
     );
   });
 
-  it("should drop role from the URL when unchecked", () => {
+  it("should drop role from the URL when All roles is selected", async () => {
     currentSearchParams = new URLSearchParams("role=admin");
+    const user = userEvent.setup();
     render(<MemberFilters allSkills={[]} />);
 
-    fireEvent.click(screen.getByLabelText(ADMINS_ONLY));
+    await user.click(screen.getByLabelText(ROLE));
+    await user.click(screen.getByRole("option", { name: /all roles/i }));
 
     expect(pushMock).toHaveBeenCalledWith(
       "/members",
@@ -169,21 +215,15 @@ describe("Member filters platform-admin toggle", () => {
     );
   });
 
-  it("should show as checked when the URL already carries role=admin", () => {
-    currentSearchParams = new URLSearchParams("role=admin");
-
-    render(<MemberFilters allSkills={[]} />);
-
-    expect(screen.getByLabelText(ADMINS_ONLY)).toBeChecked();
-  });
-
-  it("should preserve in-progress search text when toggled", () => {
+  it("should preserve in-progress search text when a role is selected", async () => {
+    const user = userEvent.setup();
     render(<MemberFilters allSkills={[]} />);
 
     fireEvent.change(screen.getByLabelText(/search/i), {
       target: { value: "alice" },
     });
-    fireEvent.click(screen.getByLabelText(ADMINS_ONLY));
+    await user.click(screen.getByLabelText(ROLE));
+    await user.click(screen.getByRole("option", { name: /platform admins/i }));
 
     expect(pushMock).toHaveBeenCalledWith(
       expect.stringMatching(/\/members\?(?=.*q=alice)(?=.*role=admin)/),
