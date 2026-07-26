@@ -16,10 +16,19 @@ export const PROFILE_ROLE_FILTER_LABELS: Record<ProfileRole, string> = {
  * value is unrecognised. Only the allowlisted values reach the profiles query;
  * matching is exact, since the app writes these URLs itself and case-folding
  * would only widen what a hand-typed param can reach.
+ *
+ * Accepts the list form so the server (which receives `string[]` for a repeated
+ * param) and the client (whose `getAll()` always returns a list) share one rule.
+ * A repeated role has no coherent meaning as a filter and must not collapse to
+ * whichever value came first — that would let the control claim a filter the
+ * listing never applied.
  */
 export function parseRoleFilter(
-  value: string | null | undefined
+  value: string | string[] | null | undefined
 ): ProfileRole | null {
+  if (Array.isArray(value)) {
+    return value.length === 1 ? parseRoleFilter(value[0]) : null;
+  }
   if (!value) return null;
   return (PROFILE_ROLES as readonly string[]).includes(value)
     ? (value as ProfileRole)

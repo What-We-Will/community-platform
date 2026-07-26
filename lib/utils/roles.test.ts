@@ -1,3 +1,6 @@
+/**
+ * @vitest-environment node
+ */
 import { PROFILE_ROLES, parseRoleFilter } from "./roles";
 
 describe("Members directory ?role= param narrowing", () => {
@@ -29,5 +32,33 @@ describe("Members directory ?role= param narrowing", () => {
   it("should return null when the param is absent", () => {
     expect(parseRoleFilter(undefined)).toBeNull();
     expect(parseRoleFilter(null)).toBeNull();
+  });
+
+  // A repeated `?role=a&role=b` reaches the server as an array and the client as
+  // a multi-entry getAll(). Collapsing it to the first value would let the
+  // control claim a filter the listing never applied, so both sides reject it.
+  it("should return null when the param is repeated", () => {
+    const parsed = parseRoleFilter(["member", "admin"]);
+
+    expect(parsed).toBeNull();
+  });
+
+  it("should return null when the param is an empty list", () => {
+    const parsed = parseRoleFilter([]);
+
+    expect(parsed).toBeNull();
+  });
+
+  // getAll() always yields a list, so a single value has to survive it.
+  it("should return the role when a single-entry list holds a known role", () => {
+    const parsed = parseRoleFilter(["admin"]);
+
+    expect(parsed).toBe("admin");
+  });
+
+  it("should return null when a single-entry list holds an unknown role", () => {
+    const parsed = parseRoleFilter(["ADMIN"]);
+
+    expect(parsed).toBeNull();
   });
 });

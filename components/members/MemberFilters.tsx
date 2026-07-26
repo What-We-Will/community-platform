@@ -55,7 +55,9 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
 
   const skill = searchParams.get("skill") ?? "";
   const referrals = searchParams.get("referrals") === "true";
-  const role = parseRoleFilter(searchParams.get("role"));
+  // getAll, not get: a repeated role must read as "no filter" here too, matching
+  // what the server does with the array it receives.
+  const role = parseRoleFilter(searchParams.getAll("role"));
 
   const updateParams = useCallback(
     (

@@ -188,6 +188,16 @@ describe("Member filters platform-role dropdown", () => {
     expect(screen.getByLabelText(ROLE)).toHaveTextContent(/all roles/i);
   });
 
+  // The listing is unfiltered for a repeated role, so the control must not
+  // claim one — reading the first value would say "Members" over a full list.
+  it("should fall back to All roles when the URL repeats the role param", () => {
+    currentSearchParams = new URLSearchParams("role=member&role=admin");
+
+    render(<MemberFilters allSkills={[]} />);
+
+    expect(screen.getByLabelText(ROLE)).toHaveTextContent(/all roles/i);
+  });
+
   it("should push the chosen role to the URL when a role is selected", async () => {
     const user = userEvent.setup();
     render(<MemberFilters allSkills={[]} />);

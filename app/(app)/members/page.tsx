@@ -12,7 +12,8 @@ type MembersPageProps = {
     q?: string;
     skill?: string;
     referrals?: string;
-    role?: string;
+    // A repeated `?role=` arrives as an array; parseRoleFilter rejects it.
+    role?: string | string[];
   }>;
 };
 
