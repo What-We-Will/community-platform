@@ -25,6 +25,9 @@ interface ProfileFormProps {
   profile: Profile;
 }
 
+const MAX_SKILL_LENGTH = 30;
+const MAX_SKILLS = 20;
+
 export default function ProfileForm({ profile }: ProfileFormProps) {
   const [displayName, setDisplayName] = useState(profile.display_name);
   const [headline, setHeadline] = useState(profile.headline ?? "");
@@ -75,6 +78,21 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       .split(/,|\//)
       .map((s) => s.trim())
       .filter(Boolean);
+
+    const oversizedSkill = skills.find((s) => s.length > MAX_SKILL_LENGTH);
+    if (oversizedSkill) {
+      setError(
+        `Skill "${oversizedSkill}" is ${oversizedSkill.length} characters — max is ${MAX_SKILL_LENGTH}.`
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (skills.length > MAX_SKILLS) {
+      setError(`You can add up to ${MAX_SKILLS} skills (you entered ${skills.length}).`);
+      setLoading(false);
+      return;
+    }
 
     try {
       const result = await updateProfile({
@@ -195,7 +213,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               onChange={(e) => setSkillsInput(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Comma-separated list
+              Comma or slash separated. Max {MAX_SKILL_LENGTH} characters per
+              skill, up to {MAX_SKILLS} skills.
             </p>
           </div>
           <div className="flex items-center space-x-2">
