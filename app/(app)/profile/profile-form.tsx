@@ -72,7 +72,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setLoading(true);
 
     const skills = skillsInput
-      .split(",")
+      .split(/,|\//)
       .map((s) => s.trim())
       .filter(Boolean);
 
