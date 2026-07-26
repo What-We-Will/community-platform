@@ -79,17 +79,27 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const oversizedSkill = skills.find((s) => s.length > MAX_SKILL_LENGTH);
-    if (oversizedSkill) {
-      setError(
-        `Skill "${oversizedSkill}" is ${oversizedSkill.length} characters — max is ${MAX_SKILL_LENGTH}.`
+    const skillErrors: string[] = [];
+
+    const oversizedSkills = skills.filter((s) => s.length > MAX_SKILL_LENGTH);
+    if (oversizedSkills.length > 0) {
+      skillErrors.push(
+        `Skill${oversizedSkills.length > 1 ? "s" : ""} ${oversizedSkills
+          .map((s) => `"${s}"`)
+          .join(", ")} ${
+          oversizedSkills.length > 1 ? "exceed" : "exceeds"
+        } the ${MAX_SKILL_LENGTH}-character limit.`
       );
-      setLoading(false);
-      return;
     }
 
     if (skills.length > MAX_SKILLS) {
-      setError(`You can add up to ${MAX_SKILLS} skills (you entered ${skills.length}).`);
+      skillErrors.push(
+        `You can add up to ${MAX_SKILLS} skills (you entered ${skills.length}).`
+      );
+    }
+
+    if (skillErrors.length > 0) {
+      setError(skillErrors.join(" "));
       setLoading(false);
       return;
     }
