@@ -1,4 +1,7 @@
-export type ProfileRole = "member" | "admin" | "moderator";
+// Derived from PROFILE_ROLES so the role vocabulary has one source of truth.
+import type { ProfileRole } from "@/lib/utils/roles";
+export type { ProfileRole };
+
 export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface Profile {
