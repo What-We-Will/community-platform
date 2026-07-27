@@ -147,8 +147,8 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   );
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-      <div className="flex-1 space-y-2">
+    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="flex-1 space-y-2 sm:min-w-[200px]">
         <Label htmlFor="search">Search</Label>
         <Input
           ref={inputRef}
@@ -199,7 +199,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex shrink-0 items-center space-x-2">
         <Checkbox
           id="referrals"
           checked={referrals}
