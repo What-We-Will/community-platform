@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin } from "lucide-react";
+import { Crown, MapPin, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,7 +49,29 @@ export default function MemberCard({ profile, currentUserId }: MemberCardProps) 
             isCurrentUser={currentUserId != null && profile.id === currentUserId}
           />
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold">{profile.display_name}</h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="truncate font-semibold">{profile.display_name}</h3>
+              {/* "Platform" is load-bearing: group membership uses a separate
+                  role column that also labels its holders "Admin". */}
+              {profile.role === "admin" && (
+                <Badge className="h-5 shrink-0 gap-1 px-1.5 text-[10px]">
+                  <Crown className="size-2.5" />
+                  Platform Admin
+                </Badge>
+              )}
+              {/* Moderator grants no platform capability today; the badge exists
+                  so the role filter's results are legible, and is styled
+                  subordinate to Platform Admin to avoid implying parity. */}
+              {profile.role === "moderator" && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 shrink-0 gap-1 px-1.5 text-[10px]"
+                >
+                  <Shield className="size-2.5" />
+                  Moderator
+                </Badge>
+              )}
+            </div>
             {profile.headline && (
               <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">
                 {profile.headline}

@@ -4,10 +4,17 @@ import { createClient } from "@/lib/supabase/server";
 import MemberCard from "@/components/members/MemberCard";
 import MemberFilters from "@/components/members/MemberFilters";
 import { getOnlineStatus } from "@/lib/utils/status";
+import { parseRoleFilter } from "@/lib/utils/roles";
 import type { Profile } from "@/lib/types";
 
 type MembersPageProps = {
-  searchParams: Promise<{ q?: string; skill?: string; referrals?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    skill?: string;
+    referrals?: string;
+    // A repeated `?role=` arrives as an array; parseRoleFilter rejects it.
+    role?: string | string[];
+  }>;
 };
 
 export default async function MembersPage({ searchParams }: MembersPageProps) {
@@ -21,6 +28,8 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
   const currentUserId = user?.id ?? null;
+
+  const roleFilter = parseRoleFilter(params.role);
 
   // Build query for profiles
   let query = supabase
@@ -38,6 +47,9 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
   }
   if (referralsOnly) {
     query = query.eq("open_to_referrals", true);
+  }
+  if (roleFilter) {
+    query = query.eq("role", roleFilter);
   }
 
   const { data: profiles, error } = await query;
@@ -67,7 +79,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
     );
   }
 
-  const hasFilters = !!(q || skill || referralsOnly);
+  const hasFilters = !!(q || skill || referralsOnly || roleFilter);
   const isEmpty = !profiles || profiles.length === 0;
   const isFilteredEmpty = hasFilters && isEmpty;
 

@@ -12,6 +12,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  PROFILE_ROLES,
+  PROFILE_ROLE_FILTER_LABELS,
+  parseRoleFilter,
+} from "@/lib/utils/roles";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -50,10 +55,18 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
 
   const skill = searchParams.get("skill") ?? "";
   const referrals = searchParams.get("referrals") === "true";
+  // getAll, not get: a repeated role must read as "no filter" here too, matching
+  // what the server does with the array it receives.
+  const role = parseRoleFilter(searchParams.getAll("role"));
 
   const updateParams = useCallback(
     (
-      updates: { q?: string; skill?: string; referrals?: string },
+      updates: {
+        q?: string;
+        skill?: string;
+        referrals?: string;
+        role?: string;
+      },
       navMethod: "push" | "replace" = "push"
     ) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -68,6 +81,10 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
       if (updates.referrals !== undefined) {
         if (updates.referrals === "true") params.set("referrals", "true");
         else params.delete("referrals");
+      }
+      if (updates.role !== undefined) {
+        if (updates.role) params.set("role", updates.role);
+        else params.delete("role");
       }
       const url = `/members${params.toString() ? `?${params.toString()}` : ""}`;
       router[navMethod](url, { scroll: false });
@@ -109,7 +126,7 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   // Skill / referrals changes capture the live input value so any in-progress
   // typing isn't dropped by the stale searchParams snapshot.
   const updateFilter = useCallback(
-    (updates: { skill?: string; referrals?: string }) => {
+    (updates: { skill?: string; referrals?: string; role?: string }) => {
       clearTimeout(debounceTimer.current);
       const value = inputRef.current?.value ?? "";
       lastCommittedQ.current = value;
@@ -130,14 +147,14 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
   );
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-      <div className="flex-1 space-y-2">
+    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="flex-1 space-y-2 sm:min-w-[200px]">
         <Label htmlFor="search">Search</Label>
         <Input
           ref={inputRef}
           id="search"
           type="search"
-          placeholder="Search by name, role, or location..."
+          placeholder="Search by name, job title, or location..."
           defaultValue={searchParams.get("q") ?? ""}
           onChange={handleSearchChange}
           onBlur={commitSearch}
@@ -145,12 +162,12 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
         />
       </div>
       <div className="space-y-2">
-        <Label>Skill</Label>
+        <Label htmlFor="skill-filter">Skill</Label>
         <Select
           value={skill || "all"}
           onValueChange={(v) => updateFilter({ skill: v === "all" ? "" : v })}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger id="skill-filter" className="w-[180px]">
             <SelectValue placeholder="All skills" />
           </SelectTrigger>
           <SelectContent>
@@ -163,7 +180,26 @@ export default function MemberFilters({ allSkills }: MemberFiltersProps) {
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="space-y-2">
+        <Label htmlFor="role-filter">Role</Label>
+        <Select
+          value={role ?? "all"}
+          onValueChange={(v) => updateFilter({ role: v === "all" ? "" : v })}
+        >
+          <SelectTrigger id="role-filter" className="w-[180px]">
+            <SelectValue placeholder="All roles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All roles</SelectItem>
+            {PROFILE_ROLES.map((r) => (
+              <SelectItem key={r} value={r}>
+                {PROFILE_ROLE_FILTER_LABELS[r]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex shrink-0 items-center space-x-2">
         <Checkbox
           id="referrals"
           checked={referrals}
