@@ -6,10 +6,9 @@ weekly batch quickly.
 
 ## TL;DR
 
-1. Read the **triage comment** the bot posts on the PR (`.github/workflows/dependabot-triage.yml`
-   + `dependabot-triage-post.yml`) — it applies this same decision matrix automatically and
-   labels the PR `ready to merge` or `status: needs-review`. It does not merge anything; a
-   human still clicks merge.
+1. Read the **triage comment** the bot posts on the PR (`.github/workflows/dependabot-triage.yml`)
+   — it applies this same decision matrix automatically and labels the PR `ready to merge` or
+   `status: needs-review`. It does not merge anything; a human still clicks merge.
 2. If you want to double-check its reasoning: look at the **`verify`** check on the PR.
    Green = `npm ci` + lint + type-check + unit tests + a production build all passed
    against the new dependency. That is the underlying signal the bot's verdict is based on.
@@ -22,29 +21,31 @@ weekly batch quickly.
 
 ## Automated triage
 
-Two workflows, split because GitHub caps Dependabot-triggered `pull_request` runs to a
-read-only `GITHUB_TOKEN` regardless of the declared `permissions:` block — a write here 403s
-("Resource not accessible by integration") no matter what the workflow YAML asks for.
+One workflow (`dependabot-triage.yml`), running on every Dependabot PR (`pull_request`). GitHub
+caps Dependabot-triggered `pull_request` runs to a read-only `GITHUB_TOKEN` regardless of the
+declared `permissions:` block — a write here 403s ("Resource not accessible by integration") no
+matter what the workflow YAML asks for. So the write doesn't use `GITHUB_TOKEN` at all: the job
+mints a short-lived installation token from an org-owned GitHub App (`wwc-dependabot-triage`,
+installed on this repo only, scoped to Issues + Pull requests read/write), capped again in the
+minting step itself (`permission-issues: write`, `permission-pull-requests: write`) so the
+ceiling is visible in the workflow diff, not just in the App's installation settings. See
+`docs/adr/github-app-token-dependabot-writes.md` for the full investigation and rejected
+alternatives (a repo-wide "send write tokens to fork PRs" setting, `pull_request_target` —
+banned by ADR-0003 — and a personal access token).
 
-- `dependabot-triage.yml` runs on every Dependabot PR (`pull_request`, read-only token).
-  `scripts/ci/classify-dependabot-pr.sh` reads `dependabot/fetch-metadata` output (bump type,
-  dependency type, package names) and mirrors the matrix below, then writes the verdict to an
-  artifact — it makes no GitHub API writes at all.
-- `dependabot-triage-post.yml`, triggered by `workflow_run` on the job above completing,
-  downloads that artifact and posts the verdict comment plus label (`ready to merge` /
-  `status: needs-review`). `workflow_run`-triggered workflows get a normal token even when the
-  workflow that triggered them didn't, and always run the workflow file from `main` rather
-  than the PR — so this never executes PR-authored code with the elevated token.
-
-Together they re-run and update the comment on every push, so the label always reflects the
+`scripts/ci/classify-dependabot-pr.sh` reads `dependabot/fetch-metadata` output (bump type,
+dependency type, package names) and mirrors the matrix below; the same job then posts the
+verdict comment and swaps the `ready to merge` / `status: needs-review` label using the App
+token. It re-runs and updates the comment on every push, so the label always reflects the
 latest commit on the PR. A posting failure (rate limit, transient API hiccup, a renamed label)
 logs a warning instead of failing the job — this stage doesn't validate the dependency update
 itself, so its failure shouldn't red-X the PR the way a broken build should.
 
-It does not distinguish security updates from version updates — `alert-lookup` would need a
-PAT/App token (the default `GITHUB_TOKEN` can't read Dependabot alerts), and a major bump is
-`needs-review` either way, so it wasn't worth the extra credential to manage. A Dependabot
-security-update PR still gets triaged by bump type like any other.
+It does not distinguish security updates from version updates — reading Dependabot alerts needs
+a `security_events` scope the App isn't granted (the default `GITHUB_TOKEN` can't read them
+either), and a major bump is `needs-review` either way, so it wasn't worth widening the App's
+permissions just to change the reason text. A Dependabot security-update PR still gets triaged
+by bump type like any other.
 
 What it does **not** do (yet): merge anything, or update a stale branch before merging.
 Auto-merge is a deliberate later step — see the "Ready to merge" label as "safe per the
