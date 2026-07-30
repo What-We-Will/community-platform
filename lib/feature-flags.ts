@@ -1,3 +1,8 @@
+/**
+ * Server-only resolution has no NEXT_PUBLIC_ authority: feature_flags is the
+ * sole site-definition source, cold acquisition failures fail closed, and
+ * future scoped definitions extend the ordered chain without changing callers.
+ */
 import "server-only";
 
 import { cache } from "react";

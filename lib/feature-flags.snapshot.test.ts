@@ -29,7 +29,7 @@ describe("feature flag snapshots", () => {
   afterEach(() => vi.useRealTimers());
 
   it("should accept known rows and ignore unknown future rows when loading a snapshot", async () => {
-    const { client } = buildMockSupabaseClient({
+    const { client, queries } = buildMockSupabaseClient({
       tables: {
         feature_flags: {
           data: [
@@ -48,6 +48,12 @@ describe("feature flag snapshots", () => {
 
     expect(snapshot).toHaveLength(3);
     expect(snapshot.get("jobApplicationTracker")).toMatchObject({ enabled: true });
+    expect(queries).toEqual([
+      expect.objectContaining({
+        table: "feature_flags",
+        calls: [{ method: "select", args: ["key, enabled, fail_mode, updated_at"] }],
+      }),
+    ]);
   });
 
   it("should preserve the prior snapshot when a known row is malformed", async () => {
