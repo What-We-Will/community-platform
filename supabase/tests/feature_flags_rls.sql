@@ -1,6 +1,6 @@
 begin;
 
-select plan(9);
+select plan(15);
 
 select tests.create_supabase_user('feature_flags_member', 'feature-flags-member@example.com');
 select tests.create_supabase_user('feature_flags_admin', 'feature-flags-admin@example.com');
@@ -34,6 +34,21 @@ select ok(
   'feature_flags has row level security enabled'
 );
 
+set local role anon;
+
+select is(
+  current_user,
+  'anon',
+  'anonymous checks run as the anon database role'
+);
+
+select is_empty(
+  $$ select key from public.feature_flags where key = 'jobApplicationTracker' $$,
+  'anonymous users cannot select feature flags'
+);
+
+reset role;
+
 select tests.authenticate_as('feature_flags_member');
 
 select is(
@@ -58,6 +73,25 @@ select is_empty(
   'authenticated non-admin cannot update feature flags'
 );
 
+select throws_ok(
+  $$
+    insert into public.feature_flags (key, type)
+    values ('pgtapMemberInsertFeatureFlag', 'ops')
+  $$,
+  '42501',
+  'new row violates row-level security policy for table "feature_flags"',
+  'authenticated non-admin cannot insert feature flags'
+);
+
+select is_empty(
+  $$
+    delete from public.feature_flags
+    where key = 'pgtapFeatureFlag'
+    returning key
+  $$,
+  'authenticated non-admin cannot delete feature flags'
+);
+
 select tests.authenticate_as('feature_flags_admin');
 
 select results_eq(
@@ -69,6 +103,26 @@ select results_eq(
   $$,
   $$ values (true) $$,
   'admin can update feature flags'
+);
+
+select results_eq(
+  $$
+    insert into public.feature_flags (key, type)
+    values ('pgtapAdminInsertFeatureFlag', 'ops')
+    returning key
+  $$,
+  $$ values ('pgtapAdminInsertFeatureFlag') $$,
+  'admin can insert feature flags'
+);
+
+select results_eq(
+  $$
+    delete from public.feature_flags
+    where key = 'pgtapAdminInsertFeatureFlag'
+    returning key
+  $$,
+  $$ values ('pgtapAdminInsertFeatureFlag') $$,
+  'admin can delete feature flags'
 );
 
 select ok(
