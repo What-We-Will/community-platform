@@ -2,7 +2,12 @@ import { vi } from "vitest";
 
 export type MockQueryResult<T = unknown> = {
   data: T | null;
-  error: { message: string } | null;
+  error: {
+    message: string;
+    details?: string | null;
+    hint?: string | null;
+    code?: string;
+  } | null;
 };
 
 export type RecordedQuery = {
