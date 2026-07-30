@@ -21,6 +21,9 @@ create unique index feature_flags_seed_id_key
   on public.feature_flags (seed_id)
   where seed_id is not null;
 
+grant select on public.profiles to authenticated;
+grant select, insert, update, delete on public.feature_flags to authenticated;
+
 create trigger feature_flags_updated_at
   before update on public.feature_flags
   for each row execute function public.update_updated_at();

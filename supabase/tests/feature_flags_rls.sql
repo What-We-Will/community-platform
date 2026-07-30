@@ -1,13 +1,51 @@
 begin;
 
-select plan(15);
+select plan(20);
 
-select tests.create_supabase_user('feature_flags_member', 'feature-flags-member@example.com');
-select tests.create_supabase_user('feature_flags_admin', 'feature-flags-admin@example.com');
+insert into auth.users (
+  instance_id,
+  id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  created_at,
+  updated_at
+)
+values
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000101',
+    'authenticated',
+    'authenticated',
+    'feature-flags-member@example.com',
+    'not-used-by-pgtap',
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    now(),
+    now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000102',
+    'authenticated',
+    'authenticated',
+    'feature-flags-admin@example.com',
+    'not-used-by-pgtap',
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    now(),
+    now()
+  );
 
 update public.profiles
 set role = 'admin'
-where id = tests.get_supabase_uid('feature_flags_admin');
+where id = '00000000-0000-0000-0000-000000000102';
 
 insert into public.feature_flags (
   key,
@@ -34,6 +72,31 @@ select ok(
   'feature_flags has row level security enabled'
 );
 
+select ok(
+  has_table_privilege('authenticated', 'public.feature_flags', 'select'),
+  'authenticated can select feature flags'
+);
+
+select ok(
+  has_table_privilege('authenticated', 'public.feature_flags', 'insert'),
+  'authenticated can attempt feature flag inserts for RLS evaluation'
+);
+
+select ok(
+  has_table_privilege('authenticated', 'public.feature_flags', 'update'),
+  'authenticated can attempt feature flag updates for RLS evaluation'
+);
+
+select ok(
+  has_table_privilege('authenticated', 'public.feature_flags', 'delete'),
+  'authenticated can attempt feature flag deletes for RLS evaluation'
+);
+
+select ok(
+  has_table_privilege('authenticated', 'public.profiles', 'select'),
+  'authenticated can evaluate the profile-based admin predicate'
+);
+
 set local role anon;
 
 select is(
@@ -42,14 +105,21 @@ select is(
   'anonymous checks run as the anon database role'
 );
 
-select is_empty(
+select throws_ok(
   $$ select key from public.feature_flags where key = 'jobApplicationTracker' $$,
+  '42501',
+  'permission denied for table feature_flags',
   'anonymous users cannot select feature flags'
 );
 
 reset role;
 
-select tests.authenticate_as('feature_flags_member');
+select set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000101',
+  true
+);
+set local role authenticated;
 
 select is(
   current_user,
@@ -92,7 +162,14 @@ select is_empty(
   'authenticated non-admin cannot delete feature flags'
 );
 
-select tests.authenticate_as('feature_flags_admin');
+reset role;
+
+select set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000102',
+  true
+);
+set local role authenticated;
 
 select results_eq(
   $$
@@ -154,20 +231,15 @@ select results_eq(
   'feature_flags has exactly four RLS policies'
 );
 
-select results_eq(
-  $$
-    select policyname
-    from pg_policies
-    where schemaname = 'public' and tablename = 'feature_flags'
-    order by policyname
-  $$,
-  $$
-    values
-      ('Admins can delete feature flags'),
-      ('Admins can insert feature flags'),
-      ('Admins can update feature flags'),
-      ('Authenticated users can read feature flags')
-  $$,
+select policies_are(
+  'public',
+  'feature_flags',
+  array[
+    'Admins can delete feature flags',
+    'Admins can insert feature flags',
+    'Admins can update feature flags',
+    'Authenticated users can read feature flags'
+  ]::name[],
   'feature_flags RLS policy names match the contract'
 );
 
