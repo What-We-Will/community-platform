@@ -20,6 +20,7 @@ const VALID_ENV = {
   GMAIL_USER: "bot@example.com",
   GMAIL_APP_PASSWORD: "app-pass-123",
   ADMIN_EMAIL: "admin@example.com",
+  BUG_REPORT_EMAIL: "bug-reports@example.com",
 } as const;
 
 function stubEnv(env: Record<string, string>) {
@@ -69,7 +70,7 @@ describe("POST /api/bug-report — emails the admin a submitted bug report", () 
     expect(sendMail).toHaveBeenCalledTimes(1);
     const mail = sendMail.mock.calls[0][0];
     expect(mail).toMatchObject({
-      to: "engineers@wwwrise.org",
+      to: "bug-reports@example.com",
       from: expect.stringContaining("bot@example.com"),
       replyTo: "reporter@example.com",
       subject: expect.stringContaining("reporter@example.com"),
