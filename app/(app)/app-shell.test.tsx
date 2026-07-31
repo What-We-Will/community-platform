@@ -44,6 +44,10 @@ function allFlags(overrides: Partial<Record<FeatureFlag, boolean>> = {}) {
   };
 }
 
+function countSeparators(container: HTMLElement) {
+  return container.querySelectorAll('[data-slot="separator"]').length;
+}
+
 describe("AppShell nav visibility", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,12 +107,14 @@ describe("AppShell nav visibility", () => {
   });
 
   describe("My Tools section", () => {
-    it("should hide the separator, title, and both items when both child flags are off", () => {
-      render(
+    it("should hide the separator, title, and both items when both child flags are off, and show the separator once a child flag turns on", () => {
+      const { container, rerender } = render(
         <AppShell user={baseUser} visibleFlags={allFlags()}>
           <div />
         </AppShell>
       );
+
+      const separatorCountWhenOff = countSeparators(container);
 
       expect(screen.queryByText("My Tools")).not.toBeInTheDocument();
       expect(
@@ -117,6 +123,17 @@ describe("AppShell nav visibility", () => {
       expect(
         screen.queryByRole("link", { name: /learning tracker/i })
       ).not.toBeInTheDocument();
+
+      rerender(
+        <AppShell
+          user={baseUser}
+          visibleFlags={allFlags({ jobApplicationTracker: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      expect(countSeparators(container)).toBe(separatorCountWhenOff + 1);
     });
 
     it("should show only the Job Application Tracker item when just that flag is on", () => {
