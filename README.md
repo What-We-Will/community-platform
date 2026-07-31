@@ -125,6 +125,7 @@ You will need a GMail account for this to serve as the email sender.
 GMAIL_USER=your-gmail-address-here
 GMAIL_APP_PASSWORD=your app password goes here
 ADMIN_EMAIL=your-gmail-address-here
+BUG_REPORT_EMAIL=engineers@wwwrise.org
 ```
 
 Note that as of this writing the group message notification emails are only sent if the recipient hasn't been on the platform today. You may want to comment out this `lastSeen` logic in `messages/route.ts` if you are testing locally.

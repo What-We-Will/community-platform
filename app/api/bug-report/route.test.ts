@@ -69,7 +69,7 @@ describe("POST /api/bug-report — emails the admin a submitted bug report", () 
     expect(sendMail).toHaveBeenCalledTimes(1);
     const mail = sendMail.mock.calls[0][0];
     expect(mail).toMatchObject({
-      to: "admin@example.com",
+      to: "engineers@wwwrise.org",
       from: expect.stringContaining("bot@example.com"),
       replyTo: "reporter@example.com",
       subject: expect.stringContaining("reporter@example.com"),

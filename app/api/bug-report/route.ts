@@ -3,11 +3,12 @@ import nodemailer from "nodemailer";
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? GMAIL_USER;
+const BUG_REPORT_EMAIL =
+  process.env.BUG_REPORT_EMAIL ?? "engineers@wwwrise.org";
 
 export async function POST(request: Request) {
-  if (!GMAIL_USER || !GMAIL_APP_PASSWORD || !ADMIN_EMAIL) {
-    console.error("[bug-report] Missing GMAIL_USER, GMAIL_APP_PASSWORD, or ADMIN_EMAIL");
+ if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+   console.error("[bug-report] Missing GMAIL_USER or GMAIL_APP_PASSWORD");
     return NextResponse.json(
       { error: "Bug reporting is not configured on this server." },
       { status: 503 }
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
 
     await transporter.sendMail({
       from: `Bug Reports <${GMAIL_USER}>`,
-      to: ADMIN_EMAIL,
+      to: BUG_REPORT_EMAIL,
       replyTo: reporter,
       subject: `[Bug Report] from ${reporter}`,
       html: `
