@@ -82,7 +82,7 @@ beforeEach(() => {
 // Every exported action in this file must guard with canMutateFeature("learningTracker", ...)
 // immediately after the auth check — the DIFFERENT key from app/(app)/tracker/actions.ts's
 // jobApplicationTracker. An earlier plan revision gated both tracker action files with the
-// same key (finding C2); these tests assert the exact key argument per action.
+// same key; these tests assert the exact key argument per action.
 
 type GuardCase = {
   name: string;

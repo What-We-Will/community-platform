@@ -162,7 +162,7 @@ describe("deleteApplication — revalidates affected pages", () => {
 //
 // Every exported action in this file must guard with canMutateFeature("jobApplicationTracker", ...)
 // immediately after the auth check. An earlier plan revision gated both tracker
-// action files with the same key (finding C2) — these tests assert the exact
+// action files with the same key — these tests assert the exact
 // key argument per action, not merely that some guard denies.
 
 type GuardCase = {
