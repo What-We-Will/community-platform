@@ -66,7 +66,7 @@ const mainNavItems: NavItem[] = [
 
 const myToolsNavItems: NavItem[] = [
   { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList, flag: "jobApplicationTracker" },
-  { href: "/learning/tracker", label: "Learning Tracker", icon: ListTodo },
+  { href: "/learning/tracker", label: "Learning Tracker", icon: ListTodo, flag: "learningTracker" },
 ];
 
 const resourcesNavItems: NavItem[] = [
@@ -134,6 +134,8 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
         });
     }
   }, []);
+
+  const visibleMyToolsItems = visibleItems(myToolsNavItems, visibleFlags);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -220,21 +222,25 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
               Join Slack
             </a>
 
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              My Tools
-            </p>
-            {visibleItems(myToolsNavItems, visibleFlags).map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <item.icon className="size-5 shrink-0" />
-                {item.label}
-              </Link>
-            ))}
+            {visibleMyToolsItems.length > 0 && (
+              <>
+                <Separator className="my-2" />
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  My Tools
+                </p>
+                {visibleMyToolsItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <item.icon className="size-5 shrink-0" />
+                    {item.label}
+                  </Link>
+                ))}
+              </>
+            )}
 
             <Separator className="my-2" />
             <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">

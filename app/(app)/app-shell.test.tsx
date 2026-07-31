@@ -90,7 +90,7 @@ describe("AppShell nav visibility", () => {
     ).toBeInTheDocument();
   });
 
-  it("should keep non-flagged nav entries visible regardless of flag state", () => {
+  it("should keep unflagged nav sections fully visible when every flag is off", () => {
     render(
       <AppShell user={baseUser} visibleFlags={allFlags()}>
         <div />
@@ -98,6 +98,94 @@ describe("AppShell nav visibility", () => {
     );
 
     expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /learning tracker/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /job board/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /my profile/i })).toBeInTheDocument();
+  });
+
+  describe("My Tools section", () => {
+    it("should hide the separator, title, and both items when both child flags are off", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags()}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.queryByText("My Tools")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: /job application tracker/i })
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: /learning tracker/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it("should show only the Job Application Tracker item when just that flag is on", () => {
+      render(
+        <AppShell
+          user={baseUser}
+          visibleFlags={allFlags({ jobApplicationTracker: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByText("My Tools")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /job application tracker/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: /learning tracker/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it("should show only the Learning Tracker item when just that flag is on", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ learningTracker: true })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByText("My Tools")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /learning tracker/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: /job application tracker/i })
+      ).not.toBeInTheDocument();
+    });
+
+    it("should show both items when both child flags are on", () => {
+      render(
+        <AppShell
+          user={baseUser}
+          visibleFlags={allFlags({ jobApplicationTracker: true, learningTracker: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByText("My Tools")).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /job application tracker/i })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /learning tracker/i })
+      ).toBeInTheDocument();
+    });
+
+    it("should show the Learning Tracker item for an admin previewing an off flag", () => {
+      render(
+        <AppShell
+          user={{ ...baseUser, isAdmin: true }}
+          visibleFlags={allFlags({ learningTracker: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      expect(
+        screen.getByRole("link", { name: /learning tracker/i })
+      ).toBeInTheDocument();
+    });
   });
 });
