@@ -209,6 +209,24 @@ export function ConversationView({
           markAsRead();
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversationId}`,
+        },
+        (payload) => {
+          const updated = payload.new as Message;
+
+          // Merge rather than replace: the row from Realtime carries no joined
+          // sender, and dropping it would blank the avatar and name.
+          setMessages((prev) =>
+            prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m))
+          );
+        }
+      )
       .subscribe();
 
     return () => {
@@ -373,6 +391,50 @@ export function ConversationView({
       message_type: "system",
     });
     // Message will appear via Realtime subscription (avoids duplicate if we added optimistically)
+  }
+
+  /**
+   * Save an edit to one of the current member's own messages.
+   * Returns an error string for the editor to display, or null on success.
+   *
+   * Ownership is enforced by the "Users can edit their own messages" RLS policy
+   * and the column guard in 20260731103827_guard_message_edit_columns.sql;
+   * edited_at is stamped by that trigger, never sent from here.
+   */
+  async function handleEditMessage(
+    messageId: string,
+    content: string
+  ): Promise<string | null> {
+    const { data, error } = await supabase
+      .from("messages")
+      .update({ content })
+      .eq("id", messageId)
+      .eq("sender_id", currentUser.id)
+      .select("id, conversation_id, sender_id, content, message_type, metadata, edited_at, created_at")
+      .maybeSingle();
+
+    if (error) {
+      console.error("[handleEditMessage] failed:", error);
+      // P0001 is a RAISE EXCEPTION from the column guard in
+      // 20260731103827_guard_message_edit_columns.sql — a permanent refusal, so
+      // inviting a retry would be misleading. The guard's own wording is
+      // technical and never shown to the member.
+      if (error.code === "P0001") {
+        return "That change can't be saved to this message.";
+      }
+      return "Couldn't save your edit. Please try again.";
+    }
+    if (!data) {
+      // RLS filtered the row out, or it no longer exists.
+      return "You can no longer edit this message.";
+    }
+
+    // Apply locally so the edit is visible immediately; the Realtime UPDATE
+    // handler is idempotent and will merge the same values again.
+    setMessages((prev) =>
+      prev.map((m) => (m.id === data.id ? { ...m, ...data } : m))
+    );
+    return null;
   }
 
   async function handleStartVideoCall() {
@@ -660,6 +722,11 @@ export function ConversationView({
                       setVideoRoomName(roomName);
                       setVideoCallOpen(true);
                     }
+                  : undefined
+              }
+              onEdit={
+                msg.message_type === "text" && !readOnlyFooter
+                  ? handleEditMessage
                   : undefined
               }
             />

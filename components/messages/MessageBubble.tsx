@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
-import { Video, FileText } from "lucide-react";
+import { Video, FileText, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/utils/time";
 import { UserAvatar } from "@/components/shared/UserAvatar";
@@ -182,12 +182,207 @@ function FileMessageBubble({
   );
 }
 
+function TextMessageBubble({
+  messageId,
+  isOwn,
+  isGroup,
+  showSenderInfo,
+  senderId,
+  senderName,
+  senderAvatarUrl,
+  content,
+  createdAt,
+  editedAt,
+  onEdit,
+}: {
+  messageId: string;
+  isOwn: boolean;
+  isGroup: boolean;
+  showSenderInfo: boolean;
+  senderId: string | null;
+  senderName: string;
+  senderAvatarUrl: string | null;
+  content: string;
+  createdAt: string;
+  editedAt: string | null;
+  onEdit?: (messageId: string, content: string) => Promise<string | null>;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(content);
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  // The draft is seeded from content each time the editor opens, so a Realtime
+  // edit arriving while the editor is closed needs no syncing. While it is
+  // open, nothing overwrites the draft — the member's own typing wins.
+  const canEdit = isOwn && Boolean(onEdit);
+
+  function startEditing() {
+    setDraft(content);
+    setEditError(null);
+    setIsEditing(true);
+  }
+
+  function cancelEditing() {
+    setDraft(content);
+    setEditError(null);
+    setIsEditing(false);
+  }
+
+  async function saveEdit() {
+    if (!onEdit) return;
+
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      setEditError("Message cannot be empty");
+      return;
+    }
+    if (trimmed === content) {
+      cancelEditing();
+      return;
+    }
+
+    setSaving(true);
+    const error = await onEdit(messageId, trimmed);
+    setSaving(false);
+
+    if (error) {
+      setEditError(error);
+      return;
+    }
+    setIsEditing(false);
+  }
+
+  return (
+    <div
+      className={cn(
+        "group flex gap-2 mb-0.5",
+        isOwn ? "flex-row-reverse" : "flex-row",
+        showSenderInfo && "mt-4"
+      )}
+    >
+      {!isOwn && (
+        <div className="w-7 shrink-0 self-end">
+          {showSenderInfo && (
+            <SenderProfileLink
+              senderId={senderId}
+              isGroup={isGroup}
+              className="block rounded-full hover:opacity-80"
+            >
+              <UserAvatar
+                avatarUrl={senderAvatarUrl}
+                displayName={senderName}
+                size="xs"
+              />
+            </SenderProfileLink>
+          )}
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "flex flex-col max-w-[75%]",
+          isOwn ? "items-end" : "items-start"
+        )}
+      >
+        {!isOwn && showSenderInfo && (
+          <SenderProfileLink
+            senderId={senderId}
+            isGroup={isGroup}
+            className="text-xs text-muted-foreground mb-1 ml-1"
+          >
+            {senderName}
+          </SenderProfileLink>
+        )}
+
+        {isEditing ? (
+          <div className="w-full min-w-[220px]">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelEditing();
+                } else if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void saveEdit();
+                }
+              }}
+              rows={2}
+              autoFocus
+              disabled={saving}
+              aria-label="Edit message"
+              className="w-full resize-none rounded-2xl border bg-background px-3 py-2 text-sm leading-relaxed text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-70"
+            />
+            {editError && (
+              <p className="mt-1 px-1 text-xs text-destructive">{editError}</p>
+            )}
+            <div className="mt-1 flex items-center gap-2 px-1">
+              <Button size="sm" onClick={saveEdit} disabled={saving}>
+                {saving ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={cancelEditing}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+              <span className="text-[11px] text-muted-foreground">
+                Enter to save · Esc to cancel
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className={cn("flex items-center gap-1", isOwn && "flex-row-reverse")}>
+            <div
+              className={cn(
+                "px-3 py-2 rounded-2xl text-sm break-words leading-relaxed whitespace-pre-wrap",
+                isOwn
+                  ? "bg-primary text-primary-foreground rounded-tr-sm"
+                  : "bg-muted text-foreground rounded-tl-sm"
+              )}
+            >
+              {content}
+            </div>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={startEditing}
+                aria-label="Edit message"
+                className="shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary group-hover:opacity-100"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {showSenderInfo && !isEditing && (
+          <span className="text-[11px] text-muted-foreground mt-1 px-1">
+            {formatRelativeTime(createdAt)}
+            {editedAt && " · edited"}
+          </span>
+        )}
+        {!showSenderInfo && editedAt && !isEditing && (
+          <span className="text-[11px] text-muted-foreground mt-1 px-1">
+            edited
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface MessageBubbleProps {
   message: MessageWithSender;
   isOwn: boolean;
   isGroup?: boolean;
   showSenderInfo: boolean;
   onJoinVideoCall?: (roomName: string) => void;
+  onEdit?: (messageId: string, content: string) => Promise<string | null>;
 }
 
 export function MessageBubble({
@@ -196,6 +391,7 @@ export function MessageBubble({
   isGroup = false,
   showSenderInfo,
   onJoinVideoCall,
+  onEdit,
 }: MessageBubbleProps) {
   // System messages: centered pill with muted text, no avatar
   if (message.message_type === "system") {
@@ -287,64 +483,18 @@ export function MessageBubble({
   const senderName = message.sender?.display_name ?? "Unknown";
 
   return (
-    <div
-      className={cn(
-        "flex gap-2 mb-0.5",
-        isOwn ? "flex-row-reverse" : "flex-row",
-        showSenderInfo && "mt-4"
-      )}
-    >
-      {!isOwn && (
-        <div className="w-7 shrink-0 self-end">
-          {showSenderInfo && (
-            <SenderProfileLink
-              senderId={message.sender_id}
-              isGroup={isGroup}
-              className="block rounded-full hover:opacity-80"
-            >
-              <UserAvatar
-                avatarUrl={message.sender?.avatar_url ?? null}
-                displayName={senderName}
-                size="xs"
-              />
-            </SenderProfileLink>
-          )}
-        </div>
-      )}
-
-      <div
-        className={cn(
-          "flex flex-col max-w-[75%]",
-          isOwn ? "items-end" : "items-start"
-        )}
-      >
-        {!isOwn && showSenderInfo && (
-          <SenderProfileLink
-            senderId={message.sender_id}
-            isGroup={isGroup}
-            className="text-xs text-muted-foreground mb-1 ml-1"
-          >
-            {senderName}
-          </SenderProfileLink>
-        )}
-
-        <div
-          className={cn(
-            "px-3 py-2 rounded-2xl text-sm break-words leading-relaxed",
-            isOwn
-              ? "bg-primary text-primary-foreground rounded-tr-sm"
-              : "bg-muted text-foreground rounded-tl-sm"
-          )}
-        >
-          {message.content}
-        </div>
-
-        {showSenderInfo && (
-          <span className="text-[11px] text-muted-foreground mt-1 px-1">
-            {formatRelativeTime(message.created_at)}
-          </span>
-        )}
-      </div>
-    </div>
+    <TextMessageBubble
+      messageId={message.id}
+      isOwn={isOwn}
+      isGroup={isGroup}
+      showSenderInfo={showSenderInfo}
+      senderId={message.sender_id}
+      senderName={senderName}
+      senderAvatarUrl={message.sender?.avatar_url ?? null}
+      content={message.content}
+      createdAt={message.created_at}
+      editedAt={message.edited_at}
+      onEdit={onEdit}
+    />
   );
 }
