@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { canViewFeature, type FlagContext } from "@/lib/feature-flags";
+import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { TrackerClient, type Application, type CommunityNote } from "./TrackerClient";
 import type { Interview, HelpRequest } from "./actions";
 
@@ -7,6 +9,20 @@ export default async function TrackerPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const flagContext: FlagContext = {
+    targetingKey: user.id,
+    attributes: profile?.role ? { role: profile.role } : undefined,
+  };
+  if (!(await canViewFeature("jobApplicationTracker", flagContext))) {
+    return <FeatureComingSoon />;
+  }
 
   const [{ data: rawApplications }, { data: rawInterviews }, { data: rawHelp }] = await Promise.all([
     supabase

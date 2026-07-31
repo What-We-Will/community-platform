@@ -22,7 +22,9 @@ import {
   Globe,
   MessageSquare,
   UsersRound,
+  type LucideIcon,
 } from "lucide-react";
+import type { FeatureFlag } from "@/lib/feature-flags";
 import dynamic from "next/dynamic";
 
 const BugReportDialog = dynamic(
@@ -46,7 +48,15 @@ const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so othe
 const SLACK_INVITE_URL =
   "https://join.slack.com/t/whatwewill/shared_invite/zt-3zxh2f0x0-~zvous3lLva6Pi8IJQ0T8A";
 
-const mainNavItems = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** Nav entries without a flag are always visible. */
+  flag?: FeatureFlag;
+}
+
+const mainNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/groups", label: "Groups", icon: UsersRound },
@@ -54,12 +64,12 @@ const mainNavItems = [
   { href: "/members", label: "Members", icon: UserSearch },
 ];
 
-const myToolsNavItems = [
-  { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList },
+const myToolsNavItems: NavItem[] = [
+  { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList, flag: "jobApplicationTracker" },
   { href: "/learning/tracker", label: "Learning Tracker", icon: ListTodo },
 ];
 
-const resourcesNavItems = [
+const resourcesNavItems: NavItem[] = [
   { href: "/jobs",         label: "Job Board",      icon: Briefcase },
   { href: "/learning",     label: "Group Learning", icon: BookMarked },
   { href: "/projects",     label: "Projects",       icon: GitFork },
@@ -67,9 +77,17 @@ const resourcesNavItems = [
   { href: "https://warn-tracker.streamlit.app/", label: "WARN Tracker", icon: Globe },
 ];
 
-const profileNavItems = [
+const profileNavItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
+
+/** Nav entries gated by a flag are dropped unless their flag resolved visible. */
+function visibleItems(
+  items: NavItem[],
+  flags: Record<FeatureFlag, boolean>
+): NavItem[] {
+  return items.filter((item) => !item.flag || flags[item.flag]);
+}
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -81,9 +99,11 @@ interface AppShellProps {
     unreadCount: number;
     isAdmin?: boolean;
   };
+  /** Server-resolved visibility per flag; never the resolver itself. */
+  visibleFlags: Record<FeatureFlag, boolean>;
 }
 
-export default function AppShell({ children, user }: AppShellProps) {
+export default function AppShell({ children, user, visibleFlags }: AppShellProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -171,7 +191,7 @@ export default function AppShell({ children, user }: AppShellProps) {
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-            {mainNavItems.map((item) => (
+            {visibleItems(mainNavItems, visibleFlags).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -204,7 +224,7 @@ export default function AppShell({ children, user }: AppShellProps) {
             <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
               My Tools
             </p>
-            {myToolsNavItems.map((item) => (
+            {visibleItems(myToolsNavItems, visibleFlags).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -220,7 +240,7 @@ export default function AppShell({ children, user }: AppShellProps) {
             <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
               Resources
             </p>
-            {resourcesNavItems.map((item) =>
+            {visibleItems(resourcesNavItems, visibleFlags).map((item) =>
               item.href.startsWith("http") ? (
                 <a
                   key={item.href}
@@ -257,7 +277,7 @@ export default function AppShell({ children, user }: AppShellProps) {
             </a>
 
             <Separator className="my-2" />
-            {profileNavItems.map((item) => (
+            {visibleItems(profileNavItems, visibleFlags).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
