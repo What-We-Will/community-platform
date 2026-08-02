@@ -27,9 +27,11 @@ function getMotivationalLine(): string {
 
 interface WelcomeBannerProps {
   profile: Profile | null;
+  /** Server-resolved view boolean; never the resolver itself. */
+  showJobBoardCta: boolean;
 }
 
-export function WelcomeBanner({ profile }: WelcomeBannerProps) {
+export function WelcomeBanner({ profile, showJobBoardCta }: WelcomeBannerProps) {
   const displayName = profile?.display_name ?? "there";
   const greeting = getGreeting();
   const subtitle = getMotivationalLine();
@@ -45,12 +47,14 @@ export function WelcomeBanner({ profile }: WelcomeBannerProps) {
             <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
           </div>
           <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" size="sm" asChild>
-                <Link href="/jobs">
-                  <Briefcase className="size-4" />
-                  Browse Jobs
-                </Link>
-              </Button>
+              {showJobBoardCta && (
+                <Button variant="secondary" size="sm" asChild>
+                  <Link href="/jobs">
+                    <Briefcase className="size-4" />
+                    Browse Jobs
+                  </Link>
+                </Button>
+              )}
               <Button variant="secondary" size="sm" asChild>
                 <Link href="/members">
                   <Users className="size-4" />

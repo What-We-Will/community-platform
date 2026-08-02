@@ -70,7 +70,7 @@ const myToolsNavItems: NavItem[] = [
 ];
 
 const resourcesNavItems: NavItem[] = [
-  { href: "/jobs",         label: "Job Board",      icon: Briefcase },
+  { href: "/jobs",         label: "Job Board",      icon: Briefcase, flag: "ghostJobBoard" },
   { href: "/learning",     label: "Group Learning", icon: BookMarked },
   { href: "/projects",     label: "Projects",       icon: GitFork },
   { href: "/links",        label: "Resource Hub",   icon: Link2 },

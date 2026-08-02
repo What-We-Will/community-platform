@@ -8,7 +8,7 @@
 
 ## Context
 
-Issue #191 asked for a durable feature-flag system to replace the hardcoded boolean constants shipped as a sketch in PR #194. The design that came out of that work makes a `feature_flags` table the sole source of truth and enforces it through exactly two named checks: `canViewFeature`, which is user-aware and lets an admin preview a disabled feature, and `canMutateFeature`, which is strict and has no admin carve-out (`lib/feature-flags.ts`). Nav entries derive from resolved flag state rather than being maintained by hand (`app/(app)/app-shell.tsx:84-89`).
+Issue #191 asked for a durable feature-flag system to replace the hardcoded boolean constants shipped as a sketch in PR #194. The design that came out of that work makes a `feature_flags` table the sole source of truth and enforces it through exactly two named checks: `canViewFeature`, which is user-aware and lets an admin preview a disabled feature, and `canMutateFeature`, which is strict and has no admin carve-out (`lib/feature-flags.ts`). Nav entries derive from resolved flag state rather than being maintained by hand (`app/(app)/app-shell.tsx`).
 
 The tables those gated features write to predate the flag system. Their RLS is keyed on row ownership — with an admin carve-out on some delete policies — and makes no reference to `feature_flags` (`supabase/migrations/021_job_tracker.sql:27-50`, `supabase/migrations/036_learning_tracker.sql:14-52`). Those policies grant the owner write access on their own rows, and the gated Server Actions exercise them through the user's own session (`app/(app)/tracker/actions.ts:3`), not a privileged connection. Supabase auto-generates a PostgREST endpoint for every such table, reachable with that same session token. A user can therefore call PostgREST directly and insert, update, or delete their own rows while the flag gating that feature is off. The Server Action guard is not in that path.
 
@@ -46,4 +46,4 @@ The `type` CHECK constraint already permits `'permission'` alongside `'release'`
 ## Open questions
 
 - Whether to add a pgTAP assertion that no `permission`-type row exists until an ADR authorizes the first one. That would convert the gate above from a review rule into a mechanical one, at the cost of a test that must be deliberately removed when the time comes.
-- One Job Board write path inserts into `job_applications` (`app/(app)/jobs/community-actions.ts:21`), a table belonging to a feature governed by a different flag. Which flag should govern that write is unresolved, and is being decided alongside the Job Board's own gating work rather than here.
+- One Job Board write path inserts into `job_applications` (`app/(app)/jobs/community-actions.ts`), a table belonging to a feature governed by a different flag. Which flag should govern that write is unresolved, and is being decided alongside the Job Board's own gating work rather than here.

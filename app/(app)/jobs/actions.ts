@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { findExistingDM, createDMConversation } from "@/lib/messages";
+import { canMutateFeature, type FlagContext } from "@/lib/feature-flags";
 
 export type JobType = "full_time" | "part_time" | "contract" | "internship" | "volunteer";
 
@@ -23,6 +24,10 @@ export async function createJobPosting(input: JobPostingInput): Promise<{ error?
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("job_postings").insert({
     ...input,
@@ -41,6 +46,10 @@ export async function updateJobPosting(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   // Verify ownership or admin — mirrors the RLS policy
   const { data: posting } = await supabase
@@ -75,6 +84,13 @@ export async function messageJobPoster(posterId: string): Promise<never> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Typed Promise<never>: cannot return { error }. Deny by redirecting to the
+  // gated /jobs page itself, the same way the !user check above terminates.
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    redirect("/jobs");
+  }
+
   let conversationId = await findExistingDM(user.id, posterId);
   if (!conversationId) {
     conversationId = await createDMConversation(user.id, posterId);
@@ -86,6 +102,10 @@ export async function deleteJobPosting(id: string): Promise<{ error?: string }> 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("job_postings").delete().eq("id", id);
   if (error) return { error: error.message };

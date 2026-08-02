@@ -102,8 +102,61 @@ describe("AppShell nav visibility", () => {
     );
 
     expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /job board/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /my profile/i })).toBeInTheDocument();
+  });
+
+  describe("Job Board nav entry", () => {
+    it("should hide the Job Board entry for a member when ghostJobBoard is off", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ ghostJobBoard: false })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.queryByRole("link", { name: /job board/i })).not.toBeInTheDocument();
+    });
+
+    it("should show the Job Board entry for a member when ghostJobBoard is on", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ ghostJobBoard: true })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByRole("link", { name: /job board/i })).toBeInTheDocument();
+    });
+
+    it("should show the Job Board entry for an admin previewing an off flag", () => {
+      // Admin preview is resolved server-side by canViewFeature before AppShell
+      // ever sees a boolean — the shell has no separate admin branch.
+      render(
+        <AppShell
+          user={{ ...baseUser, isAdmin: true }}
+          visibleFlags={allFlags({ ghostJobBoard: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByRole("link", { name: /job board/i })).toBeInTheDocument();
+    });
+
+    it("should keep the Resources header and its four unflagged siblings visible when ghostJobBoard is off", () => {
+      // C05-A01 scope fence: only /jobs gains a flag. With four unflagged
+      // siblings (/learning, /projects, /links, WARN Tracker) the section
+      // never empties in this phase, so the header must not disappear.
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ ghostJobBoard: false })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByText("Resources")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /group learning/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /projects/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /resource hub/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /warn tracker/i })).toBeInTheDocument();
+    });
   });
 
   describe("My Tools section", () => {
