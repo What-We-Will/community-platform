@@ -1,6 +1,6 @@
 begin;
 
-select plan(20);
+select plan(23);
 
 insert into auth.users (
   instance_id,
@@ -73,8 +73,33 @@ select ok(
 );
 
 select ok(
-  has_table_privilege('authenticated', 'public.feature_flags', 'select'),
-  'authenticated can select feature flags'
+  not has_table_privilege('authenticated', 'public.feature_flags', 'select'),
+  'authenticated has no table-level select on feature flags'
+);
+
+select ok(
+  has_any_column_privilege('authenticated', 'public.feature_flags', 'select'),
+  'authenticated can select some feature_flags columns'
+);
+
+select ok(
+  has_column_privilege('authenticated', 'public.feature_flags', 'key', 'select')
+  and has_column_privilege('authenticated', 'public.feature_flags', 'enabled', 'select')
+  and has_column_privilege('authenticated', 'public.feature_flags', 'fail_mode', 'select')
+  and has_column_privilege('authenticated', 'public.feature_flags', 'updated_at', 'select'),
+  'authenticated can select exactly the resolver columns'
+);
+
+select ok(
+  not (
+    has_column_privilege('authenticated', 'public.feature_flags', 'type', 'select')
+    or has_column_privilege('authenticated', 'public.feature_flags', 'owner', 'select')
+    or has_column_privilege('authenticated', 'public.feature_flags', 'description', 'select')
+    or has_column_privilege('authenticated', 'public.feature_flags', 'expires_at', 'select')
+    or has_column_privilege('authenticated', 'public.feature_flags', 'created_at', 'select')
+    or has_column_privilege('authenticated', 'public.feature_flags', 'seed_id', 'select')
+  ),
+  'authenticated cannot select non-resolver feature_flags columns'
 );
 
 select ok(
