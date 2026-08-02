@@ -27,7 +27,7 @@ describe("feature flag fallback logging", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("should log site, stale, and cold error-fallback resolutions when reads change state", async () => {
+  it("should not log the site-default happy path, but should log stale and cold error-fallback resolutions with the causing error", async () => {
     const { client } = buildMockSupabaseClient({
       tables: {
         feature_flags: [
@@ -49,18 +49,45 @@ describe("feature flag fallback logging", () => {
     resetFeatureFlagCacheForTests();
     await canMutateFeature("jobApplicationTracker", context);
 
+    expect(log).toHaveBeenCalledTimes(3);
     expect(log).toHaveBeenNthCalledWith(1, "feature flag resolved", {
-      flag: "jobApplicationTracker", source: "site-default", value: true,
+      flag: "jobApplicationTracker",
+      source: "stale-snapshot",
+      value: true,
+      error: expect.objectContaining({
+        message: "Feature flag read failed: offline",
+      }),
     });
     expect(log).toHaveBeenNthCalledWith(2, "feature flag resolved", {
-      flag: "jobApplicationTracker", source: "stale-snapshot", value: true,
+      flag: "jobApplicationTracker",
+      source: "error-fallback",
+      value: false,
+      error: expect.objectContaining({
+        message: "Feature flag read failed: offline",
+      }),
     });
     expect(log).toHaveBeenNthCalledWith(3, "feature flag resolved", {
-      flag: "jobApplicationTracker", source: "error-fallback", value: false,
+      flag: "jobApplicationTracker",
+      source: "error-fallback",
+      value: false,
+      error: expect.objectContaining({
+        message: "Feature flag read failed: offline",
+      }),
     });
-    expect(log).toHaveBeenNthCalledWith(4, "feature flag resolved", {
-      flag: "jobApplicationTracker", source: "error-fallback", value: false,
+  });
+
+  it("should not log a site-default resolution", async () => {
+    const { client } = buildMockSupabaseClient({
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null },
+      },
     });
+    mockCreateClient.mockResolvedValue(client as never);
+    const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+    await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(true);
+
+    expect(log).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -76,7 +103,12 @@ describe("feature flag fallback logging", () => {
     await expect(canMutateFeature("jobApplicationTracker", { targetingKey: "" })).resolves.toBe(expected);
 
     expect(log).toHaveBeenCalledWith("feature flag resolved", {
-      flag: "jobApplicationTracker", source: "fail-mode", value: expected,
+      flag: "jobApplicationTracker",
+      source: "fail-mode",
+      value: expected,
+      error: expect.objectContaining({
+        message: "Feature flag context requires a targeting key",
+      }),
     });
   });
 

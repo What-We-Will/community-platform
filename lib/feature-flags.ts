@@ -153,9 +153,13 @@ function evaluateFlag(
 function logResolution(
   flag: FeatureFlag,
   source: ResolutionSource,
-  value: boolean
+  value: boolean,
+  error?: unknown
 ) {
-  console.info("feature flag resolved", { flag, source, value });
+  console.info(
+    "feature flag resolved",
+    error ? { flag, source, value, error } : { flag, source, value }
+  );
 }
 
 async function resolveFeature(
@@ -164,26 +168,30 @@ async function resolveFeature(
 ): Promise<boolean> {
   let definition: FeatureFlagDefinition | undefined;
   let source: ResolutionSource = "site-default";
+  let snapshotError: unknown;
 
   try {
     definition = (await getFlagSnapshot()).get(flag);
-  } catch {
+  } catch (error) {
+    snapshotError = error;
     definition = lastKnownGood?.snapshot.get(flag);
     source = definition ? "stale-snapshot" : "error-fallback";
   }
 
   if (!definition) {
-    logResolution(flag, "error-fallback", false);
+    logResolution(flag, "error-fallback", false, snapshotError);
     return false;
   }
 
   try {
     const value = evaluateFlag(definition, context);
-    logResolution(flag, source, value);
+    if (source !== "site-default") {
+      logResolution(flag, source, value, snapshotError);
+    }
     return value;
-  } catch {
+  } catch (error) {
     const value = definition.failMode === "open";
-    logResolution(flag, "fail-mode", value);
+    logResolution(flag, "fail-mode", value, error);
     return value;
   }
 }
