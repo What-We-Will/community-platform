@@ -34,8 +34,7 @@ function makeChain(thenResult = { error: null }, singleResult: Record<string, an
 // canMutateFeature("groupLearning", ...) immediately after the auth check.
 // The export-set pin below is derived from the module at runtime — not a
 // second hand list — so a ninth export that skips the guard fails this check
-// instead of leaving a green suite (C05-RULING-005, applied to this module by
-// C07-RULING-001).
+// instead of leaving a green suite.
 
 describe("exported-action inventory pinned to the export set", () => {
   it("every exported action in learning-actions.ts is covered by a guard case in this file or a sibling", () => {
@@ -169,6 +168,20 @@ describe("deletePath — revalidates affected pages", () => {
     expect(mockCanMutateFeature).toHaveBeenCalledWith("groupLearning", { targetingKey: "member-1" });
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
+
+  it("denies an authenticated admin identically when groupLearning is off", async () => {
+    mockCreateClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "admin-1" } } }) },
+      from: vi.fn(),
+    } as any);
+    mockCanMutateFeature.mockResolvedValue(false);
+
+    const result = await deletePath("path-1");
+
+    expect(result).toEqual({ error: "Feature not available" });
+    expect(mockCanMutateFeature).toHaveBeenCalledWith("groupLearning", { targetingKey: "admin-1" });
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
 });
 
 describe("toggleStarPath — revalidates affected pages", () => {
@@ -227,6 +240,22 @@ describe("toggleStarPath — revalidates affected pages", () => {
     expect(mockCanMutateFeature).toHaveBeenCalledWith("groupLearning", { targetingKey: "admin-1" });
     // Admin's own "Admins only" gate is a table read (profiles); the flag
     // guard must short-circuit before it, not merely before the update.
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("denies an authenticated member before the admin-role lookup when groupLearning is off", async () => {
+    const mockFrom = vi.fn();
+    mockCreateClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "member-1" } } }) },
+      from: mockFrom,
+    } as any);
+    mockCanMutateFeature.mockResolvedValue(false);
+
+    const result = await toggleStarPath("path-1", false);
+
+    expect(result).toEqual({ error: "Feature not available" });
+    expect(mockCanMutateFeature).toHaveBeenCalledWith("groupLearning", { targetingKey: "member-1" });
     expect(mockFrom).not.toHaveBeenCalled();
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });

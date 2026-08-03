@@ -233,7 +233,7 @@ describe("AppShell nav visibility", () => {
   });
 
   describe("Resources section visibility", () => {
-    it("is derived: the header and separator disappear only if every Resources item is unreachable", () => {
+    it("keeps the header and separator count identical whether some or all Resources items are visible", () => {
       // /links and WARN Tracker are permanently unflagged, so this never
       // happens today — this test documents the derivation itself, not a
       // reachable empty state.

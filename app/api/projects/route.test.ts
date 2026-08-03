@@ -1,14 +1,14 @@
 /**
  * @vitest-environment node
  *
- * This route was discovered during the Phase 7 deep-link audit: it is not a
- * link/CTA and was not enumerated in the phase card, but it independently
- * reads the `projects` table through the same service-role client the gated
- * page uses, and until this test it carried no feature-flag check at all —
- * any authenticated user, flag on or off, could call it directly. Gated here
+ * This route was discovered during a repo-wide audit of links and reads into
+ * flag-gated routes: it is not a link/CTA, but it independently reads the
+ * `projects` table through the same service-role client the gated page uses,
+ * and until this test it carried no feature-flag check at all — any
+ * authenticated user, flag on or off, could call it directly. Gated here
  * with the same canViewFeature("projects", ...) contract as the page so the
  * flag actually governs every live read path for this feature, not just the
- * one the card named.
+ * page route.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 vi.mock("@supabase/supabase-js", () => ({ createClient: vi.fn() }));

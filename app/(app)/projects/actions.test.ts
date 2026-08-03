@@ -49,11 +49,10 @@ beforeEach(() => {
 // ── Mutation gate (projects) ────────────────────────────────────────────────
 //
 // All three exports guard with canMutateFeature("projects", ...) immediately
-// after the auth check. fetchGitHubMeta had no auth check before this phase;
-// C07-RULING-001 (guard all ten, uniform shape, no fetchGitHubMeta carve-out)
-// requires deriving targetingKey the same way the other actions do, so an
-// auth check was added here as necessary plumbing for the guard, not scope
-// creep.
+// after the auth check. fetchGitHubMeta had no auth check before this change;
+// guarding it uniformly with the other two actions requires deriving
+// targetingKey the same way they do, so an auth check was added here as
+// necessary plumbing for the guard, not scope creep.
 
 type GuardCase = {
   name: string;

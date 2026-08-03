@@ -37,6 +37,8 @@ export default async function LearningTrackerPage() {
     return <FeatureComingSoon />;
   }
 
+  const showGroupLearningCta = await canViewFeature("groupLearning", flagContext);
+
   // ── Tracker items ────────────────────────────────────────────────────────────
   const { data: raw } = await supabase
     .from("personal_learning_items")
@@ -132,6 +134,7 @@ export default async function LearningTrackerPage() {
       <LearningTrackerClient
         trackerItems={trackerItems}
         myStudyGroups={myStudyGroups}
+        showGroupLearningCta={showGroupLearningCta}
       />
     </div>
   );

@@ -93,4 +93,40 @@ describe("AppLayout flag wiring", () => {
     expect(result.type).toBe(AppShell);
     expect(result.props.visibleFlags.ghostJobBoard).toBe(false);
   });
+
+  it("should resolve groupLearning visible for an admin previewing an off flag", async () => {
+    setUpLayout({ role: "admin", enabled: false, flag: "groupLearning" });
+
+    const result = await AppLayout({ children: <div /> });
+
+    expect(result.type).toBe(AppShell);
+    expect(result.props.visibleFlags.groupLearning).toBe(true);
+  });
+
+  it("should resolve groupLearning hidden for a member when the flag is off", async () => {
+    setUpLayout({ role: "member", enabled: false, flag: "groupLearning" });
+
+    const result = await AppLayout({ children: <div /> });
+
+    expect(result.type).toBe(AppShell);
+    expect(result.props.visibleFlags.groupLearning).toBe(false);
+  });
+
+  it("should resolve projects visible for an admin previewing an off flag", async () => {
+    setUpLayout({ role: "admin", enabled: false, flag: "projects" });
+
+    const result = await AppLayout({ children: <div /> });
+
+    expect(result.type).toBe(AppShell);
+    expect(result.props.visibleFlags.projects).toBe(true);
+  });
+
+  it("should resolve projects hidden for a member when the flag is off", async () => {
+    setUpLayout({ role: "member", enabled: false, flag: "projects" });
+
+    const result = await AppLayout({ children: <div /> });
+
+    expect(result.type).toBe(AppShell);
+    expect(result.props.visibleFlags.projects).toBe(false);
+  });
 });

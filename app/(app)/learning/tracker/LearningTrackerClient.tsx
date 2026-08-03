@@ -274,7 +274,13 @@ function KanbanColumn({
 
 // ── Study Groups Sidebar ──────────────────────────────────────────────────────
 
-function StudyGroupsSidebar({ groups }: { groups: MyStudyGroup[] }) {
+function StudyGroupsSidebar({
+  groups,
+  showGroupLearningCta,
+}: {
+  groups: MyStudyGroup[];
+  showGroupLearningCta: boolean;
+}) {
   const typeIcon = (type: string | null) =>
     type === "video"  ? <PlaySquare className="size-3 shrink-0" /> :
     type === "course" ? <GraduationCap className="size-3 shrink-0" /> :
@@ -298,9 +304,11 @@ function StudyGroupsSidebar({ groups }: { groups: MyStudyGroup[] }) {
           <p className="text-xs text-muted-foreground leading-snug">
             You haven&apos;t joined any study groups yet.
           </p>
-          <Button size="sm" variant="outline" asChild className="text-xs h-7">
-            <Link href="/learning">Browse Learning</Link>
-          </Button>
+          {showGroupLearningCta && (
+            <Button size="sm" variant="outline" asChild className="text-xs h-7">
+              <Link href="/learning">Browse Learning</Link>
+            </Button>
+          )}
         </div>
       ) : (
         <ul className="space-y-2.5">
@@ -359,9 +367,12 @@ function StudyGroupsSidebar({ groups }: { groups: MyStudyGroup[] }) {
 export function LearningTrackerClient({
   trackerItems,
   myStudyGroups,
+  showGroupLearningCta,
 }: {
   trackerItems: TrackerItem[];
   myStudyGroups: MyStudyGroup[];
+  /** Server-resolved view boolean; never the resolver itself. */
+  showGroupLearningCta: boolean;
 }) {
   const router = useRouter();
 
@@ -443,7 +454,11 @@ export function LearningTrackerClient({
         <h2 className="text-lg font-semibold">Your tracker is empty</h2>
         <p className="mt-1 text-sm text-muted-foreground max-w-xs">
           Browse Courses, Videos, or Tutorials in{" "}
-          <a href="/learning" className="text-primary hover:underline">Group Learning</a>{" "}
+          {showGroupLearningCta ? (
+            <a href="/learning" className="text-primary hover:underline">Group Learning</a>
+          ) : (
+            "Group Learning"
+          )}{" "}
           and click <strong>Add to My Tracker</strong> to get started.
         </p>
       </div>
@@ -485,7 +500,7 @@ export function LearningTrackerClient({
       </div>
 
       {/* Study groups sidebar */}
-      <StudyGroupsSidebar groups={myStudyGroups} />
+      <StudyGroupsSidebar groups={myStudyGroups} showGroupLearningCta={showGroupLearningCta} />
     </div>
   );
 }

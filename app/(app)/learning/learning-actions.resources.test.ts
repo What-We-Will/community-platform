@@ -143,4 +143,20 @@ describe("deleteResource — revalidates affected pages", () => {
     expect(mockFrom).not.toHaveBeenCalled();
     expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
+
+  it("denies an authenticated admin identically when groupLearning is off", async () => {
+    const mockFrom = vi.fn();
+    mockCreateClient.mockResolvedValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "admin-1" } } }) },
+      from: mockFrom,
+    } as any);
+    mockCanMutateFeature.mockResolvedValue(false);
+
+    const result = await deleteResource("resource-1");
+
+    expect(result).toEqual({ error: "Feature not available" });
+    expect(mockCanMutateFeature).toHaveBeenCalledWith("groupLearning", { targetingKey: "admin-1" });
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
+  });
 });
