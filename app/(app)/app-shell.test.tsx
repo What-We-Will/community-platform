@@ -126,9 +126,10 @@ describe("AppShell nav visibility", () => {
       expect(screen.getByRole("link", { name: /job board/i })).toBeInTheDocument();
     });
 
-    it("should show the Job Board entry for an admin previewing an off flag", () => {
+    it("should show the Job Board entry for an admin whenever ghostJobBoard resolves true, since AppShell has no separate admin branch", () => {
       // Admin preview is resolved server-side by canViewFeature before AppShell
-      // ever sees a boolean — the shell has no separate admin branch.
+      // ever sees a boolean (see layout.test.tsx's admin/off coverage) —
+      // AppShell itself only ever reads the resolved flags map.
       render(
         <AppShell
           user={{ ...baseUser, isAdmin: true }}
@@ -142,9 +143,9 @@ describe("AppShell nav visibility", () => {
     });
 
     it("should keep the Resources header and its four unflagged siblings visible when ghostJobBoard is off", () => {
-      // C05-A01 scope fence: only /jobs gains a flag. With four unflagged
-      // siblings (/learning, /projects, /links, WARN Tracker) the section
-      // never empties in this phase, so the header must not disappear.
+      // Only /jobs gains a flag in this phase. With four unflagged siblings
+      // (/learning, /projects, /links, WARN Tracker) the section never
+      // empties, so the header must not disappear.
       render(
         <AppShell user={baseUser} visibleFlags={allFlags({ ghostJobBoard: false })}>
           <div />

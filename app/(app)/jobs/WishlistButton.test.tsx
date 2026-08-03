@@ -26,7 +26,7 @@ function renderButton() {
   );
 }
 
-// C05-A01 — the button treated every error except the "already_wishlisted"
+// The button used to treat every error except the "already_wishlisted"
 // sentinel as success (`if (res.error !== "already_wishlisted") setWishlisted(true)`).
 // That was nearly harmless before this phase, but addToWishlist can now
 // routinely return { error: "Feature not available" } from the ghostJobBoard

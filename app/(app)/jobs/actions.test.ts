@@ -21,6 +21,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { canMutateFeature } from "@/lib/feature-flags";
 import { findExistingDM, createDMConversation } from "@/lib/messages";
+import * as ActionsModule from "./actions";
 import {
   createJobPosting,
   updateJobPosting,
@@ -87,6 +88,21 @@ const GUARD_CASES: GuardCase[] = [
   { name: "updateJobPosting", call: () => updateJobPosting("job-1", { title: "Senior Engineer" }) },
   { name: "deleteJobPosting", call: () => deleteJobPosting("job-1") },
 ];
+
+// messageJobPoster can't share GUARD_CASES's { error? } shape (Promise<never>);
+// it's guard-tested separately below. Deriving exportedActionNames from the
+// module at runtime — not a second hand list — is what makes a future
+// ungated export fail this check instead of leaving a green suite.
+describe("exported-action inventory pinned to the export set", () => {
+  it("every exported action has a guard case or its own guard describe", () => {
+    const exportedActionNames = Object.keys(ActionsModule).filter(
+      (key) => typeof (ActionsModule as Record<string, unknown>)[key] === "function"
+    );
+    const coveredActionNames = [...GUARD_CASES.map((c) => c.name), "messageJobPoster"];
+
+    expect(exportedActionNames.sort()).toEqual(coveredActionNames.sort());
+  });
+});
 
 describe.each(GUARD_CASES)("$name — mutation gate", ({ call }) => {
   it("returns the existing auth error for an unauthenticated caller without disclosing flag state", async () => {

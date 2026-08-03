@@ -8,7 +8,7 @@ import type { MockedFunction } from "vitest";
 import { createClient } from "@/lib/supabase/server";
 import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
 import { makeFeatureFlagRow } from "@/lib/__tests__/factories";
-import { resetFeatureFlagCacheForTests } from "@/lib/feature-flags";
+import { resetFeatureFlagCacheForTests, type FeatureFlag } from "@/lib/feature-flags";
 import AppShell from "./app-shell";
 import AppLayout from "./layout";
 
@@ -20,9 +20,11 @@ const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 function setUpLayout({
   role,
   enabled,
+  flag = "jobApplicationTracker",
 }: {
   role: "member" | "admin";
   enabled: boolean;
+  flag?: FeatureFlag;
 }) {
   const { client } = buildMockSupabaseClient({
     user: { id: "user-1" },
@@ -37,7 +39,7 @@ function setUpLayout({
         error: null,
       },
       feature_flags: {
-        data: [makeFeatureFlagRow({ key: "jobApplicationTracker", enabled })],
+        data: [makeFeatureFlagRow({ key: flag, enabled })],
         error: null,
       },
     },
@@ -72,5 +74,23 @@ describe("AppLayout flag wiring", () => {
 
     expect(result.type).toBe(AppShell);
     expect(result.props.visibleFlags.jobApplicationTracker).toBe(false);
+  });
+
+  it("should resolve ghostJobBoard visible for an admin previewing an off flag", async () => {
+    setUpLayout({ role: "admin", enabled: false, flag: "ghostJobBoard" });
+
+    const result = await AppLayout({ children: <div /> });
+
+    expect(result.type).toBe(AppShell);
+    expect(result.props.visibleFlags.ghostJobBoard).toBe(true);
+  });
+
+  it("should resolve ghostJobBoard hidden for a member when the flag is off", async () => {
+    setUpLayout({ role: "member", enabled: false, flag: "ghostJobBoard" });
+
+    const result = await AppLayout({ children: <div /> });
+
+    expect(result.type).toBe(AppShell);
+    expect(result.props.visibleFlags.ghostJobBoard).toBe(false);
   });
 });

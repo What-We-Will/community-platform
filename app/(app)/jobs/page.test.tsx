@@ -93,7 +93,7 @@ describe("Job Board page feature gate", () => {
   });
 });
 
-describe("Job Board wishlist control view condition (C05-RULING-004)", () => {
+describe("Job Board wishlist control view condition", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetFeatureFlagCacheForTests();

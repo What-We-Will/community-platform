@@ -78,11 +78,16 @@ describe("Dashboard Job Board CTA gate", () => {
     expect(welcomeBannerProps(result)?.showJobBoardCta).toBe(true);
   });
 
-  it("passes only a boolean to WelcomeBanner, never a FlagContext or resolver", async () => {
+  it("passes only a boolean CTA prop to WelcomeBanner, never a FlagContext or resolver", async () => {
     setUpDashboard({ role: "member", ghostJobBoard: true });
 
     const result = await DashboardPage();
+    const props = welcomeBannerProps(result);
 
-    expect(typeof welcomeBannerProps(result)?.showJobBoardCta).toBe("boolean");
+    // Asserts the exact prop key set so a FlagContext or resolver callback
+    // spread onto the element alongside the boolean would fail this test,
+    // not just that showJobBoardCta itself happens to be a boolean.
+    expect(Object.keys(props ?? {}).sort()).toEqual(["profile", "showJobBoardCta"]);
+    expect(typeof props?.showJobBoardCta).toBe("boolean");
   });
 });

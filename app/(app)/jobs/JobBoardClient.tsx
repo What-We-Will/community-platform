@@ -67,7 +67,7 @@ interface Props {
   activeReferralFilter: boolean;
   activeCommunityFilter: boolean;
   activeNotesFilter: boolean;
-  /** Server-resolved view boolean; never the resolver itself (C05-RULING-004). */
+  /** Server-resolved view boolean; never the resolver itself. */
   showWishlistControl: boolean;
 }
 

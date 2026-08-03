@@ -10,6 +10,7 @@ import type { MockedFunction } from "vitest";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { canMutateFeature } from "@/lib/feature-flags";
+import * as CommunityActionsModule from "./community-actions";
 import {
   addToWishlist,
   removeFromWishlist,
@@ -61,9 +62,9 @@ beforeEach(() => {
 //
 // Every exported action in this file must guard with canMutateFeature("ghostJobBoard", ...)
 // immediately after the auth check — a single flag, never combined with
-// jobApplicationTracker (C05-RULING-004: the tracker dependency is a UI
-// coherence decision, not a second mutation guard). These tests assert the
-// exact key argument per action, not merely that some guard denies.
+// jobApplicationTracker (the tracker dependency is a UI coherence decision,
+// not a second mutation guard). These tests assert the exact key argument
+// per action, not merely that some guard denies.
 
 type GuardCase = {
   name: string;
@@ -76,6 +77,20 @@ const GUARD_CASES: GuardCase[] = [
   { name: "addJobComment", call: () => addJobComment("job-1", "great posting") },
   { name: "deleteJobComment", call: () => deleteJobComment("comment-1") },
 ];
+
+// Pinned to the module's actual runtime exports, not a second hand-written
+// list, so a new exported action with no guard case fails this check instead
+// of leaving a green suite.
+describe("exported-action inventory pinned to the export set", () => {
+  it("every exported action has a guard case", () => {
+    const exportedActionNames = Object.keys(CommunityActionsModule).filter(
+      (key) => typeof (CommunityActionsModule as Record<string, unknown>)[key] === "function"
+    );
+    const coveredActionNames = GUARD_CASES.map((c) => c.name);
+
+    expect(exportedActionNames.sort()).toEqual(coveredActionNames.sort());
+  });
+});
 
 describe.each(GUARD_CASES)("$name — mutation gate", ({ call }) => {
   it("returns the existing auth error for an unauthenticated caller without disclosing flag state", async () => {

@@ -34,11 +34,10 @@ export default async function JobBoardPage({
     return <FeatureComingSoon />;
   }
 
-  // The wishlist writes into job_applications, the tracker's table
-  // (C05-RULING-004). Hiding the control when the tracker itself isn't
-  // viewable is a coherence decision, not an authorization boundary — the
-  // mutation guard on addToWishlist/removeFromWishlist checks ghostJobBoard
-  // alone.
+  // The wishlist writes into job_applications, the tracker's table.
+  // Hiding the control when the tracker itself isn't viewable is a
+  // coherence decision, not an authorization boundary — the mutation guard
+  // on addToWishlist/removeFromWishlist checks ghostJobBoard alone.
   const showWishlistControl =
     (await canViewFeature("ghostJobBoard", flagContext)) &&
     (await canViewFeature("jobApplicationTracker", flagContext));
