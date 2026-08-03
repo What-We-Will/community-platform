@@ -71,8 +71,8 @@ const myToolsNavItems: NavItem[] = [
 
 const resourcesNavItems: NavItem[] = [
   { href: "/jobs",         label: "Job Board",      icon: Briefcase, flag: "ghostJobBoard" },
-  { href: "/learning",     label: "Group Learning", icon: BookMarked },
-  { href: "/projects",     label: "Projects",       icon: GitFork },
+  { href: "/learning",     label: "Group Learning", icon: BookMarked, flag: "groupLearning" },
+  { href: "/projects",     label: "Projects",       icon: GitFork, flag: "projects" },
   { href: "/links",        label: "Resource Hub",   icon: Link2 },
   { href: "https://warn-tracker.streamlit.app/", label: "WARN Tracker", icon: Globe },
 ];
@@ -136,6 +136,7 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
   }, []);
 
   const visibleMyToolsItems = visibleItems(myToolsNavItems, visibleFlags);
+  const visibleResourcesItems = visibleItems(resourcesNavItems, visibleFlags);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -242,34 +243,38 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
               </>
             )}
 
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              Resources
-            </p>
-            {visibleItems(resourcesNavItems, visibleFlags).map((item) =>
-              item.href.startsWith("http") ? (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <item.icon className="size-5 shrink-0" />
-                  {item.label}
-                </a>
-              ) : (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <item.icon className="size-5 shrink-0" />
-                  {item.label}
-                </Link>
-              )
+            {visibleResourcesItems.length > 0 && (
+              <>
+                <Separator className="my-2" />
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Resources
+                </p>
+                {visibleResourcesItems.map((item) =>
+                  item.href.startsWith("http") ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <item.icon className="size-5 shrink-0" />
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <item.icon className="size-5 shrink-0" />
+                      {item.label}
+                    </Link>
+                  )
+                )}
+              </>
             )}
             <a
               href="https://techworkersco.slack.com"

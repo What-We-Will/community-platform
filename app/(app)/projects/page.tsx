@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
+import { canViewFeature, type FlagContext } from "@/lib/feature-flags";
+import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { ProjectsClient, type ProjectRow } from "./ProjectsClient";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +13,17 @@ export default async function ProjectsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [projectsResult, { data: profile }] = await Promise.all([
-    fetchProjects(supabase),
-    supabase.from("profiles").select("role").eq("id", user.id).single(),
-  ]);
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+
+  const flagContext: FlagContext = {
+    targetingKey: user.id,
+    attributes: profile?.role ? { role: profile.role } : undefined,
+  };
+  if (!(await canViewFeature("projects", flagContext))) {
+    return <FeatureComingSoon />;
+  }
+
+  const projectsResult = await fetchProjects(supabase);
 
   if (projectsResult.error) {
     console.error("[projects page] fetch error:", projectsResult.error);

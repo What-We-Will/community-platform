@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { canMutateFeature, type FlagContext } from "@/lib/feature-flags";
 
 // ── GitHub metadata fetch ─────────────────────────────────────────────────────
 
@@ -14,6 +15,14 @@ export interface GitHubMeta {
 }
 
 export async function fetchGitHubMeta(githubUrl: string): Promise<{ data?: GitHubMeta; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("projects", flagContext))) {
+    return { error: "Feature not available" };
+  }
+
   const match = githubUrl.trim().match(/github\.com\/([^/]+)\/([^/#?]+)/);
   if (!match) return { error: "Please enter a valid GitHub repository URL." };
   const [, owner, repo] = match;
@@ -66,6 +75,10 @@ export async function createProject(data: ProjectFormData): Promise<{ error?: st
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated." };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("projects", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("projects").insert({
     created_by: user.id,
@@ -87,6 +100,13 @@ export async function createProject(data: ProjectFormData): Promise<{ error?: st
 
 export async function deleteProject(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated." };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("projects", flagContext))) {
+    return { error: "Feature not available" };
+  }
+
   const { error } = await supabase.from("projects").delete().eq("id", id);
   if (error) return { error: error.message };
   revalidatePath("/projects");

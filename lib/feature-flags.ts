@@ -12,6 +12,8 @@ export const FLAG_KEYS = [
   "jobApplicationTracker",
   "learningTracker",
   "ghostJobBoard",
+  "groupLearning",
+  "projects",
 ] as const;
 
 export type FeatureFlag = (typeof FLAG_KEYS)[number];

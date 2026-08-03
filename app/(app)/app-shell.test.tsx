@@ -40,6 +40,8 @@ function allFlags(overrides: Partial<Record<FeatureFlag, boolean>> = {}) {
     jobApplicationTracker: false,
     learningTracker: false,
     ghostJobBoard: false,
+    groupLearning: false,
+    projects: false,
     ...overrides,
   };
 }
@@ -142,21 +144,126 @@ describe("AppShell nav visibility", () => {
       expect(screen.getByRole("link", { name: /job board/i })).toBeInTheDocument();
     });
 
-    it("should keep the Resources header and its four unflagged siblings visible when ghostJobBoard is off", () => {
-      // Only /jobs gains a flag in this phase. With four unflagged siblings
-      // (/learning, /projects, /links, WARN Tracker) the section never
-      // empties, so the header must not disappear.
+    it("should keep the Resources header and its two unflagged siblings visible when every Resources flag is off", () => {
+      // /jobs, /learning, and /projects all carry flags as of this phase.
+      // /links and WARN Tracker never carry a flag, so the section can never
+      // empty and the header must not disappear.
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ ghostJobBoard: false })}>
+        <AppShell user={baseUser} visibleFlags={allFlags()}>
           <div />
         </AppShell>
       );
 
       expect(screen.getByText("Resources")).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /group learning/i })).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /projects/i })).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /resource hub/i })).toBeInTheDocument();
       expect(screen.getByRole("link", { name: /warn tracker/i })).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /group learning/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /projects/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Group Learning nav entry", () => {
+    it("should hide the Group Learning entry for a member when groupLearning is off", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ groupLearning: false })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.queryByRole("link", { name: /group learning/i })).not.toBeInTheDocument();
+    });
+
+    it("should show the Group Learning entry for a member when groupLearning is on", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ groupLearning: true })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByRole("link", { name: /group learning/i })).toBeInTheDocument();
+    });
+
+    it("should show the Group Learning entry for an admin previewing an off flag", () => {
+      render(
+        <AppShell
+          user={{ ...baseUser, isAdmin: true }}
+          visibleFlags={allFlags({ groupLearning: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByRole("link", { name: /group learning/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Projects nav entry", () => {
+    it("should hide the Projects entry for a member when projects is off", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ projects: false })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.queryByRole("link", { name: /^projects$/i })).not.toBeInTheDocument();
+    });
+
+    it("should show the Projects entry for a member when projects is on", () => {
+      render(
+        <AppShell user={baseUser} visibleFlags={allFlags({ projects: true })}>
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByRole("link", { name: /^projects$/i })).toBeInTheDocument();
+    });
+
+    it("should show the Projects entry for an admin previewing an off flag", () => {
+      render(
+        <AppShell
+          user={{ ...baseUser, isAdmin: true }}
+          visibleFlags={allFlags({ projects: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      expect(screen.getByRole("link", { name: /^projects$/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Resources section visibility", () => {
+    it("is derived: the header and separator disappear only if every Resources item is unreachable", () => {
+      // /links and WARN Tracker are permanently unflagged, so this never
+      // happens today — this test documents the derivation itself, not a
+      // reachable empty state.
+      const { container, rerender } = render(
+        <AppShell
+          user={baseUser}
+          visibleFlags={allFlags({ ghostJobBoard: true, groupLearning: false, projects: false })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      const separatorCountWithJobsOnly = countSeparators(container);
+      expect(screen.getByText("Resources")).toBeInTheDocument();
+
+      rerender(
+        <AppShell
+          user={baseUser}
+          visibleFlags={allFlags({ ghostJobBoard: true, groupLearning: true, projects: true })}
+        >
+          <div />
+        </AppShell>
+      );
+
+      // Same separator: the section was already visible, adding items to an
+      // already-visible section does not add another separator.
+      expect(countSeparators(container)).toBe(separatorCountWithJobsOnly);
+      expect(screen.getByRole("link", { name: /job board/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /group learning/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /^projects$/i })).toBeInTheDocument();
     });
   });
 
