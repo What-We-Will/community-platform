@@ -42,8 +42,8 @@ The `type` CHECK constraint already permits `'permission'` alongside `'release'`
 - No call site may add its own admin check for a flagged feature. The `canViewFeature` / `canMutateFeature` split is the whole authorization surface.
 - The `permission` gate is enforced by review, not by the schema. A row with `type = 'permission'` can be inserted today and nothing stops it. See Open questions.
 - This record introduces no migration and no code change. It documents the boundary that already ships.
+- The Job Board's `addToWishlist` and `removeFromWishlist` (`app/(app)/jobs/community-actions.ts`) write into `job_applications`, a table belonging to a different gated feature. That write is governed by the Job Board's own flag alone; the dependency on the other feature is expressed as a view-only condition on the wishlist control, not as a second mutation guard. The residual — a direct PostgREST write producing an invisible, user-owned row while the other feature is off — is exactly the bypass this ADR already accepts.
 
 ## Open questions
 
 - Whether to add a pgTAP assertion that no `permission`-type row exists until an ADR authorizes the first one. That would convert the gate above from a review rule into a mechanical one, at the cost of a test that must be deliberately removed when the time comes.
-- One Job Board write path inserts into `job_applications` (`app/(app)/jobs/community-actions.ts`), a table belonging to a feature governed by a different flag. Which flag should govern that write is unresolved, and is being decided alongside the Job Board's own gating work rather than here.
