@@ -39,11 +39,14 @@ updates:
           - "next"
           - "eslint-config-next"
       vitest:
-        # Core + coverage-v8 only — both share vitest's version (4.1.8).
+        # Core + coverage-v8 share vitest's version (4.1.8). @vitejs/plugin-react
+        # is compatibility- not version-locked: a vitest major can require a
+        # matching plugin major, so it rides along instead of arriving separately.
         # @vitest/eslint-plugin is on its own track and lives in the `eslint` group.
         patterns:
           - "vitest"
           - "@vitest/coverage-v8"
+          - "@vitejs/plugin-react"
       date-fns:
         # date-fns-tz tracks date-fns' major
         patterns:
@@ -70,6 +73,12 @@ updates:
           - "@tailwindcss/*"
           - "tailwind-merge"
           - "tw-animate-css"
+      nodemailer:
+        # Runtime + type defs pair, same shape as react/@types/react — otherwise
+        # they split across prod-minor-patch and types and bump on different weeks.
+        patterns:
+          - "nodemailer"
+          - "@types/nodemailer"
       # --- Category groups (batch minor/patch; majors surface as individual reviewable PRs) ---
       testing:
         patterns:
@@ -94,6 +103,7 @@ updates:
         exclude-patterns:
           - "@types/react"
           - "@types/react-dom"
+          - "@types/nodemailer"
         update-types:
           - minor
           - patch
@@ -154,6 +164,9 @@ updates:
         update-types:
           - version-update:semver-major
       - dependency-name: "@vitest/coverage-v8"
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@vitejs/plugin-react"
         update-types:
           - version-update:semver-major
       - dependency-name: tailwindcss
