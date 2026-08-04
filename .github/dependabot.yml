@@ -22,10 +22,15 @@ updates:
       prefix: chore
       include: scope
     groups:
+      # Scoped deps are listed by literal name as well as by glob. The globs do
+      # match; the problem was ranking. Dependabot scores group specificity, and a
+      # wildcard scores ~90-105 against 500 for a group declaring no `patterns` —
+      # so the catch-alls silently claimed them (PR #265). An exact literal scores
+      # 1000 and outranks both. See ADR-0010.
       # --- Version-locked families ---
       # No update-types filter, so a major would move the whole family atomically —
       # but family majors are HELD in `ignore` below (taken as scheduled migrations,
-      # not bot PRs). First match wins, so families sit ABOVE the catch-alls.
+      # not bot PRs).
       react:
         # @types/react* track react's version, not their own cadence
         patterns:
@@ -39,9 +44,9 @@ updates:
           - "next"
           - "eslint-config-next"
       vitest:
-        # Core + coverage-v8 share vitest's version (4.1.8). @vitejs/plugin-react
-        # is compatibility- not version-locked: a vitest major can require a
-        # matching plugin major, so it rides along instead of arriving separately.
+        # Core + coverage-v8 share vitest's version. @vitejs/plugin-react is
+        # compatibility- not version-locked: a vitest major can require a matching
+        # plugin major, so it rides along instead of arriving separately.
         # @vitest/eslint-plugin is on its own track and lives in the `eslint` group.
         patterns:
           - "vitest"
@@ -59,6 +64,9 @@ updates:
       dnd-kit:
         patterns:
           - "@dnd-kit/*"
+          - "@dnd-kit/core"
+          - "@dnd-kit/sortable"
+          - "@dnd-kit/utilities"
       supabase:
         # Runtime client stack — supabase-js + ssr move together for SSR auth.
         # The `supabase` CLI is intentionally NOT grouped here: it's a dev tool on
@@ -67,10 +75,13 @@ updates:
         # reviewable PRs (we stay current on the CLI rather than holding majors).
         patterns:
           - "@supabase/*"
+          - "@supabase/ssr"
+          - "@supabase/supabase-js"
       tailwind:
         patterns:
           - "tailwindcss"
           - "@tailwindcss/*"
+          - "@tailwindcss/postcss"
           - "tailwind-merge"
           - "tw-animate-css"
       nodemailer:
@@ -83,7 +94,12 @@ updates:
       testing:
         patterns:
           - "@playwright/*"
+          - "@playwright/test"
           - "@testing-library/*"
+          - "@testing-library/dom"
+          - "@testing-library/jest-dom"
+          - "@testing-library/react"
+          - "@testing-library/user-event"
         update-types:
           - minor
           - patch
@@ -100,6 +116,7 @@ updates:
       types:
         patterns:
           - "@types/*"
+          - "@types/node"
         exclude-patterns:
           - "@types/react"
           - "@types/react-dom"
@@ -107,20 +124,31 @@ updates:
         update-types:
           - minor
           - patch
-      # --- Catch-alls (dependency-type only; must stay LAST) ---
+      # --- Catch-alls ---
       dev-minor-patch:
+        # `patterns: ["*"]` is load-bearing. A group with no `patterns` scores 500
+        # for specificity and outranks every wildcard pattern, so it steals their
+        # dependencies; the universal wildcard scores 1, which is where a catch-all
+        # belongs. Membership is unchanged — `*` matches everything, and
+        # `dependency-type` still does the real filtering.
+        patterns:
+          - "*"
         dependency-type: development
         update-types:
           - minor
           - patch
       prod-minor-patch:
+        patterns:
+          - "*"
         dependency-type: production
         update-types:
           - minor
           - patch
     ignore:
       # Held major upgrades — handle as scheduled migrations, not bot PRs.
-      # Scoped to semver-major so SECURITY updates still flow. Review in January and July.
+      # Every entry stays scoped to semver-major so SECURITY updates still flow; a
+      # bare `dependency-name` with no `update-types` would suppress those too.
+      # Review in January and July.
       - dependency-name: next
         update-types:
           - version-update:semver-major
