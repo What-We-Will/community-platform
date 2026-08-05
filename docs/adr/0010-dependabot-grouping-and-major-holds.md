@@ -1,13 +1,13 @@
 # ADR-0010 — Dependabot grouping conventions and major-version holds
 
 **Status:** Proposed 2026-08-03
-**TL;DR:** Dependabot ranks groups by pattern specificity, and a group declaring no `patterns` outranks every wildcard, so our `dependency-type` catch-alls were silently stealing dependencies from named groups; the catch-alls now declare `patterns: ["*"]` and scoped dependencies are additionally listed by literal name. Family major-version holds stay expressed as `ignore` entries scoped to `version-update:semver-major`, never as a bare `dependency-name`, because only the scoped form leaves security updates flowing.
+**TL;DR:** We will give Dependabot catch-all groups an explicit universal pattern and list current scoped dependencies by exact name so named groups reliably win specificity routing. Major-version holds will remain scoped to version updates so Dependabot security updates continue to flow.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
 
 ## Context
 
-Dependabot version updates were switched on in June 2026 with a grouped configuration (PR #169). The design has two layers: version-locked *family* groups (react, next, vitest, tailwind, the Supabase client SDKs, and others) that move a related set atomically, and *category* groups (testing, eslint, types) that batch minor and patch bumps while letting majors surface as individual reviewable PRs. Two `dependency-type` catch-alls sat last to sweep the long tail. In July the family majors were additionally held back via `ignore` so that framework upgrades are taken as scheduled migrations rather than arriving unannounced as bot PRs, on the January and July review cadence [ADR-0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) established for the held ESLint major.
+Dependabot version updates were switched on in June 2026 with a grouped configuration (PR #169). Its named groups have two forms: version-locked *family* groups (react, next, vitest, tailwind, the Supabase client SDKs, and others) that move a related set atomically, and *routine-maintenance* groups (testing, eslint, types, and paired runtime/type packages) that batch minor and patch bumps while letting majors surface as individual reviewable PRs. Two `dependency-type` catch-alls sat last to sweep the long tail. In July the family majors were additionally held back via `ignore` so that framework upgrades are taken as scheduled migrations rather than arriving unannounced as bot PRs, on the January and July review cadence [ADR-0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) established for the held ESLint major.
 
 On 2026-08-03, PR #265 grouped `@playwright/test` and `@tailwindcss/postcss` into the `dev-minor-patch` catch-all, even though both match patterns in groups written to own them. Four groups — `dnd-kit`, `supabase`, `testing`, and `types` — had in fact never captured a single dependency since being written, and `tailwind` was capturing only its unscoped members. Twelve dependencies were being routed somewhere other than where the configuration said. Most pointedly, the `supabase` group exists specifically so `@supabase/ssr` and `@supabase/supabase-js` move together for SSR auth; in practice they had been drifting independently through the production catch-all.
 
@@ -24,6 +24,10 @@ The catch-all groups declare `patterns: ["*"]` in addition to `dependency-type`.
 Scoped dependencies are additionally listed by literal name in their group. This is redundant with the fix above and is kept deliberately: an exact match scores 1000, the highest score short of explicit membership, so the routing survives even if the specificity constants change. The globs remain alongside the literals and are load-bearing again — with the catch-alls demoted, a glob correctly claims anything the literals have not enumerated.
 
 Family major-version holds remain expressed as `ignore` entries carrying `update-types: [version-update:semver-major]`. The scoping is not stylistic. GitHub's options reference states that "`update-types` only affects *version* updates, not *security updates*," so the scoped form suppresses routine major bumps while leaving Dependabot free to open a security PR for the same dependency. A bare `dependency-name` entry with no `update-types` would suppress both. Holds are reviewed each January and July.
+
+`@vitejs/plugin-react` joins the Vitest family because a Vitest major upgrade can require a compatible plugin major. Its routine major updates are therefore held for the same scheduled migration as Vitest core instead of arriving as independent PRs.
+
+`nodemailer` and `@types/nodemailer` form a routine-maintenance group so their minor and patch updates do not split across the production and development catch-alls. Their major versions are not locked to each other, so the group is limited to minor and patch updates and their majors continue to surface independently.
 
 Wildcards in `ignore` need no equivalent treatment. `Config::UpdateConfig.wildcard_match?` is byte-identical to the group matcher and `ignore` conditions are selected with a plain filter, with no specificity ranking involved, so `@dnd-kit/*` and `@tailwindcss/*` match there as written.
 
@@ -46,6 +50,10 @@ Giving the catch-alls a `patterns` key also makes them eligible for specificity 
 Adding a scoped dependency should still come with its literal name in the appropriate group, but forgetting is no longer silent breakage — the glob will catch it. The literal is belt to the glob's braces, not the only thing holding routing together.
 
 Holding majors via `ignore` remains an indefinite suppression rather than a delay. Security updates are unaffected, but a held major that is never reviewed is invisible; the January and July review cadence is the only thing that surfaces it.
+
+Vitest migration reviews now include `@vitejs/plugin-react`. Its routine majors no longer surface independently, so the scheduled review must evaluate the compatibility requirements of Vitest core, its coverage package, and the React plugin together.
+
+Routine Nodemailer and type-definition updates now arrive together, while majors remain separate review items. This avoids treating independently versioned packages as one major migration.
 
 This configuration now depends on undocumented behavior in `dependabot-core`. The dependency is deliberate and the reasoning is recorded here, but it is the kind of thing that can change without a changelog entry, and the symptom if it does is silent misrouting rather than an error.
 

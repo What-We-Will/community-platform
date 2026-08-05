@@ -24,7 +24,7 @@ updates:
     groups:
       # Scoped deps are listed by literal name as well as by glob. The globs do
       # match; the problem was ranking. Dependabot scores group specificity, and a
-      # wildcard scores ~90-105 against 500 for a group declaring no `patterns` —
+      # wildcard scores 93-103 against 500 for a group declaring no `patterns` —
       # so the catch-alls silently claimed them (PR #265). An exact literal scores
       # 1000 and outranks both. See ADR-0010.
       # --- Version-locked families ---
@@ -84,13 +84,16 @@ updates:
           - "@tailwindcss/postcss"
           - "tailwind-merge"
           - "tw-animate-css"
+      # --- Category groups (batch minor/patch; majors surface as individual reviewable PRs) ---
       nodemailer:
-        # Runtime + type defs pair, same shape as react/@types/react — otherwise
-        # they split across prod-minor-patch and types and bump on different weeks.
+        # Batch routine runtime + type-def maintenance that would otherwise split
+        # across production and development groups. Their majors are independent.
         patterns:
           - "nodemailer"
           - "@types/nodemailer"
-      # --- Category groups (batch minor/patch; majors surface as individual reviewable PRs) ---
+        update-types:
+          - minor
+          - patch
       testing:
         patterns:
           - "@playwright/*"

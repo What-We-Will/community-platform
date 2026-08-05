@@ -84,7 +84,8 @@ exists has already cleared its bake window — you do not need to check release 
 Family majors for core libraries (react, next, supabase, radix, tailwind, etc.) are held
 in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs. See
 [ADR-0010](../adr/0010-dependabot-grouping-and-major-holds.md) for why those holds are
-scoped the way they are.
+scoped the way they are. The Vitest family includes `@vitejs/plugin-react`, so review
+their major-version compatibility together during the January and July migration review.
 
 ## Editing the groups in `dependabot.yml`
 
@@ -100,6 +101,11 @@ scores in between, above every wildcard. Two rules follow from that:
 - **Add the literal name when you add a scoped dependency.** The glob will catch it
   either way now, so forgetting is not breakage — the literal is a deliberate second
   layer, and matching the existing style keeps the groups readable.
+- **Limit routine-maintenance groups to minor and patch updates.** Packages paired for
+  batching are not automatically version-locked. For example, `nodemailer` and
+  `@types/nodemailer` update together routinely, but their majors remain independent.
+  Omit `update-types` only for a version-locked family whose majors are covered by the
+  scoped holds below the groups.
 
 If a PR looks misgrouped — a package bundled into a catch-all when a named group
 clearly covers it — this scoring is the first thing to check, not the pattern spelling.
