@@ -106,12 +106,12 @@ export function PostJobForm() {
       <DialogTrigger asChild>
         <Button className="gap-1.5">
           <Plus className="size-4" />
-          Post a Job
+          Report a Ghost
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Post a Job</DialogTitle>
+          <DialogTitle>Report a Ghost</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div className="grid grid-cols-2 gap-3">
@@ -257,7 +257,7 @@ export function PostJobForm() {
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="size-4 mr-2 animate-spin" />}
-              Post Job
+              Report a Ghost
             </Button>
           </div>
         </form>
