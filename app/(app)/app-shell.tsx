@@ -70,10 +70,10 @@ const myToolsNavItems: NavItem[] = [
 ];
 
 const resourcesNavItems: NavItem[] = [
-  { href: "/jobs",         label: "Ghost Job Board",      icon: Briefcase, flag: "ghostJobBoard" },
-  { href: "/learning",     label: "Group Learning", icon: BookMarked, flag: "groupLearning" },
-  { href: "/projects",     label: "Projects",       icon: GitFork, flag: "projects" },
-  { href: "/links",        label: "Resource Hub",   icon: Link2 },
+  { href: "/jobs",         label: "Ghost Job Board", icon: Briefcase, flag: "ghostJobBoard" },
+  { href: "/learning",     label: "Group Learning",  icon: BookMarked, flag: "groupLearning" },
+  { href: "/projects",     label: "Projects",        icon: GitFork, flag: "projects" },
+  { href: "/links",        label: "Resource Hub",    icon: Link2 },
   { href: "https://warn-tracker.streamlit.app/", label: "WARN Tracker", icon: Globe },
 ];
 
