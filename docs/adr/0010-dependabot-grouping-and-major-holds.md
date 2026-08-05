@@ -1,6 +1,6 @@
 # ADR-0010 — Dependabot grouping conventions and major-version holds
 
-**Status:** Proposed 2026-08-03
+**Status:** Accepted 2026-08-05
 **TL;DR:** We will give Dependabot catch-all groups an explicit universal pattern and list current scoped dependencies by exact name so named groups reliably win specificity routing. Major-version holds will remain scoped to version updates so Dependabot security updates continue to flow.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario

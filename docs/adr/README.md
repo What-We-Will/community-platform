@@ -138,7 +138,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | — | @tonyrosario |
 | [0006](./0006-profiles-protected-column-enforcement.md) | Profiles protected-column enforcement | Accepted 2026-07-26 | — | @tonyrosario |
 | [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | Time-boxed waivers for unfixable advisories | Accepted 2026-07-25 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) | @tonyrosario |
-| [0010](./0010-dependabot-grouping-and-major-holds.md) | Dependabot grouping conventions and major-version holds | Proposed 2026-08-03 | Uses the review cadence from [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
+| [0010](./0010-dependabot-grouping-and-major-holds.md) | Dependabot grouping conventions and major-version holds | Accepted 2026-08-05 | Uses the review cadence from [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay
