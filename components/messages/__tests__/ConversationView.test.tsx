@@ -1,6 +1,7 @@
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { ConversationView } from "../ConversationView";
-import type { Profile } from "@/lib/types";
+import { buildMessage } from "@/lib/__tests__/factories";
+import type { Message, Profile } from "@/lib/types";
 
 // Keep stable — an unstable mock masks stale-closure bugs in effect deps.
 const routerMock = { push: vi.fn(), refresh: vi.fn() };
@@ -10,9 +11,10 @@ vi.mock("next/navigation", () => ({
 }));
 
 // ConversationView binds two Realtime channels (messages and typing).
-// Capture the messages INSERT handler by filtering on table+event so
-// tests fire the handler under test unambiguously.
+// Capture the messages INSERT and UPDATE handlers by filtering on table+event
+// so tests fire the handler under test unambiguously.
 let onMessagesInsert: (payload: { new: Record<string, unknown> }) => void;
+let onMessagesUpdate: (payload: { new: Message }) => void;
 
 function makeQueryChain() {
   const chain: Record<string, unknown> = {};
@@ -37,6 +39,9 @@ function makeChannel() {
       if (opts?.table === "messages" && opts?.event === "INSERT") {
         onMessagesInsert = cb as typeof onMessagesInsert;
       }
+      if (opts?.table === "messages" && opts?.event === "UPDATE") {
+        onMessagesUpdate = cb as typeof onMessagesUpdate;
+      }
       return channel;
     }
   );
@@ -55,10 +60,24 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
-// Render message content as plain text so assertions can query by it.
+// Render message content as plain text so assertions can query by it, plus the
+// joined sender name — a Realtime UPDATE payload carries no sender, so this is
+// what proves the handler merges into the existing row rather than replacing it.
 vi.mock("../MessageBubble", () => ({
-  MessageBubble: ({ message }: { message: { content: string | null } }) => (
-    <div data-testid="bubble">{message.content}</div>
+  MessageBubble: ({
+    message,
+  }: {
+    message: {
+      content: string | null;
+      edited_at: string | null;
+      sender: { display_name: string } | null;
+    };
+  }) => (
+    <div data-testid="bubble">
+      <span>{message.content}</span>
+      <span data-testid="sender">{message.sender?.display_name ?? "no-sender"}</span>
+      {message.edited_at && <span data-testid="edited-marker">edited</span>}
+    </div>
   ),
 }));
 
@@ -128,6 +147,21 @@ function simulateRealtimeInsert(id: string, content: string) {
   });
 }
 
+function simulateRealtimeUpdate(id: string, content: string, editedAt: string) {
+  act(() => {
+    onMessagesUpdate({
+      new: buildMessage({
+        id,
+        conversation_id: "conv-1",
+        sender_id: "user-me",
+        content,
+        edited_at: editedAt,
+        created_at: "2026-01-01T00:01:00Z",
+      }),
+    });
+  });
+}
+
 function renderView() {
   return render(
     <ConversationView
@@ -185,5 +219,56 @@ describe("ConversationView Realtime INSERT handler", () => {
     simulateRealtimeInsert("server-msg-1", "hello from me");
 
     expect(screen.getAllByText("hello from me")).toHaveLength(1);
+  });
+});
+
+/**
+ * When another participant edits a message, the change reaches this client as a
+ * Realtime UPDATE. That payload is the raw `messages` row — it has no joined
+ * sender — so the handler has to merge it into the message already in state.
+ * Replacing the row outright would blank the sender's name and avatar.
+ */
+describe("ConversationView Realtime UPDATE handler", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+
+  it("should show the new content when an edit arrives for a message on screen", () => {
+    renderView();
+    simulateRealtimeInsert("server-msg-1", "original text");
+
+    simulateRealtimeUpdate("server-msg-1", "corrected text", "2026-01-01T00:02:00Z");
+
+    expect(screen.getByText("corrected text")).toBeInTheDocument();
+    expect(screen.queryByText("original text")).toBeNull();
+  });
+
+  it("should keep the joined sender when an edit arrives", () => {
+    renderView();
+    simulateRealtimeInsert("server-msg-1", "original text");
+
+    simulateRealtimeUpdate("server-msg-1", "corrected text", "2026-01-01T00:02:00Z");
+
+    expect(screen.getByTestId("sender")).toHaveTextContent("Me");
+  });
+
+  it("should mark the message as edited when the update carries an edited_at", () => {
+    renderView();
+    simulateRealtimeInsert("server-msg-1", "original text");
+
+    simulateRealtimeUpdate("server-msg-1", "corrected text", "2026-01-01T00:02:00Z");
+
+    expect(screen.getByTestId("edited-marker")).toBeInTheDocument();
+  });
+
+  it("should ignore an update for a message that is not on screen", () => {
+    renderView();
+    simulateRealtimeInsert("server-msg-1", "original text");
+
+    simulateRealtimeUpdate("unknown-msg", "should not appear", "2026-01-01T00:02:00Z");
+
+    expect(screen.getByText("original text")).toBeInTheDocument();
+    expect(screen.queryByText("should not appear")).toBeNull();
   });
 });
