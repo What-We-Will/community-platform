@@ -16,7 +16,7 @@ import {
 } from "./feature-flags";
 
 const mockCreateClient = vi.mocked(createClient);
-const context = { targetingKey: "member-1" };
+const context = { targetingKey: "user-1" };
 
 describe("feature flag snapshots", () => {
   beforeEach(() => {

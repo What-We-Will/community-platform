@@ -6,7 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 vi.mock("server-only", () => ({}));
 
-import { makeFeatureFlagRow } from "@/lib/__tests__/factories";
+import {
+  makeFeatureFlagRow,
+  makeProfileRoleRow,
+} from "@/lib/__tests__/factories";
 import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -31,7 +34,7 @@ describe("feature flag authorization", () => {
     const { client } = buildMockSupabaseClient({
       tables: {
         feature_flags: { data: [makeFeatureFlagRow()], error: null },
-        profiles: { data: { role: "admin" }, error: null },
+        profiles: { data: makeProfileRoleRow({ role: "admin" }), error: null },
       },
     });
     mockCreateClient.mockResolvedValue(client as never);
@@ -48,7 +51,7 @@ describe("feature flag authorization", () => {
     const { client } = buildMockSupabaseClient({
       tables: {
         feature_flags: { data: [makeFeatureFlagRow({ enabled })], error: null },
-        profiles: { data: { role }, error: null },
+        profiles: { data: makeProfileRoleRow({ role }), error: null },
       },
     });
     mockCreateClient.mockResolvedValue(client as never);
@@ -63,8 +66,29 @@ describe("feature flag authorization", () => {
     mockCreateClient.mockResolvedValue(client as never);
 
     await expect(canMutateFeature("jobApplicationTracker", {
-      targetingKey: "admin-1", attributes: { role: "admin", arbitrary: "true" },
+      targetingKey: "user-1", attributes: { role: "admin", arbitrary: "true" },
     })).resolves.toBe(false);
+  });
+
+  it.each([
+    ["no user", ""],
+    ["another user", "other-user"],
+  ] as const)("should fail closed when the mutation targeting key belongs to %s", async (_, targetingKey) => {
+    const { client, queries } = buildMockSupabaseClient({
+      tables: {
+        feature_flags: {
+          data: [makeFeatureFlagRow({ fail_mode: "open" })],
+          error: null,
+        },
+      },
+    });
+    mockCreateClient.mockResolvedValue(client as never);
+
+    await expect(canMutateFeature("jobApplicationTracker", {
+      targetingKey,
+    })).resolves.toBe(false);
+
+    expect(queries).toHaveLength(0);
   });
 
   // pgTAP covers the real database RLS boundary.
@@ -73,8 +97,8 @@ describe("feature flag authorization", () => {
       tables: {
         feature_flags: { data: [makeFeatureFlagRow()], error: null },
         profiles: [
-          { data: { role: "admin" }, error: null },
-          { data: { role: "member" }, error: null },
+          { data: makeProfileRoleRow({ role: "admin" }), error: null },
+          { data: makeProfileRoleRow(), error: null },
         ],
       },
     });

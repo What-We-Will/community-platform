@@ -1,4 +1,13 @@
 import type { FeatureFlagRow } from "@/lib/feature-flags";
+import type { Profile } from "@/lib/types";
+
+type ProfileRoleRow = Pick<Profile, "role">;
+
+export function makeProfileRoleRow(
+  overrides: Partial<ProfileRoleRow> = {}
+): ProfileRoleRow {
+  return { role: "member", ...overrides };
+}
 
 export function makeFeatureFlagRow(
   overrides: Partial<

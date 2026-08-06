@@ -13,7 +13,10 @@ vi.mock("react", () => ({
   },
 }));
 
-import { makeFeatureFlagRow } from "@/lib/__tests__/factories";
+import {
+  makeFeatureFlagRow,
+  makeProfileRoleRow,
+} from "@/lib/__tests__/factories";
 import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -37,7 +40,7 @@ describe("feature flag request memoization", () => {
     const { client, queries } = buildMockSupabaseClient({
       tables: {
         feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null },
-        profiles: { data: { role: "member" }, error: null },
+        profiles: { data: makeProfileRoleRow(), error: null },
       },
     });
     mockCreateClient.mockResolvedValue(client as never);

@@ -12,7 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { canMutateFeature, resetFeatureFlagCacheForTests } from "./feature-flags";
 
 const mockCreateClient = vi.mocked(createClient);
-const context = { targetingKey: "member-1" };
+const context = { targetingKey: "user-1" };
 
 describe("feature flag fallback logging", () => {
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe("feature flag fallback logging", () => {
     vi.advanceTimersByTime(30_001);
     await canMutateFeature("jobApplicationTracker", context);
     resetFeatureFlagCacheForTests();
-    await canMutateFeature("jobApplicationTracker", { targetingKey: "" });
+    await canMutateFeature("jobApplicationTracker", context);
     resetFeatureFlagCacheForTests();
     await canMutateFeature("jobApplicationTracker", context);
 
@@ -92,6 +92,7 @@ describe("feature flag fallback logging", () => {
     ["closed", false],
   ] as const)("should use %s when evaluating a known definition fails", async (failMode, expected) => {
     const { client } = buildMockSupabaseClient({
+      user: { id: "" },
       tables: { feature_flags: { data: [makeFeatureFlagRow({ fail_mode: failMode })], error: null } },
     });
     mockCreateClient.mockResolvedValue(client as never);

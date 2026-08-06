@@ -1,6 +1,6 @@
 begin;
 
-select plan(24);
+select plan(27);
 
 insert into auth.users (
   instance_id,
@@ -145,6 +145,34 @@ select throws_ok(
   '42501',
   'permission denied for table feature_flags',
   'anonymous users cannot select feature flags'
+);
+
+select throws_ok(
+  $$
+    insert into public.feature_flags (key, type)
+    values ('pgtapAnonInsertFeatureFlag', 'ops')
+  $$,
+  '42501',
+  'permission denied for table feature_flags',
+  'anonymous users cannot insert feature flags'
+);
+
+select throws_ok(
+  $$
+    update public.feature_flags
+    set enabled = true
+    where key = 'pgtapFeatureFlag'
+  $$,
+  '42501',
+  'permission denied for table feature_flags',
+  'anonymous users cannot update feature flags'
+);
+
+select throws_ok(
+  $$ delete from public.feature_flags where key = 'pgtapFeatureFlag' $$,
+  '42501',
+  'permission denied for table feature_flags',
+  'anonymous users cannot delete feature flags'
 );
 
 reset role;

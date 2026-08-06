@@ -261,6 +261,16 @@ export async function canMutateFeature(
     return false;
   }
 
+  if (context && context.targetingKey !== identity.targetingKey) {
+    logResolution(
+      flag,
+      "error-fallback",
+      false,
+      new Error("Feature flag context identity does not match the authenticated user")
+    );
+    return false;
+  }
+
   return resolveFeature(
     flag,
     context ?? { targetingKey: identity.targetingKey },

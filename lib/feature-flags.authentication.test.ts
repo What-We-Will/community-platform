@@ -11,11 +11,12 @@ import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
 import { createClient } from "@/lib/supabase/server";
 import {
   canMutateFeature,
+  canViewFeature,
   resetFeatureFlagCacheForTests,
 } from "./feature-flags";
 
 const mockCreateClient = vi.mocked(createClient);
-const context = { targetingKey: "member-1" };
+const context = { targetingKey: "user-1" };
 
 describe("feature flag authentication", () => {
   beforeEach(() => {
@@ -26,6 +27,21 @@ describe("feature flag authentication", () => {
   });
 
   afterEach(() => vi.useRealTimers());
+
+  it("should fail closed on view access when authentication is missing or invalid", async () => {
+    const unauthenticated = buildMockSupabaseClient({ user: null });
+    const invalidCredentials = buildMockSupabaseClient({
+      userError: { message: "Authentication credentials are invalid" },
+    });
+    mockCreateClient.mockResolvedValueOnce(unauthenticated.client as never)
+      .mockResolvedValueOnce(invalidCredentials.client as never);
+
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(false);
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(false);
+
+    expect(unauthenticated.queries).toHaveLength(0);
+    expect(invalidCredentials.queries).toHaveLength(0);
+  });
 
   it("should fail closed without querying flags when authentication is missing or invalid", async () => {
     const unauthenticated = buildMockSupabaseClient({ user: null });
@@ -53,6 +69,7 @@ describe("feature flag authentication", () => {
     await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(true);
 
     await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(false);
+
     expect(unauthenticated.queries).toHaveLength(0);
   });
 
@@ -68,6 +85,7 @@ describe("feature flag authentication", () => {
     vi.advanceTimersByTime(30_001);
 
     await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(false);
+
     expect(unauthenticated.queries).toHaveLength(0);
   });
 });

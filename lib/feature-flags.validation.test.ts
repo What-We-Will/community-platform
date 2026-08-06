@@ -60,7 +60,7 @@ describe("feature flag row validation", () => {
     });
     mockCreateClient.mockResolvedValue(client as never);
 
-    await expect(canMutateFeature(flag, { targetingKey: "member-1" })).resolves.toBe(false);
+    await expect(canMutateFeature(flag, { targetingKey: "user-1" })).resolves.toBe(false);
 
     expect(queries).toHaveLength(1);
   });
