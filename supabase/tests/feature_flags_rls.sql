@@ -1,6 +1,6 @@
 begin;
 
-select plan(27);
+select plan(28);
 
 insert into auth.users (
   instance_id,
@@ -304,6 +304,22 @@ select policies_are(
     'Authenticated users can read feature flags'
   ]::name[],
   'feature_flags RLS policy names match the contract'
+);
+
+select ok(
+  exists (
+    select 1
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'feature_flags'
+      and policyname = 'Authenticated users can read feature flags'
+      and permissive = 'PERMISSIVE'
+      and roles = array['authenticated']::name[]
+      and cmd = 'SELECT'
+      and qual = 'true'
+      and with_check is null
+  ),
+  'feature flag reads are unrestricted only for authenticated users'
 );
 
 select * from finish();

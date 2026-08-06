@@ -13,6 +13,7 @@ import { canMutateFeature, resetFeatureFlagCacheForTests } from "./feature-flags
 
 const mockCreateClient = vi.mocked(createClient);
 const context = { targetingKey: "user-1" };
+const syntheticEvaluatorFailureContext = { targetingKey: "" };
 
 describe("feature flag fallback logging", () => {
   beforeEach(() => {
@@ -90,15 +91,15 @@ describe("feature flag fallback logging", () => {
   it.each([
     ["open", true],
     ["closed", false],
-  ] as const)("should use %s when evaluating a known definition fails", async (failMode, expected) => {
+  ] as const)("should preserve %s fail mode when a synthetic evaluator failure occurs", async (failMode, expected) => {
     const { client } = buildMockSupabaseClient({
-      user: { id: "" },
+      user: { id: syntheticEvaluatorFailureContext.targetingKey },
       tables: { feature_flags: { data: [makeFeatureFlagRow({ fail_mode: failMode })], error: null } },
     });
     mockCreateClient.mockResolvedValue(client as never);
     const log = vi.spyOn(console, "info").mockImplementation(() => undefined);
 
-    await expect(canMutateFeature("jobApplicationTracker", { targetingKey: "" })).resolves.toBe(expected);
+    await expect(canMutateFeature("jobApplicationTracker", syntheticEvaluatorFailureContext)).resolves.toBe(expected);
 
     expect(log).toHaveBeenCalledWith("feature flag resolved", {
       flag: "jobApplicationTracker",
