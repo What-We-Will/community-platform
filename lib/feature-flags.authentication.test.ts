@@ -58,7 +58,7 @@ describe("feature flag authentication", () => {
     expect(invalidCredentials.queries).toHaveLength(0);
   });
 
-  it("should fail closed when authentication is lost while the process snapshot is fresh", async () => {
+  it("should authenticate before using a fresh process snapshot", async () => {
     const initial = buildMockSupabaseClient({
       tables: { feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null } },
     });
@@ -73,7 +73,7 @@ describe("feature flag authentication", () => {
     expect(unauthenticated.queries).toHaveLength(0);
   });
 
-  it("should fail closed when authentication is lost after the process snapshot expires", async () => {
+  it("should authenticate before refreshing an expired process snapshot", async () => {
     const initial = buildMockSupabaseClient({
       tables: { feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null } },
     });
