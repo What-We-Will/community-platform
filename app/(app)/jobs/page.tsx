@@ -34,9 +34,7 @@ export default async function JobBoardPage({
   // Hiding the control when the tracker itself isn't viewable is a
   // coherence decision, not an authorization boundary — the mutation guard
   // on addToWishlist/removeFromWishlist checks ghostJobBoard alone.
-  const showWishlistControl =
-    (await canViewFeature("ghostJobBoard")) &&
-    (await canViewFeature("jobApplicationTracker"));
+  const showWishlistControl = await canViewFeature("jobApplicationTracker");
 
   let jobQuery = supabase
     .from("job_postings")
