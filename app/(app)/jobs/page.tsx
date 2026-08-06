@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { canViewFeature, type FlagContext } from "@/lib/feature-flags";
+import { canViewFeature } from "@/lib/feature-flags";
 import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { JobBoardClient, type JobPosting } from "./JobBoardClient";
 import type { Comment } from "./JobComments";
@@ -26,11 +26,7 @@ export default async function JobBoardPage({
     .eq("id", user.id)
     .maybeSingle();
 
-  const flagContext: FlagContext = {
-    targetingKey: user.id,
-    attributes: profile?.role ? { role: profile.role } : undefined,
-  };
-  if (!(await canViewFeature("ghostJobBoard", flagContext))) {
+  if (!(await canViewFeature("ghostJobBoard"))) {
     return <FeatureComingSoon />;
   }
 
@@ -39,8 +35,8 @@ export default async function JobBoardPage({
   // coherence decision, not an authorization boundary — the mutation guard
   // on addToWishlist/removeFromWishlist checks ghostJobBoard alone.
   const showWishlistControl =
-    (await canViewFeature("ghostJobBoard", flagContext)) &&
-    (await canViewFeature("jobApplicationTracker", flagContext));
+    (await canViewFeature("ghostJobBoard")) &&
+    (await canViewFeature("jobApplicationTracker"));
 
   let jobQuery = supabase
     .from("job_postings")

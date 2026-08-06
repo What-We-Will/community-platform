@@ -9,10 +9,7 @@ vi.mock("server-only", () => ({}));
 import { makeFeatureFlagRow } from "@/lib/__tests__/factories";
 import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
 import { createClient } from "@/lib/supabase/server";
-import {
-  canMutateFeature,
-  resetFeatureFlagCacheForTests,
-} from "./feature-flags";
+import { canMutateFeature, resetFeatureFlagCacheForTests } from "./feature-flags";
 
 const mockCreateClient = vi.mocked(createClient);
 const context = { targetingKey: "member-1" };
@@ -112,8 +109,7 @@ describe("feature flag fallback logging", () => {
     });
   });
 
-  it("should fail closed without retrying when a read is unauthenticated or permission denied", async () => {
-    const unauthenticated = buildMockSupabaseClient({ user: null });
+  it("should fail closed without retrying when a feature flag read is permission denied", async () => {
     const denied = buildMockSupabaseClient({
       tables: {
         feature_flags: {
@@ -122,22 +118,15 @@ describe("feature flag fallback logging", () => {
         },
       },
     });
-    mockCreateClient.mockResolvedValueOnce(unauthenticated.client as never)
-      .mockResolvedValueOnce(denied.client as never);
+    mockCreateClient.mockResolvedValue(denied.client as never);
 
     await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(false);
-    await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(false);
 
-    expect(unauthenticated.queries).toHaveLength(0);
     expect(denied.queries).toHaveLength(1);
   });
 
-  it("should retain a warm snapshot when authentication or RLS fails after refresh", async () => {
+  it("should retain a warm snapshot when RLS fails after refresh", async () => {
     const initial = buildMockSupabaseClient({
-      tables: { feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null } },
-    });
-    const unauthenticated = buildMockSupabaseClient({ user: null });
-    const fresh = buildMockSupabaseClient({
       tables: { feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null } },
     });
     const denied = buildMockSupabaseClient({
@@ -149,19 +138,12 @@ describe("feature flag fallback logging", () => {
       },
     });
     mockCreateClient.mockResolvedValueOnce(initial.client as never)
-      .mockResolvedValueOnce(unauthenticated.client as never)
-      .mockResolvedValueOnce(fresh.client as never)
       .mockResolvedValueOnce(denied.client as never);
 
     await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(true);
     vi.advanceTimersByTime(30_001);
     await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(true);
-    resetFeatureFlagCacheForTests();
-    await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(true);
-    vi.advanceTimersByTime(30_001);
-    await expect(canMutateFeature("jobApplicationTracker", context)).resolves.toBe(true);
 
-    expect(unauthenticated.queries).toHaveLength(0);
     expect(denied.queries).toHaveLength(1);
   });
 });

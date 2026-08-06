@@ -6,7 +6,7 @@
  * `projects` table through the same service-role client the gated page uses,
  * and until this test it carried no feature-flag check at all — any
  * authenticated user, flag on or off, could call it directly. Gated here
- * with the same canViewFeature("projects", ...) contract as the page so the
+ * with the same canViewFeature("projects") contract as the page so the
  * flag actually governs every live read path for this feature, not just the
  * page route.
  */
@@ -24,16 +24,11 @@ const mockCreateAdminClient = createAdminClient as MockedFunction<typeof createA
 const mockCreateServerClient = createServerClient as MockedFunction<typeof createServerClient>;
 const mockCanViewFeature = canViewFeature as MockedFunction<typeof canViewFeature>;
 
-function serverClientFor(userId: string | null, role?: string) {
+function serverClientFor(userId: string | null) {
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: userId ? { id: userId } : null } }),
     },
-    from: vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: role ? { role } : null, error: null }),
-    }),
   } as any;
 }
 
@@ -63,7 +58,7 @@ describe("GET /api/projects", () => {
   });
 
   it("returns 404 for an authenticated member when projects is off, without querying the projects table", async () => {
-    mockCreateServerClient.mockResolvedValue(serverClientFor("member-1", "member"));
+    mockCreateServerClient.mockResolvedValue(serverClientFor("member-1"));
     mockCanViewFeature.mockResolvedValue(false);
     const fromSpy = vi.fn();
     mockCreateAdminClient.mockReturnValue({ from: fromSpy } as any);
@@ -72,12 +67,12 @@ describe("GET /api/projects", () => {
     const response = await GET();
 
     expect(response.status).toBe(404);
-    expect(mockCanViewFeature).toHaveBeenCalledWith("projects", { targetingKey: "member-1", attributes: { role: "member" } });
+    expect(mockCanViewFeature).toHaveBeenCalledWith("projects");
     expect(fromSpy).not.toHaveBeenCalled();
   });
 
   it("returns project data for an authenticated member when projects is on", async () => {
-    mockCreateServerClient.mockResolvedValue(serverClientFor("member-1", "member"));
+    mockCreateServerClient.mockResolvedValue(serverClientFor("member-1"));
     mockCanViewFeature.mockResolvedValue(true);
     const order = vi.fn().mockResolvedValue({ data: [{ id: "p1" }], error: null });
     const select = vi.fn().mockReturnValue({ order });
@@ -92,7 +87,7 @@ describe("GET /api/projects", () => {
   });
 
   it("returns project data for an admin previewing projects off", async () => {
-    mockCreateServerClient.mockResolvedValue(serverClientFor("admin-1", "admin"));
+    mockCreateServerClient.mockResolvedValue(serverClientFor("admin-1"));
     mockCanViewFeature.mockResolvedValue(true);
     const order = vi.fn().mockResolvedValue({ data: [], error: null });
     const select = vi.fn().mockReturnValue({ order });
@@ -102,6 +97,6 @@ describe("GET /api/projects", () => {
     const response = await GET();
 
     expect(response.status).toBe(200);
-    expect(mockCanViewFeature).toHaveBeenCalledWith("projects", { targetingKey: "admin-1", attributes: { role: "admin" } });
+    expect(mockCanViewFeature).toHaveBeenCalledWith("projects");
   });
 });

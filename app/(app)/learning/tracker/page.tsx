@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ListTodo } from "lucide-react";
-import { canViewFeature, type FlagContext } from "@/lib/feature-flags";
+import { canViewFeature } from "@/lib/feature-flags";
 import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { LearningTrackerClient } from "./LearningTrackerClient";
 import type { TrackerItem } from "../page";
@@ -23,21 +23,11 @@ export default async function LearningTrackerPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const flagContext: FlagContext = {
-    targetingKey: user.id,
-    attributes: profile?.role ? { role: profile.role } : undefined,
-  };
-  if (!(await canViewFeature("learningTracker", flagContext))) {
+  if (!(await canViewFeature("learningTracker"))) {
     return <FeatureComingSoon />;
   }
 
-  const showGroupLearningCta = await canViewFeature("groupLearning", flagContext);
+  const showGroupLearningCta = await canViewFeature("groupLearning");
 
   // ── Tracker items ────────────────────────────────────────────────────────────
   const { data: raw } = await supabase

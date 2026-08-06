@@ -19,6 +19,8 @@ export type RecordedQuery = {
 type BuildOptions = {
   /** null models an unauthenticated session. */
   user?: { id: string } | null;
+  /** Models getUser() rejecting the current authentication credentials. */
+  userError?: { message: string } | null;
   /**
    * What each `from(table)` query resolves to. An array is consumed in call
    * order — needed when one caller issues several queries against the same
@@ -57,7 +59,7 @@ const CHAINABLE_METHODS = [
  * which filters reached the query, not how the caller assembled them.
  */
 export function buildMockSupabaseClient(options: BuildOptions = {}) {
-  const { user = { id: "user-1" }, tables = {} } = options;
+  const { user = { id: "user-1" }, userError = null, tables = {} } = options;
   const queries: RecordedQuery[] = [];
   const consumed: Record<string, number> = {};
 
@@ -92,7 +94,7 @@ export function buildMockSupabaseClient(options: BuildOptions = {}) {
 
   const client = {
     auth: {
-      getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }),
+      getUser: vi.fn().mockResolvedValue({ data: { user }, error: userError }),
       getClaims: vi.fn().mockResolvedValue({
         data: user ? { claims: { sub: user.id } } : null,
         error: null,

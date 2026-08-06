@@ -16,8 +16,6 @@ import {
 } from "./feature-flags";
 
 const mockCreateClient = vi.mocked(createClient);
-const member = { targetingKey: "member-1", attributes: { role: "member" } };
-const admin = { targetingKey: "admin-1", attributes: { role: "admin" } };
 
 describe("feature flag authorization", () => {
   beforeEach(() => {
@@ -29,18 +27,33 @@ describe("feature flag authorization", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it.each([
-    [member, true, true],
-    [member, false, false],
-    [admin, true, true],
-    [admin, false, true],
-  ] as const)("should resolve view access for %o when the flag is %s", async (context, enabled, expected) => {
+  it("should derive admin preview access from the authenticated server profile", async () => {
     const { client } = buildMockSupabaseClient({
-      tables: { feature_flags: { data: [makeFeatureFlagRow({ enabled })], error: null } },
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow()], error: null },
+        profiles: { data: { role: "admin" }, error: null },
+      },
     });
     mockCreateClient.mockResolvedValue(client as never);
 
-    await expect(canViewFeature("jobApplicationTracker", context)).resolves.toBe(expected);
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(true);
+  });
+
+  it.each([
+    ["member", true, true],
+    ["member", false, false],
+    ["admin", true, true],
+    ["admin", false, true],
+  ] as const)("should resolve view access for a server-derived %s when the flag is %s", async (role, enabled, expected) => {
+    const { client } = buildMockSupabaseClient({
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow({ enabled })], error: null },
+        profiles: { data: { role }, error: null },
+      },
+    });
+    mockCreateClient.mockResolvedValue(client as never);
+
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(expected);
   });
 
   it("should never let an admin mutate a disabled feature when attributes claim privilege", async () => {
@@ -57,11 +70,17 @@ describe("feature flag authorization", () => {
   // pgTAP covers the real database RLS boundary.
   it("should not leak an admin view decision when a member resolves next", async () => {
     const { client } = buildMockSupabaseClient({
-      tables: { feature_flags: { data: [makeFeatureFlagRow()], error: null } },
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow()], error: null },
+        profiles: [
+          { data: { role: "admin" }, error: null },
+          { data: { role: "member" }, error: null },
+        ],
+      },
     });
     mockCreateClient.mockResolvedValue(client as never);
 
-    await expect(canViewFeature("jobApplicationTracker", admin)).resolves.toBe(true);
-    await expect(canViewFeature("jobApplicationTracker", member)).resolves.toBe(false);
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(true);
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(false);
   });
 });

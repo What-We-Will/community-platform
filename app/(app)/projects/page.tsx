@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
-import { canViewFeature, type FlagContext } from "@/lib/feature-flags";
+import { canViewFeature } from "@/lib/feature-flags";
 import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { ProjectsClient, type ProjectRow } from "./ProjectsClient";
 
@@ -15,11 +15,7 @@ export default async function ProjectsPage() {
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
 
-  const flagContext: FlagContext = {
-    targetingKey: user.id,
-    attributes: profile?.role ? { role: profile.role } : undefined,
-  };
-  if (!(await canViewFeature("projects", flagContext))) {
+  if (!(await canViewFeature("projects"))) {
     return <FeatureComingSoon />;
   }
 

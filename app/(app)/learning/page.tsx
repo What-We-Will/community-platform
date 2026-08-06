@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { canViewFeature, type FlagContext } from "@/lib/feature-flags";
+import { canViewFeature } from "@/lib/feature-flags";
 import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { LearningClientRoot } from "./LearningClientRoot";
 import type { LearningPath, LearningPathItem, LearningResource } from "./types";
@@ -40,11 +40,7 @@ export default async function GroupLearningPage() {
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
 
-  const flagContext: FlagContext = {
-    targetingKey: user.id,
-    attributes: profile?.role ? { role: profile.role } : undefined,
-  };
-  if (!(await canViewFeature("groupLearning", flagContext))) {
+  if (!(await canViewFeature("groupLearning"))) {
     return <FeatureComingSoon />;
   }
 

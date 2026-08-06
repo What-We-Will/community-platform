@@ -6,7 +6,6 @@ import {
   canViewFeature,
   FLAG_KEYS,
   type FeatureFlag,
-  type FlagContext,
 } from "@/lib/feature-flags";
 import AppShell from "./app-shell";
 
@@ -39,13 +38,9 @@ export default async function AppLayout({
   const { data: total } = await supabase.rpc("get_total_unread_count");
   const unreadCount = Number(total ?? 0);
 
-  const flagContext: FlagContext = {
-    targetingKey: user.id,
-    attributes: profile?.role ? { role: profile.role } : undefined,
-  };
   const visibleFlagEntries = await Promise.all(
     FLAG_KEYS.map(
-      async (flag) => [flag, await canViewFeature(flag, flagContext)] as const
+      async (flag) => [flag, await canViewFeature(flag)] as const
     )
   );
   const visibleFlags = Object.fromEntries(visibleFlagEntries) as Record<

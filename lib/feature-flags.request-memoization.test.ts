@@ -17,7 +17,7 @@ import { makeFeatureFlagRow } from "@/lib/__tests__/factories";
 import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
 import { createClient } from "@/lib/supabase/server";
 import {
-  canMutateFeature,
+  canViewFeature,
   resetFeatureFlagCacheForTests,
 } from "./feature-flags";
 
@@ -33,17 +33,21 @@ describe("feature flag request memoization", () => {
 
   afterEach(() => vi.useRealTimers());
 
-  it("should issue one cold-snapshot query when feature resolutions are concurrent", async () => {
+  it("should issue one server-profile and cold-snapshot query when view resolutions are concurrent", async () => {
     const { client, queries } = buildMockSupabaseClient({
-      tables: { feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null } },
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow({ enabled: true })], error: null },
+        profiles: { data: { role: "member" }, error: null },
+      },
     });
     mockCreateClient.mockResolvedValue(client as never);
 
     await expect(Promise.all([
-      canMutateFeature("jobApplicationTracker", { targetingKey: "member-1" }),
-      canMutateFeature("learningTracker", { targetingKey: "member-1" }),
+      canViewFeature("jobApplicationTracker"),
+      canViewFeature("learningTracker"),
     ])).resolves.toEqual([true, false]);
 
-    expect(queries).toHaveLength(1);
+    expect(queries.filter(({ table }) => table === "profiles")).toHaveLength(1);
+    expect(queries.filter(({ table }) => table === "feature_flags")).toHaveLength(1);
   });
 });

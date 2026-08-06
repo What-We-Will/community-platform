@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { canViewFeature, type FlagContext } from "@/lib/feature-flags";
+import { canViewFeature } from "@/lib/feature-flags";
 
 // Service-role client — bypasses RLS for reading projects (public open-source data)
 const adminSupabase = createClient(
@@ -16,17 +16,7 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const flagContext: FlagContext = {
-    targetingKey: user.id,
-    attributes: profile?.role ? { role: profile.role } : undefined,
-  };
-  if (!(await canViewFeature("projects", flagContext))) {
+  if (!(await canViewFeature("projects"))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

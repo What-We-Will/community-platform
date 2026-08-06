@@ -23,6 +23,16 @@ export type FlagContext = {
   attributes?: Record<string, string>;
 };
 
+type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
+
+type FlagIdentity = Pick<FlagContext, "targetingKey"> & {
+  supabase: ServerSupabaseClient;
+};
+
+type TrustedFlagContext = FlagContext & {
+  supabase: ServerSupabaseClient;
+};
+
 export type FeatureFlagRow = {
   key: string;
   enabled: boolean;
@@ -93,17 +103,9 @@ function validateSnapshot(data: unknown): FlagSnapshot {
   return definitions;
 }
 
-async function readFlagSnapshot(): Promise<FlagSnapshot> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    throw new Error("Feature flags require an authenticated user");
-  }
-
+async function readFlagSnapshot(
+  supabase: ServerSupabaseClient
+): Promise<FlagSnapshot> {
   const now = Date.now();
   if (lastKnownGood && now - lastKnownGood.refreshedAt < SNAPSHOT_TTL_MS) {
     return lastKnownGood.snapshot;
@@ -124,8 +126,43 @@ async function readFlagSnapshot(): Promise<FlagSnapshot> {
 
 const getRequestFlagSnapshot = cache(readFlagSnapshot);
 
+async function readFlagIdentity(): Promise<FlagIdentity> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("Feature flags require an authenticated user");
+  }
+
+  return { targetingKey: user.id, supabase };
+}
+
+const getRequestFlagIdentity = cache(readFlagIdentity);
+
+async function readFlagContext(): Promise<TrustedFlagContext> {
+  const identity = await getRequestFlagIdentity();
+  const { supabase } = identity;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", identity.targetingKey)
+    .maybeSingle();
+
+  return {
+    ...identity,
+    attributes: profile?.role ? { role: profile.role } : undefined,
+  };
+}
+
+const getRequestFlagContext = cache(readFlagContext);
+
 export async function getFlagSnapshot(): Promise<FlagSnapshot> {
-  return getRequestFlagSnapshot();
+  const identity = await getRequestFlagIdentity();
+  return getRequestFlagSnapshot(identity.supabase);
 }
 
 function evaluateSiteFlag(
@@ -166,14 +203,15 @@ function logResolution(
 
 async function resolveFeature(
   flag: FeatureFlag,
-  context: FlagContext
+  context: FlagContext,
+  supabase: ServerSupabaseClient
 ): Promise<boolean> {
   let definition: FeatureFlagDefinition | undefined;
   let source: ResolutionSource = "site-default";
   let snapshotError: unknown;
 
   try {
-    definition = (await getFlagSnapshot()).get(flag);
+    definition = (await getRequestFlagSnapshot(supabase)).get(flag);
   } catch (error) {
     snapshotError = error;
     definition = lastKnownGood?.snapshot.get(flag);
@@ -198,19 +236,36 @@ async function resolveFeature(
   }
 }
 
-export async function canViewFeature(
-  flag: FeatureFlag,
-  context: FlagContext
-): Promise<boolean> {
-  const value = await resolveFeature(flag, context);
+export async function canViewFeature(flag: FeatureFlag): Promise<boolean> {
+  let context: TrustedFlagContext;
+  try {
+    context = await getRequestFlagContext();
+  } catch (error) {
+    logResolution(flag, "error-fallback", false, error);
+    return false;
+  }
+
+  const value = await resolveFeature(flag, context, context.supabase);
   return value || context.attributes?.role === "admin";
 }
 
 export async function canMutateFeature(
   flag: FeatureFlag,
-  context: FlagContext
+  context?: FlagContext
 ): Promise<boolean> {
-  return resolveFeature(flag, context);
+  let identity: FlagIdentity;
+  try {
+    identity = await getRequestFlagIdentity();
+  } catch (error) {
+    logResolution(flag, "error-fallback", false, error);
+    return false;
+  }
+
+  return resolveFeature(
+    flag,
+    context ?? { targetingKey: identity.targetingKey },
+    identity.supabase
+  );
 }
 
 export function resetFeatureFlagCacheForTests() {
