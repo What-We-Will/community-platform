@@ -1,6 +1,6 @@
 begin;
 
-select plan(23);
+select plan(24);
 
 insert into auth.users (
   instance_id,
@@ -46,6 +46,16 @@ values
 update public.profiles
 set role = 'admin'
 where id = '00000000-0000-0000-0000-000000000102';
+
+select is(
+  (
+    select role
+    from public.profiles
+    where id = '00000000-0000-0000-0000-000000000102'
+  ),
+  'admin',
+  'admin profile fixture is promoted before policy checks'
+);
 
 insert into public.feature_flags (
   key,
