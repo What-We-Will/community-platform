@@ -34,14 +34,14 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Capped here as well as at the App installation, so broadening the App for
       # an unrelated reason can't silently widen this workflow. Requesting a
       # permission the installation lacks fails the mint, which is intended.
       - name: Mint App token
         id: apptoken
-        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
@@ -68,7 +68,7 @@ jobs:
       # Labels are the ones the manual triage workflow already uses, not a
       # parallel bot-only scheme.
       - name: Post verdict comment and label
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           VERDICT: ${{ steps.classify.outputs.verdict }}
           REASON: ${{ steps.classify.outputs.reason }}
