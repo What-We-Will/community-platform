@@ -25,6 +25,9 @@ interface ProfileFormProps {
   profile: Profile;
 }
 
+const MAX_SKILL_LENGTH = 30;
+const MAX_SKILLS = 20;
+
 export default function ProfileForm({ profile }: ProfileFormProps) {
   const [displayName, setDisplayName] = useState(profile.display_name);
   const [headline, setHeadline] = useState(profile.headline ?? "");
@@ -72,9 +75,34 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setLoading(true);
 
     const skills = skillsInput
-      .split(",")
+      .split(/,|\//)
       .map((s) => s.trim())
       .filter(Boolean);
+
+    const skillErrors: string[] = [];
+
+    const oversizedSkills = skills.filter((s) => s.length > MAX_SKILL_LENGTH);
+    if (oversizedSkills.length > 0) {
+      skillErrors.push(
+        `Skill${oversizedSkills.length > 1 ? "s" : ""} ${oversizedSkills
+          .map((s) => `"${s}"`)
+          .join(", ")} ${
+          oversizedSkills.length > 1 ? "exceed" : "exceeds"
+        } the ${MAX_SKILL_LENGTH}-character limit.`
+      );
+    }
+
+    if (skills.length > MAX_SKILLS) {
+      skillErrors.push(
+        `You can add up to ${MAX_SKILLS} skills (you entered ${skills.length}).`
+      );
+    }
+
+    if (skillErrors.length > 0) {
+      setError(skillErrors.join(" "));
+      setLoading(false);
+      return;
+    }
 
     try {
       const result = await updateProfile({
@@ -117,7 +145,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive break-words">
               {error}
             </div>
           )}
@@ -195,7 +223,8 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               onChange={(e) => setSkillsInput(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Comma-separated list
+              Comma or slash separated. Max {MAX_SKILL_LENGTH} characters per
+              skill, up to {MAX_SKILLS} skills.
             </p>
           </div>
           <div className="flex items-center space-x-2">
