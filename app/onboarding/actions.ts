@@ -18,6 +18,7 @@ export async function completeOnboarding(
     open_to_referrals: boolean;
     linkedin_url?: string | null;
     timezone?: string;
+    guidelines_accepted: boolean;
   }
 ): Promise<OnboardingResult> {
   const supabase = await createClient();
@@ -34,26 +35,59 @@ export async function completeOnboarding(
     return { error: "LinkedIn URL is required to verify your background." };
   }
 
-  const { error } = await supabase.from("profiles").upsert(
-    {
-      id: user.id,
-      display_name: data.display_name,
-      avatar_url: data.avatar_url ?? null,
-      headline: data.headline || null,
-      location: data.location || null,
-      bio: data.bio || null,
-      skills: data.skills,
-      open_to_referrals: data.open_to_referrals,
-      linkedin_url: data.linkedin_url || null,
-      timezone: safeTimezone(data.timezone),
-      is_onboarded: true,
-      approval_status: "pending",
-    },
-    { onConflict: "id" }
-  );
+  if (!data.guidelines_accepted) {
+    return {
+      error: "You must agree to the Community Guidelines to complete onboarding.",
+    };
+  }
+
+  const profileFields = {
+    id: user.id,
+    display_name: data.display_name,
+    avatar_url: data.avatar_url ?? null,
+    headline: data.headline || null,
+    location: data.location || null,
+    bio: data.bio || null,
+    skills: data.skills,
+    open_to_referrals: data.open_to_referrals,
+    linkedin_url: data.linkedin_url || null,
+    timezone: safeTimezone(data.timezone),
+    is_onboarded: true,
+    approval_status: "pending",
+  };
+
+  // The consent trigger rejects rewriting an existing acceptance, so only send a
+  // timestamp when there isn't one yet — otherwise a retry after a submission
+  // that actually succeeded (e.g. the client timeout below) would hard-fail.
+  const { data: existing } = await supabase
+    .from("profiles")
+    .select("guidelines_accepted_at")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  let { error } = await supabase
+    .from("profiles")
+    .upsert(
+      existing?.guidelines_accepted_at
+        ? profileFields
+        : { ...profileFields, guidelines_accepted_at: new Date().toISOString() },
+      { onConflict: "id" }
+    );
+
+  // Two concurrent submissions can both read a null acceptance, so the loser
+  // still trips the trigger. That rolls back the whole statement, so retry
+  // without the timestamp rather than dropping the rest of the profile write.
+  if (error && isGuidelinesGuardError(error)) {
+    ({ error } = await supabase
+      .from("profiles")
+      .upsert(profileFields, { onConflict: "id" }));
+  }
 
   if (error) {
-    return { error: error.message };
+    console.error("[onboarding] Failed to complete onboarding:", error);
+    return {
+      error: "We couldn't complete your onboarding. Please try again.",
+    };
   }
 
   // Notify admin that a new account needs review
@@ -65,6 +99,15 @@ export async function completeOnboarding(
 
   revalidatePath("/", "layout");
   return {};
+}
+
+/**
+ * The consent trigger (20260724171118_add_guidelines_accepted_at) raises when an
+ * existing acceptance would be cleared or rewritten. Matched on the column name
+ * so the message wording can be reworded without breaking the retry above.
+ */
+function isGuidelinesGuardError(error: { message?: string }): boolean {
+  return error.message?.includes("guidelines_accepted_at") ?? false;
 }
 
 async function notifyAdminOfNewApplication({

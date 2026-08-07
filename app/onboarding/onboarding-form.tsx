@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { completeOnboarding } from "./actions";
 import { updateAvatarUrl } from "@/app/(app)/profile/actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
@@ -29,6 +30,7 @@ interface OnboardingFormProps {
     skills: string[];
     open_to_referrals: boolean;
     linkedin_url: string;
+    guidelines_accepted: boolean;
   };
   userId: string;
 }
@@ -54,12 +56,21 @@ export default function OnboardingForm({
   const [timezone, setTimezone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"
   );
+  const [agreedToGuidelines, setAgreedToGuidelines] = useState(
+    initialData.guidelines_accepted
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
+    if (!agreedToGuidelines) {
+      setError("Please read and agree to the Community Guidelines to continue.");
+      return;
+    }
+
     setLoading(true);
 
     const skills = skillsInput
@@ -86,6 +97,7 @@ export default function OnboardingForm({
         open_to_referrals: openToReferrals,
         linkedin_url: linkedinUrl || null,
         timezone,
+        guidelines_accepted: agreedToGuidelines,
       });
 
       clearTimeout(timeoutId);
@@ -220,6 +232,31 @@ export default function OnboardingForm({
             <p className="text-xs text-muted-foreground">
               Required to verify your background as a tech worker
             </p>
+          </div>
+          <div className="flex items-start space-x-2 border-t pt-4">
+            <Checkbox
+              id="guidelines_accepted"
+              checked={agreedToGuidelines}
+              onCheckedChange={(checked) =>
+                setAgreedToGuidelines(checked === true)
+              }
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor="guidelines_accepted"
+              className="cursor-pointer text-sm font-normal leading-relaxed"
+            >
+              I have read and agree to the{" "}
+              <Link
+                href="/community-guidelines"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium underline underline-offset-2"
+              >
+                Community Guidelines
+              </Link>
+              <span className="text-destructive"> *</span>
+            </Label>
           </div>
         </CardContent>
         <CardFooter>

@@ -44,7 +44,6 @@ export async function updateProfile(
       github_url: data.github_url || null,
       portfolio_url: data.portfolio_url || null,
       timezone: safeTimezone(data.timezone),
-      is_onboarded: true,
     },
     { onConflict: "id" }
   );

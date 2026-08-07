@@ -40,6 +40,7 @@ export default async function OnboardingPage() {
           skills: profile?.skills ?? [],
           open_to_referrals: profile?.open_to_referrals ?? false,
           linkedin_url: profile?.linkedin_url ?? "",
+          guidelines_accepted: Boolean(profile?.guidelines_accepted_at),
         }}
         userId={user.id}
       />

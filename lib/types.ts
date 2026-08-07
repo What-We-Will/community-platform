@@ -22,6 +22,7 @@ export interface Profile {
   approval_status: ApprovalStatus;
   role: ProfileRole;
   last_seen_at: string | null;
+  guidelines_accepted_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,6 +43,7 @@ export interface ProfileInsert {
   timezone?: string;
   is_onboarded?: boolean;
   role?: ProfileRole;
+  guidelines_accepted_at?: string | null;
 }
 
 export interface ProfileUpdate {
@@ -58,6 +60,7 @@ export interface ProfileUpdate {
   portfolio_url?: string | null;
   timezone?: string;
   is_onboarded?: boolean;
+  guidelines_accepted_at?: string | null;
 }
 
 // ─── Messaging ───────────────────────────────────────────────────────────────
