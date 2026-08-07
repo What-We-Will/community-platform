@@ -1,6 +1,6 @@
-# Feature flags are rollout gates, not an authorization boundary
+# ADR-0011 — Feature flags are rollout gates, not an authorization boundary
 
-**Status:** Draft 2026-07-19
+**Status:** Accepted 2026-08-06
 **TL;DR:** Feature flags of type `release` and `experiment` are enforced at the Server Action layer through `canViewFeature` and `canMutateFeature`; the tables those features write to keep ownership-scoped RLS with no dependency on `feature_flags`. A user can therefore still mutate rows they already own via direct PostgREST while a flag is off, and that is accepted. A `permission`-type flag must have RLS backing before it can carry an authorization decision.
 
 **Author:** @tonyrosario
