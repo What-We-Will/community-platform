@@ -26,7 +26,9 @@ permissions:
 
 jobs:
   triage:
-    if: github.actor == 'dependabot[bot]'
+    # Author, not github.actor: actor is whoever acted on the PR last, which is
+    # not the same question and is the weaker gate on a job that mints a token.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
