@@ -82,7 +82,50 @@ exists has already cleared its bake window — you do not need to check release 
 | **Dev-only, patch/minor** (e.g. test runner, types) | Safe to merge on green `verify` | None — not in the production bundle. For a test-runner bump, the test suite running green under the new version *is* the smoke test. Dev-only does **not** exempt a major bump from the Major row above. |
 
 Family majors for core libraries (react, next, supabase, radix, tailwind, etc.) are held
-in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs.
+in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs. See
+[ADR-0010](../adr/0010-dependabot-grouping-and-major-holds.md) for why those holds are
+scoped the way they are. The Vitest family includes `@vitejs/plugin-react`, so review
+their major-version compatibility together during the January and July migration review.
+
+## Editing the groups in `dependabot.yml`
+
+Dependabot does not simply take the first group whose patterns match — it scores each
+matching group and assigns the dependency to the most *specific* one. An exact name
+scores highest, a wildcard scores low, and a group declaring no `patterns` at all
+scores in between, above every wildcard. Two rules follow from that:
+
+- **Leave `patterns: ["*"]` on the two catch-all groups.** It looks redundant next to
+  `dependency-type`, but removing it makes them outrank every wildcard pattern in the
+  file and silently swallow dependencies from named groups. That is exactly what
+  happened in PR #265.
+- **Add the literal name when you add a scoped dependency.** The glob will catch it
+  either way now, so forgetting is not breakage — the literal is a deliberate second
+  layer, and matching the existing style keeps the groups readable.
+- **Limit routine-maintenance groups to minor and patch updates.** Packages paired for
+  batching are not automatically version-locked. For example, `nodemailer` and
+  `@types/nodemailer` update together routinely, but their majors remain independent.
+  Omit `update-types` only for a version-locked family whose majors are covered by the
+  scoped holds below the groups.
+
+If a PR looks misgrouped — a package bundled into a catch-all when a named group
+clearly covers it — this scoring is the first thing to check, not the pattern spelling.
+The louder tell is a group that produces *nothing*: this bug is silent, so a broken
+group reads correctly and simply never appears. List the groups that have actually
+fired and diff that against the group names in the config:
+
+```bash
+gh pr list --state all --limit 200 --json headRefName \
+  --jq '[.[]|select(.headRefName|startswith("dependabot/"))
+        |.headRefName|split("/")[2]|sub("-[0-9a-f]+$";"")]|unique|sort'
+```
+
+Only the absence side means anything — ungrouped single-dependency PRs produce branch
+names too. A configured group missing from the output has either been swallowed or has
+genuinely had no eligible updates; check whether its members turn up in catch-all PRs
+to tell those apart.
+
+[ADR-0010](../adr/0010-dependabot-grouping-and-major-holds.md) has the scores, the
+evidence, and the `dependabot-core` source it comes from.
 
 ## Validating locally
 

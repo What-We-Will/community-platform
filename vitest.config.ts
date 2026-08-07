@@ -16,7 +16,7 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     // Only *.test.ts(x) — *.spec.ts stays reserved for Playwright (e2e/).
     include: ['**/*.test.{ts,tsx}'],
-    exclude: ['**/node_modules/**', '**/.next/**', 'e2e/**'],
+    exclude: ['**/node_modules/**', '**/.next/**', 'e2e/**', '**/.claude/**'],
     // Reporting only — no thresholds enforced yet. The TESTING_STANDARDS ≥80% lib/ target
     // is aspirational; current baseline is well below it. Run via `npm run test:coverage`.
     coverage: {
