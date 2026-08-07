@@ -1,0 +1,110 @@
+/**
+ * @vitest-environment node
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("server-only", () => ({}));
+
+import {
+  makeFeatureFlagRow,
+  makeProfileRoleRow,
+} from "@/lib/__tests__/factories";
+import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
+import { createClient } from "@/lib/supabase/server";
+import {
+  canMutateFeature,
+  canViewFeature,
+  resetFeatureFlagCacheForTests,
+} from "./feature-flags";
+
+const mockCreateClient = vi.mocked(createClient);
+
+describe("feature flag authorization", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-07-30T00:00:00.000Z"));
+    resetFeatureFlagCacheForTests();
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it("should derive admin preview access from the authenticated server profile", async () => {
+    const { client } = buildMockSupabaseClient({
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow()], error: null },
+        profiles: { data: makeProfileRoleRow({ role: "admin" }), error: null },
+      },
+    });
+    mockCreateClient.mockResolvedValue(client as never);
+
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(true);
+  });
+
+  it.each([
+    ["member", true, true],
+    ["member", false, false],
+    ["admin", true, true],
+    ["admin", false, true],
+  ] as const)("should resolve view access for a server-derived %s when the flag is %s", async (role, enabled, expected) => {
+    const { client } = buildMockSupabaseClient({
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow({ enabled })], error: null },
+        profiles: { data: makeProfileRoleRow({ role }), error: null },
+      },
+    });
+    mockCreateClient.mockResolvedValue(client as never);
+
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(expected);
+  });
+
+  it("should never let an admin mutate a disabled feature when attributes claim privilege", async () => {
+    const { client } = buildMockSupabaseClient({
+      tables: { feature_flags: { data: [makeFeatureFlagRow()], error: null } },
+    });
+    mockCreateClient.mockResolvedValue(client as never);
+
+    await expect(canMutateFeature("jobApplicationTracker", {
+      targetingKey: "user-1", attributes: { role: "admin", arbitrary: "true" },
+    })).resolves.toBe(false);
+  });
+
+  it.each([
+    ["no user", ""],
+    ["another user", "other-user"],
+  ] as const)("should fail closed when the mutation targeting key belongs to %s", async (_, targetingKey) => {
+    const { client, queries } = buildMockSupabaseClient({
+      tables: {
+        feature_flags: {
+          data: [makeFeatureFlagRow({ fail_mode: "open" })],
+          error: null,
+        },
+      },
+    });
+    mockCreateClient.mockResolvedValue(client as never);
+
+    await expect(canMutateFeature("jobApplicationTracker", {
+      targetingKey,
+    })).resolves.toBe(false);
+
+    expect(queries).toHaveLength(0);
+  });
+
+  // pgTAP covers the real database RLS boundary.
+  it("should not leak an admin view decision when a member resolves next", async () => {
+    const { client } = buildMockSupabaseClient({
+      tables: {
+        feature_flags: { data: [makeFeatureFlagRow()], error: null },
+        profiles: [
+          { data: makeProfileRoleRow({ role: "admin" }), error: null },
+          { data: makeProfileRoleRow(), error: null },
+        ],
+      },
+    });
+    mockCreateClient.mockResolvedValue(client as never);
+
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(true);
+    await expect(canViewFeature("jobApplicationTracker")).resolves.toBe(false);
+  });
+});

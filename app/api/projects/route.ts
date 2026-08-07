@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { canViewFeature } from "@/lib/feature-flags";
 
 // Service-role client — bypasses RLS for reading projects (public open-source data)
 const adminSupabase = createClient(
@@ -10,10 +11,15 @@ const adminSupabase = createClient(
 );
 
 export async function GET() {
-  // Still require the user to be authenticated
   const supabase = await createServerClient();
+  // Route Handlers cannot share React request memoization with the resolver.
+  // Accept the duplicate auth round trip to keep its verification independent.
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (!(await canViewFeature("projects"))) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
   const { data, error } = await adminSupabase
     .from("projects")

@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { NOINDEX_METADATA } from "@/lib/seo";
+import {
+  canViewFeature,
+  FLAG_KEYS,
+  type FeatureFlag,
+} from "@/lib/feature-flags";
 import AppShell from "./app-shell";
 
 export const metadata: Metadata = NOINDEX_METADATA;
@@ -33,6 +38,16 @@ export default async function AppLayout({
   const { data: total } = await supabase.rpc("get_total_unread_count");
   const unreadCount = Number(total ?? 0);
 
+  const visibleFlagEntries = await Promise.all(
+    FLAG_KEYS.map(
+      async (flag) => [flag, await canViewFeature(flag)] as const
+    )
+  );
+  const visibleFlags = Object.fromEntries(visibleFlagEntries) as Record<
+    FeatureFlag,
+    boolean
+  >;
+
   return (
     <AppShell
       user={{
@@ -47,6 +62,7 @@ export default async function AppLayout({
         unreadCount,
         isAdmin: profile?.role === "admin",
       }}
+      visibleFlags={visibleFlags}
     >
       {children}
     </AppShell>

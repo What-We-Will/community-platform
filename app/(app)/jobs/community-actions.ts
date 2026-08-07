@@ -2,11 +2,16 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { canMutateFeature, type FlagContext } from "@/lib/feature-flags";
 
 export async function addToWishlist(jobPostingId: string, company: string, position: string, url?: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   // Avoid duplicates — check if already wishlisted
   const { data: existing } = await supabase
@@ -37,6 +42,10 @@ export async function removeFromWishlist(jobPostingId: string): Promise<{ error?
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase
     .from("job_applications")
@@ -55,6 +64,10 @@ export async function addJobComment(jobPostingId: string, content: string): Prom
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("job_posting_comments").insert({
     job_posting_id: jobPostingId,
@@ -71,6 +84,10 @@ export async function deleteJobComment(commentId: string): Promise<{ error?: str
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("ghostJobBoard", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase
     .from("job_posting_comments")

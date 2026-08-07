@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { canViewFeature } from "@/lib/feature-flags";
+import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { JobBoardClient, type JobPosting } from "./JobBoardClient";
 import type { Comment } from "./JobComments";
 
@@ -17,6 +19,22 @@ export default async function JobBoardPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!(await canViewFeature("ghostJobBoard"))) {
+    return <FeatureComingSoon />;
+  }
+
+  // The wishlist writes into job_applications, the tracker's table.
+  // Hiding the control when the tracker itself isn't viewable is a
+  // coherence decision, not an authorization boundary — the mutation guard
+  // on addToWishlist/removeFromWishlist checks ghostJobBoard alone.
+  const showWishlistControl = await canViewFeature("jobApplicationTracker");
 
   let jobQuery = supabase
     .from("job_postings")
@@ -35,12 +53,10 @@ export default async function JobBoardPage({
 
   const [
     { data: jobs },
-    { data: profile },
     { data: myWishlisted },
     { data: allComments },
   ] = await Promise.all([
     jobQuery,
-    supabase.from("profiles").select("role").eq("id", user.id).single(),
     supabase
       .from("job_applications")
       .select("job_posting_id")
@@ -151,6 +167,7 @@ export default async function JobBoardPage({
         activeReferralFilter={referralFilter}
         activeCommunityFilter={communityFilter}
         activeNotesFilter={notesFilter}
+        showWishlistControl={showWishlistControl}
       />
     </Suspense>
   );

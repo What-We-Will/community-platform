@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { createGroup, generateSlug, joinGroup, leaveGroup } from "@/lib/groups";
+import { canMutateFeature, type FlagContext } from "@/lib/feature-flags";
 
 export type TrackerStatus = "want_to_take" | "in_progress" | "completed";
 
@@ -15,6 +16,10 @@ export async function addToTracker(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("learningTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase
     .from("personal_learning_items")
@@ -31,6 +36,10 @@ export async function updateTrackerStatus(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("learningTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase
     .from("personal_learning_items")
@@ -46,6 +55,10 @@ export async function removeFromTracker(itemId: string): Promise<{ error?: strin
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("learningTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase
     .from("personal_learning_items")
@@ -69,6 +82,10 @@ export async function createStudyGroup(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("learningTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   try {
     // 1. Create a real group (public, not discoverable in the groups directory,
@@ -120,6 +137,10 @@ export async function joinStudyGroup(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("learningTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   // Fetch the real group_id
   const { data: sg } = await supabase
@@ -154,6 +175,10 @@ export async function leaveStudyGroup(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("learningTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   // Fetch the real group_id
   const { data: sg } = await supabase
@@ -186,6 +211,10 @@ export async function deleteStudyGroup(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("learningTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { data: profile } = await supabase
     .from("profiles")

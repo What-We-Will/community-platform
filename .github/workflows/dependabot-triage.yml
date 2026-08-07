@@ -26,7 +26,9 @@ permissions:
 
 jobs:
   triage:
-    if: github.actor == 'dependabot[bot]'
+    # Author, not github.actor: actor is whoever acted on the PR last, which is
+    # not the same question and is the weaker gate on a job that mints a token.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -35,6 +37,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       # Capped here as well as at the App installation, so broadening the App for
       # an unrelated reason can't silently widen this workflow. Requesting a

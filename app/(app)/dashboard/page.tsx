@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { canViewFeature } from "@/lib/feature-flags";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { NewMembersCard } from "@/components/dashboard/NewMembersCard";
 import { PollsCardWrapper } from "@/components/dashboard/PollsCardWrapper";
@@ -26,9 +27,11 @@ export default async function DashboardPage() {
 
   const isPlatformAdmin = profile?.role === "admin";
 
+  const showJobBoardCta = await canViewFeature("ghostJobBoard");
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      <WelcomeBanner profile={profile ?? null} />
+      <WelcomeBanner profile={profile ?? null} showJobBoardCta={showJobBoardCta} />
       <AnnouncementsCard />
       <WeeklyScheduleCard rows={scheduleRows ?? []} isPlatformAdmin={isPlatformAdmin} />
 

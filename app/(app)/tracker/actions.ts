@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { canMutateFeature, type FlagContext } from "@/lib/feature-flags";
 
 export type ApplicationStatus =
   | "wishlist" | "applied" | "phone_screen"
@@ -23,6 +24,10 @@ export async function createApplication(input: JobApplicationInput): Promise<{ e
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   // Seed status_dates with today for the initial status
   const today = new Date().toISOString().split("T")[0];
@@ -47,6 +52,10 @@ export async function updateApplication(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   // If status is changing, auto-record today's date for the new status
   // (only if the caller hasn't explicitly provided status_dates)
@@ -88,6 +97,10 @@ export async function updateStatusDate(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { data: existing } = await supabase
     .from("job_applications")
@@ -126,6 +139,10 @@ export async function syncCommunityNote(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   if (!content.trim()) {
     // Remove the comment if content is cleared
@@ -184,6 +201,10 @@ export async function addInterview(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("job_application_interviews").insert({
     application_id: applicationId,
@@ -203,6 +224,10 @@ export async function deleteInterview(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase
     .from("job_application_interviews")
@@ -245,6 +270,10 @@ export async function requestHelp(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("interview_help_requests").insert({
     user_id: user.id,
@@ -267,6 +296,10 @@ export async function cancelHelp(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase
     .from("interview_help_requests")
@@ -283,6 +316,10 @@ export async function deleteApplication(id: string): Promise<{ error?: string }>
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("jobApplicationTracker", flagContext))) {
+    return { error: "Feature not available" };
+  }
   const { error } = await supabase
     .from("job_applications")
     .delete()

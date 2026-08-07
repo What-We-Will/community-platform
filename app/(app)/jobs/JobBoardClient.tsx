@@ -67,6 +67,8 @@ interface Props {
   activeReferralFilter: boolean;
   activeCommunityFilter: boolean;
   activeNotesFilter: boolean;
+  /** Server-resolved view boolean; never the resolver itself. */
+  showWishlistControl: boolean;
 }
 
 // ── Resize hook ──────────────────────────────────────────────────────────────
@@ -140,6 +142,7 @@ export function JobBoardClient({
   activeReferralFilter,
   activeCommunityFilter,
   activeNotesFilter,
+  showWishlistControl,
 }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(jobs[0]?.id ?? null);
   const selectedJob = jobs.find((j) => j.id === selectedId) ?? null;
@@ -165,9 +168,9 @@ export function JobBoardClient({
       {/* ── Top bar ── */}
       <div className="shrink-0 flex items-center justify-between gap-4 border-b bg-background px-4 py-3 lg:px-6">
         <div>
-          <h1 className="text-xl font-bold">Community Job Board</h1>
+          <h1 className="text-xl font-bold">Ghost Job Board</h1>
           <p className="text-xs text-muted-foreground">
-            Add a job to your Job Tracker wishlist and share Community Notes.
+            Anonymously share your experience here.
           </p>
         </div>
         <PostJobForm />
@@ -383,14 +386,16 @@ export function JobBoardClient({
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-2">
-                  <WishlistButton
-                    key={selectedJob.id}
-                    jobPostingId={selectedJob.id}
-                    company={selectedJob.company}
-                    position={selectedJob.title}
-                    url={selectedJob.url}
-                    initialWishlisted={wishlistedSet.has(selectedJob.id)}
-                  />
+                  {showWishlistControl && (
+                    <WishlistButton
+                      key={selectedJob.id}
+                      jobPostingId={selectedJob.id}
+                      company={selectedJob.company}
+                      position={selectedJob.title}
+                      url={selectedJob.url}
+                      initialWishlisted={wishlistedSet.has(selectedJob.id)}
+                    />
+                  )}
                   {selectedJob.offers_referral && selectedJob.posted_by && selectedJob.posted_by !== currentUserId && (
                     <MessagePosterButton
                       posterId={selectedJob.posted_by}

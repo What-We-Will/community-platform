@@ -32,7 +32,7 @@ export function WishlistButton({ jobPostingId, company, position, url, initialWi
       setWishlisted(false);
     } else {
       const res = await addToWishlist(jobPostingId, company, position, url ?? undefined);
-      if (res.error !== "already_wishlisted") setWishlisted(true);
+      if (!res.error || res.error === "already_wishlisted") setWishlisted(true);
     }
     setLoading(false);
     router.refresh();

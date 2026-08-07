@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { canViewFeature } from "@/lib/feature-flags";
+import { FeatureComingSoon } from "@/components/shared/FeatureComingSoon";
 import { LearningClientRoot } from "./LearningClientRoot";
 import type { LearningPath, LearningPathItem, LearningResource } from "./types";
 import type { TrackerStatus } from "./learning-tracker-actions";
@@ -36,11 +38,18 @@ export default async function GroupLearningPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+
+  if (!(await canViewFeature("groupLearning"))) {
+    return <FeatureComingSoon />;
+  }
+
+  const isPlatformAdmin = profile?.role === "admin";
+
   const [
     { data: paths },
     { data: pathItems },
     { data: resources },
-    { data: profile },
     { data: rawTrackerItems },
     { data: rawStudyGroups },
     { data: allMembers },
@@ -58,7 +67,6 @@ export default async function GroupLearningPage() {
       .from("learning_resources")
       .select("id, type, title, url, description, tags, added_by, created_at, adder:added_by(id, display_name)")
       .order("created_at", { ascending: false }),
-    supabase.from("profiles").select("role").eq("id", user.id).single(),
     supabase
       .from("personal_learning_items")
       .select("id, resource_id, status, notes, resource:resource_id(id, type, title, url, description)")
@@ -71,8 +79,6 @@ export default async function GroupLearningPage() {
       .from("learning_study_group_members")
       .select("group_id, user_id"),
   ]);
-
-  const isPlatformAdmin = profile?.role === "admin";
 
   // Normalize paths
   const normalizedPaths: LearningPath[] = (paths ?? []).map((p) => ({

@@ -147,6 +147,7 @@ All factories live in `lib/__tests__/factories.ts`. Use overrides to vary only w
 | `makeBaseConversation(overrides?)` | Conversation stub |
 | `makeBasePoll(overrides?)` | Poll |
 | `makePollOption(overrides?)` | Poll option |
+| `makeFeatureFlagRow(overrides?)` | Feature flag database row |
 
 ---
 

@@ -21,11 +21,11 @@ permissions:
 jobs:
   # Secret-free checks; runs for every PR, forks included, so fork code is safe here.
   # The migrations output is consumed by preview-deploy.
-  # Required check: the branch-protection ruleset must point at this job. If you
-  # rename it, update the ruleset — preview-deploy never runs for forks, so the
-  # required check must be one that always runs.
   verify:
     if: github.event.action != 'closed'
+    concurrency:
+      group: ${{ github.workflow }}-verify-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -38,6 +38,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check migration filename collisions
         run: bash scripts/ci/check-migration-collisions.sh
@@ -84,8 +85,14 @@ jobs:
 
   # Its own job, not folded into verify, so it runs in parallel with a tighter
   # permission set and separate timeout.
+  # Required check: the branch-protection ruleset points at this job. If you rename
+  # it, update the ruleset — preview-deploy never runs for forks, so the required
+  # check must be one that always runs.
   security-scan:
     if: github.event.action != 'closed'
+    concurrency:
+      group: ${{ github.workflow }}-security-scan-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -96,6 +103,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       # Using the gitleaks binary rather than gitleaks/gitleaks-action because the
       # wrapper requires GITLEAKS_LICENSE for organization repos. Revisit if/when
@@ -152,6 +160,12 @@ jobs:
       github.event.action != 'closed' &&
       github.actor != 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository
+    # Not cancelled by a superseding push: a kill between `supabase db push` and its
+    # completion leaves the preview DB half-migrated. Not absolute — `timeout-minutes`
+    # below is a separate kill path. Only one superseded deploy pends; older ones drop.
+    concurrency:
+      group: ${{ github.workflow }}-preview-deploy-${{ github.ref }}
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -161,6 +175,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020  # v4.4.0

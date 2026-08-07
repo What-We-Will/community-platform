@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { canMutateFeature, type FlagContext } from "@/lib/feature-flags";
 import type { ResourceType } from "./types";
 
 // ── Paths ─────────────────────────────────────────────────────────────────────
@@ -10,6 +11,10 @@ export async function createPath(title: string, description: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("groupLearning", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("learning_paths").insert({
     title: title.trim(),
@@ -26,6 +31,10 @@ export async function deletePath(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("groupLearning", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("learning_paths").delete().eq("id", id);
   if (error) return { error: error.message };
@@ -38,6 +47,10 @@ export async function toggleStarPath(id: string, current: boolean) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("groupLearning", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { data: profile } = await supabase
     .from("profiles").select("role").eq("id", user.id).single();
@@ -62,6 +75,10 @@ export async function addPathItem(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("groupLearning", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const [{ data: path }, { data: profile }] = await Promise.all([
     supabase.from("learning_paths").select("created_by").eq("id", pathId).single(),
@@ -98,6 +115,10 @@ export async function deletePathItem(id: string, pathId: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("groupLearning", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const [{ data: path }, { data: profile }] = await Promise.all([
     supabase.from("learning_paths").select("created_by").eq("id", pathId).single(),
@@ -127,6 +148,10 @@ export async function addResource(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("groupLearning", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("learning_resources").insert({
     type,
@@ -146,6 +171,10 @@ export async function deleteResource(id: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
+  const flagContext: FlagContext = { targetingKey: user.id };
+  if (!(await canMutateFeature("groupLearning", flagContext))) {
+    return { error: "Feature not available" };
+  }
 
   const { error } = await supabase.from("learning_resources").delete().eq("id", id);
   if (error) return { error: error.message };

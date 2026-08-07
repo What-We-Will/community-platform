@@ -22,7 +22,9 @@ import {
   Globe,
   MessageSquare,
   UsersRound,
+  type LucideIcon,
 } from "lucide-react";
+import type { FeatureFlag } from "@/lib/feature-flags";
 import dynamic from "next/dynamic";
 
 const BugReportDialog = dynamic(
@@ -46,7 +48,15 @@ const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so othe
 const SLACK_INVITE_URL =
   "https://join.slack.com/t/whatwewill/shared_invite/zt-3zxh2f0x0-~zvous3lLva6Pi8IJQ0T8A";
 
-const mainNavItems = [
+interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  /** Nav entries without a flag are always visible. */
+  flag?: FeatureFlag;
+}
+
+const mainNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/events", label: "Events", icon: Calendar },
   { href: "/groups", label: "Groups", icon: UsersRound },
@@ -54,22 +64,30 @@ const mainNavItems = [
   { href: "/members", label: "Members", icon: UserSearch },
 ];
 
-const myToolsNavItems = [
-  { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList },
-  { href: "/learning/tracker", label: "Learning Tracker", icon: ListTodo },
+const myToolsNavItems: NavItem[] = [
+  { href: "/tracker", label: "Job Application Tracker", icon: ClipboardList, flag: "jobApplicationTracker" },
+  { href: "/learning/tracker", label: "Learning Tracker", icon: ListTodo, flag: "learningTracker" },
 ];
 
-const resourcesNavItems = [
-  { href: "/jobs",         label: "Job Board",      icon: Briefcase },
-  { href: "/learning",     label: "Group Learning", icon: BookMarked },
-  { href: "/projects",     label: "Projects",       icon: GitFork },
-  { href: "/links",        label: "Resource Hub",   icon: Link2 },
+const resourcesNavItems: NavItem[] = [
+  { href: "/jobs",         label: "Ghost Job Board", icon: Briefcase, flag: "ghostJobBoard" },
+  { href: "/learning",     label: "Group Learning",  icon: BookMarked, flag: "groupLearning" },
+  { href: "/projects",     label: "Projects",        icon: GitFork, flag: "projects" },
+  { href: "/links",        label: "Resource Hub",    icon: Link2 },
   { href: "https://warn-tracker.streamlit.app/", label: "WARN Tracker", icon: Globe },
 ];
 
-const profileNavItems = [
+const profileNavItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
+
+/** Nav entries gated by a flag are dropped unless their flag resolved visible. */
+function visibleItems(
+  items: NavItem[],
+  flags: Record<FeatureFlag, boolean>
+): NavItem[] {
+  return items.filter((item) => !item.flag || flags[item.flag]);
+}
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -81,9 +99,11 @@ interface AppShellProps {
     unreadCount: number;
     isAdmin?: boolean;
   };
+  /** Server-resolved visibility per flag; never the resolver itself. */
+  visibleFlags: Record<FeatureFlag, boolean>;
 }
 
-export default function AppShell({ children, user }: AppShellProps) {
+export default function AppShell({ children, user, visibleFlags }: AppShellProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -114,6 +134,9 @@ export default function AppShell({ children, user }: AppShellProps) {
         });
     }
   }, []);
+
+  const visibleMyToolsItems = visibleItems(myToolsNavItems, visibleFlags);
+  const visibleResourcesItems = visibleItems(resourcesNavItems, visibleFlags);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -171,7 +194,7 @@ export default function AppShell({ children, user }: AppShellProps) {
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-            {mainNavItems.map((item) => (
+            {visibleItems(mainNavItems, visibleFlags).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -200,50 +223,58 @@ export default function AppShell({ children, user }: AppShellProps) {
               Join Slack
             </a>
 
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              My Tools
-            </p>
-            {myToolsNavItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <item.icon className="size-5 shrink-0" />
-                {item.label}
-              </Link>
-            ))}
+            {visibleMyToolsItems.length > 0 && (
+              <>
+                <Separator className="my-2" />
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  My Tools
+                </p>
+                {visibleMyToolsItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <item.icon className="size-5 shrink-0" />
+                    {item.label}
+                  </Link>
+                ))}
+              </>
+            )}
 
-            <Separator className="my-2" />
-            <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              Resources
-            </p>
-            {resourcesNavItems.map((item) =>
-              item.href.startsWith("http") ? (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <item.icon className="size-5 shrink-0" />
-                  {item.label}
-                </a>
-              ) : (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <item.icon className="size-5 shrink-0" />
-                  {item.label}
-                </Link>
-              )
+            {visibleResourcesItems.length > 0 && (
+              <>
+                <Separator className="my-2" />
+                <p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                  Resources
+                </p>
+                {visibleResourcesItems.map((item) =>
+                  item.href.startsWith("http") ? (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <item.icon className="size-5 shrink-0" />
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      <item.icon className="size-5 shrink-0" />
+                      {item.label}
+                    </Link>
+                  )
+                )}
+              </>
             )}
             <a
               href="https://techworkersco.slack.com"
@@ -257,7 +288,7 @@ export default function AppShell({ children, user }: AppShellProps) {
             </a>
 
             <Separator className="my-2" />
-            {profileNavItems.map((item) => (
+            {visibleItems(profileNavItems, visibleFlags).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
