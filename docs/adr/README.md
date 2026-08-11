@@ -135,13 +135,14 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 |---|---|---|---|---|
 | [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | — | @tonyrosario |
 | [0002](./0002-migrations-timestamps-and-local-first.md) | Timestamp-based migrations and local-first authoring | Accepted 2026-05-19 | — | @timchaffee |
-| [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | Audit step amended by [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
+| [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | Audit step amended by [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md); gate scope amended by [0012](./0012-dependency-risk-control-lanes.md) | @tonyrosario |
 | [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | — | @tonyrosario |
 | [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | — | @tonyrosario |
 | [0006](./0006-profiles-protected-column-enforcement.md) | Profiles protected-column enforcement | Accepted 2026-07-26 | — | @tonyrosario |
-| [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | Time-boxed waivers for unfixable advisories | Accepted 2026-07-25 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) | @tonyrosario |
+| [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | Time-boxed waivers for unfixable advisories | Accepted 2026-07-25 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md); waiver role amended by [0012](./0012-dependency-risk-control-lanes.md) | @tonyrosario |
 | [0010](./0010-dependabot-grouping-and-major-holds.md) | Dependabot grouping conventions and major-version holds | Accepted 2026-08-05 | Uses the review cadence from [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
 | [0011](./0011-feature-flags-not-an-authorization-boundary.md) | Feature flags are rollout gates, not an authorization boundary | Accepted 2026-08-06 | — | @tonyrosario |
+| [0012](./0012-dependency-risk-control-lanes.md) | Dependency-risk control lanes | Accepted 2026-08-11 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) and [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay

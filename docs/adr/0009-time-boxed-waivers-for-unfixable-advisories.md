@@ -5,6 +5,8 @@
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
 
+> **Current application:** [ADR-0012](./0012-dependency-risk-control-lanes.md) rescopes the pre-merge gate to advisories a pull request introduces and narrows the waiver's role to introduced advisories and accepted monitored findings — it is no longer the mechanism for unblocking unrelated work. The waiver format, expiry enforcement, and fail-closed handling in this record remain in force.
+
 ## Context
 
 ADR-0003 established `npm ci --ignore-scripts && npm audit --audit-level=high` as a blocking step in the `security-scan` job and records it as a required check on `main`. The step had exactly two outcomes: no high or critical advisory anywhere in the dependency tree, or no merges.

@@ -1,6 +1,6 @@
 # ADR-0012 — Dependency-risk control lanes
 
-**Status:** Proposed 2026-08-11
+**Status:** Accepted 2026-08-11
 **TL;DR:** The blocking pre-merge audit changes scope from the whole dependency tree to the advisories a pull request introduces, and the full-tree audit moves to a scheduled run against `main` that files owned, tracked work plus a reporting step at production deploy.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
