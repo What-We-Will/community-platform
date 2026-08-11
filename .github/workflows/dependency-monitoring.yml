@@ -1,0 +1,60 @@
+name: Dependency monitoring
+
+# Monitoring lane from docs/adr/0012-dependency-risk-control-lanes.md: a scheduled,
+# full-tree audit against main that files owned, deduplicated GitHub issues for un-waived
+# high/critical advisories. Not a status check — it never gates a merge and is never red
+# because a vulnerable dependency exists. It fails only on a mechanical problem: the audit
+# script crashed (no report produced), or a GitHub issue create/update/reopen/close/assign
+# call errored. A monitoring lane that cannot record its findings is not allowed to look
+# green.
+#
+# This is a schedule/workflow_dispatch trigger, not a Dependabot- or PR-triggered run, so
+# it gets a normal GITHUB_TOKEN with no fork/Dependabot write restriction — unlike
+# dependabot-triage.yml, no GitHub App token is needed here.
+
+on:
+  schedule:
+    # 09:17 UTC: off-peak, and deliberately not on the hour to avoid the scheduler's
+    # top-of-hour pile-up.
+    - cron: "17 9 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # Never fails the job here: a gate failure (findings, expired/malformed waivers) is
+      # exactly what this lane exists to record, not to redden on. The report file is the
+      # real signal — a missing report means the scanner itself crashed. That is checked
+      # by the next step, which is the one allowed to fail the job.
+      - name: Run full-tree audit
+        run: node scripts/ci/audit-with-allowlist.mjs --report /tmp/audit-report.json
+        continue-on-error: true
+
+      - name: File, update, and close dependency-monitoring issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/ci/dependency-monitoring-issues.mjs --report /tmp/audit-report.json
