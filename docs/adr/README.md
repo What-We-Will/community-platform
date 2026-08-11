@@ -64,6 +64,8 @@ Examples:
 
 Once a number is assigned (at `Proposed`), it is permanent. If an ADR is superseded, the old file keeps its number and gains a `Superseded YYYY-MM-DD by [ADR-NNNN](./NNNN-...)` status line; the new ADR takes the next unused number. **Numbers are never reused.**
 
+Two numbers are absent from the index but are not available: **0007** is claimed by `0007-url-validation-over-html-sanitizer.md` (`Proposed 2026-07-22`, in review on `feat/170-github-or-website-signup-link`), and **0008** was assigned to a navigation URL-state ADR whose decision was ultimately recorded as `docs/conventions/navigation.md` instead of merging as an ADR. Per the rule above, both stay retired.
+
 ---
 
 ## Status values
