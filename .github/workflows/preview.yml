@@ -146,8 +146,15 @@ jobs:
           fi
           node scripts/scan-hidden-chars.mjs "${files[@]}"
 
+      # Delta-scoped: blocks only on advisories this pull request introduces relative to the
+      # merge base. head.sha is the PR head, not the checked-out merge commit, so the merge
+      # base is the real one. Both sides are audited from the lockfile alone, so no install
+      # is needed. fetch-depth: 0 above is what makes both commits resolvable.
       - name: Audit dependencies
-        run: npm ci --ignore-scripts && node scripts/ci/audit-with-allowlist.mjs
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/ci/audit-with-allowlist.mjs --base-ref "$BASE_SHA" --head-ref "$HEAD_SHA"
 
   # Every secret-bearing step lives here. The job-level `if:` below is the gate;
   # `needs: verify` makes the deploy wait on green checks and exposes the migrations
