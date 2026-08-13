@@ -81,8 +81,11 @@ lane, not by this check.
 ## Decision matrix
 
 Grouping and cooldown are configured in `.github/dependabot.yml`. Cooldown is enforced by
-Dependabot at PR-open time (patch 3 days / minor 7 / major 30, npm only), so any PR that
-exists has already cleared its bake window — you do not need to check release age.
+Dependabot at PR-open time (patch 3 days / minor 7 / major 30), but it covers npm
+**version updates only**: security updates are never delayed by cooldown, and the
+github-actions ecosystem has no cooldown configured. A routine npm version bump has
+therefore cleared its bake window by the time the PR exists; a security-update PR can
+open the same day its advisory ships — check release age on those yourself.
 
 | Bump type | With green `verify` **and** `security-scan` | Extra check needed |
 |-----------|-----------------------|--------------------|
@@ -92,7 +95,10 @@ exists has already cleared its bake window — you do not need to check release 
 | **Dev-only, patch/minor** (e.g. test runner, types) | Safe to merge | None — not in the production bundle. For a test-runner bump, the test suite running green under the new version *is* the smoke test. Dev-only does **not** exempt a major bump from the Major row above. |
 
 Family majors for core libraries (react, next, supabase, radix, tailwind, etc.) are held
-in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs. See
+in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs — with
+one exception: the holds are scoped to `version-update:semver-major`, so Dependabot can
+still open a **security** PR that crosses a held major, with no cooldown. Treat that as
+the Major row with extra urgency, not as a misconfiguration. See
 [ADR-0010](../adr/0010-dependabot-grouping-and-major-holds.md) for why those holds are
 scoped the way they are. The Vitest family includes `@vitejs/plugin-react`, so review
 their major-version compatibility together during the January and July migration review.
@@ -178,6 +184,7 @@ Order in an incident: **Vercel rollback → `git revert` → pin.** A pre-merge 
 
 GitHub runs Dependabot-triggered workflows against a separate, empty secret store, so
 `VERCEL_TOKEN` and the Supabase keys are blank and any deploy step fails at `vercel pull`.
-The pipeline is split so the secret-free `verify` job carries the merge signal, and
+The pipeline is split so the secret-free jobs — `verify` and `security-scan`, the
+required check — always run and carry the signals a merge decision needs, and
 `preview-deploy` is skipped for Dependabot (and for forks, which also can't reach secrets).
 This is a platform constraint, not a misconfiguration.
