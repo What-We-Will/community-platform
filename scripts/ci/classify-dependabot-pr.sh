@@ -73,6 +73,14 @@ else
   reason="unrecognized update type '${update_type}' — defaulting to manual review"
 fi
 
+# Emitted for every verdict, not just needs-review, so the screenshot job can
+# gate on "is this PR UI-surface" independently of why it needs review.
+if is_ui_surface; then
+  echo "is-ui-surface=true" >>"$GITHUB_OUTPUT"
+else
+  echo "is-ui-surface=false" >>"$GITHUB_OUTPUT"
+fi
+
 echo "verdict=$verdict" >>"$GITHUB_OUTPUT"
 {
   echo "reason<<EOF_REASON"

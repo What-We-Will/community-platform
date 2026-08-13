@@ -57,3 +57,30 @@ describe("Dependabot triage — UI-surface packages", () => {
     expect(verdict).toBe("needs-review");
   });
 });
+
+describe("Dependabot triage — is-ui-surface output", () => {
+  it("should report true when the bump touches a UI-surface package", () => {
+    const dependencyNames = "radix-ui";
+
+    const { isUiSurface } = classify({ dependencyNames });
+
+    expect(isUiSurface).toBe("true");
+  });
+
+  it("should report false when the bump touches no UI-surface package", () => {
+    const dependencyNames = "left-pad";
+
+    const { isUiSurface } = classify({ dependencyNames });
+
+    expect(isUiSurface).toBe("false");
+  });
+
+  it("should report true when a major bump touches a UI-surface package", () => {
+    const updateType = "version-update:semver-major";
+
+    const { verdict, isUiSurface } = classify({ updateType, dependencyNames: "radix-ui" });
+
+    expect(verdict).toBe("needs-review");
+    expect(isUiSurface).toBe("true");
+  });
+});

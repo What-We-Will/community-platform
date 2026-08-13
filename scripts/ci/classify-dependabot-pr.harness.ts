@@ -17,6 +17,7 @@ export type ClassifyInput = {
 export type ClassifyResult = {
   verdict?: string;
   reason?: string;
+  isUiSurface?: string;
 };
 
 export function classify({
@@ -45,6 +46,7 @@ export function classify({
 
     return {
       verdict: raw.match(/^verdict=(.*)$/m)?.[1],
+      isUiSurface: raw.match(/^is-ui-surface=(.*)$/m)?.[1],
       reason: raw.match(/reason<<EOF_REASON\n([\s\S]*?)\nEOF_REASON/)?.[1],
     };
   } finally {
