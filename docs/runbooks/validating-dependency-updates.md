@@ -151,8 +151,8 @@ scripts/validate-dep-pr.sh <branch-ref>       # e.g. dependabot/npm_and_yarn/nex
 It fetches the branch into a throwaway worktree, runs `npm ci --ignore-scripts` + lint +
 type-check + tests + a production build with placeholder non-secret env, reports pass/fail,
 and cleans up without touching your current branch. It does not run CI's migration-collision
-check. For a visual smoke, build in a persistent worktree
-and `npm run start` to click through the affected screens.
+check, so green here does not mean `verify` would be green. For a visual smoke, build in a
+persistent worktree and `npm run start` to click through the affected screens.
 
 ## Rollback / revert
 

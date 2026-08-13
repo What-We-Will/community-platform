@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 #
-# validate-dep-pr.sh — reproduce the CI `verify` job locally for a dependency PR.
+# validate-dep-pr.sh — reproduce the dependency portion of CI's `verify` job locally.
 #
-# Runs npm ci + lint + type-check + unit tests + a production build (with placeholder,
-# non-secret env) against a PR's branch in a throwaway git worktree, then cleans up.
-# This is the same signal the CI `verify` job produces — useful for a local sanity
-# check, or for the cases that still want a human eye (major bumps, visual-surface
-# changes) where you also want to boot the app afterwards.
+# Runs npm ci --ignore-scripts + lint + type-check + unit tests + a production build
+# (with placeholder, non-secret env) against a PR's branch in a throwaway git worktree,
+# then cleans up. Useful for a local sanity check, or for the cases that still want a
+# human eye (major bumps, visual-surface changes) where you also want to boot the app
+# afterwards.
+#
+# Not a complete stand-in for the check: `verify` also runs the migration-collision
+# check, which this script omits. Green here does not mean `verify` would be green.
 #
 # Usage:
 #   scripts/validate-dep-pr.sh <pr-number|branch-ref>
