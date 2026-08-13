@@ -152,8 +152,14 @@ and `npm run start` to click through the affected screens.
 
 ## Rollback / revert
 
-Merging to `main` triggers an automatic **production** deploy, so a bad merge is a live
-incident. Two independent layers — stop the bleeding first, then fix the source.
+Merging to `main` does **not** deploy. Production ships only when someone dispatches the
+Production Deploy workflow by hand, and `vercel.json` disables Vercel's git integration, so
+a push cannot deploy either. A bad merge therefore sits on `main` until the next manual
+deploy — which is the window to catch it, and the reason the deploy runs a dependency risk
+report before building.
+
+Once that deploy goes out, a bad merge is a live incident. Two independent layers — stop the
+bleeding first, then fix the source.
 
 | Step | Action | When | Speed |
 |------|--------|------|-------|
