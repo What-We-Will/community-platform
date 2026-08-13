@@ -47,17 +47,21 @@ if [[ "$package_ecosystem" == *github*action* ]]; then
 elif [[ "$update_type" == *semver-major* ]]; then
   verdict="needs-review"
   reason="major bump — read the changelog for breaking changes before merging"
+elif is_ui_surface && [[ "$update_type" == *semver-patch* || "$update_type" == *semver-minor* ]]; then
+  # Ordered ahead of the patch/minor and dependency-type branches on purpose: a
+  # patch to the CSS engine can change a utility's compiled rule while its class
+  # name stays the same, and tailwindcss is a devDependency but still UI-surface.
+  case "$update_type" in
+    *semver-patch*) bump_level="patch" ;;
+    *) bump_level="minor" ;;
+  esac
+  verdict="needs-review"
+  reason="${bump_level} bump to a UI-surface package — do a quick visual smoke before merging"
 elif [[ "$update_type" == *semver-patch* ]]; then
   verdict="safe"
   reason="patch bump — safe to merge on green verify and security-scan checks"
 elif [[ "$update_type" == *semver-minor* ]]; then
-  # UI-surface check comes first: rendered-output risk doesn't depend on
-  # whether the package happens to be a devDependency (tailwindcss and
-  # tw-animate-css are build-time devDependencies but still UI-surface).
-  if is_ui_surface; then
-    verdict="needs-review"
-    reason="minor bump to a UI-surface package — do a quick visual smoke before merging"
-  elif [[ "$dependency_type" == "direct:development" ]]; then
+  if [[ "$dependency_type" == "direct:development" ]]; then
     verdict="safe"
     reason="minor bump, dev-only dependency — green tests are the smoke test"
   else
