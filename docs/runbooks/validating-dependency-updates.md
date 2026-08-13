@@ -165,8 +165,10 @@ persistent worktree and `npm run start` to click through the affected screens.
 Merging to `main` does **not** deploy. Production ships only when someone dispatches the
 Production Deploy workflow by hand, and `vercel.json` disables Vercel's git integration, so
 a push cannot deploy either. A bad merge therefore sits on `main` until the next manual
-deploy — which is the window to catch it, and the reason the deploy runs a dependency risk
-report before building.
+deploy — that gap is the window to catch it. The deploy re-runs lint, type-check, and
+tests before shipping, and prints a dependency risk report, but the report never gates
+the deploy and only sees audit advisories — do not count on the dispatch step to stop a
+functionally bad bump.
 
 Once that deploy goes out, a bad merge is a live incident. Two independent layers — stop the
 bleeding first, then fix the source.
