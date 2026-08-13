@@ -9,15 +9,17 @@ weekly batch quickly.
 1. Read the **triage comment** the bot posts on the PR (`.github/workflows/dependabot-triage.yml`)
    — it applies this same decision matrix automatically and labels the PR `ready to merge` or
    `status: needs-review`. It does not merge anything; a human still clicks merge.
-2. If you want to double-check its reasoning: look at the **`verify`** check on the PR.
-   Green = `npm ci` + lint + type-check + unit tests + a production build all passed
-   against the new dependency. That is the underlying signal the bot's verdict is based on.
+2. The label is **not** a CI verdict. It is computed from the bump's metadata alone, so a PR
+   can be labelled `ready to merge` while its checks are red. Always read the checks too:
+   **`verify`** green = `npm ci` + lint + type-check + unit tests + a production build all
+   passed against the new dependency.
 3. Ignore `preview-deploy` on Dependabot PRs — it is **skipped** (it needs deploy secrets
    that GitHub withholds from Dependabot). A skipped or absent preview is expected, not a
    failure.
 4. Decide by bump type using the matrix below. Merge patch/minor with a green `verify`;
    give majors, github-actions bumps, and visual-surface bumps a closer look.
-5. Know the rollback path *before* you merge anything that auto-deploys to production.
+5. Merging does not deploy — production ships on a manual dispatch. Know the rollback path
+   before you dispatch that deploy, not before you merge.
 
 ## Automated triage
 
