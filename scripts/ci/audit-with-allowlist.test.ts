@@ -1,8 +1,14 @@
 // @vitest-environment node
-import { evaluateAudit, parseAuditReport, runAudit } from "./audit-with-allowlist.mjs";
+import {
+  evaluateAudit,
+  evaluateDelta,
+  parseAuditReport,
+  runAudit,
+} from "./audit-with-allowlist.mjs";
 
 const WAIVED = "GHSA-mh99-v99m-4gvg";
 const OTHER = "GHSA-aaaa-bbbb-cccc";
+const THIRD = "GHSA-dddd-eeee-ffff";
 const TODAY = "2026-07-25";
 
 const allowlist = [{ id: WAIVED, expires: "2026-10-23", reason: "test fixture" }];
@@ -359,6 +365,260 @@ describe("Audit gate mixed-root and mixed-envelope handling", () => {
 
     expect(parsed.ok).toBe(false);
     expect(parsed.kind).toBe("error-envelope");
+  });
+});
+
+const report = (vulnerabilities: Record<string, unknown>) => ({ ok: true, vulnerabilities });
+const scannerFailure = { ok: false, kind: "scanner", detail: "spawn npm ENOENT" };
+const unparseable = { ok: false, kind: "unparseable", detail: "Unexpected token" };
+const malformedMap = report({ malformed: null });
+const brokenChain = report({ eslint: { name: "eslint", severity: "high", via: ["ghost-package"] } });
+
+function delta({
+  base,
+  head,
+  list = allowlist,
+  today = TODAY,
+}: {
+  base: unknown;
+  head: unknown;
+  list?: unknown[];
+  today?: string;
+}) {
+  return evaluateDelta({ base, head, allowlist: list, today });
+}
+
+describe("Pre-merge gate scoped to advisories the change introduces", () => {
+  it("should pass when an advisory is present only at the merge base", () => {
+    const result = delta({ base: report({ "brace-expansion": rootFinding(OTHER) }), head: report({}) });
+
+    expect(result.ok).toBe(true);
+    expect(result.introduced).toEqual([]);
+  });
+
+  it("should fail and name the advisory when it is present only at the head", () => {
+    const result = delta({ base: report({}), head: report({ "brace-expansion": rootFinding(OTHER) }) });
+
+    expect(result.ok).toBe(false);
+    expect(result.blocking.map((r) => r.id)).toEqual([OTHER]);
+    expect(result.blocking[0].baseSeverity).toBeNull();
+  });
+
+  it("should pass when the same advisory is present at both sides with the same severity", () => {
+    const tree = { "brace-expansion": rootFinding(OTHER) };
+    const result = delta({ base: report(tree), head: report(tree) });
+
+    expect(result.ok).toBe(true);
+    expect(result.blocking).toEqual([]);
+    expect(result.inherited.map((r) => r.id)).toEqual([OTHER]);
+  });
+
+  it("should fail when an advisory present at both sides is re-rated upward at the head", () => {
+    const result = delta({
+      base: report({ "brace-expansion": rootFinding(OTHER, "high") }),
+      head: report({ "brace-expansion": rootFinding(OTHER, "critical") }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.blocking.map((r) => r.id)).toEqual([OTHER]);
+    expect(result.blocking[0].baseSeverity).toBe("high");
+  });
+
+  it("should pass when an advisory present at both sides is re-rated downward at the head", () => {
+    const result = delta({
+      base: report({ "brace-expansion": rootFinding(OTHER, "critical") }),
+      head: report({ "brace-expansion": rootFinding(OTHER, "high") }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.blocking).toEqual([]);
+  });
+
+  it("should fail on an introduced advisory while ignoring an inherited one in the same head report", () => {
+    const result = delta({
+      base: report({ "brace-expansion": rootFinding(OTHER) }),
+      head: report({ "brace-expansion": rootFinding(OTHER), nanoid: rootFinding(THIRD) }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.blocking.map((r) => r.id)).toEqual([THIRD]);
+    expect(result.inherited.map((r) => r.id)).toEqual([OTHER]);
+  });
+
+  it("should ignore an advisory below the gated severities on both sides", () => {
+    const result = delta({
+      base: report({}),
+      head: report({ "some-pkg": rootFinding(OTHER, "moderate") }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.introduced).toEqual([]);
+  });
+});
+
+describe("Pre-merge delta gate fail-closed behavior per evaluation", () => {
+  it.each([
+    ["an unrunnable scanner", unparseable],
+    ["an unparseable report", scannerFailure],
+  ])("should fail when the merge-base evaluation produced %s", (_label, base) => {
+    const result = delta({ base, head: report({}) });
+
+    expect(result.ok).toBe(false);
+    expect(result.base.failure).not.toBeNull();
+  });
+
+  it.each([
+    ["a malformed vulnerabilities map", malformedMap],
+    ["an unresolvable dependency chain", brokenChain],
+  ])("should fail when the merge-base evaluation contains %s", (_label, base) => {
+    const result = delta({ base, head: report({}) });
+
+    expect(result.ok).toBe(false);
+    expect(result.base.invalid.length + result.base.unresolved.length).toBeGreaterThan(0);
+  });
+
+  it.each([
+    ["an unrunnable scanner", scannerFailure],
+    ["an unparseable report", unparseable],
+  ])("should fail when the head evaluation produced %s", (_label, head) => {
+    const result = delta({ base: report({}), head });
+
+    expect(result.ok).toBe(false);
+    expect(result.head.failure).not.toBeNull();
+  });
+
+  it.each([
+    ["a malformed vulnerabilities map", malformedMap],
+    ["an unresolvable dependency chain", brokenChain],
+  ])("should fail when the head evaluation contains %s", (_label, head) => {
+    const result = delta({ base: report({}), head });
+
+    expect(result.ok).toBe(false);
+    expect(result.head.invalid.length + result.head.unresolved.length).toBeGreaterThan(0);
+  });
+
+  // A merge base that could not be evaluated is not a merge base with no findings; treating
+  // it as one would let the head's entire tree pass as inherited.
+  it("should never treat a failed merge-base evaluation as an empty baseline", () => {
+    const result = delta({
+      base: scannerFailure,
+      head: report({ "brace-expansion": rootFinding(OTHER) }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.inherited).toEqual([]);
+  });
+
+  it.each([
+    ["the head", "head" as const],
+    ["the merge base", "base" as const],
+  ])("should fail on an unrecognised severity at %s", (_label, side) => {
+    const bad = report({ x: { name: "x", severity: "URGENT", via: [advisory(OTHER)] } });
+    const result = delta({
+      base: side === "base" ? bad : report({}),
+      head: side === "head" ? bad : report({}),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(side === "base" ? result.base.invalid : result.head.invalid).toHaveLength(1);
+  });
+
+  it("should fail when an advisory severity is unrecognised at the merge base only", () => {
+    const result = delta({
+      base: report({
+        "brace-expansion": { name: "brace-expansion", severity: "high", via: [advisory(OTHER, "HIGH")] },
+      }),
+      head: report({ "brace-expansion": rootFinding(OTHER) }),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.base.unresolved).toHaveLength(1);
+  });
+});
+
+describe("Pre-merge delta gate waiver scope", () => {
+  const expiredWaiver = [{ id: OTHER, expires: "2026-01-01", reason: "expired fixture" }];
+  const validWaiver = [{ id: OTHER, expires: "2026-10-23", reason: "valid fixture" }];
+  const malformedWaiver = [{ id: OTHER, expires: "not-a-date", reason: "malformed fixture" }];
+
+  it("should pass when an introduced advisory is covered by a valid waiver", () => {
+    const result = delta({
+      base: report({}),
+      head: report({ "brace-expansion": rootFinding(OTHER) }),
+      list: validWaiver,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.waived.map((r) => r.id)).toEqual([OTHER]);
+    expect(result.blocking).toEqual([]);
+  });
+
+  it("should fail when an introduced advisory is covered only by an expired waiver", () => {
+    const result = delta({
+      base: report({}),
+      head: report({ "brace-expansion": rootFinding(OTHER) }),
+      list: expiredWaiver,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.blocking.map((r) => r.id)).toEqual([OTHER]);
+    expect(result.expired.map((e) => e.id)).toEqual([OTHER]);
+  });
+
+  it("should fail when an introduced advisory is covered only by a malformed waiver", () => {
+    const result = delta({
+      base: report({}),
+      head: report({ "brace-expansion": rootFinding(OTHER) }),
+      list: malformedWaiver,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.blocking.map((r) => r.id)).toEqual([OTHER]);
+    expect(result.malformedWaivers).toHaveLength(1);
+  });
+
+  // Carrying the full-tree waiver check into delta mode would let one stale waiver on an
+  // inherited finding re-block every open pull request.
+  it.each([
+    ["an expired waiver", expiredWaiver],
+    ["a malformed waiver", malformedWaiver],
+  ])("should pass when %s covers an advisory already present at the merge base", (_label, list) => {
+    const tree = { "brace-expansion": rootFinding(OTHER) };
+    const result = delta({ base: report(tree), head: report(tree), list });
+
+    expect(result.ok).toBe(true);
+    expect(result.expired).toEqual([]);
+    expect(result.malformedWaivers).toEqual([]);
+  });
+
+  it("should pass when an expired waiver names an advisory absent from both sides", () => {
+    const result = delta({ base: report({}), head: report({}), list: expiredWaiver });
+
+    expect(result.ok).toBe(true);
+    expect(result.expired).toEqual([]);
+  });
+
+  it("should block an introduced advisory that no waiver names", () => {
+    const result = delta({
+      base: report({}),
+      head: report({ nanoid: rootFinding(THIRD) }),
+      list: validWaiver,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.blocking.map((r) => r.id)).toEqual([THIRD]);
+  });
+
+  // Waiver coverage is decided on the introduction, not on the advisory's presence at base.
+  it("should block an upward re-rating even when the waiver covering it has expired", () => {
+    const result = delta({
+      base: report({ "brace-expansion": rootFinding(OTHER, "high") }),
+      head: report({ "brace-expansion": rootFinding(OTHER, "critical") }),
+      list: expiredWaiver,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.blocking.map((r) => r.id)).toEqual([OTHER]);
   });
 });
 

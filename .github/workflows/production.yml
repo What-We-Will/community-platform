@@ -27,7 +27,57 @@ jobs:
           cache: 'npm'
 
       - run: npm ci --ignore-scripts
-      
+
+      # Reporting only — never gates this deploy. ADR-0012's release lane: the full-tree
+      # audit runs against the installed tree above and surfaces un-waived findings as the
+      # deploy-anchored enforcement checkpoint for the monitoring lane's disposition clock
+      # (critical before the next deploy, high within two). Placed before the build/deploy
+      # steps so the report is visible while the deploy is still observable, not buried
+      # after the fact.
+      - name: Dependency risk report
+        run: |
+          set +e
+          REPORT_PATH="/tmp/dependency-audit-report.json"
+          audit_exit=0
+          node scripts/ci/audit-with-allowlist.mjs --report "$REPORT_PATH" || audit_exit=$?
+
+          {
+            echo "## Dependency risk report"
+            echo ""
+            if [ ! -s "$REPORT_PATH" ]; then
+              echo "**Audit unavailable — treat as unknown risk.**"
+              echo ""
+              echo "The dependency audit script exited ${audit_exit} without producing a report — it crashed rather than completing a scan. This deploy is proceeding anyway, but the full-tree dependency risk for this release is unknown."
+            else
+              failure_kind="$(jq -r '.failure.kind // empty' "$REPORT_PATH")"
+              if [ -n "$failure_kind" ]; then
+                failure_detail="$(jq -r '.failure.detail // "no detail"' "$REPORT_PATH")"
+                echo "**Audit unavailable — treat as unknown risk.**"
+                echo ""
+                echo "The scanner could not produce a usable result (${failure_kind}): ${failure_detail}. This deploy is proceeding anyway, but the full-tree dependency risk for this release is unknown."
+              elif [ "$(jq -r '.ok' "$REPORT_PATH")" = "true" ]; then
+                echo "No un-waived high/critical advisories in the full dependency tree. Clean to deploy."
+              else
+                blocking_count="$(jq '.blocking | length' "$REPORT_PATH")"
+                waived_count="$(jq '.waived | length' "$REPORT_PATH")"
+                stale_count="$(jq '.stale | length' "$REPORT_PATH")"
+                expired_count="$(jq '.expired | length' "$REPORT_PATH")"
+                malformed_count="$(jq '.malformedWaivers | length' "$REPORT_PATH")"
+                echo "**${blocking_count} un-waived high/critical advisory(ies) outstanding in the full dependency tree.**"
+                echo ""
+                echo "| ID | Severity | Package | Title |"
+                echo "|---|---|---|---|"
+                # Advisory titles are upstream free text; a pipe or newline would corrupt the table.
+                jq -r '.blocking[] | [.id, .severity, .name, .title] | map(tostring | gsub("[|]"; "&#124;") | gsub("\r|\n"; " ")) | "| \(.[0]) | \(.[1]) | \(.[2]) | \(.[3]) |"' "$REPORT_PATH"
+                echo ""
+                echo "Waived: ${waived_count} · Stale waivers: ${stale_count} · Expired waivers: ${expired_count} · Malformed waivers: ${malformed_count}"
+                echo ""
+                echo "Disposition policy: a critical finding must reach fixed or waived-with-rationale-and-expiry before this deploy proceeds as a deliberate exception; a high finding must reach disposition within two deploys. This deploy is proceeding regardless — review before treating it as routine."
+              fi
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          exit 0
+
       - name: Lint
         run: npm run lint
 

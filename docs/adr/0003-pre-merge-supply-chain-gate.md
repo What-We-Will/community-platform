@@ -5,7 +5,7 @@
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
 
-> **Current application:** [ADR-0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) amends the audit substep below. The other security-scan and workflow-hardening decisions in this record remain in force.
+> **Current application:** the audit substep below has been amended twice. [ADR-0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) made it gate on un-waived advisories rather than all advisories, and [ADR-0012](./0012-dependency-risk-control-lanes.md) rescoped it further to the advisories a pull request introduces, moving full-tree evaluation to a scheduled monitoring lane and a production-deploy report. Read ADR-0012 for the gate's current scope: it no longer certifies that the tree is free of high or critical advisories. The required check keeps this record's `security-scan` name, and the other security-scan and workflow-hardening decisions here remain in force.
 
 ## Context
 
