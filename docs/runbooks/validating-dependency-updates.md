@@ -62,11 +62,18 @@ After the preview pipeline split, `preview.yml` runs three jobs:
 | Job | Needs secrets? | Runs on Dependabot? | What green means |
 |-----|----------------|---------------------|------------------|
 | `verify` | No | Yes | Installs, lints, type-checks, tests, **and builds** the app on the new deps |
-| `security-scan` | No | Yes | Secret + hidden-char scan, `npm audit` |
+| `security-scan` | No | Yes | Secret + hidden-char scan, and an `npm audit` scoped to the advisories this PR introduces |
 | `preview-deploy` | Yes | **No (skipped)** | Live preview URL — only on same-repo, non-Dependabot PRs |
 
-`verify` is the required check on `main`. If it is green, the app builds and tests pass
-with the update. `preview-deploy` being skipped on a Dependabot PR is by design.
+`security-scan` is the required check on `main`. `verify` is the one that tells you the
+update is sound — green means the app builds and tests pass with it — but it is not what
+blocks the merge button. `preview-deploy` being skipped on a Dependabot PR is by design.
+
+Green on `security-scan` does **not** mean the tree is free of high or critical advisories.
+Per [ADR-0012](../adr/0012-dependency-risk-control-lanes.md) the gate is delta-scoped: it
+blocks only on advisories the PR introduces relative to its merge base, and reports the rest
+as `inherited`. Advisories already present on `main` are tracked by the scheduled monitoring
+lane, not by this check.
 
 ## Decision matrix
 
