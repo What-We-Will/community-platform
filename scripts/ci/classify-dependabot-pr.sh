@@ -49,7 +49,7 @@ elif [[ "$update_type" == *semver-major* ]]; then
   reason="major bump — read the changelog for breaking changes before merging"
 elif [[ "$update_type" == *semver-patch* ]]; then
   verdict="safe"
-  reason="patch bump — safe to merge on a green verify check"
+  reason="patch bump — safe to merge on green verify and security-scan checks"
 elif [[ "$update_type" == *semver-minor* ]]; then
   # UI-surface check comes first: rendered-output risk doesn't depend on
   # whether the package happens to be a devDependency (tailwindcss and
@@ -62,7 +62,7 @@ elif [[ "$update_type" == *semver-minor* ]]; then
     reason="minor bump, dev-only dependency — green tests are the smoke test"
   else
     verdict="safe"
-    reason="minor bump — safe to merge on a green verify check"
+    reason="minor bump — safe to merge on green verify and security-scan checks"
   fi
 else
   verdict="needs-review"
