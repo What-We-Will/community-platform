@@ -278,12 +278,12 @@ async function createIssue(repo, { id, finding, today }) {
 // severity. (A tracked issue that lost the label entirely is unreachable by the
 // label-scoped search that builds `existingIssues` in the first place — the only defense
 // against that case is never letting the label fail to stick here.)
-async function commentAndMaybeReopen(repo, { id, issue, note, finding, reopen }) {
+export async function commentAndMaybeReopen(repo, { id, issue, note, finding, reopen, today }) {
   const [owner, name] = repo.split('/');
   if (finding) {
     await githubRequest(`/repos/${owner}/${name}/issues/${issue.number}`, {
       method: 'PATCH',
-      body: JSON.stringify({ body: buildIssueBody({ ...finding, note }) }),
+      body: JSON.stringify({ body: buildIssueBody({ ...finding, note, today }) }),
     });
   }
   await githubRequest(`/repos/${owner}/${name}/issues/${issue.number}/comments`, {
@@ -372,7 +372,7 @@ async function main() {
 
   for (const update of plan.updates) {
     try {
-      await commentAndMaybeReopen(repo, { ...update, reopen: false });
+      await commentAndMaybeReopen(repo, { ...update, reopen: false, today });
       console.log(`• updated #${update.issue.number} for ${update.id}`);
     } catch (err) {
       console.error(`✖ could not update issue #${update.issue.number} for ${update.id}: ${err.message}`);
@@ -382,7 +382,7 @@ async function main() {
 
   for (const reopen of plan.reopens) {
     try {
-      await commentAndMaybeReopen(repo, { ...reopen, reopen: true });
+      await commentAndMaybeReopen(repo, { ...reopen, reopen: true, today });
       console.log(`• reopened #${reopen.issue.number} for ${reopen.id}`);
     } catch (err) {
       console.error(`✖ could not reopen issue #${reopen.issue.number} for ${reopen.id}: ${err.message}`);

@@ -6,6 +6,7 @@ import {
   assertLabeled,
   buildIssueBody,
   buildIssueTitle,
+  commentAndMaybeReopen,
   extractAdvisoryId,
   extractAdvisoryIdFromWaiverMessage,
   markerFor,
@@ -333,5 +334,47 @@ describe("planActions — degraded report (expired/malformed waivers)", () => {
     const plan = planActions({ report, existingIssues });
 
     expect(plan.closes).toEqual([]);
+  });
+});
+
+// Asserted at the call site, not on buildIssueBody: the caller was what dropped the field.
+describe("commentAndMaybeReopen", () => {
+  const requests: { method: string; payload: Record<string, unknown> }[] = [];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    requests.length = 0;
+
+    vi.stubEnv("GITHUB_TOKEN", "test-token");
+    vi.stubGlobal("fetch", async (_url: string, init: RequestInit) => {
+      requests.push({
+        method: String(init.method ?? "GET"),
+        payload: init.body ? JSON.parse(String(init.body)) : {},
+      });
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ number: 1, assignees: [{ login: EXPECTED_ASSIGNEE }], labels: [{ name: LABEL }] }),
+      };
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it.each([
+    ["updating", false],
+    ["reopening", true],
+  ])("should keep the last-seen date in the rewritten body when %s a tracked issue", async (_action, reopen) => {
+    const tracked = { id: ID, issue: { number: 1 }, note: "severity moved", finding: finding(ID, "high") };
+
+    await commentAndMaybeReopen("owner/repo", { ...tracked, reopen, today: TODAY });
+
+    const rewrite = requests.find((r) => r.method === "PATCH" && typeof r.payload.body === "string");
+    expect(rewrite?.payload.body).toContain(`_Last seen: ${TODAY}_`);
   });
 });
