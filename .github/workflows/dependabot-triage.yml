@@ -33,6 +33,8 @@ jobs:
     timeout-minutes: 5
     permissions:
       contents: read
+    outputs:
+      is-ui-surface: ${{ steps.classify.outputs.is-ui-surface }}
 
     steps:
       - name: Checkout
@@ -76,6 +78,7 @@ jobs:
         env:
           VERDICT: ${{ steps.classify.outputs.verdict }}
           REASON: ${{ steps.classify.outputs.reason }}
+          IS_UI_SURFACE: ${{ steps.classify.outputs.is-ui-surface }}
           DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
           UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
           DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
@@ -85,10 +88,12 @@ jobs:
             const prNumber = context.payload.pull_request.number;
             const marker = '<!-- dependabot-triage:verdict -->';
             const isSafe = process.env.VERDICT === 'safe';
+            const isUiSurface = process.env.IS_UI_SURFACE === 'true';
 
             const runbookUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/blob/main/docs/runbooks/validating-dependency-updates.md`;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
-            const body = [
+            const bodyLines = [
               '### 🤖 Dependency update triage',
               '',
               `**Verdict:** ${isSafe ? '✅ Safe to merge' : '⚠️ Needs review'}`,
@@ -96,10 +101,62 @@ jobs:
               `**Bump:** ${process.env.UPDATE_TYPE} (${process.env.DEPENDENCY_TYPE})`,
               `**Why:** ${process.env.REASON}`,
               '',
-              `_Per the [decision matrix](${runbookUrl})._`,
-              '',
-              marker,
-            ].join('\n');
+            ];
+
+            // Inlined rather than linked: a reviewer who has to go find the runbook to
+            // learn what the check is will substitute their own.
+            if (isUiSurface) {
+              bodyLines.push(
+                '#### UI-surface visual smoke',
+                '',
+                'This bump touches Tailwind/radix — `verify` cannot catch a visual regression. ' +
+                  'Take either path below; neither is required on top of the other. A human still ' +
+                  'makes the merge call, and nothing here auto-merges.',
+                '',
+                '**Path A — screenshots this run captured.** Landing and login, 1280px and 375px, ' +
+                  `plus console errors, as an artifact on [the workflow run](${runUrl}) (it appears ` +
+                  'once the UI smoke job finishes). Unauthenticated pages only — behind placeholder ' +
+                  'credentials everything auth-gated renders a redirect.',
+                '',
+                '**Path B — run it locally.** The only way to reach the auth-gated surfaces, but ' +
+                  'only with a working local backend already set up:',
+                '```bash',
+                `scripts/validate-dep-pr.sh --keep ${prNumber}`,
+                'cd <the worktree path it prints>',
+                'cp /path/to/your/.env.local .env.local',
+                'cp /path/to/your/.env.e2e .env.e2e     # omit this and the auth specs skip, reporting green',
+                'npm run test:e2e                       # Playwright starts its own dev server',
+                'npm run dev                            # then click through the surfaces below',
+                '```',
+                '`--keep` is load-bearing: without it the script removes its worktree before ' +
+                  'returning, so the commands after it would run against your own checkout and ' +
+                  'smoke-test the wrong code.',
+                'A worktree carries no `.env.local` or `.env.e2e` — both are gitignored. Without ' +
+                  'them the auth specs `test.skip` rather than fail, so the run reports green ' +
+                  'while every auth-gated assertion was skipped. Use `npm run dev`, not ' +
+                  '`npm run start`: the retained build has placeholder `NEXT_PUBLIC_*` values ' +
+                  'inlined, so the built app cannot reach a real backend whatever you put in ' +
+                  '`.env.local` afterwards.',
+                'Check three surfaces: **dashboard** (dense grid, most shadcn primitives on one ' +
+                  'screen), **a modal/dialog-heavy flow** (overlay, backdrop, z-index), and **one ' +
+                  'page at 375px** (a responsive prefix that stops applying is the highest-risk ' +
+                  'failure for a tailwindcss bump).',
+                '',
+                '**Fail the PR if any of these is observed:**',
+                '- An element visibly overlapping another where it did not before.',
+                '- Any unstyled/raw-HTML flash, or content that stays unstyled.',
+                '- An element clipped or cut off by its container that was not before.',
+                '- At 375px, a layout that does not change from its desktop arrangement at all.',
+                '- Any new browser console error or warning on load.',
+                '- `npm run test:e2e` reporting a failure.',
+                '',
+                `Full checklist and rationale: [the runbook](${runbookUrl}#visual-smoke-for-ui-surface-bumps).`,
+                ''
+              );
+            }
+
+            bodyLines.push(`_Per the [decision matrix](${runbookUrl})._`, '', marker);
+            const body = bodyLines.join('\n');
 
             try {
               const { data: comments } = await github.rest.issues.listComments({
@@ -143,6 +200,21 @@ jobs:
               core.warning(`Could not add label "${addLabel}" on PR #${prNumber}: ${err.message}`);
             }
 
+            // Separate call, not batched with addLabel above: a missing `ui` label would
+            // 404 the whole request and take the triage label down with it.
+            if (isUiSurface) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  labels: ['ui'],
+                });
+              } catch (err) {
+                core.warning(`Could not add label "ui" on PR #${prNumber}: ${err.message}`);
+              }
+            }
+
             try {
               await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
@@ -155,3 +227,72 @@ jobs:
                 core.warning(`Could not remove label "${removeLabel}" on PR #${prNumber}: ${err.message}`);
               }
             }
+
+  # References no `secrets.*` by design, reusing the placeholder env from
+  # preview.yml's `verify` job: nothing is withheld on a Dependabot-triggered
+  # run, and unreviewed dependency code never sees a real credential.
+  ui-smoke-screenshots:
+    needs: triage
+    if: needs.triage.outputs.is-ui-surface == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # Browser revision is pinned by the @playwright/test version in the
+      # lockfile, so this cannot drift independently of a reviewed bump.
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Build (placeholder env)
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+        run: npm run build
+
+      - name: Start server
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+          SUPABASE_SERVICE_ROLE_KEY: placeholder-service-role-key
+        run: |
+          npm run start &
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://localhost:3000/; then
+              echo "Server ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server did not become ready within 60s"
+          exit 1
+
+      - name: Capture UI smoke screenshots
+        run: node scripts/ci/ui-smoke-screenshots.mjs
+
+      # always(): a failed capture is when the console log matters most.
+      - name: Upload screenshots and console output
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ui-smoke-${{ github.event.pull_request.number }}
+          path: ui-smoke-output/
+          retention-days: 14
