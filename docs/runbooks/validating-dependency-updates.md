@@ -9,15 +9,18 @@ weekly batch quickly.
 1. Read the **triage comment** the bot posts on the PR (`.github/workflows/dependabot-triage.yml`)
    — it applies this same decision matrix automatically and labels the PR `ready to merge` or
    `status: needs-review`. It does not merge anything; a human still clicks merge.
-2. If you want to double-check its reasoning: look at the **`verify`** check on the PR.
-   Green = `npm ci` + lint + type-check + unit tests + a production build all passed
-   against the new dependency. That is the underlying signal the bot's verdict is based on.
+2. The label is **not** a CI verdict. It is computed from the bump's metadata alone, so a PR
+   can be labelled `ready to merge` while its checks are red. Always read the checks too:
+   **`verify`** green = the migration-collision check plus `npm ci --ignore-scripts`, lint,
+   type-check, unit tests, and a production build all passed against the new dependency.
 3. Ignore `preview-deploy` on Dependabot PRs — it is **skipped** (it needs deploy secrets
    that GitHub withholds from Dependabot). A skipped or absent preview is expected, not a
    failure.
-4. Decide by bump type using the matrix below. Merge patch/minor with a green `verify`;
-   give majors, github-actions bumps, and visual-surface bumps a closer look.
-5. Know the rollback path *before* you merge anything that auto-deploys to production.
+4. Decide by bump type using the matrix below. Merge patch/minor only with green `verify`
+   **and** `security-scan`; give majors, github-actions bumps, and visual-surface bumps a
+   closer look.
+5. Merging does not deploy — production ships on a manual dispatch. Know the rollback path
+   before you dispatch that deploy, not before you merge.
 
 ## Automated triage
 
@@ -36,10 +39,10 @@ banned by ADR-0003 — and a personal access token).
 `scripts/ci/classify-dependabot-pr.sh` reads `dependabot/fetch-metadata` output (bump type,
 dependency type, package names) and mirrors the matrix below; the same job then posts the
 verdict comment and swaps the `ready to merge` / `status: needs-review` label using the App
-token. It re-runs and updates the comment on every push, so the label always reflects the
-latest commit on the PR. A posting failure (rate limit, transient API hiccup, a renamed label)
-logs a warning instead of failing the job — this stage doesn't validate the dependency update
-itself, so its failure shouldn't red-X the PR the way a broken build should.
+token. It re-runs on every push and, when the posting step succeeds, updates the comment and
+label for the latest commit on the PR. A posting failure (rate limit, transient API hiccup, a
+renamed label) logs a warning instead of failing the job — this stage doesn't validate the
+dependency update itself, so its failure shouldn't red-X the PR the way a broken build should.
 
 It does not distinguish security updates from version updates — reading Dependabot alerts needs
 a `security_events` scope the App isn't granted (the default `GITHUB_TOKEN` can't read them
@@ -61,28 +64,41 @@ After the preview pipeline split, `preview.yml` runs three jobs:
 
 | Job | Needs secrets? | Runs on Dependabot? | What green means |
 |-----|----------------|---------------------|------------------|
-| `verify` | No | Yes | Installs, lints, type-checks, tests, **and builds** the app on the new deps |
-| `security-scan` | No | Yes | Secret + hidden-char scan, `npm audit` |
+| `verify` | No | Yes | Checks migration filename collisions; installs, lints, type-checks, tests, **and builds** the app on the new deps |
+| `security-scan` | No | Yes | Secret + hidden-char scan, and an `npm audit` scoped to the advisories this PR introduces |
 | `preview-deploy` | Yes | **No (skipped)** | Live preview URL — only on same-repo, non-Dependabot PRs |
 
-`verify` is the required check on `main`. If it is green, the app builds and tests pass
-with the update. `preview-deploy` being skipped on a Dependabot PR is by design.
+`security-scan` is the required check on `main`. `verify` is the one that tells you the
+update is sound — green means the app builds and tests pass with it — but it is not what
+blocks the merge button. `preview-deploy` being skipped on a Dependabot PR is by design.
+
+Green on `security-scan` does **not** mean the tree is free of high or critical advisories.
+Per [ADR-0012](../adr/0012-dependency-risk-control-lanes.md) the gate is delta-scoped: it
+blocks only on advisories the PR introduces relative to its merge base, and reports the rest
+as `inherited`. Advisories already present on `main` are tracked by the scheduled monitoring
+lane, not by this check.
 
 ## Decision matrix
 
 Grouping and cooldown are configured in `.github/dependabot.yml`. Cooldown is enforced by
-Dependabot at PR-open time (patch 3 days / minor 7 / major 30, npm only), so any PR that
-exists has already cleared its bake window — you do not need to check release age.
+Dependabot at PR-open time (patch 3 days / minor 7 / major 30), but it covers npm
+**version updates only**: security updates are never delayed by cooldown, and the
+github-actions ecosystem has no cooldown configured. A routine npm version bump has
+therefore cleared its bake window by the time the PR exists; a security-update PR can
+open the same day its advisory ships — check release age on those yourself.
 
-| Bump type | With a green `verify` | Extra check needed |
+| Bump type | With green `verify` **and** `security-scan` | Extra check needed |
 |-----------|-----------------------|--------------------|
 | **Patch** (`x.y.Z`) | Safe to merge | None |
 | **Minor** (`x.Y.z`) | Safe to merge | If it touches UI (Radix, Tailwind, component libs): a quick **visual smoke** — build locally and eyeball the affected components. `verify` cannot catch visual regressions. |
 | **Major** (`X.y.z`) | Do **not** merge on green alone | Read the changelog for breaking changes; map each against how we actually use the dependency. For GitHub Actions majors, check the workflow files. Consider holding for a scheduled migration. Applies to dev-only deps too — a tooling major (e.g. eslint) can break lint/build rules just as easily as a runtime major. |
-| **Dev-only, patch/minor** (e.g. test runner, types) | Safe to merge on green `verify` | None — not in the production bundle. For a test-runner bump, the test suite running green under the new version *is* the smoke test. Dev-only does **not** exempt a major bump from the Major row above. |
+| **Dev-only, patch/minor** (e.g. test runner, types) | Safe to merge | None — not in the production bundle. For a test-runner bump, the test suite running green under the new version *is* the smoke test. Dev-only does **not** exempt a major bump from the Major row above. |
 
 Family majors for core libraries (react, next, supabase, radix, tailwind, etc.) are held
-in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs. See
+in `ignore` in `dependabot.yml` and handled as deliberate migrations, not bot PRs — with
+one exception: the holds are scoped to `version-update:semver-major`, so Dependabot can
+still open a **security** PR that crosses a held major, with no cooldown. Treat that as
+the Major row with extra urgency, not as a misconfiguration. See
 [ADR-0010](../adr/0010-dependabot-grouping-and-major-holds.md) for why those holds are
 scoped the way they are. The Vitest family includes `@vitejs/plugin-react`, so review
 their major-version compatibility together during the January and July migration review.
@@ -130,37 +146,47 @@ evidence, and the `dependabot-core` source it comes from.
 ## Validating locally
 
 CI's `verify` job already runs on every PR, so a green check usually means no local work
-is needed. When you want to reproduce it — a major bump, a visual smoke, or CI is
-unavailable — use the helper:
+is needed. When you want to reproduce its dependency install/test/build portion — a major
+bump, a visual smoke, or CI is unavailable — use the helper:
 
 ```bash
 scripts/validate-dep-pr.sh <pr-number>        # e.g. 207  (resolves the branch via gh)
 scripts/validate-dep-pr.sh <branch-ref>       # e.g. dependabot/npm_and_yarn/next-...
 ```
 
-It fetches the branch into a throwaway worktree, runs `npm ci` + lint + type-check + tests
-+ a production build with placeholder non-secret env, reports pass/fail, and cleans up —
-without touching your current branch. For a visual smoke, build in a persistent worktree
-and `npm run start` to click through the affected screens.
+It fetches the branch into a throwaway worktree, runs `npm ci --ignore-scripts` + lint +
+type-check + tests + a production build with placeholder non-secret env, reports pass/fail,
+and cleans up without touching your current branch. It does not run CI's migration-collision
+check, so green here does not mean `verify` would be green. For a visual smoke, build in a
+persistent worktree and `npm run start` to click through the affected screens.
 
 ## Rollback / revert
 
-Merging to `main` triggers an automatic **production** deploy, so a bad merge is a live
-incident. Two independent layers — stop the bleeding first, then fix the source.
+Merging to `main` does **not** deploy. Production ships only when someone dispatches the
+Production Deploy workflow by hand, and `vercel.json` disables Vercel's git integration, so
+a push cannot deploy either. A bad merge therefore sits on `main` until the next manual
+deploy — that gap is the window to catch it. The deploy re-runs lint, type-check, and
+tests before shipping, and prints a dependency risk report, but the report never gates
+the deploy and only sees audit advisories — do not count on the dispatch step to stop a
+functionally bad bump.
+
+Once that deploy goes out, a bad merge is a live incident. Two independent layers — stop the
+bleeding first, then fix the source.
 
 | Step | Action | When | Speed |
 |------|--------|------|-------|
 | 1. Runtime | **Vercel instant rollback** — promote the previous production deployment (dashboard "Instant Rollback", or `vercel rollback <url>`). Undoes the user-facing breakage without touching git. | Production is broken now | Seconds |
-| 2. Source | **`git revert -m 1 <merge-sha>`** — restores the old `package.json` + lockfile; the next deploy ships the known-good version. `-m 1` keeps the first parent (main). | Always, after step 1 | A deploy cycle |
+| 2. Source | **Revert the dependency commit** — use `git revert -m 1 <merge-sha>` for a merge commit (`-m 1` keeps the first parent, `main`); use `git revert <commit-sha>` for a squash or rebase commit. This restores the old `package.json` + lockfile; the next deploy ships the known-good version. | Always, after step 1 | A deploy cycle |
 | 3. Prevent recurrence | Re-pin the dependency and/or add a scoped `ignore` for the bad version in `.github/dependabot.yml`, so Dependabot does not re-open the same PR. | Version is known-bad, not just untested | — |
 
 Order in an incident: **Vercel rollback → `git revert` → pin.** A pre-merge catch (a red
-`verify`, or a failed local validation) means you never reach this table.
+`verify` or `security-scan`, or a failed local validation) means you never reach this table.
 
 ## Why `preview-deploy` can't run on Dependabot PRs
 
 GitHub runs Dependabot-triggered workflows against a separate, empty secret store, so
 `VERCEL_TOKEN` and the Supabase keys are blank and any deploy step fails at `vercel pull`.
-The pipeline is split so the secret-free `verify` job carries the merge signal, and
+The pipeline is split so the secret-free jobs — `verify` and `security-scan`, the
+required check — always run and carry the signals a merge decision needs, and
 `preview-deploy` is skipped for Dependabot (and for forks, which also can't reach secrets).
 This is a platform constraint, not a misconfiguration.
