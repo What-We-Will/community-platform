@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { updateProfile, updateAvatarUrl, updateResumePath, getResumeSignedUrl, deleteResume } from "./actions";
+import {
+  updateProfile,
+  updateAvatarUrl,
+  updateResumePath,
+  getResumeSignedUrl,
+  deleteResume,
+} from "./actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { ResumeUpload } from "@/components/profile/ResumeUpload";
 import { Button } from "@/components/ui/button";
@@ -20,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { Profile } from "@/lib/types";
+import { MAX_SKILL_LENGTH, MAX_SKILLS, validateSkills } from "@/lib/utils/skills";
 
 interface ProfileFormProps {
   profile: Profile;
@@ -31,21 +38,17 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [location, setLocation] = useState(profile.location ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [skillsInput, setSkillsInput] = useState(
-    profile.skills?.join(", ") ?? ""
+    profile.skills?.join(", ") ?? "",
   );
   const [openToReferrals, setOpenToReferrals] = useState(
-    profile.open_to_referrals ?? false
+    profile.open_to_referrals ?? false,
   );
   const [timezone, setTimezone] = useState(
-    profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+    profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
   );
-  const [linkedinUrl, setLinkedinUrl] = useState(
-    profile.linkedin_url ?? ""
-  );
+  const [linkedinUrl, setLinkedinUrl] = useState(profile.linkedin_url ?? "");
   const [githubUrl, setGithubUrl] = useState(profile.github_url ?? "");
-  const [portfolioUrl, setPortfolioUrl] = useState(
-    profile.portfolio_url ?? ""
-  );
+  const [portfolioUrl, setPortfolioUrl] = useState(profile.portfolio_url ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,7 +60,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setBio(profile.bio ?? "");
     setSkillsInput(profile.skills?.join(", ") ?? "");
     setOpenToReferrals(profile.open_to_referrals ?? false);
-    setTimezone(profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
+    setTimezone(
+      profile.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
     setLinkedinUrl(profile.linkedin_url ?? "");
     setGithubUrl(profile.github_url ?? "");
     setPortfolioUrl(profile.portfolio_url ?? "");
@@ -75,6 +80,13 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
+
+    const skillsValidation = validateSkills(skills);
+    if (!skillsValidation.valid) {
+      setError(skillsValidation.error);
+      setLoading(false);
+      return;
+    }
 
     try {
       const result = await updateProfile({
@@ -117,7 +129,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive break-words">
               {error}
             </div>
           )}
@@ -142,133 +154,134 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               }}
             />
             <div className="flex-1 space-y-4 w-full">
-          <div className="space-y-2">
-            <Label htmlFor="display_name">Display name</Label>
-            <Input
-              id="display_name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="headline">Headline</Label>
-            <Input
-              id="headline"
-              placeholder="e.g. Senior Frontend Engineer"
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
-              placeholder="e.g. Tulsa, OK"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Timezone</Label>
-            <TimezoneCombobox value={timezone} onChange={setTimezone} />
-            <p className="text-xs text-muted-foreground">
-              Used for displaying event times
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell the community about yourself..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="skills">Skills</Label>
-            <Input
-              id="skills"
-              placeholder="e.g. React, TypeScript, Node.js"
-              value={skillsInput}
-              onChange={(e) => setSkillsInput(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Comma-separated list
-            </p>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="open_to_referrals"
-              checked={openToReferrals}
-              onCheckedChange={(checked) =>
-                setOpenToReferrals(checked === true)
-              }
-            />
-            <Label
-              htmlFor="open_to_referrals"
-              className="cursor-pointer text-sm font-normal"
-            >
-              Open to Mock Interviews
-            </Label>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="linkedin_url">LinkedIn URL</Label>
-            <Input
-              id="linkedin_url"
-              type="url"
-              placeholder="https://linkedin.com/in/username"
-              value={linkedinUrl}
-              onChange={(e) => setLinkedinUrl(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="github_url">GitHub URL</Label>
-            <Input
-              id="github_url"
-              type="url"
-              placeholder="https://github.com/username"
-              value={githubUrl}
-              onChange={(e) => setGithubUrl(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="portfolio_url">Portfolio URL</Label>
-            <Input
-              id="portfolio_url"
-              type="url"
-              placeholder="https://yourportfolio.com"
-              value={portfolioUrl}
-              onChange={(e) => setPortfolioUrl(e.target.value)}
-            />
-          </div>
-          <ResumeUpload
-            userId={profile.id}
-            resumePath={profile.resume_path ?? null}
-            onUploadComplete={async (path) => {
-              const res = await updateResumePath(path);
-              if (res.error) setError(res.error);
-              else {
-                setSuccess(true);
-                setTimeout(() => setSuccess(false), 3000);
-                router.refresh();
-              }
-            }}
-            onViewClick={async () => {
-              const url = await getResumeSignedUrl();
-              if (url) window.open(url, "_blank");
-            }}
-            onDeleteClick={async () => {
-              const res = await deleteResume();
-              if (!res.error) {
-                setSuccess(true);
-                setTimeout(() => setSuccess(false), 3000);
-                router.refresh();
-              }
-              return res;
-            }}
-          />
+              <div className="space-y-2">
+                <Label htmlFor="display_name">Display name</Label>
+                <Input
+                  id="display_name"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="headline">Headline</Label>
+                <Input
+                  id="headline"
+                  placeholder="e.g. Senior Frontend Engineer"
+                  value={headline}
+                  onChange={(e) => setHeadline(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  placeholder="e.g. Tulsa, OK"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Timezone</Label>
+                <TimezoneCombobox value={timezone} onChange={setTimezone} />
+                <p className="text-xs text-muted-foreground">
+                  Used for displaying event times
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  placeholder="Tell the community about yourself..."
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="skills">Skills</Label>
+                <Input
+                  id="skills"
+                  placeholder="e.g. React, TypeScript, Node.js"
+                  value={skillsInput}
+                  onChange={(e) => setSkillsInput(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Comma or slash separated. Max {MAX_SKILL_LENGTH} characters
+                  per skill, up to {MAX_SKILLS} skills.
+                </p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="open_to_referrals"
+                  checked={openToReferrals}
+                  onCheckedChange={(checked) =>
+                    setOpenToReferrals(checked === true)
+                  }
+                />
+                <Label
+                  htmlFor="open_to_referrals"
+                  className="cursor-pointer text-sm font-normal"
+                >
+                  Open to Mock Interviews
+                </Label>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                <Input
+                  id="linkedin_url"
+                  type="url"
+                  placeholder="https://linkedin.com/in/username"
+                  value={linkedinUrl}
+                  onChange={(e) => setLinkedinUrl(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="github_url">GitHub URL</Label>
+                <Input
+                  id="github_url"
+                  type="url"
+                  placeholder="https://github.com/username"
+                  value={githubUrl}
+                  onChange={(e) => setGithubUrl(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="portfolio_url">Portfolio URL</Label>
+                <Input
+                  id="portfolio_url"
+                  type="url"
+                  placeholder="https://yourportfolio.com"
+                  value={portfolioUrl}
+                  onChange={(e) => setPortfolioUrl(e.target.value)}
+                />
+              </div>
+              <ResumeUpload
+                userId={profile.id}
+                resumePath={profile.resume_path ?? null}
+                onUploadComplete={async (path) => {
+                  const res = await updateResumePath(path);
+                  if (res.error) setError(res.error);
+                  else {
+                    setSuccess(true);
+                    setTimeout(() => setSuccess(false), 3000);
+                    router.refresh();
+                  }
+                }}
+                onViewClick={async () => {
+                  const url = await getResumeSignedUrl();
+                  if (url) window.open(url, "_blank");
+                }}
+                onDeleteClick={async () => {
+                  const res = await deleteResume();
+                  if (!res.error) {
+                    setSuccess(true);
+                    setTimeout(() => setSuccess(false), 3000);
+                    router.refresh();
+                  }
+                  return res;
+                }}
+              />
             </div>
           </div>
         </CardContent>

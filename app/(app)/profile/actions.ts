@@ -3,23 +3,22 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { safeTimezone } from "@/lib/utils/timezone";
+import { validateSkills } from "@/lib/utils/skills";
 
 export type ProfileUpdateResult = { error?: string };
 
-export async function updateProfile(
-  data: {
-    display_name: string;
-    headline?: string | null;
-    location?: string | null;
-    bio?: string | null;
-    skills: string[];
-    open_to_referrals: boolean;
-    linkedin_url?: string | null;
-    github_url?: string | null;
-    portfolio_url?: string | null;
-    timezone?: string | null;
-  }
-): Promise<ProfileUpdateResult> {
+export async function updateProfile(data: {
+  display_name: string;
+  headline?: string | null;
+  location?: string | null;
+  bio?: string | null;
+  skills: string[];
+  open_to_referrals: boolean;
+  linkedin_url?: string | null;
+  github_url?: string | null;
+  portfolio_url?: string | null;
+  timezone?: string | null;
+}): Promise<ProfileUpdateResult> {
   const supabase = await createClient();
 
   const {
@@ -28,6 +27,11 @@ export async function updateProfile(
 
   if (!user) {
     return { error: "You must be signed in to update your profile." };
+  }
+
+  const skillsValidation = validateSkills(data.skills);
+  if (!skillsValidation.valid) {
+    return { error: skillsValidation.error };
   }
 
   // Upsert: insert if profile doesn't exist, otherwise update
@@ -46,7 +50,7 @@ export async function updateProfile(
       timezone: safeTimezone(data.timezone),
       is_onboarded: true,
     },
-    { onConflict: "id" }
+    { onConflict: "id" },
   );
 
   if (error) {
@@ -76,9 +80,13 @@ export async function updateLastSeen(): Promise<void> {
     .eq("id", user.id);
 }
 
-export async function updateAvatarUrl(avatarUrl: string): Promise<{ error?: string }> {
+export async function updateAvatarUrl(
+  avatarUrl: string,
+): Promise<{ error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase
@@ -92,9 +100,13 @@ export async function updateAvatarUrl(avatarUrl: string): Promise<{ error?: stri
   return {};
 }
 
-export async function updateResumePath(resumePath: string): Promise<{ error?: string }> {
+export async function updateResumePath(
+  resumePath: string,
+): Promise<{ error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
   const { error } = await supabase
@@ -109,7 +121,9 @@ export async function updateResumePath(resumePath: string): Promise<{ error?: st
 
 export async function deleteResume(): Promise<{ error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "Not authenticated" };
 
   const { data: profile, error: selectError } = await supabase
@@ -135,7 +149,7 @@ export async function deleteResume(): Promise<{ error?: string }> {
   if (storageError || removed?.length === 0) {
     console.error(
       "[deleteResume] storage cleanup incomplete:",
-      storageError?.message ?? "no objects removed"
+      storageError?.message ?? "no objects removed",
     );
   }
 
@@ -145,7 +159,9 @@ export async function deleteResume(): Promise<{ error?: string }> {
 
 export async function getResumeSignedUrl(): Promise<string | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data: profile } = await supabase
