@@ -2,6 +2,23 @@
   "name": "nextjs",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.19.0",
+  "engines": {
+    "node": "^20.17.0 || >=22.9.0",
+    "npm": ">=10.8.2"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^20.17.0 || >=22.9.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=11.19.0",
+      "onFail": "warn"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
