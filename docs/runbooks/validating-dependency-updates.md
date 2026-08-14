@@ -89,8 +89,8 @@ open the same day its advisory ships — check release age on those yourself.
 
 | Bump type | With green `verify` **and** `security-scan` | Extra check needed |
 |-----------|-----------------------|--------------------|
-| **Patch** (`x.y.Z`) | Safe to merge | None |
-| **Minor** (`x.Y.z`) | Safe to merge | If it touches UI (Radix, Tailwind, component libs): a quick **visual smoke** — build locally and eyeball the affected components. `verify` cannot catch visual regressions. |
+| **Patch** (`x.y.Z`) | Safe to merge | None — unless it touches a UI-surface package. Those are `needs-review` at every bump size; see [Visual smoke for UI-surface bumps](#visual-smoke-for-ui-surface-bumps). |
+| **Minor** (`x.Y.z`) | Safe to merge | Same UI-surface carve-out as patch. `verify` cannot catch a visual regression. |
 | **Major** (`X.y.z`) | Do **not** merge on green alone | Read the changelog for breaking changes; map each against how we actually use the dependency. For GitHub Actions majors, check the workflow files. Consider holding for a scheduled migration. Applies to dev-only deps too — a tooling major (e.g. eslint) can break lint/build rules just as easily as a runtime major. |
 | **Dev-only, patch/minor** (e.g. test runner, types) | Safe to merge | None — not in the production bundle. For a test-runner bump, the test suite running green under the new version *is* the smoke test. Dev-only does **not** exempt a major bump from the Major row above. |
 
@@ -102,6 +102,89 @@ the Major row with extra urgency, not as a misconfiguration. See
 [ADR-0010](../adr/0010-dependabot-grouping-and-major-holds.md) for why those holds are
 scoped the way they are. The Vitest family includes `@vitejs/plugin-react`, so review
 their major-version compatibility together during the January and July migration review.
+
+## Visual smoke for UI-surface bumps
+
+UI-surface means `tailwindcss`, `tailwind-merge`, `tw-animate-css`, `@tailwindcss/*`,
+`radix-ui`, or `@dnd-kit/*` — the authoritative list is `is_ui_surface()` in
+`scripts/ci/classify-dependabot-pr.sh`. These come back `needs-review` at **any** bump
+size, patch included: the failure mode is a utility whose compiled CSS rule changes while
+its class name stays the same, and semver level does not bound that. A green `verify`
+says nothing about it, because lint, type-check, and tests never observe real layout.
+
+The two paths below are alternatives, not a sequence. Do either one. A human makes the
+merge call either way — nothing here auto-merges.
+
+**Path A — the screenshots CI already captured.** The triage workflow runs a secret-free
+job on UI-surface PRs that builds the app, starts it, and captures the landing and login
+pages at 1280px and 375px, plus any browser console errors, as a workflow artifact. Open
+the run linked from the PR comment and download it. Unauthenticated pages only: with
+placeholder Supabase credentials everything behind auth renders a redirect, so
+screenshotting it would be misleading rather than useful.
+
+**Path B — run it locally.** Slower, and the only way to reach the two auth-gated
+surfaces — but only if you have a working local backend already. See
+[`e2e/README.md`](../../e2e/README.md) for that setup; without it, Path B gives you
+nothing Path A did not.
+
+```bash
+scripts/validate-dep-pr.sh --keep <pr-number>
+cd <the worktree path it prints>
+cp /path/to/your/.env.local .env.local
+cp /path/to/your/.env.e2e .env.e2e     # omit this and the auth specs skip, reporting green
+npm run test:e2e                       # Playwright starts its own dev server
+npm run dev                            # then click through the surfaces below
+```
+
+Three things about that sequence are easy to get wrong:
+
+- **`--keep` is load-bearing.** Without it the script removes its worktree before
+  returning, so everything after would run against your own checkout — usually `main` —
+  and quietly smoke-test the wrong code.
+- **A worktree has no `.env.local` or `.env.e2e`.** Both are gitignored, so a fresh
+  checkout never carries them. Missing them, the auth specs `test.skip` rather than fail
+  — the run reports green while every auth-gated assertion was silently skipped — and the
+  app itself redirects instead of rendering.
+- **Use `npm run dev`, not `npm run start`.** The retained build was produced with
+  placeholder credentials, and `NEXT_PUBLIC_*` values are inlined into the client bundle
+  at build time, so the built app points at the placeholder Supabase project no matter
+  what you put in `.env.local` afterwards. `dev` resolves the env at runtime. Run
+  `test:e2e` before `dev`, or in a second terminal: both bind port 3000, and Playwright
+  reuses an existing server there rather than starting its own.
+
+Run the full `test:e2e` suite rather than `:smoke` — the auth-state specs in `e2e/auth/`
+already exercise `/onboarding`, `/pending-approval`, and `/dashboard`, three structurally
+different layouts, at no extra authoring cost.
+
+Check three surfaces, chosen for component-type diversity rather than coverage. A
+CSS-engine bump breaks structure — grid, flex, overflow, z-index, responsive prefixes —
+not business logic:
+
+- **Dashboard** — dense grid/card layout, the widest concentration of shadcn primitives on
+  one screen.
+- **A modal/dialog-heavy flow** (event RSVP, profile edit) — overlay, backdrop, and
+  z-index utilities, the category most likely to break silently.
+- **One page at 375px** — a responsive prefix that stops applying is the highest-risk
+  failure for a `tailwindcss` bump specifically, and desktop-only checking misses it
+  entirely.
+
+Only the third is reachable on Path A, and only on the landing and login pages. The first
+two need Path B with a local backend. If you have neither, say so on the PR rather than
+approving on partial evidence — an unreviewed surface is a known gap, not a pass.
+
+Fail the PR if any of the following is observed. This is a fixed list rather than a
+judgment call, so the check cannot quietly shrink under time pressure — compare against
+`main` in a second window where the criterion says "than before":
+
+- An element visibly overlapping another where it did not before.
+- Any unstyled/raw-HTML flash, or content that stays unstyled.
+- An element clipped or cut off by its container that was not before.
+- At 375px, a layout that does not change from its desktop arrangement at all.
+- Any new browser console error or warning on load.
+- `npm run test:e2e` reporting a failure.
+
+On a fail, block the PR and record what was seen against which criterion. Do not diagnose
+or fix the root cause inside the dependency PR.
 
 ## Editing the groups in `dependabot.yml`
 
@@ -157,8 +240,9 @@ scripts/validate-dep-pr.sh <branch-ref>       # e.g. dependabot/npm_and_yarn/nex
 It fetches the branch into a throwaway worktree, runs `npm ci --ignore-scripts` + lint +
 type-check + tests + a production build with placeholder non-secret env, reports pass/fail,
 and cleans up without touching your current branch. It does not run CI's migration-collision
-check, so green here does not mean `verify` would be green. For a visual smoke, build in a
-persistent worktree and `npm run start` to click through the affected screens.
+check, so green here does not mean `verify` would be green. For a visual smoke, follow
+[Visual smoke for UI-surface bumps](#visual-smoke-for-ui-surface-bumps) — it names the
+surfaces to check and what counts as a failure, rather than leaving it to eyeballing.
 
 ## Rollback / revert
 
