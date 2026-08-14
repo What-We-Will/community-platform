@@ -151,6 +151,18 @@ export default function SignupPage() {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Create account"}
           </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            By creating an account, you agree to abide by our{" "}
+            <Link
+              href="/community-guidelines"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Community Guidelines
+            </Link>
+            .
+          </p>
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
