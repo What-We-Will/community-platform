@@ -11,7 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
-import { DISPLAY_NAME_MAX_LENGTH } from "@/lib/utils/display-name";
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  DISPLAY_NAME_TOO_LONG_ERROR,
+  displayNameLength,
+} from "@/lib/utils/display-name";
 import {
   Card,
   CardContent,
@@ -71,6 +75,16 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setError(null);
     setSuccess(false);
     setLoading(true);
+
+    // Counted the way the server and the CHECK constraint count, so the form is
+    // never stricter than they are. The native maxLength attribute cannot do
+    // this: it measures UTF-16 code units, which would cap an astral-plane name
+    // (emoji, CJK Extension B) at half the real limit.
+    if (displayNameLength(displayName.trim()) > DISPLAY_NAME_MAX_LENGTH) {
+      setError(DISPLAY_NAME_TOO_LONG_ERROR);
+      setLoading(false);
+      return;
+    }
 
     const skills = skillsInput
       .split(",")
@@ -149,7 +163,6 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               id="display_name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              maxLength={DISPLAY_NAME_MAX_LENGTH}
               required
             />
           </div>
