@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfile, updateAvatarUrl, updateResumePath, getResumeSignedUrl, deleteResume } from "./actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
@@ -54,6 +54,24 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+  // Bumped on every rejection so repeating one still re-runs the effect below:
+  // React collapses a null-then-same-string update into no render at all.
+  const [errorSeq, setErrorSeq] = useState(0);
+
+  function reportError(message: string) {
+    setError(message);
+    setErrorSeq((seq) => seq + 1);
+  }
+
+  // The banner renders above a form tall enough that the submit button is
+  // offscreen from it, so without moving the viewport and the focus ring a
+  // rejected submit looks like the button did nothing at all.
+  useEffect(() => {
+    if (!error) return;
+    errorRef.current?.scrollIntoView({ block: "center" });
+    errorRef.current?.focus();
+  }, [error, errorSeq]);
 
   useEffect(() => {
     setDisplayName(profile.display_name);
@@ -81,7 +99,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     // this: it measures UTF-16 code units, which would cap an astral-plane name
     // (emoji, CJK Extension B) at half the real limit.
     if (displayNameLength(displayName.trim()) > DISPLAY_NAME_MAX_LENGTH) {
-      setError(DISPLAY_NAME_TOO_LONG_ERROR);
+      reportError(DISPLAY_NAME_TOO_LONG_ERROR);
       setLoading(false);
       return;
     }
@@ -106,7 +124,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       });
 
       if (result.error) {
-        setError(result.error);
+        reportError(result.error);
         setLoading(false);
         return;
       }
@@ -116,7 +134,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       setTimeout(() => setSuccess(false), 3000);
       router.refresh();
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      reportError("An unexpected error occurred. Please try again.");
       setLoading(false);
     }
   }
@@ -132,7 +150,12 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div
+              ref={errorRef}
+              role="alert"
+              tabIndex={-1}
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {error}
             </div>
           )}
@@ -148,7 +171,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               displayName={profile.display_name}
               onUploadComplete={async (url) => {
                 const res = await updateAvatarUrl(url);
-                if (res.error) setError(res.error);
+                if (res.error) reportError(res.error);
                 else {
                   setSuccess(true);
                   setTimeout(() => setSuccess(false), 3000);
@@ -263,7 +286,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             resumePath={profile.resume_path ?? null}
             onUploadComplete={async (path) => {
               const res = await updateResumePath(path);
-              if (res.error) setError(res.error);
+              if (res.error) reportError(res.error);
               else {
                 setSuccess(true);
                 setTimeout(() => setSuccess(false), 3000);

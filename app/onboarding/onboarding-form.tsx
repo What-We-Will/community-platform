@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { completeOnboarding } from "./actions";
 import { updateAvatarUrl } from "@/app/(app)/profile/actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
@@ -67,6 +67,24 @@ export default function OnboardingForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
+  // Bumped on every rejection so repeating one still re-runs the effect below:
+  // React collapses a null-then-same-string update into no render at all.
+  const [errorSeq, setErrorSeq] = useState(0);
+
+  function reportError(message: string) {
+    setError(message);
+    setErrorSeq((seq) => seq + 1);
+  }
+
+  // The banner renders above a form tall enough that the submit button is
+  // offscreen from it, so without moving the viewport and the focus ring a
+  // rejected submit looks like the button did nothing at all.
+  useEffect(() => {
+    if (!error) return;
+    errorRef.current?.scrollIntoView({ block: "center" });
+    errorRef.current?.focus();
+  }, [error, errorSeq]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,13 +96,13 @@ export default function OnboardingForm({
     // this: it measures UTF-16 code units, which would cap an astral-plane name
     // (emoji, CJK Extension B) at half the real limit.
     if (displayNameLength(displayName.trim()) > DISPLAY_NAME_MAX_LENGTH) {
-      setError(DISPLAY_NAME_TOO_LONG_ERROR);
+      reportError(DISPLAY_NAME_TOO_LONG_ERROR);
       setLoading(false);
       return;
     }
 
     if (!linkedinUrl.trim() && !githubUrl.trim() && !portfolioUrl.trim()) {
-      setError("Provide at least one link so we can verify your background.");
+      reportError("Provide at least one link so we can verify your background.");
       setLoading(false);
       return;
     }
@@ -97,7 +115,7 @@ export default function OnboardingForm({
     // Safety: if the server never responds (e.g. prod timeout), unlock the button
     const timeoutId = setTimeout(() => {
       setLoading(false);
-      setError(
+      reportError(
         "Request is taking longer than usual. If you already see yourself in Members, your profile was saved — try opening Dashboard."
       );
     }, 15000);
@@ -120,7 +138,7 @@ export default function OnboardingForm({
       clearTimeout(timeoutId);
 
       if (result.error) {
-        setError(result.error);
+        reportError(result.error);
         return;
       }
 
@@ -130,7 +148,7 @@ export default function OnboardingForm({
       return;
     } catch {
       clearTimeout(timeoutId);
-      setError("An unexpected error occurred. Please try again.");
+      reportError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -147,7 +165,12 @@ export default function OnboardingForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div
+              ref={errorRef}
+              role="alert"
+              tabIndex={-1}
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {error}
             </div>
           )}
