@@ -26,7 +26,9 @@ describe("displayNameLength", () => {
     });
     it("counts a family emoji by its code points, as Postgres does", () => {
       // ZWJ sequence: 4 people + 3 joiners = 7 code points.
-      expect(displayNameLength("👨‍👩‍👧‍👦")).toBe(7);
+      expect(
+        displayNameLength("\u{1F468}\u{200D}\u{1F469}\u{200D}\u{1F467}\u{200D}\u{1F466}")
+      ).toBe(7);
     });
     it("counts accented characters as one each", () => {
       expect(displayNameLength("José")).toBe(4);
