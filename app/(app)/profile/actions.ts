@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { safeTimezone } from "@/lib/utils/timezone";
-import { validateHttpsUrl } from "@/lib/utils/url";
+import { normalizeSubmittedUrl, validateHttpsUrl } from "@/lib/utils/url";
 
 export type ProfileUpdateResult = { error?: string };
 
@@ -31,10 +31,17 @@ export async function updateProfile(
     return { error: "You must be signed in to update your profile." };
   }
 
+  // Validate and persist the same normalized values — the WHATWG URL parser
+  // ignores surrounding and embedded whitespace, so validating the raw string
+  // would accept input that differs from what gets stored.
+  const linkedinUrl = normalizeSubmittedUrl(data.linkedin_url);
+  const githubUrl = normalizeSubmittedUrl(data.github_url);
+  const portfolioUrl = normalizeSubmittedUrl(data.portfolio_url);
+
   const urlValidationErrors = [
-    validateHttpsUrl(data.linkedin_url),
-    validateHttpsUrl(data.github_url),
-    validateHttpsUrl(data.portfolio_url),
+    validateHttpsUrl(linkedinUrl),
+    validateHttpsUrl(githubUrl),
+    validateHttpsUrl(portfolioUrl),
   ].filter((e): e is string => e !== null);
   if (urlValidationErrors.length > 0) {
     return { error: urlValidationErrors[0] };
@@ -50,9 +57,9 @@ export async function updateProfile(
       bio: data.bio || null,
       skills: data.skills,
       open_to_referrals: data.open_to_referrals,
-      linkedin_url: data.linkedin_url || null,
-      github_url: data.github_url || null,
-      portfolio_url: data.portfolio_url || null,
+      linkedin_url: linkedinUrl,
+      github_url: githubUrl,
+      portfolio_url: portfolioUrl,
       timezone: safeTimezone(data.timezone),
       is_onboarded: true,
     },

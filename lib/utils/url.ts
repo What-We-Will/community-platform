@@ -26,6 +26,29 @@ export function isHttpsUrl(url: string): boolean {
   }
 }
 
+/**
+ * Normalize a submitted link into the exact form that should be persisted.
+ *
+ * The WHATWG URL parser strips leading/trailing C0-and-space and removes all
+ * ASCII tab and newline characters *before* parsing, so `isHttpsUrl` accepts
+ * strings that still contain them. Storing the raw value would mean validating
+ * one representation and persisting another; this collapses that gap by
+ * removing exactly what the parser ignores.
+ *
+ * @param value - Raw submitted link; `null`/`undefined`/blank means "absent".
+ * @returns The cleaned link, or `null` when nothing meaningful was submitted.
+ * @example
+ * normalizeSubmittedUrl("  https://github.com/jane  "); // → "https://github.com/jane"
+ * normalizeSubmittedUrl("https://git\thub.com/jane");   // → "https://github.com/jane"
+ * normalizeSubmittedUrl("   ");                          // → null
+ */
+export function normalizeSubmittedUrl(
+  value: string | null | undefined
+): string | null {
+  if (typeof value !== "string") return null;
+  return value.replace(/[\t\n\r]/g, "").trim() || null;
+}
+
 /** User-facing copy for a rejected link, shared so both write paths agree. */
 export const HTTPS_URL_ERROR =
   "Please provide a valid URL starting with https:// (e.g. https://github.com/username)";

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
 import { safeTimezone } from "@/lib/utils/timezone";
 import { escapeHtml } from "@/lib/utils/html";
-import { validateHttpsUrl } from "@/lib/utils/url";
+import { normalizeSubmittedUrl, validateHttpsUrl } from "@/lib/utils/url";
 
 export type OnboardingResult = { error?: string };
 
@@ -34,9 +34,9 @@ export async function completeOnboarding(
     return { error: "You must be signed in to complete onboarding." };
   }
 
-  const linkedinUrl = data.linkedin_url?.trim() || null;
-  const githubUrl = data.github_url?.trim() || null;
-  const portfolioUrl = data.portfolio_url?.trim() || null;
+  const linkedinUrl = normalizeSubmittedUrl(data.linkedin_url);
+  const githubUrl = normalizeSubmittedUrl(data.github_url);
+  const portfolioUrl = normalizeSubmittedUrl(data.portfolio_url);
 
   if (!linkedinUrl && !githubUrl && !portfolioUrl) {
     return {
