@@ -40,9 +40,17 @@ function mockQueue(rows: Profile[]) {
 
 // A profiles row exists from the moment an account does — the signup trigger
 // creates it before onboarding runs, with every verification URL still NULL.
-// Someone who abandoned the form has not applied, so the admin queue must ask
-// the database for submitted applications rather than for every pending row.
-describe("Pending approvals page — queue holds submitted applications only", () => {
+// Filtering the queue on is_onboarded removes that abandoned-signup class.
+//
+// Tested boundary: these assert the queue's own predicates and its rendering of
+// what the query returns. They do NOT establish that every row reaching the
+// queue was submitted through the onboarding form. is_onboarded is the closest
+// signal the schema offers, not a submission marker, and two other write paths
+// set it without requiring a verification link — updateProfile
+// (app/(app)/profile/actions.ts:74) and app/api/test-upsert/route.ts:41. Proving
+// the stronger claim needs a protected submission marker; until then, treat a
+// queue row as "onboarding flag set", not "application submitted".
+describe("Pending approvals page — abandoned signups are excluded from the queue", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -65,7 +73,7 @@ describe("Pending approvals page — queue holds submitted applications only", (
     );
   });
 
-  it("should list the applicant when a completed application awaits review", async () => {
+  it("should list the profile when an onboarded row awaits review", async () => {
     mockQueue([
       makeBaseProfile({
         display_name: "Real Applicant",
@@ -80,7 +88,7 @@ describe("Pending approvals page — queue holds submitted applications only", (
     expect(screen.queryByText(/no pending applications/i)).toBeNull();
   });
 
-  it("should show the empty state when no submitted application is waiting", async () => {
+  it("should show the empty state when no onboarded profile is waiting", async () => {
     mockQueue([]);
 
     render(await ApprovalsPage());
