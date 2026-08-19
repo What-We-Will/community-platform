@@ -16,6 +16,7 @@ import {
   DISPLAY_NAME_TOO_LONG_ERROR,
   displayNameLength,
 } from "@/lib/utils/display-name";
+import { HTTPS_URL_ERROR, validateHttpsUrl } from "@/lib/utils/url";
 import {
   Card,
   CardContent,
@@ -55,6 +56,10 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
+  const displayNameRef = useRef<HTMLInputElement>(null);
+  const linkedinRef = useRef<HTMLInputElement>(null);
+  const githubRef = useRef<HTMLInputElement>(null);
+  const portfolioRef = useRef<HTMLInputElement>(null);
   // Bumped on every rejection so repeating one still re-runs the effect below:
   // React collapses a null-then-same-string update into no render at all.
   const [errorSeq, setErrorSeq] = useState(0);
@@ -64,14 +69,41 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setErrorSeq((seq) => seq + 1);
   }
 
+  // Field-level rejections reuse the browser's own constraint validation, so an
+  // app rule gets the identical treatment a malformed URL already gets: the
+  // bubble anchored to the input, scrolled to and focused by the user agent.
+  // The message still goes to the banner, which is what assistive tech reads —
+  // validation bubbles are not reliably announced and dismiss on interaction.
+  function reportFieldError(
+    message: string,
+    field: React.RefObject<HTMLInputElement | null>
+  ) {
+    setError(message);
+    setLoading(false);
+    field.current?.setCustomValidity(message);
+    field.current?.reportValidity();
+  }
+
+  // A custom validity that outlives its cause would block every later submit
+  // before our handler ever runs, so all of them are cleared on each attempt
+  // and on any edit.
+  function clearFieldValidity() {
+    displayNameRef.current?.setCustomValidity("");
+    linkedinRef.current?.setCustomValidity("");
+    githubRef.current?.setCustomValidity("");
+    portfolioRef.current?.setCustomValidity("");
+  }
+
   // The banner renders above a form tall enough that the submit button is
   // offscreen from it, so without moving the viewport and the focus ring a
-  // rejected submit looks like the button did nothing at all.
+  // rejected submit looks like the button did nothing at all. Keyed on the
+  // counter alone: a field-level rejection sets the banner text too, and must
+  // keep the focus the browser just put on the offending input.
   useEffect(() => {
-    if (!error) return;
+    if (!errorSeq) return;
     errorRef.current?.scrollIntoView({ block: "center" });
     errorRef.current?.focus();
-  }, [error, errorSeq]);
+  }, [errorSeq]);
 
   useEffect(() => {
     setDisplayName(profile.display_name);
@@ -92,6 +124,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     e.preventDefault();
     setError(null);
     setSuccess(false);
+    clearFieldValidity();
     setLoading(true);
 
     // Counted the way the server and the CHECK constraint count, so the form is
@@ -99,8 +132,23 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     // this: it measures UTF-16 code units, which would cap an astral-plane name
     // (emoji, CJK Extension B) at half the real limit.
     if (displayNameLength(displayName.trim()) > DISPLAY_NAME_MAX_LENGTH) {
-      reportError(DISPLAY_NAME_TOO_LONG_ERROR);
-      setLoading(false);
+      reportFieldError(DISPLAY_NAME_TOO_LONG_ERROR, displayNameRef);
+      return;
+    }
+
+    // Checked here as well as on the server so the rejection can point at the
+    // field that caused it. type="url" only rules out unparseable values, not
+    // an http: or javascript: one, and the server reports only the first of the
+    // three — leaving a second bad link to surface as an identical message.
+    const schemeRejection = (
+      [
+        [linkedinUrl, linkedinRef],
+        [githubUrl, githubRef],
+        [portfolioUrl, portfolioRef],
+      ] as const
+    ).find(([value]) => validateHttpsUrl(value.trim() || null));
+    if (schemeRejection) {
+      reportFieldError(HTTPS_URL_ERROR, schemeRejection[1]);
       return;
     }
 
@@ -184,8 +232,12 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             <Label htmlFor="display_name">Display name</Label>
             <Input
               id="display_name"
+              ref={displayNameRef}
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={(e) => {
+                clearFieldValidity();
+                setDisplayName(e.target.value);
+              }}
               required
             />
           </div>
@@ -255,30 +307,42 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
             <Label htmlFor="linkedin_url">LinkedIn URL</Label>
             <Input
               id="linkedin_url"
+              ref={linkedinRef}
               type="url"
               placeholder="https://linkedin.com/in/username"
               value={linkedinUrl}
-              onChange={(e) => setLinkedinUrl(e.target.value)}
+              onChange={(e) => {
+                clearFieldValidity();
+                setLinkedinUrl(e.target.value);
+              }}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="github_url">GitHub URL</Label>
             <Input
               id="github_url"
+              ref={githubRef}
               type="url"
               placeholder="https://github.com/username"
               value={githubUrl}
-              onChange={(e) => setGithubUrl(e.target.value)}
+              onChange={(e) => {
+                clearFieldValidity();
+                setGithubUrl(e.target.value);
+              }}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="portfolio_url">Portfolio URL</Label>
             <Input
               id="portfolio_url"
+              ref={portfolioRef}
               type="url"
               placeholder="https://yourportfolio.com"
               value={portfolioUrl}
-              onChange={(e) => setPortfolioUrl(e.target.value)}
+              onChange={(e) => {
+                clearFieldValidity();
+                setPortfolioUrl(e.target.value);
+              }}
             />
           </div>
           <ResumeUpload

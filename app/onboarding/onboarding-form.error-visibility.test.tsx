@@ -48,7 +48,7 @@ describe("OnboardingForm — a rejected link points at the field that caused it"
     completeOnboardingMock.mockReset();
   });
 
-  it("should attach the at-least-one rule to the first link field", async () => {
+  it("should attach the rule to the first link field when no link is provided", async () => {
     const user = userEvent.setup();
     render(<OnboardingForm initialData={initialData} userId="user-1" />);
 
@@ -60,7 +60,7 @@ describe("OnboardingForm — a rejected link points at the field that caused it"
     expect(completeOnboardingMock).not.toHaveBeenCalled();
   });
 
-  it("should attach a non-https rejection to the offending field", async () => {
+  it("should attach the rejection to the offending field when a link is not https", async () => {
     const user = userEvent.setup();
     render(<OnboardingForm initialData={initialData} userId="user-1" />);
 
@@ -74,7 +74,7 @@ describe("OnboardingForm — a rejected link points at the field that caused it"
 
   // A custom validity outliving its cause would block the browser from ever
   // firing submit again, stranding the user on a message they already fixed.
-  it("should clear the rejection once the user edits a link", async () => {
+  it("should clear the rejection when the user edits any link", async () => {
     const user = userEvent.setup();
     completeOnboardingMock.mockResolvedValue({});
     render(<OnboardingForm initialData={initialData} userId="user-1" />);
