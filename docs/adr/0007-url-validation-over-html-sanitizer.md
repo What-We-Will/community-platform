@@ -1,7 +1,7 @@
 # ADR-0007 — URL scheme validation instead of an HTML-sanitizer library for user-submitted links
 
 **Status:** Proposed 2026-07-22
-**TL;DR:** We use `validateHttpsUrl` at every write path and `isHttpsUrl` again before rendering links on the approvals page. React escapes JSX text, while Nodemailer HTML-body interpolations use narrow `escapeHtml` encoding; SMTP headers remain plain text. DOMPurify and sanitize-html are rejected because this feature accepts URLs, not user-authored HTML.
+**TL;DR:** We use `validateHttpsUrl` at every write path and `isRenderableLink` again before rendering profile links. React escapes JSX text, while Nodemailer HTML-body interpolations use narrow `escapeHtml` encoding; SMTP headers remain plain text. DOMPurify and sanitize-html are rejected because this feature accepts URLs, not user-authored HTML.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
 
@@ -52,7 +52,7 @@ validation wherever these fields are stored:
   (`app/admin/approvals/page.tsx`) and the member profile page
   (`app/(app)/members/[userId]/page.tsx`) apply it, and any new surface that
   renders these fields must do the same.
-- On the React approvals page, React's default JSX text escaping handles text
+- On the React-rendered pages, React's default JSX text escaping handles text
   rendering.
 - In the Nodemailer HTML body, where React escaping does not apply,
   `escapeHtml` encodes user-controlled values for HTML text and quoted
@@ -113,9 +113,9 @@ to a fixed list of known-safe domains (github.com, linkedin.com, etc.)
 instead of accepting arbitrary personal websites. Not rejected — treated as a
 separate, still-open product/security tradeoff outside this ADR's scope, but
 flagged during review as *not fully orthogonal* to the escaping question:
-restricting `github_url`/`linkedin_url` to their real domains would collapse
-those two fields' risk to near-zero, leaving the free-form "personal
-website" field as the only meaningful remaining surface. Worth deciding
+restricting `github_url`/`linkedin_url` to their real domains would materially
+reduce arbitrary-destination risk for those two fields, leaving the free-form
+"personal website" field as the largest remaining surface. Worth deciding
 alongside this fix rather than deferring indefinitely.
 
 ## Consequences
@@ -124,8 +124,8 @@ alongside this fix rather than deferring indefinitely.
   across these paths.
 - The team keeps small, fully auditable shared URL helpers
   (`lib/utils/url.ts`) as the source of truth across both current write paths
-  and the approvals-page render guard, rather than depending on a library's
-  internal allowlist semantics.
+  and the admin-approvals and member-profile render guards, rather than
+  depending on a library's internal allowlist semantics.
 - `isHttpsUrl` validates **scheme only, not host**. It does not protect
   against SSRF if any current or future feature fetches these URLs
   server-side (e.g., link preview, OpenGraph or favicon fetching against
