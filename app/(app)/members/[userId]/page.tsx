@@ -12,6 +12,7 @@ import {
 import { QuickCallButton } from "@/components/video/QuickCallButton";
 import { LiveStatusAvatar } from "@/components/shared/LiveStatusAvatar";
 import { createClient } from "@/lib/supabase/server";
+import { isRenderableLink } from "@/lib/utils/url";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/lib/types";
@@ -152,7 +153,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       label: "Portfolio",
       icon: Globe,
     },
-  ].filter((l) => l.url);
+  ].filter(isRenderableLink);
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -241,7 +242,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             {links.map(({ url, label, icon: Icon }) => (
               <a
                 key={label}
-                href={url!}
+                href={url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"

@@ -1,10 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { completeOnboarding } from "./actions";
 import { updateAvatarUrl } from "@/app/(app)/profile/actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
+import {
+  DISPLAY_NAME_MAX_LENGTH,
+  DISPLAY_NAME_TOO_LONG_ERROR,
+  displayNameLength,
+} from "@/lib/utils/display-name";
+import { HTTPS_URL_ERROR, validateHttpsUrl } from "@/lib/utils/url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +35,8 @@ interface OnboardingFormProps {
     skills: string[];
     open_to_referrals: boolean;
     linkedin_url: string;
+    github_url: string;
+    portfolio_url: string;
   };
   userId: string;
 }
@@ -51,16 +59,104 @@ export default function OnboardingForm({
   const [linkedinUrl, setLinkedinUrl] = useState(
     initialData.linkedin_url ?? ""
   );
+  const [githubUrl, setGithubUrl] = useState(initialData.github_url ?? "");
+  const [portfolioUrl, setPortfolioUrl] = useState(
+    initialData.portfolio_url ?? ""
+  );
   const [timezone, setTimezone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const linkedinRef = useRef<HTMLInputElement>(null);
+  const githubRef = useRef<HTMLInputElement>(null);
+  const portfolioRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  // Bumped on every rejection so repeating one still re-runs the effect below:
+  // React collapses a null-then-same-string update into no render at all.
+  const [errorSeq, setErrorSeq] = useState(0);
+
+  function reportError(message: string) {
+    setError(message);
+    setErrorSeq((seq) => seq + 1);
+  }
+
+  // Field-level rejections reuse the browser's own constraint validation, so an
+  // app rule gets the identical treatment a malformed URL already gets: the
+  // bubble anchored to the input, scrolled to and focused by the user agent.
+  // The message still goes to the banner, which is what assistive tech reads —
+  // validation bubbles are not reliably announced and dismiss on interaction.
+  function reportFieldError(
+    message: string,
+    field: React.RefObject<HTMLInputElement | null>
+  ) {
+    setError(message);
+    setLoading(false);
+    field.current?.setCustomValidity(message);
+    field.current?.reportValidity();
+  }
+
+  // A custom validity that outlives its cause would block every later submit
+  // before our handler ever runs, so all three are cleared on each attempt and
+  // on any edit. All three, not just the edited one: the at-least-one rule is
+  // reported on the LinkedIn field but answered by a value in any of them.
+  function clearLinkValidity() {
+    linkedinRef.current?.setCustomValidity("");
+    githubRef.current?.setCustomValidity("");
+    portfolioRef.current?.setCustomValidity("");
+  }
+
+  // The banner renders above a form tall enough that the submit button is
+  // offscreen from it, so without moving the viewport and the focus ring a
+  // rejected submit looks like the button did nothing at all. Keyed on the
+  // counter alone: a field-level rejection sets the banner text too, and must
+  // keep the focus the browser just put on the offending input.
+  useEffect(() => {
+    if (!errorSeq) return;
+    errorRef.current?.scrollIntoView({ block: "center" });
+    errorRef.current?.focus();
+  }, [errorSeq]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    clearLinkValidity();
     setLoading(true);
+
+    // Counted the way the server and the CHECK constraint count, so the form is
+    // never stricter than they are. The native maxLength attribute cannot do
+    // this: it measures UTF-16 code units, which would cap an astral-plane name
+    // (emoji, CJK Extension B) at half the real limit.
+    if (displayNameLength(displayName.trim()) > DISPLAY_NAME_MAX_LENGTH) {
+      reportError(DISPLAY_NAME_TOO_LONG_ERROR);
+      setLoading(false);
+      return;
+    }
+
+    if (!linkedinUrl.trim() && !githubUrl.trim() && !portfolioUrl.trim()) {
+      // Anchored to LinkedIn as the first field of the group; the rule belongs
+      // to the group rather than to any one of the three.
+      reportFieldError(
+        "Provide at least one link so we can verify your background.",
+        linkedinRef
+      );
+      return;
+    }
+
+    // Checked here as well as on the server so the rejection can point at the
+    // field that caused it. type="url" only rules out unparseable values, not
+    // an http: or javascript: one.
+    const schemeRejection = (
+      [
+        [linkedinUrl, linkedinRef],
+        [githubUrl, githubRef],
+        [portfolioUrl, portfolioRef],
+      ] as const
+    ).find(([value]) => validateHttpsUrl(value.trim() || null));
+    if (schemeRejection) {
+      reportFieldError(HTTPS_URL_ERROR, schemeRejection[1]);
+      return;
+    }
 
     const skills = skillsInput
       .split(",")
@@ -70,7 +166,7 @@ export default function OnboardingForm({
     // Safety: if the server never responds (e.g. prod timeout), unlock the button
     const timeoutId = setTimeout(() => {
       setLoading(false);
-      setError(
+      reportError(
         "Request is taking longer than usual. If you already see yourself in Members, your profile was saved — try opening Dashboard."
       );
     }, 15000);
@@ -85,13 +181,15 @@ export default function OnboardingForm({
         skills,
         open_to_referrals: openToReferrals,
         linkedin_url: linkedinUrl || null,
+        github_url: githubUrl || null,
+        portfolio_url: portfolioUrl || null,
         timezone,
       });
 
       clearTimeout(timeoutId);
 
       if (result.error) {
-        setError(result.error);
+        reportError(result.error);
         return;
       }
 
@@ -101,7 +199,7 @@ export default function OnboardingForm({
       return;
     } catch {
       clearTimeout(timeoutId);
-      setError("An unexpected error occurred. Please try again.");
+      reportError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -118,7 +216,12 @@ export default function OnboardingForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div
+              ref={errorRef}
+              role="alert"
+              tabIndex={-1}
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {error}
             </div>
           )}
@@ -205,21 +308,56 @@ export default function OnboardingForm({
               Open to Mock Interviews
             </Label>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="linkedin_url">
-              LinkedIn URL <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="linkedin_url"
-              type="url"
-              placeholder="https://linkedin.com/in/username"
-              value={linkedinUrl}
-              onChange={(e) => setLinkedinUrl(e.target.value)}
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              Required to verify your background as a tech worker
-            </p>
+          <div className="space-y-3 rounded-md border p-4">
+            <div>
+              <p className="text-sm font-medium">Verification link</p>
+              <p className="text-xs text-muted-foreground">
+                Provide at least one so we can verify your background as a
+                tech worker
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+              <Input
+                id="linkedin_url"
+                ref={linkedinRef}
+                type="url"
+                placeholder="https://linkedin.com/in/username"
+                value={linkedinUrl}
+                onChange={(e) => {
+                  clearLinkValidity();
+                  setLinkedinUrl(e.target.value);
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="github_url">GitHub URL</Label>
+              <Input
+                id="github_url"
+                ref={githubRef}
+                type="url"
+                placeholder="https://github.com/username"
+                value={githubUrl}
+                onChange={(e) => {
+                  clearLinkValidity();
+                  setGithubUrl(e.target.value);
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="portfolio_url">Website URL</Label>
+              <Input
+                id="portfolio_url"
+                ref={portfolioRef}
+                type="url"
+                placeholder="https://yourportfolio.com"
+                value={portfolioUrl}
+                onChange={(e) => {
+                  clearLinkValidity();
+                  setPortfolioUrl(e.target.value);
+                }}
+              />
+            </div>
           </div>
         </CardContent>
         <CardFooter>
