@@ -44,13 +44,14 @@ validation wherever these fields are stored:
   `app/(app)/profile/actions.ts`) call `validateHttpsUrl` before storing a
   submitted link. Future write paths for these fields must apply the same
   validation.
-- The React approvals page filters stored links through `isHttpsUrl` again at
-  render time. This is a defense-in-depth backstop for legacy data and future
-  write-path mistakes on that admin surface because no database constraint
-  enforces the scheme. It is not yet a universal render-time guard: the
-  pre-existing member profile page (`app/(app)/members/[userId]/page.tsx`)
-  renders the same stored fields without applying `isHttpsUrl`; see Open
-  Questions.
+- Every surface that renders these links filters them through `isRenderableLink`
+  (`lib/utils/url.ts`, a scheme check over `isHttpsUrl` that also narrows away
+  the absent case) at render time. This is a defense-in-depth backstop for
+  legacy data and future write-path mistakes, because no database constraint
+  enforces the scheme. Both the admin approvals page
+  (`app/admin/approvals/page.tsx`) and the member profile page
+  (`app/(app)/members/[userId]/page.tsx`) apply it, and any new surface that
+  renders these fields must do the same.
 - On the React approvals page, React's default JSX text escaping handles text
   rendering.
 - In the Nodemailer HTML body, where React escaping does not apply,
@@ -138,15 +139,19 @@ alongside this fix rather than deferring indefinitely.
 - Contributors reviewing future PRs that touch user-submitted link handling
   should reference this ADR rather than re-relitigating the library
   question from scratch.
+- Because the WHATWG parser ignores surrounding whitespace and embedded
+  tab/CR/LF, validating a raw submission would accept a string that differs
+  from the one stored. Write paths therefore normalize through
+  `normalizeSubmittedUrl` and validate and persist that same value.
+- The render-time guard is proven by a pure unit suite over `isRenderableLink`
+  plus the admin approvals page's DOM test. The member profile page has no
+  DOM-level test: it nests an async Server Component, which React Testing
+  Library cannot render (see `TESTING_STANDARDS.security-rls.md`), so a
+  rendering test there passes vacuously against an empty document. E2E remains
+  the only tier that can assert that page's markup.
 
 ## Open questions
 
-- **Add render-time validation to the member profile page.**
-  `app/(app)/members/[userId]/page.tsx` renders the same three stored URL
-  fields without filtering them through `isHttpsUrl`. The current write paths
-  validate new values, but legacy rows or a future write-path mistake could
-  still reach that member-facing surface. Apply the same render-time guard in
-  a focused follow-up with coverage for the links block.
 - **Revisit if a server-side fetch of these URLs is added** (link preview,
   OpenGraph/favicon fetch, or similar). `isHttpsUrl` does not protect
   against SSRF via private-IP/localhost targets; a host-based check would

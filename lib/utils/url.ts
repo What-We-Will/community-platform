@@ -49,6 +49,24 @@ export function normalizeSubmittedUrl(
   return value.replace(/[\t\n\r]/g, "").trim() || null;
 }
 
+/**
+ * Decide whether a stored profile link may be used as an `href`.
+ *
+ * The read-time counterpart to `validateHttpsUrl` (ADR-0007). Rows written
+ * before the write paths validated, or by any future path that forgets to, are
+ * still readable and no database constraint enforces the scheme — so every
+ * surface that renders these links re-checks them here. Narrows `url` to
+ * `string` so callers need no non-null assertion.
+ *
+ * @param link - A candidate link whose `url` may be absent or unsafe.
+ * @returns `true` only when `url` is present and passes `isHttpsUrl`.
+ */
+export function isRenderableLink<T extends { url: string | null | undefined }>(
+  link: T
+): link is T & { url: string } {
+  return typeof link.url === "string" && isHttpsUrl(link.url);
+}
+
 /** User-facing copy for a rejected link, shared so both write paths agree. */
 export const HTTPS_URL_ERROR =
   "Please provide a valid URL starting with https:// (e.g. https://github.com/username)";

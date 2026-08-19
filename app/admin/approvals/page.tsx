@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { approveUser, rejectUser } from "./actions";
-import { isHttpsUrl } from "@/lib/utils/url";
+import { isRenderableLink } from "@/lib/utils/url";
 import { ArrowLeft, Linkedin, Github, Globe } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -64,12 +64,7 @@ export default async function ApprovalsPage() {
               { url: profile.linkedin_url, label: "LinkedIn", icon: Linkedin },
               { url: profile.github_url, label: "GitHub", icon: Github },
               { url: profile.portfolio_url, label: "Website", icon: Globe },
-            ].filter(
-              // Read-time guard: stored rows predate write-path validation and
-              // no DB constraint enforces the scheme.
-              (link): link is typeof link & { url: string } =>
-                Boolean(link.url) && isHttpsUrl(link.url)
-            );
+            ].filter(isRenderableLink);
 
             return (
               <Card key={profile.id}>
