@@ -6,6 +6,11 @@
 -- column sets asserted below mirror the upsert payloads those actions issue; if
 -- either action starts writing role or approval_status, this test fails.
 --
+-- Neither payload names approval_status any more. The guard's narrowing in
+-- 20260721144537 was written to let onboarding write 'pending' over 'approved';
+-- that write is gone, so the narrowing now only covers a transition the
+-- application no longer performs.
+--
 -- The two negative controls run FIRST and are load-bearing: they prove the guard
 -- is actually active for this session. Without them the lives_ok() assertions
 -- would pass just as happily against a session that bypasses the trigger
@@ -76,21 +81,21 @@ select throws_ok(
   'guard is active: self-promotion to admin is blocked for this session'
 );
 
--- completeOnboarding(): upserts the onboarding column set, including
--- approval_status = 'pending'. That is a non-privilege-granting transition, so
--- the narrowed guard must permit it — this is the exact case 20260721144537
--- was written to unblock.
+-- completeOnboarding(): upserts the onboarding column set. approval_status is
+-- absent from it — naming the column would overwrite an admin's early approval
+-- decision — so the guard sees NEW matching OLD on both protected columns and
+-- has nothing to object to.
 select lives_ok(
   $$ insert into public.profiles (
        id, display_name, avatar_url, headline, location, bio, skills,
        open_to_referrals, linkedin_url, github_url, portfolio_url, timezone,
-       is_onboarded, approval_status
+       is_onboarded
      )
      values (
        '00000000-0000-0000-0000-000000000301', 'Jane Doe', null, null, null,
        null, array['TypeScript'], true, 'https://linkedin.com/in/jane',
        'https://github.com/jane', 'https://jane.dev', 'America/Chicago',
-       true, 'pending'
+       true
      )
      on conflict (id) do update set
        display_name = excluded.display_name,
@@ -104,23 +109,21 @@ select lives_ok(
        github_url = excluded.github_url,
        portfolio_url = excluded.portfolio_url,
        timezone = excluded.timezone,
-       is_onboarded = excluded.is_onboarded,
-       approval_status = excluded.approval_status $$,
-  'completeOnboarding column set is accepted, including approval_status = pending'
+       is_onboarded = excluded.is_onboarded $$,
+  'completeOnboarding column set is accepted — it touches neither protected column'
 );
 
 select is(
   (select approval_status from public.profiles
    where id = '00000000-0000-0000-0000-000000000301'),
   'pending',
-  'the onboarding write landed rather than being silently filtered'
+  'onboarding leaves the signup default of pending in place'
 );
 
--- Second negative control, placed here deliberately. Built from migrations the
--- approval_status column defaults to 'approved', so attempting to "self-approve"
--- before onboarding runs is not a transition at all and the guard correctly
--- ignores it. Only now, with the row at 'pending', is this the real
--- privilege-granting move the guard exists to stop.
+-- Second negative control, placed here deliberately. The row sits at 'pending' —
+-- the column default since 20260819031800 — so this is the real
+-- privilege-granting move the guard exists to stop, rather than the no-op it
+-- would have been under the previous 'approved' default.
 select throws_ok(
   $$ update public.profiles
      set approval_status = 'approved'
