@@ -98,7 +98,9 @@ describe("ProfileForm — a rejected save points at the field that caused it", (
 
     await user.click(save());
 
-    expect(updateProfileMock).toHaveBeenCalled();
+    expect(updateProfileMock).toHaveBeenCalledWith(
+      expect.objectContaining({ portfolio_url: "https://jane.dev" })
+    );
   });
 });
 

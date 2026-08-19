@@ -1,6 +1,8 @@
+import type { ComponentProps } from "react";
 import type { FeatureFlagRow } from "@/lib/feature-flags";
 import type { Profile } from "@/lib/types";
 import type { completeOnboarding } from "@/app/onboarding/actions";
+import type OnboardingForm from "@/app/onboarding/onboarding-form";
 
 // Derived from the action's own parameter type rather than restated, so a change
 // to what onboarding accepts breaks this at compile time instead of leaving the
@@ -14,6 +16,26 @@ export function makeOnboardingInput(
     display_name: "Jane Doe",
     skills: ["TypeScript"],
     open_to_referrals: true,
+    ...overrides,
+  };
+}
+
+// Derived from the component's own prop type for the same reason as above.
+type OnboardingInitialData = ComponentProps<typeof OnboardingForm>["initialData"];
+
+export function makeOnboardingInitialData(
+  overrides: Partial<OnboardingInitialData> = {}
+): OnboardingInitialData {
+  return {
+    display_name: "Jane Doe",
+    headline: "",
+    location: "",
+    bio: "",
+    skills: [],
+    open_to_referrals: false,
+    linkedin_url: "",
+    github_url: "",
+    portfolio_url: "",
     ...overrides,
   };
 }
