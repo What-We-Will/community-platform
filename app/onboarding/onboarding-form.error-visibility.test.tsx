@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import OnboardingForm from "./onboarding-form";
+import { HTTPS_URL_ERROR } from "@/lib/utils/url";
 import type { completeOnboarding } from "./actions";
 
 // TimezoneCombobox renders a Radix popover, which needs ResizeObserver — absent in jsdom.
@@ -34,56 +35,81 @@ const initialData = {
   portfolio_url: "",
 };
 
-// The banner renders at the top of the card and the submit button sits below
-// every other field, so asserting the message merely exists proves nothing about
-// whether a user can see it. These assert it is brought to them.
-describe("OnboardingForm — a rejected submit puts its message in front of the user", () => {
+const linkField = (name: RegExp) =>
+  screen.getByLabelText(name) as HTMLInputElement;
+
+// A rejected submit has to say which input is at fault, not just which rule
+// failed: the banner sits at the top of the card, a full scroll from the link
+// fields. These assert the rejection reaches the field, the way a malformed URL
+// already does through the browser's own constraint validation.
+describe("OnboardingForm — a rejected link points at the field that caused it", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     completeOnboardingMock.mockReset();
   });
 
-  it("should focus and scroll to the message when no link is provided", async () => {
+  it("should attach the at-least-one rule to the first link field", async () => {
     const user = userEvent.setup();
     render(<OnboardingForm initialData={initialData} userId="user-1" />);
 
     await user.click(screen.getByRole("button", { name: /complete profile/i }));
 
-    const alert = screen.getByRole("alert");
-    expect(alert).toHaveTextContent(/provide at least one link/i);
-    expect(alert).toHaveFocus();
-    expect(alert.scrollIntoView).toHaveBeenCalled();
+    expect(linkField(/linkedin url/i).validationMessage).toMatch(
+      /provide at least one link/i
+    );
+    expect(completeOnboardingMock).not.toHaveBeenCalled();
   });
 
-  it("should focus the message again when the same rejection repeats", async () => {
+  it("should attach a non-https rejection to the offending field", async () => {
     const user = userEvent.setup();
+    render(<OnboardingForm initialData={initialData} userId="user-1" />);
+
+    await user.type(linkField(/github url/i), "http://github.com/janedoe");
+    await user.click(screen.getByRole("button", { name: /complete profile/i }));
+
+    expect(linkField(/github url/i).validationMessage).toBe(HTTPS_URL_ERROR);
+    expect(linkField(/linkedin url/i).validationMessage).toBe("");
+    expect(completeOnboardingMock).not.toHaveBeenCalled();
+  });
+
+  // A custom validity outliving its cause would block the browser from ever
+  // firing submit again, stranding the user on a message they already fixed.
+  it("should clear the rejection once the user edits a link", async () => {
+    const user = userEvent.setup();
+    completeOnboardingMock.mockResolvedValue({});
     render(<OnboardingForm initialData={initialData} userId="user-1" />);
     const submit = screen.getByRole("button", { name: /complete profile/i });
 
     await user.click(submit);
-    // Moving focus away models the user scrolling back down to try again; the
-    // message text is unchanged, so nothing re-renders unless the form forces it.
-    screen.getByLabelText(/github url/i).focus();
+    await user.type(linkField(/github url/i), "https://github.com/janedoe");
+
+    expect(linkField(/linkedin url/i).validationMessage).toBe("");
+
     await user.click(submit);
 
-    expect(screen.getByRole("alert")).toHaveFocus();
+    expect(completeOnboardingMock).toHaveBeenCalled();
+  });
+});
+
+// Errors belonging to no field keep the banner treatment, which still has to be
+// brought to the user rather than painted offscreen above the submit button.
+describe("OnboardingForm — an error with no field of its own reaches the banner", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    completeOnboardingMock.mockReset();
   });
 
-  it("should focus the message when the server rejects the submitted link", async () => {
+  it("should focus and scroll to the banner when the server rejects for another reason", async () => {
     const user = userEvent.setup();
-    completeOnboardingMock.mockResolvedValue({
-      error: "Please provide a valid URL starting with https://",
-    });
+    completeOnboardingMock.mockResolvedValue({ error: "Something went wrong." });
     render(<OnboardingForm initialData={initialData} userId="user-1" />);
 
-    await user.type(
-      screen.getByLabelText(/github url/i),
-      "http://github.com/janedoe"
-    );
+    await user.type(linkField(/github url/i), "https://github.com/janedoe");
     await user.click(screen.getByRole("button", { name: /complete profile/i }));
 
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent(/valid url starting with https/i);
+    expect(alert).toHaveTextContent("Something went wrong.");
     expect(alert).toHaveFocus();
+    expect(alert.scrollIntoView).toHaveBeenCalled();
   });
 });

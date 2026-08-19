@@ -10,6 +10,7 @@ import {
   DISPLAY_NAME_TOO_LONG_ERROR,
   displayNameLength,
 } from "@/lib/utils/display-name";
+import { HTTPS_URL_ERROR, validateHttpsUrl } from "@/lib/utils/url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +68,9 @@ export default function OnboardingForm({
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const linkedinRef = useRef<HTMLInputElement>(null);
+  const githubRef = useRef<HTMLInputElement>(null);
+  const portfolioRef = useRef<HTMLInputElement>(null);
   const errorRef = useRef<HTMLDivElement>(null);
   // Bumped on every rejection so repeating one still re-runs the effect below:
   // React collapses a null-then-same-string update into no render at all.
@@ -77,18 +81,46 @@ export default function OnboardingForm({
     setErrorSeq((seq) => seq + 1);
   }
 
+  // Field-level rejections reuse the browser's own constraint validation, so an
+  // app rule gets the identical treatment a malformed URL already gets: the
+  // bubble anchored to the input, scrolled to and focused by the user agent.
+  // The message still goes to the banner, which is what assistive tech reads —
+  // validation bubbles are not reliably announced and dismiss on interaction.
+  function reportFieldError(
+    message: string,
+    field: React.RefObject<HTMLInputElement | null>
+  ) {
+    setError(message);
+    setLoading(false);
+    field.current?.setCustomValidity(message);
+    field.current?.reportValidity();
+  }
+
+  // A custom validity that outlives its cause would block every later submit
+  // before our handler ever runs, so all three are cleared on each attempt and
+  // on any edit. All three, not just the edited one: the at-least-one rule is
+  // reported on the LinkedIn field but answered by a value in any of them.
+  function clearLinkValidity() {
+    linkedinRef.current?.setCustomValidity("");
+    githubRef.current?.setCustomValidity("");
+    portfolioRef.current?.setCustomValidity("");
+  }
+
   // The banner renders above a form tall enough that the submit button is
   // offscreen from it, so without moving the viewport and the focus ring a
-  // rejected submit looks like the button did nothing at all.
+  // rejected submit looks like the button did nothing at all. Keyed on the
+  // counter alone: a field-level rejection sets the banner text too, and must
+  // keep the focus the browser just put on the offending input.
   useEffect(() => {
-    if (!error) return;
+    if (!errorSeq) return;
     errorRef.current?.scrollIntoView({ block: "center" });
     errorRef.current?.focus();
-  }, [error, errorSeq]);
+  }, [errorSeq]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    clearLinkValidity();
     setLoading(true);
 
     // Counted the way the server and the CHECK constraint count, so the form is
@@ -102,8 +134,27 @@ export default function OnboardingForm({
     }
 
     if (!linkedinUrl.trim() && !githubUrl.trim() && !portfolioUrl.trim()) {
-      reportError("Provide at least one link so we can verify your background.");
-      setLoading(false);
+      // Anchored to LinkedIn as the first field of the group; the rule belongs
+      // to the group rather than to any one of the three.
+      reportFieldError(
+        "Provide at least one link so we can verify your background.",
+        linkedinRef
+      );
+      return;
+    }
+
+    // Checked here as well as on the server so the rejection can point at the
+    // field that caused it. type="url" only rules out unparseable values, not
+    // an http: or javascript: one.
+    const schemeRejection = (
+      [
+        [linkedinUrl, linkedinRef],
+        [githubUrl, githubRef],
+        [portfolioUrl, portfolioRef],
+      ] as const
+    ).find(([value]) => validateHttpsUrl(value.trim() || null));
+    if (schemeRejection) {
+      reportFieldError(HTTPS_URL_ERROR, schemeRejection[1]);
       return;
     }
 
@@ -269,30 +320,42 @@ export default function OnboardingForm({
               <Label htmlFor="linkedin_url">LinkedIn URL</Label>
               <Input
                 id="linkedin_url"
+                ref={linkedinRef}
                 type="url"
                 placeholder="https://linkedin.com/in/username"
                 value={linkedinUrl}
-                onChange={(e) => setLinkedinUrl(e.target.value)}
+                onChange={(e) => {
+                  clearLinkValidity();
+                  setLinkedinUrl(e.target.value);
+                }}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="github_url">GitHub URL</Label>
               <Input
                 id="github_url"
+                ref={githubRef}
                 type="url"
                 placeholder="https://github.com/username"
                 value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
+                onChange={(e) => {
+                  clearLinkValidity();
+                  setGithubUrl(e.target.value);
+                }}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="portfolio_url">Website URL</Label>
               <Input
                 id="portfolio_url"
+                ref={portfolioRef}
                 type="url"
                 placeholder="https://yourportfolio.com"
                 value={portfolioUrl}
-                onChange={(e) => setPortfolioUrl(e.target.value)}
+                onChange={(e) => {
+                  clearLinkValidity();
+                  setPortfolioUrl(e.target.value);
+                }}
               />
             </div>
           </div>
