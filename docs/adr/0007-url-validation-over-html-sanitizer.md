@@ -1,6 +1,6 @@
 # ADR-0007 — URL scheme validation instead of an HTML-sanitizer library for user-submitted links
 
-**Status:** Proposed 2026-07-22
+**Status:** Accepted 2026-08-18
 **TL;DR:** We use `validateHttpsUrl` at every write path and `isRenderableLink` again before rendering profile links. React escapes JSX text, while Nodemailer HTML-body interpolations use narrow `escapeHtml` encoding; SMTP headers remain plain text. DOMPurify and sanitize-html are rejected because this feature accepts URLs, not user-authored HTML.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
