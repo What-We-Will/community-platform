@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { safeTimezone } from "@/lib/utils/timezone";
 import { normalizeSubmittedUrl, validateHttpsUrl } from "@/lib/utils/url";
+import {
+  normalizeDisplayName,
+  validateDisplayName,
+} from "@/lib/utils/display-name";
 
 export type ProfileUpdateResult = { error?: string };
 
@@ -31,6 +35,12 @@ export async function updateProfile(
     return { error: "You must be signed in to update your profile." };
   }
 
+  const displayName = normalizeDisplayName(data.display_name);
+  const displayNameError = validateDisplayName(displayName);
+  if (displayNameError) {
+    return { error: displayNameError };
+  }
+
   // Validate and persist the same normalized values — the WHATWG URL parser
   // ignores surrounding and embedded whitespace, so validating the raw string
   // would accept input that differs from what gets stored.
@@ -51,7 +61,7 @@ export async function updateProfile(
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
-      display_name: data.display_name,
+      display_name: displayName,
       headline: data.headline || null,
       location: data.location || null,
       bio: data.bio || null,

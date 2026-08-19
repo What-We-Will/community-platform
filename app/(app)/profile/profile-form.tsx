@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
+import { DISPLAY_NAME_MAX_LENGTH } from "@/lib/utils/display-name";
 import {
   Card,
   CardContent,
@@ -148,6 +149,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
               id="display_name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              maxLength={DISPLAY_NAME_MAX_LENGTH}
               required
             />
           </div>

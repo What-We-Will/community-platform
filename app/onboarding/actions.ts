@@ -6,6 +6,10 @@ import nodemailer from "nodemailer";
 import { safeTimezone } from "@/lib/utils/timezone";
 import { escapeHtml } from "@/lib/utils/html";
 import { normalizeSubmittedUrl, validateHttpsUrl } from "@/lib/utils/url";
+import {
+  normalizeDisplayName,
+  validateDisplayName,
+} from "@/lib/utils/display-name";
 
 export type OnboardingResult = { error?: string };
 
@@ -34,6 +38,12 @@ export async function completeOnboarding(
     return { error: "You must be signed in to complete onboarding." };
   }
 
+  const displayName = normalizeDisplayName(data.display_name);
+  const displayNameError = validateDisplayName(displayName);
+  if (displayNameError) {
+    return { error: displayNameError };
+  }
+
   const linkedinUrl = normalizeSubmittedUrl(data.linkedin_url);
   const githubUrl = normalizeSubmittedUrl(data.github_url);
   const portfolioUrl = normalizeSubmittedUrl(data.portfolio_url);
@@ -57,7 +67,7 @@ export async function completeOnboarding(
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
-      display_name: data.display_name,
+      display_name: displayName,
       avatar_url: data.avatar_url ?? null,
       headline: data.headline || null,
       location: data.location || null,
@@ -80,7 +90,7 @@ export async function completeOnboarding(
 
   // Notify admin that a new account needs review
   await notifyAdminOfNewApplication({
-    displayName: data.display_name,
+    displayName,
     linkedinUrl,
     githubUrl,
     portfolioUrl,

@@ -5,6 +5,7 @@ import { completeOnboarding } from "./actions";
 import { updateAvatarUrl } from "@/app/(app)/profile/actions";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { TimezoneCombobox } from "@/components/shared/TimezoneCombobox";
+import { DISPLAY_NAME_MAX_LENGTH } from "@/lib/utils/display-name";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -154,6 +155,7 @@ export default function OnboardingForm({
               id="display_name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
+              maxLength={DISPLAY_NAME_MAX_LENGTH}
               required
             />
           </div>
