@@ -6,17 +6,12 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
 import type { MockedFunction } from "vitest";
 import { createClient } from "@/lib/supabase/server";
+import { makeOnboardingInput } from "@/lib/__tests__/factories";
 import { completeOnboarding } from "./actions";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 const mockCreateClient = createClient as MockedFunction<typeof createClient>;
-
-const baseInput = {
-  display_name: "Jane Doe",
-  skills: ["TypeScript"],
-  open_to_referrals: true,
-};
 
 // buildMockSupabaseClient() models read chains only — it has no upsert — and the
 // assertion target here is the upsert payload, so the write path is mocked inline.
@@ -38,10 +33,10 @@ describe("completeOnboarding — requires at least one verification link", () =>
     vi.clearAllMocks();
   });
 
-  it("errors when linkedin, github, and portfolio URLs are all empty", async () => {
+  it("should error without writing when no verification link is provided", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({ ...baseInput });
+    const result = await completeOnboarding(makeOnboardingInput());
 
     expect(result).toEqual({
       error:
@@ -50,15 +45,16 @@ describe("completeOnboarding — requires at least one verification link", () =>
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it("errors when all three URLs are whitespace-only", async () => {
+  it("should error without writing when every link is whitespace-only", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      linkedin_url: "   ",
-      github_url: "  ",
-      portfolio_url: " ",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        linkedin_url: "   ",
+        github_url: "  ",
+        portfolio_url: " ",
+      })
+    );
 
     expect(result.error).toBeDefined();
     expect(upsert).not.toHaveBeenCalled();

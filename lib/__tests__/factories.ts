@@ -1,5 +1,22 @@
 import type { FeatureFlagRow } from "@/lib/feature-flags";
 import type { Profile } from "@/lib/types";
+import type { completeOnboarding } from "@/app/onboarding/actions";
+
+// Derived from the action's own parameter type rather than restated, so a change
+// to what onboarding accepts breaks this at compile time instead of leaving the
+// tests asserting against a shape the server no longer takes.
+type OnboardingInput = Parameters<typeof completeOnboarding>[0];
+
+export function makeOnboardingInput(
+  overrides: Partial<OnboardingInput> = {}
+): OnboardingInput {
+  return {
+    display_name: "Jane Doe",
+    skills: ["TypeScript"],
+    open_to_referrals: true,
+    ...overrides,
+  };
+}
 
 type ProfileRoleRow = Pick<Profile, "role">;
 

@@ -6,17 +6,12 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
 import type { MockedFunction } from "vitest";
 import { createClient } from "@/lib/supabase/server";
+import { makeOnboardingInput } from "@/lib/__tests__/factories";
 import { completeOnboarding } from "./actions";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 const mockCreateClient = createClient as MockedFunction<typeof createClient>;
-
-const baseInput = {
-  display_name: "Jane Doe",
-  skills: ["TypeScript"],
-  open_to_referrals: true,
-};
 
 // buildMockSupabaseClient() models read chains only — it has no upsert — and the
 // assertion target here is the upsert payload, so the write path is mocked inline.
@@ -38,13 +33,14 @@ describe("completeOnboarding — persists only the links that were submitted", (
     vi.clearAllMocks();
   });
 
-  it("succeeds with only a LinkedIn URL", async () => {
+  it("should persist the link and null the rest when only LinkedIn is given", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      linkedin_url: "https://linkedin.com/in/jane",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        linkedin_url: "https://linkedin.com/in/jane",
+      })
+    );
 
     expect(result).toEqual({});
     expect(upsert).toHaveBeenCalledWith(
@@ -57,13 +53,14 @@ describe("completeOnboarding — persists only the links that were submitted", (
     );
   });
 
-  it("succeeds with only a GitHub URL", async () => {
+  it("should persist the link and null the rest when only GitHub is given", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      github_url: "https://github.com/jane",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        github_url: "https://github.com/jane",
+      })
+    );
 
     expect(result).toEqual({});
     expect(upsert).toHaveBeenCalledWith(
@@ -76,13 +73,14 @@ describe("completeOnboarding — persists only the links that were submitted", (
     );
   });
 
-  it("succeeds with only a portfolio URL", async () => {
+  it("should persist the link and null the rest when only a portfolio is given", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      portfolio_url: "https://jane.dev",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        portfolio_url: "https://jane.dev",
+      })
+    );
 
     expect(result).toEqual({});
     expect(upsert).toHaveBeenCalledWith(
@@ -95,14 +93,15 @@ describe("completeOnboarding — persists only the links that were submitted", (
     );
   });
 
-  it("succeeds when multiple links are provided", async () => {
+  it("should persist every link when more than one is given", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      linkedin_url: "https://linkedin.com/in/jane",
-      github_url: "https://github.com/jane",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        linkedin_url: "https://linkedin.com/in/jane",
+        github_url: "https://github.com/jane",
+      })
+    );
 
     expect(result).toEqual({});
     expect(upsert).toHaveBeenCalledWith(

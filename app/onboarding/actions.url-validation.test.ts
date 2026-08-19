@@ -6,17 +6,12 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
 
 import type { MockedFunction } from "vitest";
 import { createClient } from "@/lib/supabase/server";
+import { makeOnboardingInput } from "@/lib/__tests__/factories";
 import { completeOnboarding } from "./actions";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 const mockCreateClient = createClient as MockedFunction<typeof createClient>;
-
-const baseInput = {
-  display_name: "Jane Doe",
-  skills: ["TypeScript"],
-  open_to_referrals: true,
-};
 
 // buildMockSupabaseClient() models read chains only — it has no upsert — and the
 // assertion target here is the upsert payload, so the write path is mocked inline.
@@ -38,49 +33,53 @@ describe("completeOnboarding — rejects non-https or malformed URLs", () => {
     vi.clearAllMocks();
   });
 
-  it("rejects an http: URL — the admin email renders these as live hrefs", async () => {
+  it("should reject without writing when a link is http: — the admin email renders these as live hrefs", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      linkedin_url: "http://linkedin.com/in/jane",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        linkedin_url: "http://linkedin.com/in/jane",
+      })
+    );
 
     expect(result.error).toBeDefined();
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it("rejects a javascript: URL", async () => {
+  it("should reject without writing when a link is javascript:", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      linkedin_url: "javascript:alert(1)",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        linkedin_url: "javascript:alert(1)",
+      })
+    );
 
     expect(result.error).toBeDefined();
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it("rejects a data: URL", async () => {
+  it("should reject without writing when a link is data:", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      github_url: "data:text/html,<script>alert(1)</script>",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        github_url: "data:text/html,<script>alert(1)</script>",
+      })
+    );
 
     expect(result.error).toBeDefined();
     expect(upsert).not.toHaveBeenCalled();
   });
 
-  it("rejects a malformed URL", async () => {
+  it("should reject without writing when a link is unparseable", async () => {
     const upsert = mockAuthedUpsert();
 
-    const result = await completeOnboarding({
-      ...baseInput,
-      portfolio_url: "not-a-url",
-    });
+    const result = await completeOnboarding(
+      makeOnboardingInput({
+        portfolio_url: "not-a-url",
+      })
+    );
 
     expect(result.error).toBeDefined();
     expect(upsert).not.toHaveBeenCalled();
