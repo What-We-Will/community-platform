@@ -32,9 +32,15 @@ type BuildOptions = {
 const EMPTY_RESULT: MockQueryResult = { data: [], error: null };
 
 // PostgREST builder methods the app chains. Each returns the builder, so a
-// query resolves only when it is awaited.
+// query resolves only when it is awaited. Write methods belong here for the same
+// reason reads do — `upsert()` returns the builder so callers may chain
+// `.select()` onto it, and awaiting the chain is what resolves the result.
 const CHAINABLE_METHODS = [
   "select",
+  "insert",
+  "upsert",
+  "update",
+  "delete",
   "eq",
   "neq",
   "in",
@@ -117,4 +123,18 @@ export function appliedFilter(
       call.method === method &&
       JSON.stringify(call.args) === JSON.stringify(args)
   );
+}
+
+/**
+ * The arguments a write method received, for assertions that cannot be an exact
+ * match — most often "the payload must not carry this column at all", which
+ * appliedFilter's whole-args comparison cannot express. Returns undefined when
+ * the method was never called, so a missing write fails as a missing value
+ * rather than passing vacuously.
+ */
+export function writeArgs(
+  query: RecordedQuery,
+  method: string
+): unknown[] | undefined {
+  return query.calls.find((call) => call.method === method)?.args;
 }

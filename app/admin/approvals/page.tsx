@@ -21,6 +21,7 @@ export default async function ApprovalsPage() {
     .from("profiles")
     .select("id, display_name, linkedin_url, github_url, portfolio_url, created_at")
     .eq("approval_status", "pending")
+    .eq("is_onboarded", true)
     .order("created_at", { ascending: true });
 
   // Enrich with emails via service role

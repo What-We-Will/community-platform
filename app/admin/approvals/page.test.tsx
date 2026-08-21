@@ -2,6 +2,9 @@
  * @vitest-environment jsdom
  */
 import { render, screen } from "@testing-library/react";
+import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
+import { makeBaseProfile } from "@/lib/__tests__/factories";
+import type { Profile } from "@/lib/types";
 import ApprovalsPage from "./page";
 
 const { createClient, createServiceClient } = vi.hoisted(() => ({
@@ -13,22 +16,15 @@ vi.mock("@/lib/supabase/server", () => ({ createClient }));
 vi.mock("@/lib/supabase/service", () => ({ createServiceClient }));
 vi.mock("./actions", () => ({ approveUser: vi.fn(), rejectUser: vi.fn() }));
 
-type Profile = { linkedin_url?: string; github_url?: string; portfolio_url?: string };
+type Links = Pick<Profile, "linkedin_url" | "github_url" | "portfolio_url">;
 
-function mockPending(links: Profile) {
-  const profile = {
-    id: "user-1",
-    display_name: "Jane Doe",
-    linkedin_url: null,
-    github_url: null,
-    portfolio_url: null,
-    created_at: "2026-07-01T00:00:00.000Z",
-    ...links,
-  };
-  const order = vi.fn().mockResolvedValue({ data: [profile] });
-  createClient.mockResolvedValue({
-    from: () => ({ select: () => ({ eq: () => ({ order }) }) }),
+function mockPending(links: Partial<Links>) {
+  const profile = makeBaseProfile({ approval_status: "pending", ...links });
+  const { client } = buildMockSupabaseClient({
+    tables: { profiles: { data: [profile], error: null } },
   });
+
+  createClient.mockResolvedValue(client);
   createServiceClient.mockReturnValue({
     auth: {
       admin: {

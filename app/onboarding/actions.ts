@@ -64,6 +64,10 @@ export async function completeOnboarding(
     return { error: urlValidationErrors[0] };
   }
 
+  // approval_status is deliberately absent: an admin may approve someone before
+  // they finish onboarding, and naming the column here would revert that on
+  // submission. The update path leaves the stored value alone, and the insert
+  // path takes the column default of 'pending'.
   const { error } = await supabase.from("profiles").upsert(
     {
       id: user.id,
@@ -79,7 +83,6 @@ export async function completeOnboarding(
       portfolio_url: portfolioUrl,
       timezone: safeTimezone(data.timezone),
       is_onboarded: true,
-      approval_status: "pending",
     },
     { onConflict: "id" }
   );
