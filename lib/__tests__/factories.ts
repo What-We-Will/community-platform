@@ -1,6 +1,11 @@
 import type { ComponentProps } from "react";
 import type { FeatureFlagRow } from "@/lib/feature-flags";
-import type { Profile } from "@/lib/types";
+import type {
+  ConversationParticipant,
+  Event,
+  EventRsvp,
+  Profile,
+} from "@/lib/types";
 import type { completeOnboarding } from "@/app/onboarding/actions";
 import type OnboardingForm from "@/app/onboarding/onboarding-form";
 
@@ -85,4 +90,29 @@ export function makeFeatureFlagRow(
     updated_at: "2026-07-30T00:00:00.000Z",
     ...overrides,
   };
+}
+
+// Rows as the jitsi action's narrow selects return them — only the selected
+// columns, Pick-typed against the real domain types so a schema rename breaks
+// compilation instead of leaving tests asserting a stale shape.
+type ParticipantRow = Pick<ConversationParticipant, "user_id">;
+type EventHostRow = Pick<Event, "host_id">;
+type EventRsvpRow = Pick<EventRsvp, "status">;
+
+export function makeParticipantRow(
+  overrides: Partial<ParticipantRow> = {}
+): ParticipantRow {
+  return { user_id: "user-1", ...overrides };
+}
+
+export function makeEventHostRow(
+  overrides: Partial<EventHostRow> = {}
+): EventHostRow {
+  return { host_id: "host-1", ...overrides };
+}
+
+export function makeEventRsvpRow(
+  overrides: Partial<EventRsvpRow> = {}
+): EventRsvpRow {
+  return { status: "going", ...overrides };
 }
