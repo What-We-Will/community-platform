@@ -20,6 +20,7 @@ const PROTECTED_ROUTES = [
   "/projects",
   "/links",
   "/learning",
+  "/tracker",
 ];
 
 const AUTH_ROUTES = ["/login", "/signup"];
@@ -75,6 +76,14 @@ export async function proxy(request: NextRequest) {
     isApproved = result.isApproved;
   } catch (err) {
     console.error("[proxy] Error:", err);
+    // Fail closed: without a verified session, protected routes get the same
+    // treatment as an unauthenticated request. Public routes proceed.
+    if (isProtectedPath(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
     return NextResponse.next({ request });
   }
 
