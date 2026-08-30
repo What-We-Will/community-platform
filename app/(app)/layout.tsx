@@ -8,6 +8,7 @@ import {
   type FeatureFlag,
 } from "@/lib/feature-flags";
 import AppShell from "./app-shell";
+import PostHogIdentify from "./posthog-identify";
 
 export const metadata: Metadata = NOINDEX_METADATA;
 
@@ -64,6 +65,7 @@ export default async function AppLayout({
       }}
       visibleFlags={visibleFlags}
     >
+      <PostHogIdentify userId={user.id} />
       {children}
     </AppShell>
   );
