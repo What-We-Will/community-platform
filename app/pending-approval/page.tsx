@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { signOutAndReset } from "@/lib/auth/sign-out";
 import { useRouter } from "next/navigation";
 
 const CHECK_INTERVAL_MS = 10_000; // check every 10 seconds
@@ -43,12 +44,7 @@ export default function PendingApprovalPage() {
   }, []);
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    document.cookie = "profile_onboarded=; path=/; max-age=0; samesite=lax";
-    document.cookie = "profile_approved=; path=/; max-age=0; samesite=lax";
-    router.push("/login");
-    router.refresh();
+    await signOutAndReset(router);
   }
 
   return (

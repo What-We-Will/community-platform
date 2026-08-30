@@ -38,7 +38,7 @@ const BugReportDialog = dynamic(
     })),
   { ssr: false },
 );
-import { createClient } from "@/lib/supabase/client";
+import { signOutAndReset } from "@/lib/auth/sign-out";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -175,13 +175,7 @@ export default function AppShell({
   );
 
   async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    // Clear the onboarding cache cookie so the next user on this browser
-    // gets a fresh check instead of inheriting the previous session's state.
-    document.cookie = "profile_onboarded=; path=/; max-age=0; samesite=lax";
-    router.push("/login");
-    router.refresh();
+    await signOutAndReset(router);
   }
 
   return (
