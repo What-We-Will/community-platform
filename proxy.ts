@@ -146,6 +146,9 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    // `ingest/` (trailing slash) exempts only the PostHog ingest subtree —
+    // a bare or prefix-sharing path (/ingest, /ingestion) still runs through
+    // session middleware. Covered by proxy.matcher.test.ts.
+    "/((?!_next/static|_next/image|favicon.ico|ingest/|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
