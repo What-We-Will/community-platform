@@ -1,4 +1,5 @@
 import type { ComponentProps } from "react";
+import type { AnalyticsBrowserEvent } from "@/lib/analytics/types";
 import type { FeatureFlagRow } from "@/lib/feature-flags";
 import type {
   ConversationParticipant,
@@ -115,4 +116,19 @@ export function makeEventRsvpRow(
   overrides: Partial<EventRsvpRow> = {}
 ): EventRsvpRow {
   return { status: "going", ...overrides };
+}
+
+export function makeCaptureEvent(
+  overrides: Partial<AnalyticsBrowserEvent> = {}
+): AnalyticsBrowserEvent {
+  const { properties, ...rest } = overrides;
+  return {
+    event: "$pageview",
+    properties: {
+      $current_url: "https://community.example.org/dashboard",
+      $pathname: "/dashboard",
+      ...properties,
+    },
+    ...rest,
+  };
 }
