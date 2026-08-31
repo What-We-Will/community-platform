@@ -91,5 +91,11 @@ describe("scrubUrl — URL privacy scrub for analytics payloads", () => {
 
       expect(result).toBeNull();
     });
+
+    it("should return null when the URL has an opaque origin carrying an address", () => {
+      const result = scrubUrl("mailto:jane@example.com", ORIGIN);
+
+      expect(result).toBeNull();
+    });
   });
 });

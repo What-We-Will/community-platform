@@ -21,6 +21,10 @@ describe("before_send URL-surface scrub — every URL channel leaves templated a
         $referring_domain: "community.example.org",
         $prev_pageview_pathname: `/groups/quiet-search`,
         utm_source: "linkedin",
+        $session_entry_url: `${ORIGIN}/members?q=Jane%20Doe`,
+        $session_entry_pathname: `/members/${UUID}`,
+        $session_entry_referrer: "https://www.linkedin.com/in/jane-doe",
+        $session_entry_utm_source: "linkedin",
         $set_once: {
           $initial_current_url: `${ORIGIN}/members/${UUID}?q=secret`,
           $initial_pathname: `/members/${UUID}`,
@@ -69,6 +73,15 @@ describe("before_send URL-surface scrub — every URL channel leaves templated a
 
   it("should remove utm event properties when the landing URL carried campaign params", () => {
     expect(scrubbed().properties).not.toHaveProperty("utm_source");
+  });
+
+  it("should scrub the session-entry URL properties when the session began on a raw URL", () => {
+    const properties = scrubbed().properties;
+
+    expect(properties.$session_entry_url).toBe(`${ORIGIN}/members`);
+    expect(properties.$session_entry_pathname).toBe("/members/[userId]");
+    expect(properties.$session_entry_referrer).toBe("https://www.linkedin.com");
+    expect(properties).not.toHaveProperty("$session_entry_utm_source");
   });
 
   it("should scrub the $set_once initial URL properties when they carry ids and queries", () => {
