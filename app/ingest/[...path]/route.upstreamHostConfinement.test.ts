@@ -36,4 +36,22 @@ describe("PostHog ingest proxy — upstream fetch can never leave the PostHog ho
     expect(response.status).toBe(400);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("should still fetch the hard-coded PostHog host when the environment points elsewhere", async () => {
+    const originalEnv = process.env;
+    process.env = {
+      ...originalEnv,
+      NEXT_PUBLIC_POSTHOG_HOST: "https://attacker.example.com",
+    };
+
+    try {
+      await GET(new NextRequest("https://community.example.org/ingest/e/"));
+
+      expect(String(fetchSpy.mock.calls[0][0])).toBe(
+        "https://us.i.posthog.com/e/"
+      );
+    } finally {
+      process.env = originalEnv;
+    }
+  });
 });

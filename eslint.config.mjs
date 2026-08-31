@@ -37,6 +37,18 @@ const eslintConfig = defineConfig([
           message:
             "data-ph-capture-attribute-* must be written as a static literal JSX attribute, not an object property (docs/adr/0013-posthog-product-analytics.md).",
         },
+        {
+          selector:
+            "Property[computed=true][key.quasis.0.value.raw=/^data-ph-capture-attribute-/]",
+          message:
+            "data-ph-capture-attribute-* names must not be constructed dynamically (docs/adr/0013-posthog-product-analytics.md).",
+        },
+        {
+          selector:
+            "Property[computed=true][key.left.value=/^data-ph-capture-attribute-/]",
+          message:
+            "data-ph-capture-attribute-* names must not be constructed dynamically (docs/adr/0013-posthog-product-analytics.md).",
+        },
       ],
     },
   },
