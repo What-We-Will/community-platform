@@ -6,7 +6,7 @@ import { buildBeforeSend } from "./before-send";
  * is load-bearing: several SDK surfaces treat `undefined` as "follow remote
  * config", so a dashboard toggle could otherwise enable them with no code
  * review. Do not remove a flag because "the dashboard has it off" — see
- * docs/adr/posthog-product-analytics.md.
+ * docs/adr/0013-posthog-product-analytics.md.
  *
  * `defaults` is pinned to the snapshot we reviewed; adopting a newer snapshot
  * requires reviewing PostHog's behavior-change notes first (ADR policy).

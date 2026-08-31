@@ -1,23 +1,9 @@
-# PostHog for product analytics
+# ADR-0013 — PostHog for product analytics
 
-**Status:** Draft 2026-08-30
+**Status:** Proposed 2026-08-31
 **TL;DR:** We adopt PostHog Cloud (US) for product analytics of the authenticated member app only, self-installed behind a first-party proxy, with a privacy posture codified here as acceptance criteria: pseudonymous UUIDs only, masked autocapture, session recording prohibited, every remote-configurable capture surface disabled in code, and a full URL scrub. Production capture stays off until the named approver signs off and a synthetic-project validation passes.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
-
-<!--
-FILE NAME
-
-Save this file as `docs/adr/NNNN-kebab-case-title.md`, where:
-  - NNNN is the next available 4-digit number, zero-padded (0001, 0002, …, 0042).
-  - kebab-case-title is a short, lowercase, hyphen-separated slug of the title.
-
-Numbers are permanent. Drafts carry no number; the number is claimed when the
-PR opens and the status flips to Proposed.
-
-Before merging, strip ALL HTML comments from this file — including this top
-block and the comments inside each body section.
--->
 
 ## Context
 
