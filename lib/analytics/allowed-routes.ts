@@ -3,7 +3,7 @@
  * Everything else — auth, recovery, onboarding, pending-approval, the public
  * marketing site — emits nothing. Never convert this to a deny-list and never
  * add a public route: capture scope changes require an ADR amendment
- * (see docs/adr/posthog-product-analytics.md).
+ * (see docs/adr/0013-posthog-product-analytics.md).
  */
 export const CAPTURABLE_ROUTE_PREFIXES = [
   "/dashboard",
