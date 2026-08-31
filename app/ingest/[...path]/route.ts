@@ -1,5 +1,9 @@
 import type { NextRequest } from "next/server";
 
+// US-cloud only (ADR-0013). Hard-coded on purpose: deriving the event host
+// from an env value would let a mistaken or compromised variable re-point
+// this public endpoint at an arbitrary HTTPS origin.
+const EVENT_HOST = "https://us.i.posthog.com";
 const ASSET_HOST = "https://us-assets.i.posthog.com";
 
 // Only what PostHog needs to interpret the payload. Everything else — Cookie
@@ -15,7 +19,7 @@ function buildUpstreamUrl(nextUrl: NextRequest["nextUrl"]): URL | null {
   const base =
     path.startsWith("/static/") || path.startsWith("/array/")
       ? ASSET_HOST
-      : (process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com");
+      : EVENT_HOST;
   const url = new URL(path, base);
   // A path remainder beginning with "//" (or "\\" — WHATWG treats backslashes
   // as slashes) is protocol-relative and would re-target the fetch at an
