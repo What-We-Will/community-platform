@@ -37,6 +37,15 @@ describe("PostHog client config — privacy-mandatory settings", () => {
     expect(config.disable_surveys).toBe(true);
   });
 
+  it("should disable conversations and product tours locally so dashboard-launched surfaces cannot collect free-form input", () => {
+    expect(config.disable_conversations).toBe(true);
+    expect(config.disable_product_tours).toBe(true);
+  });
+
+  it("should disable web experiments locally rather than relying on the SDK default", () => {
+    expect(config.disable_web_experiments).toBe(true);
+  });
+
   it("should disable exception capture locally so $exception events never send", () => {
     expect(config.capture_exceptions).toBe(false);
   });
