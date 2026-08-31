@@ -57,5 +57,10 @@ export function scrubUrl(raw: string, origin: string): string | null {
   if (url.origin === origin) {
     return url.origin + templatePathname(url.pathname);
   }
+  // Opaque origins (mailto:, blob:, android-app:, …) stringify to the literal
+  // "null" and can carry addresses in the body — fail closed.
+  if (url.origin === "null") {
+    return null;
+  }
   return url.origin;
 }
