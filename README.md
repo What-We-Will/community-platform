@@ -14,8 +14,9 @@ A community membership platform for job seekers and mutual support. Members can 
 
 ## Prerequisites
 
-- Node.js ^20.17.0 || >=22.9.0
-- npm >=10.8.2 (or yarn/pnpm)
+- Node.js: the exact development version is in `.nvmrc`. Any version in
+  `^20.17.0 || >=22.9.0` (see `package.json#engines`) is supported.
+- npm >=10.8.2 (npm 11.19.0 preferred; see `package.json#packageManager`)
 - A [Supabase](https://supabase.com) project (free tier works)
 
 ## Getting started
@@ -25,8 +26,24 @@ A community membership platform for job seekers and mutual support. Members can 
 ```bash
 git clone https://github.com/What-We-Will/community-platform.git
 cd community-platform
+```
+
+Select the project's Node.js version from the repository root, then install:
+
+```bash
+fnm install && fnm use    # or: nvm install && nvm use
 npm install
 ```
+
+mise users: enable `.nvmrc` support once, then `mise install`:
+
+```bash
+mise settings add idiomatic_version_file_enable_tools node
+mise settings add idiomatic_version_file_disable_files node:package.json
+```
+
+The second setting stops mise from resolving the `package.json#engines` range
+instead of the pinned `.nvmrc` version.
 
 ### 2. Environment variables
 
