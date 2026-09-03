@@ -14,8 +14,8 @@ A community membership platform for job seekers and mutual support. Members can 
 
 ## Prerequisites
 
-- Node.js 18+
-- npm (or yarn/pnpm)
+- Node.js ^20.17.0 || >=22.9.0
+- npm >=10.8.2 (or yarn/pnpm)
 - A [Supabase](https://supabase.com) project (free tier works)
 
 ## Getting started
