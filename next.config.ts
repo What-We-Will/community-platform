@@ -12,6 +12,11 @@ const nextConfig: NextConfig = {
         ? `https://${process.env.VERCEL_URL}`
         : undefined),
   },
+  // PostHog sends trailing-slash-sensitive paths (/ingest/e/); without this,
+  // Next's trailing-slash redirect breaks ingest requests before they reach
+  // app/ingest/[...path]/route.ts, which proxies them with a header allowlist
+  // so cookies never reach PostHog.
+  skipTrailingSlashRedirect: true,
   async redirects() {
     return [
       {
