@@ -35,15 +35,16 @@ fnm install && fnm use    # or: nvm install && nvm use
 npm install
 ```
 
-mise users: enable `.nvmrc` support once, then `mise install`:
+mise users: the repository's `mise.toml` enables `.nvmrc` support, so no
+per-machine configuration is needed:
 
 ```bash
-mise settings add idiomatic_version_file_enable_tools node
-mise settings add idiomatic_version_file_disable_files node:package.json
+mise trust
+mise install
 ```
 
-The second setting stops mise from resolving the `package.json#engines` range
-instead of the pinned `.nvmrc` version.
+Those committed settings also stop mise from resolving the
+`package.json#devEngines.runtime` range instead of the pinned `.nvmrc` version.
 
 ### 2. Environment variables
 
