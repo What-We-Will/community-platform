@@ -1,6 +1,6 @@
 # ADR-0014 — Calendar versioning for production release tags
 
-**Status:** Proposed 2026-09-04
+**Status:** Accepted 2026-09-04
 **TL;DR:** Tag each successful production deploy of a not-yet-tagged commit on `main` with a CalVer git tag (`vYYYY.MM.DD` in UTC, suffixed `.1`/`.2` for multiple same-day deploys) so the repo records what shipped and when. Instant rollbacks and out-of-band database changes are deliberately left untagged.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
