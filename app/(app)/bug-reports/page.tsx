@@ -64,7 +64,13 @@ export default async function BugReportsPage() {
         <h1 className="text-2xl font-bold tracking-tight">Bug Reports</h1>
       </div>
 
-      {reports.length === 0 ? (
+      {error ? (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <p className="text-destructive">
+            Failed to load bug reports. Please try again later.
+          </p>
+        </div>
+      ) : reports.length === 0 ? (
         <p className="text-sm text-muted-foreground">No bug reports yet.</p>
       ) : (
         <div className="space-y-4">
