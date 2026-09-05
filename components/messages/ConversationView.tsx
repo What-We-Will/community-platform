@@ -22,6 +22,7 @@ import { MessageBubble } from "./MessageBubble";
 import { MessageInput } from "./MessageInput";
 import { TypingIndicator } from "./TypingIndicator";
 import type { MessageWithSender, Profile, Message } from "@/lib/types";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 
 interface CurrentUser {
   id: string;
@@ -60,6 +61,7 @@ function buildSenderProfile(user: CurrentUser): Profile {
     location: null,
     skills: [],
     open_to_referrals: false,
+    enabled_features: [...FEATURE_KEYS],
     linkedin_url: null,
     github_url: null,
     portfolio_url: null,

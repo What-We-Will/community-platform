@@ -1,6 +1,7 @@
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { ConversationView } from "../ConversationView";
 import type { Profile } from "@/lib/types";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 
 // Keep stable — an unstable mock masks stale-closure bugs in effect deps.
 const routerMock = { push: vi.fn(), refresh: vi.fn() };
@@ -99,6 +100,7 @@ const OTHER_USER: Profile = {
   location: null,
   skills: [],
   open_to_referrals: false,
+  enabled_features: [...FEATURE_KEYS],
   role: "member",
   approval_status: "approved",
   linkedin_url: null,
