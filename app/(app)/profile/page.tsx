@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import ProfileForm from "./profile-form";
+import FeaturePreferencesForm from "./feature-preferences-form";
 import type { Profile } from "@/lib/types";
 
 export default async function ProfilePage() {
@@ -34,6 +35,9 @@ export default async function ProfilePage() {
         </p>
       </div>
       <ProfileForm profile={profile as Profile} />
+      <FeaturePreferencesForm
+        initialFeatures={(profile as Profile).enabled_features}
+      />
     </div>
   );
 }
