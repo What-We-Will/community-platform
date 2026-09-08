@@ -27,7 +27,7 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, avatar_url, is_onboarded, role")
+    .select("display_name, avatar_url, is_onboarded, role, enabled_features")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -63,6 +63,7 @@ export default async function AppLayout({
         isAdmin: profile?.role === "admin",
       }}
       visibleFlags={visibleFlags}
+      enabledFeatures={profile.enabled_features}
     >
       {children}
     </AppShell>

@@ -25,6 +25,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { FeatureFlag } from "@/lib/feature-flags";
+import type { FeatureKey } from "@/lib/feature-keys";
+import { isFeatureEnabledForMember } from "@/lib/feature-preferences";
 import dynamic from "next/dynamic";
 
 const BugReportDialog = dynamic(
@@ -52,14 +54,16 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** Nav entries without a flag are always visible. */
+  /** Platform rollout gate. Entries without one are never flag-gated. */
   flag?: FeatureFlag;
+  /** Member preference. A separate key space from flag — both must pass. */
+  feature?: FeatureKey;
 }
 
 const mainNavItems: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/events", label: "Events", icon: Calendar },
-  { href: "/groups", label: "Groups", icon: UsersRound },
+  { href: "/events", label: "Events", icon: Calendar, feature: "events" },
+  { href: "/groups", label: "Groups", icon: UsersRound, feature: "discussions" },
   { href: "/messages", label: "Messages", icon: MessageSquare },
   { href: "/members", label: "Members", icon: UserSearch },
 ];
@@ -70,10 +74,10 @@ const myToolsNavItems: NavItem[] = [
 ];
 
 const resourcesNavItems: NavItem[] = [
-  { href: "/jobs",         label: "Ghost Job Board", icon: Briefcase, flag: "ghostJobBoard" },
+  { href: "/jobs",         label: "Ghost Job Board", icon: Briefcase, flag: "ghostJobBoard", feature: "job_referrals" },
   { href: "/learning",     label: "Group Learning",  icon: BookMarked, flag: "groupLearning" },
   { href: "/projects",     label: "Projects",        icon: GitFork, flag: "projects" },
-  { href: "/links",        label: "Resource Hub",    icon: Link2 },
+  { href: "/links",        label: "Resource Hub",    icon: Link2, feature: "resource_hub" },
   { href: "https://warn-tracker.streamlit.app/", label: "WARN Tracker", icon: Globe },
 ];
 
@@ -81,12 +85,21 @@ const profileNavItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserCircle },
 ];
 
-/** Nav entries gated by a flag are dropped unless their flag resolved visible. */
+/**
+ * An entry survives only if both of its declared gates pass. Preferences shape
+ * the nav alone — they are not a lock, so direct URL access is unaffected.
+ */
 function visibleItems(
   items: NavItem[],
-  flags: Record<FeatureFlag, boolean>
+  flags: Record<FeatureFlag, boolean>,
+  enabledFeatures: FeatureKey[]
 ): NavItem[] {
-  return items.filter((item) => !item.flag || flags[item.flag]);
+  const profile = { enabled_features: enabledFeatures };
+  return items.filter(
+    (item) =>
+      (!item.flag || flags[item.flag]) &&
+      (!item.feature || isFeatureEnabledForMember(profile, item.feature))
+  );
 }
 
 interface AppShellProps {
@@ -101,9 +114,16 @@ interface AppShellProps {
   };
   /** Server-resolved visibility per flag; never the resolver itself. */
   visibleFlags: Record<FeatureFlag, boolean>;
+  /** The member's own selection, read from their profile. */
+  enabledFeatures: FeatureKey[];
 }
 
-export default function AppShell({ children, user, visibleFlags }: AppShellProps) {
+export default function AppShell({
+  children,
+  user,
+  visibleFlags,
+  enabledFeatures,
+}: AppShellProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -135,8 +155,16 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
     }
   }, []);
 
-  const visibleMyToolsItems = visibleItems(myToolsNavItems, visibleFlags);
-  const visibleResourcesItems = visibleItems(resourcesNavItems, visibleFlags);
+  const visibleMyToolsItems = visibleItems(
+    myToolsNavItems,
+    visibleFlags,
+    enabledFeatures
+  );
+  const visibleResourcesItems = visibleItems(
+    resourcesNavItems,
+    visibleFlags,
+    enabledFeatures
+  );
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -194,7 +222,7 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
           </div>
 
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-            {visibleItems(mainNavItems, visibleFlags).map((item) => (
+            {visibleItems(mainNavItems, visibleFlags, enabledFeatures).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -288,7 +316,7 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
             </a>
 
             <Separator className="my-2" />
-            {visibleItems(profileNavItems, visibleFlags).map((item) => (
+            {visibleItems(profileNavItems, visibleFlags, enabledFeatures).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
