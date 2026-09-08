@@ -5,6 +5,7 @@ import type {
   ConversationParticipant,
   Event,
   EventRsvp,
+  FeatureAdoptionRow,
   Profile,
 } from "@/lib/types";
 import type { completeOnboarding } from "@/app/onboarding/actions";
@@ -90,6 +91,17 @@ export function makeFeatureFlagRow(
     enabled: false,
     fail_mode: "closed",
     updated_at: "2026-07-30T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+export function makeAdoptionRow(
+  overrides: Partial<FeatureAdoptionRow> = {}
+): FeatureAdoptionRow {
+  return {
+    feature: "events",
+    enabled_count: 0,
+    member_total: 3,
     ...overrides,
   };
 }

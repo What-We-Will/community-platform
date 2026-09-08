@@ -12,6 +12,7 @@ import {
   Menu,
   LogOut,
   ShieldCheck,
+  SlidersHorizontal,
   Briefcase,
   ClipboardList,
   Link2,
@@ -79,6 +80,11 @@ const resourcesNavItems: NavItem[] = [
 
 const profileNavItems: NavItem[] = [
   { href: "/profile", label: "My Profile", icon: UserCircle },
+];
+
+const adminNavItems: NavItem[] = [
+  { href: "/admin/approvals", label: "Approvals", icon: ShieldCheck },
+  { href: "/admin/feature-preferences", label: "Feature preferences", icon: SlidersHorizontal },
 ];
 
 /** Nav entries gated by a flag are dropped unless their flag resolved visible. */
@@ -303,14 +309,17 @@ export default function AppShell({ children, user, visibleFlags }: AppShellProps
             {user.isAdmin && (
               <>
                 <Separator className="my-2" />
-                <Link
-                  href="/admin/approvals"
-                  onClick={() => setSidebarOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <ShieldCheck className="size-5 shrink-0" />
-                  Approvals
-                </Link>
+                {adminNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <item.icon className="size-5 shrink-0" />
+                    {item.label}
+                  </Link>
+                ))}
               </>
             )}
           </nav>

@@ -64,6 +64,15 @@ export interface ProfileUpdate {
   is_onboarded?: boolean;
 }
 
+// One row of get_feature_adoption_counts(). `feature` is a plain string, not a
+// FeatureKey: the RPC's key list is maintained separately from FEATURE_KEYS,
+// and the admin page treats any divergence as a load failure.
+export interface FeatureAdoptionRow {
+  feature: string;
+  enabled_count: number;
+  member_total: number;
+}
+
 // ─── Messaging ───────────────────────────────────────────────────────────────
 
 export interface Conversation {
