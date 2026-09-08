@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { safeTimezone } from "@/lib/utils/timezone";
+import { validateEnabledFeatures } from "@/lib/feature-preferences";
 import { normalizeSubmittedUrl, validateHttpsUrl } from "@/lib/utils/url";
 import {
   normalizeDisplayName,
@@ -116,6 +117,30 @@ export async function updateAvatarUrl(avatarUrl: string): Promise<{ error?: stri
   if (error) return { error: error.message };
   revalidatePath("/profile");
   revalidatePath("/members");
+  return {};
+}
+
+/** Writes the caller's own row only — no target user id is accepted. */
+export async function updateEnabledFeatures(
+  input: unknown
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const enabledFeatures = validateEnabledFeatures(input);
+  if (!enabledFeatures.ok) return { error: enabledFeatures.error };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ enabled_features: enabledFeatures.value })
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+
+  // The sidebar is built in the app layout, so the layout has to be rebuilt for
+  // the new selection to appear.
+  revalidatePath("/", "layout");
   return {};
 }
 
