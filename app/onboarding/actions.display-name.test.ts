@@ -11,18 +11,16 @@ import {
   DISPLAY_NAME_REQUIRED_ERROR,
   DISPLAY_NAME_TOO_LONG_ERROR,
 } from "@/lib/utils/display-name";
+import { makeOnboardingInput } from "@/lib/__tests__/factories";
 import { completeOnboarding } from "./actions";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 
-const baseInput = {
-  display_name: "Jane Doe",
-  skills: ["TypeScript"],
-  open_to_referrals: true,
+const baseInput = makeOnboardingInput({
   linkedin_url: "https://linkedin.com/in/jane",
-};
+});
 
 // buildMockSupabaseClient() models read chains only — it has no upsert — and the
 // assertion target here is the upsert payload, so the write path is mocked inline.

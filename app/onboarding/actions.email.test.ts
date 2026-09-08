@@ -13,16 +13,14 @@ vi.mock("nodemailer", () => ({ default: { createTransport } }));
 
 import type { MockedFunction } from "vitest";
 import { createClient } from "@/lib/supabase/server";
+import { makeOnboardingInput } from "@/lib/__tests__/factories";
 import { completeOnboarding } from "./actions";
 
 const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 
-const validInput = {
-  display_name: "Jane Doe",
-  skills: ["TypeScript"],
-  open_to_referrals: true,
+const validInput = makeOnboardingInput({
   linkedin_url: "https://linkedin.com/in/jane",
-};
+});
 
 function mockAuthedClient() {
   const upsert = vi.fn().mockResolvedValue({ error: null });
