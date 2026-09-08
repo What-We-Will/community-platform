@@ -1,4 +1,5 @@
 import { FEATURE_KEYS, type FeatureKey } from "@/lib/feature-keys";
+import type { Profile } from "@/lib/types";
 
 /** Member-facing copy: what a member sees, not what the platform ships. */
 export const FEATURE_DESCRIPTIONS: Record<
@@ -58,4 +59,15 @@ export function validateEnabledFeatures(
   }
 
   return { ok: true, value: FEATURE_KEYS.filter((key) => seen.has(key)) };
+}
+
+/**
+ * Whether the member opted into a feature. Preference only: it never reads
+ * flag state, and a surface governed by both must check both.
+ */
+export function isFeatureEnabledForMember(
+  profile: Pick<Profile, "enabled_features">,
+  key: FeatureKey
+): boolean {
+  return profile.enabled_features.includes(key);
 }
