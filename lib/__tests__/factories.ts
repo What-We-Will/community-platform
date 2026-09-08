@@ -22,6 +22,7 @@ export function makeOnboardingInput(
     display_name: "Jane Doe",
     skills: ["TypeScript"],
     open_to_referrals: true,
+    enabled_features: [...FEATURE_KEYS],
     ...overrides,
   };
 }
@@ -42,6 +43,7 @@ export function makeOnboardingInitialData(
     linkedin_url: "",
     github_url: "",
     portfolio_url: "",
+    enabled_features: [...FEATURE_KEYS],
     ...overrides,
   };
 }

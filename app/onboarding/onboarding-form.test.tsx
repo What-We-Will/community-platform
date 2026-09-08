@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { makeOnboardingInitialData } from "@/lib/__tests__/factories";
 import OnboardingForm from "./onboarding-form";
 import type { completeOnboarding } from "./actions";
 import {
@@ -26,17 +27,7 @@ vi.mock("@/app/(app)/profile/actions", () => ({
   updateAvatarUrl: vi.fn(),
 }));
 
-const initialData = {
-  display_name: "Jane Doe",
-  headline: "",
-  location: "",
-  bio: "",
-  skills: [],
-  open_to_referrals: false,
-  linkedin_url: "",
-  github_url: "",
-  portfolio_url: "",
-};
+const initialData = makeOnboardingInitialData({ display_name: "Jane Doe" });
 
 describe("OnboardingForm — verification link group", () => {
   beforeEach(() => {
