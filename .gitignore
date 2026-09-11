@@ -56,3 +56,6 @@ pnpm-lock.yaml
 
 # Claude Code personal settings
 .claude/settings.local.json
+
+# mise personal overrides (repo-level mise.toml is committed)
+mise.local.toml
