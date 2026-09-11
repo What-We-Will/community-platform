@@ -9,13 +9,19 @@ import type { Profile } from "@/lib/types";
 
 type MembersPageProps = {
   searchParams: Promise<{
-    q?: string;
-    skill?: string;
-    referrals?: string;
+    q?: string | string[];
+    skill?: string | string[];
+    referrals?: string | string[];
     // A repeated `?role=` arrives as an array; parseRoleFilter rejects it.
-    role?: string | string[];
+    role?: string | string[] | string[];
   }>;
 };
+
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default async function MembersPage({ searchParams }: MembersPageProps) {
   const params = await searchParams;
