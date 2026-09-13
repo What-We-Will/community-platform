@@ -7,7 +7,8 @@
       "Read(./.supabase/**)",
       "Read(./.next/**)",
       "Read(./node_modules/**)",
-      "Read(./tsconfig.tsbuildinfo)" 
+      "Read(./tsconfig.tsbuildinfo)",
+      "Bash(gh *)"
     ]
   }
 }
