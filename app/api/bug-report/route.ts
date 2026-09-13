@@ -1,20 +1,27 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import type { BugReportInsert } from "@/lib/types";
 
 const GMAIL_USER = process.env.GMAIL_USER;
 const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 const BUG_REPORT_EMAIL =
   process.env.BUG_REPORT_EMAIL ?? "engineers@wwwrise.org";
 
-export async function POST(request: Request) {
- if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
-   console.error("[bug-report] Missing GMAIL_USER or GMAIL_APP_PASSWORD");
-    return NextResponse.json(
-      { error: "Bug reporting is not configured on this server." },
-      { status: 503 }
-    );
-  }
+// Reporter-supplied text is interpolated into the admin email's HTML body.
+// Escape it so a report can't inject markup into the admin's inbox (phishing
+// surface, not browser XSS).
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
+export async function POST(request: Request) {
   try {
     const body = (await request.json()) as {
       email?: string;
@@ -26,40 +33,114 @@ export async function POST(request: Request) {
     if (!description) {
       return NextResponse.json({ error: "Description is required." }, { status: 400 });
     }
-
-    const reporter = body.email?.trim();
-    if (!reporter) {
-      return NextResponse.json({ error: "Email is required." }, { status: 400 });
+    if (description.length > 5000) {
+      return NextResponse.json({ error: "Description is too long." }, { status: 400 });
     }
 
     const steps = body.steps?.trim();
-    const url = request.headers.get("referer") ?? "unknown";
+    if (steps && steps.length > 5000) {
+      return NextResponse.json({ error: "Steps are too long." }, { status: 400 });
+    }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_APP_PASSWORD,
-      },
-    });
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    await transporter.sendMail({
-      from: `Bug Reports <${GMAIL_USER}>`,
-      to: BUG_REPORT_EMAIL,
-      replyTo: reporter,
-      subject: `[Bug Report] from ${reporter}`,
-      html: `
+    let reporterId: string | null = null;
+    let reporterEmail: string | null = null;
+    let reporter: string;
+
+    if (user) {
+      reporterId = user.id;
+      reporterEmail = null;
+      reporter = user.email ?? "";
+    } else {
+      const email = body.email?.trim();
+      if (!email) {
+        return NextResponse.json({ error: "Email is required." }, { status: 400 });
+      }
+      // Reject malformed addresses. The regex also excludes the CR/LF that
+      // could otherwise inject extra headers into the admin email's replyTo
+      // or subject (this value is unverified reporter input).
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
+      }
+      reporterId = null;
+      reporterEmail = email;
+      reporter = email;
+    }
+
+    const pageUrl = request.headers.get("referer") ?? null;
+    const userAgent = request.headers.get("user-agent") ?? null;
+
+    // The insert and the email are independent best-effort side effects, so
+    // run them concurrently rather than adding the SMTP round-trip on top of
+    // the insert latency. Each resolves to its own success flag and never
+    // rejects, so Promise.all won't short-circuit on one failing.
+    const persist = async (): Promise<boolean> => {
+      try {
+        const service = createServiceClient();
+        const insertPayload: BugReportInsert = {
+          reporter_id: reporterId,
+          reporter_email: reporterEmail,
+          description,
+          steps: steps || null,
+          page_url: pageUrl,
+          user_agent: userAgent,
+        };
+        const { error } = await service.from("bug_reports").insert(insertPayload);
+        if (error) {
+          console.error("[bug-report] insert failed", error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.error("[bug-report] insert failed", e);
+        return false;
+      }
+    };
+
+    const notify = async (): Promise<boolean> => {
+      if (!GMAIL_USER || !GMAIL_APP_PASSWORD) return false;
+      try {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: GMAIL_USER,
+            pass: GMAIL_APP_PASSWORD,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `Bug Reports <${GMAIL_USER}>`,
+          to: BUG_REPORT_EMAIL,
+          replyTo: reporter,
+          subject: `[Bug Report] from ${reporter}`,
+          html: `
         <h2>Bug Report</h2>
-        <p><strong>Reporter:</strong> ${reporter}</p>
-        <p><strong>Page:</strong> ${url}</p>
+        <p><strong>Reporter:</strong> ${escapeHtml(reporter)}</p>
+        <p><strong>Page:</strong> ${escapeHtml(pageUrl ?? "unknown")}</p>
         <hr />
         <h3>Description</h3>
-        <p style="white-space:pre-wrap">${description}</p>
-        ${steps ? `<h3>Steps to Reproduce</h3><p style="white-space:pre-wrap">${steps}</p>` : ""}
+        <p style="white-space:pre-wrap">${escapeHtml(description)}</p>
+        ${steps ? `<h3>Steps to Reproduce</h3><p style="white-space:pre-wrap">${escapeHtml(steps)}</p>` : ""}
       `,
-    });
+        });
+        return true;
+      } catch (e) {
+        console.error("[bug-report] email failed", e);
+        return false;
+      }
+    };
 
-    return NextResponse.json({ success: true });
+    const [insertOk, emailOk] = await Promise.all([persist(), notify()]);
+
+    if (insertOk || emailOk) {
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
   } catch (e) {
     console.error("[bug-report] Error:", e);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
