@@ -21,6 +21,7 @@ const PROTECTED_ROUTES = [
   "/links",
   "/learning",
   "/tracker",
+  "/bug-reports",
 ];
 
 const AUTH_ROUTES = ["/login", "/signup"];
