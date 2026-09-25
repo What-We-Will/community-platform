@@ -1,0 +1,6 @@
+# Lets mise read the pinned Node version from .nvmrc. The disable_files entry
+# keeps mise from preferring package.json#devEngines.runtime (a range) over the
+# exact .nvmrc pin. Tool versions belong in .nvmrc, not here.
+[settings]
+idiomatic_version_file_enable_tools = ["node"]
+idiomatic_version_file_disable_files = ["node:package.json"]
