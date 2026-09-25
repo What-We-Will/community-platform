@@ -1,6 +1,6 @@
 # ADR-0013 — PostHog for product analytics
 
-**Status:** Proposed 2026-08-31
+**Status:** Accepted 2026-09-25
 **TL;DR:** We adopt PostHog Cloud (US) for product analytics of the authenticated member app only, self-installed behind a first-party proxy, with a privacy posture codified here as acceptance criteria: pseudonymous UUIDs only, masked autocapture, session recording prohibited, every remote-configurable capture surface disabled in code, and a full URL scrub. Production capture stays off until the named approver signs off and a synthetic-project validation passes.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
