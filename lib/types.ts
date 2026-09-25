@@ -1,3 +1,4 @@
+import type { FeatureKey } from "@/lib/feature-keys";
 // Derived from PROFILE_ROLES so the role vocabulary has one source of truth.
 import type { ProfileRole } from "@/lib/utils/roles";
 export type { ProfileRole };
@@ -14,6 +15,7 @@ export interface Profile {
   location: string | null;
   skills: string[];
   open_to_referrals: boolean;
+  enabled_features: FeatureKey[];
   linkedin_url: string | null;
   github_url: string | null;
   portfolio_url: string | null;
@@ -36,6 +38,7 @@ export interface ProfileInsert {
   location?: string | null;
   skills?: string[];
   open_to_referrals?: boolean;
+  enabled_features?: FeatureKey[];
   linkedin_url?: string | null;
   github_url?: string | null;
   portfolio_url?: string | null;
@@ -53,6 +56,7 @@ export interface ProfileUpdate {
   location?: string | null;
   skills?: string[];
   open_to_referrals?: boolean;
+  enabled_features?: FeatureKey[];
   linkedin_url?: string | null;
   github_url?: string | null;
   portfolio_url?: string | null;

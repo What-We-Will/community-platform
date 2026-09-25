@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 
 import MemberCard from "../MemberCard";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 import type { Profile, ProfileRole } from "@/lib/types";
 
 function makeProfile(overrides: Partial<Profile> = {}): Profile {
@@ -14,6 +15,7 @@ function makeProfile(overrides: Partial<Profile> = {}): Profile {
     location: null,
     skills: [],
     open_to_referrals: false,
+    enabled_features: [...FEATURE_KEYS],
     linkedin_url: null,
     github_url: null,
     portfolio_url: null,

@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import type { FeatureFlagRow } from "@/lib/feature-flags";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 import type {
   ConversationParticipant,
   Event,
@@ -64,6 +65,7 @@ export function makeBaseProfile(overrides: Partial<Profile> = {}): Profile {
     location: null,
     skills: [],
     open_to_referrals: false,
+    enabled_features: [...FEATURE_KEYS],
     linkedin_url: null,
     github_url: null,
     portfolio_url: null,

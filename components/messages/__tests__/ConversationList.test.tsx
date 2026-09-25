@@ -2,6 +2,7 @@ import type { Mock } from "vitest";
 import { render, act, screen } from "@testing-library/react";
 import { ConversationList } from "../ConversationList";
 import type { ConversationWithDetails } from "@/lib/types";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 
 const pushMock = vi.fn();
 const refreshMock = vi.fn();
@@ -59,6 +60,7 @@ const OTHER_USER = {
   location: null,
   skills: [],
   open_to_referrals: false,
+  enabled_features: [...FEATURE_KEYS],
   role: "member" as const,
   approval_status: "approved" as const,
   linkedin_url: null,
