@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import type { FeatureFlag } from "@/lib/feature-flags";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 import AppShell from "./app-shell";
 
 vi.mock("next/navigation", () => ({
@@ -35,6 +36,9 @@ const baseUser = {
   unreadCount: 0,
 };
 
+// These cases isolate flag behavior, so every member preference stays on.
+const allFeatures = [...FEATURE_KEYS];
+
 function allFlags(overrides: Partial<Record<FeatureFlag, boolean>> = {}) {
   return {
     jobApplicationTracker: false,
@@ -57,7 +61,7 @@ describe("AppShell nav visibility", () => {
 
   it("should hide the Job Application Tracker entry for a member when the flag is off", () => {
     render(
-      <AppShell user={baseUser} visibleFlags={allFlags({ jobApplicationTracker: false })}>
+      <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ jobApplicationTracker: false })}>
         <div />
       </AppShell>
     );
@@ -69,7 +73,7 @@ describe("AppShell nav visibility", () => {
 
   it("should show the Job Application Tracker entry for a member when the flag is on", () => {
     render(
-      <AppShell user={baseUser} visibleFlags={allFlags({ jobApplicationTracker: true })}>
+      <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ jobApplicationTracker: true })}>
         <div />
       </AppShell>
     );
@@ -85,7 +89,7 @@ describe("AppShell nav visibility", () => {
     render(
       <AppShell
         user={{ ...baseUser, isAdmin: true }}
-        visibleFlags={allFlags({ jobApplicationTracker: true })}
+        enabledFeatures={allFeatures} visibleFlags={allFlags({ jobApplicationTracker: true })}
       >
         <div />
       </AppShell>
@@ -98,7 +102,7 @@ describe("AppShell nav visibility", () => {
 
   it("should keep unflagged nav sections fully visible when every flag is off", () => {
     render(
-      <AppShell user={baseUser} visibleFlags={allFlags()}>
+      <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags()}>
         <div />
       </AppShell>
     );
@@ -110,7 +114,7 @@ describe("AppShell nav visibility", () => {
   describe("Job Board nav entry", () => {
     it("should hide the Job Board entry for a member when ghostJobBoard is off", () => {
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ ghostJobBoard: false })}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ ghostJobBoard: false })}>
           <div />
         </AppShell>
       );
@@ -120,7 +124,7 @@ describe("AppShell nav visibility", () => {
 
     it("should show the Job Board entry for a member when ghostJobBoard is on", () => {
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ ghostJobBoard: true })}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ ghostJobBoard: true })}>
           <div />
         </AppShell>
       );
@@ -135,7 +139,7 @@ describe("AppShell nav visibility", () => {
       render(
         <AppShell
           user={{ ...baseUser, isAdmin: true }}
-          visibleFlags={allFlags({ ghostJobBoard: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ ghostJobBoard: true })}
         >
           <div />
         </AppShell>
@@ -145,11 +149,10 @@ describe("AppShell nav visibility", () => {
     });
 
     it("should keep the Resources header and its two unflagged siblings visible when every Resources flag is off", () => {
-      // /jobs, /learning, and /projects all carry flags as of this phase.
-      // /links and WARN Tracker never carry a flag, so the section can never
-      // empty and the header must not disappear.
+      // WARN Tracker is the only Resources entry carrying no gate at all, so
+      // it alone keeps the section from emptying and the header must stay.
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags()}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags()}>
           <div />
         </AppShell>
       );
@@ -165,7 +168,7 @@ describe("AppShell nav visibility", () => {
   describe("Group Learning nav entry", () => {
     it("should hide the Group Learning entry for a member when groupLearning is off", () => {
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ groupLearning: false })}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ groupLearning: false })}>
           <div />
         </AppShell>
       );
@@ -175,7 +178,7 @@ describe("AppShell nav visibility", () => {
 
     it("should show the Group Learning entry for a member when groupLearning is on", () => {
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ groupLearning: true })}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ groupLearning: true })}>
           <div />
         </AppShell>
       );
@@ -187,7 +190,7 @@ describe("AppShell nav visibility", () => {
       render(
         <AppShell
           user={{ ...baseUser, isAdmin: true }}
-          visibleFlags={allFlags({ groupLearning: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ groupLearning: true })}
         >
           <div />
         </AppShell>
@@ -200,7 +203,7 @@ describe("AppShell nav visibility", () => {
   describe("Projects nav entry", () => {
     it("should hide the Projects entry for a member when projects is off", () => {
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ projects: false })}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ projects: false })}>
           <div />
         </AppShell>
       );
@@ -210,7 +213,7 @@ describe("AppShell nav visibility", () => {
 
     it("should show the Projects entry for a member when projects is on", () => {
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ projects: true })}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ projects: true })}>
           <div />
         </AppShell>
       );
@@ -222,7 +225,7 @@ describe("AppShell nav visibility", () => {
       render(
         <AppShell
           user={{ ...baseUser, isAdmin: true }}
-          visibleFlags={allFlags({ projects: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ projects: true })}
         >
           <div />
         </AppShell>
@@ -234,13 +237,12 @@ describe("AppShell nav visibility", () => {
 
   describe("Resources section visibility", () => {
     it("keeps the header and separator count identical whether some or all Resources items are visible", () => {
-      // /links and WARN Tracker are permanently unflagged, so this never
-      // happens today — this test documents the derivation itself, not a
-      // reachable empty state.
+      // WARN Tracker carries no gate, so the section never actually empties —
+      // this test documents the derivation itself, not a reachable state.
       const { container, rerender } = render(
         <AppShell
           user={baseUser}
-          visibleFlags={allFlags({ ghostJobBoard: true, groupLearning: false, projects: false })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ ghostJobBoard: true, groupLearning: false, projects: false })}
         >
           <div />
         </AppShell>
@@ -252,7 +254,7 @@ describe("AppShell nav visibility", () => {
       rerender(
         <AppShell
           user={baseUser}
-          visibleFlags={allFlags({ ghostJobBoard: true, groupLearning: true, projects: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ ghostJobBoard: true, groupLearning: true, projects: true })}
         >
           <div />
         </AppShell>
@@ -270,7 +272,7 @@ describe("AppShell nav visibility", () => {
   describe("My Tools section", () => {
     it("should hide the separator, title, and both items when both child flags are off, and show the separator once a child flag turns on", () => {
       const { container, rerender } = render(
-        <AppShell user={baseUser} visibleFlags={allFlags()}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags()}>
           <div />
         </AppShell>
       );
@@ -288,7 +290,7 @@ describe("AppShell nav visibility", () => {
       rerender(
         <AppShell
           user={baseUser}
-          visibleFlags={allFlags({ jobApplicationTracker: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ jobApplicationTracker: true })}
         >
           <div />
         </AppShell>
@@ -301,7 +303,7 @@ describe("AppShell nav visibility", () => {
       render(
         <AppShell
           user={baseUser}
-          visibleFlags={allFlags({ jobApplicationTracker: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ jobApplicationTracker: true })}
         >
           <div />
         </AppShell>
@@ -318,7 +320,7 @@ describe("AppShell nav visibility", () => {
 
     it("should show only the Learning Tracker item when just that flag is on", () => {
       render(
-        <AppShell user={baseUser} visibleFlags={allFlags({ learningTracker: true })}>
+        <AppShell user={baseUser} enabledFeatures={allFeatures} visibleFlags={allFlags({ learningTracker: true })}>
           <div />
         </AppShell>
       );
@@ -336,7 +338,7 @@ describe("AppShell nav visibility", () => {
       render(
         <AppShell
           user={baseUser}
-          visibleFlags={allFlags({ jobApplicationTracker: true, learningTracker: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ jobApplicationTracker: true, learningTracker: true })}
         >
           <div />
         </AppShell>
@@ -355,7 +357,7 @@ describe("AppShell nav visibility", () => {
       render(
         <AppShell
           user={{ ...baseUser, isAdmin: true }}
-          visibleFlags={allFlags({ learningTracker: true })}
+          enabledFeatures={allFeatures} visibleFlags={allFlags({ learningTracker: true })}
         >
           <div />
         </AppShell>

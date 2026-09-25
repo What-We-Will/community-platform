@@ -11,6 +11,8 @@ import {
   displayNameLength,
 } from "@/lib/utils/display-name";
 import { HTTPS_URL_ERROR, validateHttpsUrl } from "@/lib/utils/url";
+import { type FeatureKey } from "@/lib/feature-keys";
+import { FeaturePreferences } from "@/components/profile/FeaturePreferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +39,7 @@ interface OnboardingFormProps {
     linkedin_url: string;
     github_url: string;
     portfolio_url: string;
+    enabled_features: FeatureKey[];
   };
   userId: string;
 }
@@ -65,6 +68,9 @@ export default function OnboardingForm({
   );
   const [timezone, setTimezone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago"
+  );
+  const [enabledFeatures, setEnabledFeatures] = useState<FeatureKey[]>(
+    initialData.enabled_features
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -184,6 +190,7 @@ export default function OnboardingForm({
         github_url: githubUrl || null,
         portfolio_url: portfolioUrl || null,
         timezone,
+        enabled_features: enabledFeatures,
       });
 
       clearTimeout(timeoutId);
@@ -307,6 +314,20 @@ export default function OnboardingForm({
             >
               Open to Mock Interviews
             </Label>
+          </div>
+          <div className="space-y-3 rounded-md border p-4">
+            <div>
+              <p className="text-sm font-medium">Platform features</p>
+              <p className="text-xs text-muted-foreground">
+                Choose what appears in your navigation. You can change this any
+                time in My Profile.
+              </p>
+            </div>
+            <FeaturePreferences
+              value={enabledFeatures}
+              onChange={setEnabledFeatures}
+              idPrefix="onboarding"
+            />
           </div>
           <div className="space-y-3 rounded-md border p-4">
             <div>

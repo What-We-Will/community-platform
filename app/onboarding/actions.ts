@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import nodemailer from "nodemailer";
 import { safeTimezone } from "@/lib/utils/timezone";
+import { validateEnabledFeatures } from "@/lib/feature-preferences";
 import { escapeHtml } from "@/lib/utils/html";
 import { normalizeSubmittedUrl, validateHttpsUrl } from "@/lib/utils/url";
 import {
@@ -26,6 +27,9 @@ export async function completeOnboarding(
     github_url?: string | null;
     portfolio_url?: string | null;
     timezone?: string;
+    // Typed loosely because it crosses the client boundary; the shape is
+    // established by validateEnabledFeatures below, not by this annotation.
+    enabled_features: unknown;
   }
 ): Promise<OnboardingResult> {
   const supabase = await createClient();
@@ -64,6 +68,11 @@ export async function completeOnboarding(
     return { error: urlValidationErrors[0] };
   }
 
+  const enabledFeatures = validateEnabledFeatures(data.enabled_features);
+  if (!enabledFeatures.ok) {
+    return { error: enabledFeatures.error };
+  }
+
   // approval_status is deliberately absent: an admin may approve someone before
   // they finish onboarding, and naming the column here would revert that on
   // submission. The update path leaves the stored value alone, and the insert
@@ -78,6 +87,7 @@ export async function completeOnboarding(
       bio: data.bio || null,
       skills: data.skills,
       open_to_referrals: data.open_to_referrals,
+      enabled_features: enabledFeatures.value,
       linkedin_url: linkedinUrl,
       github_url: githubUrl,
       portfolio_url: portfolioUrl,

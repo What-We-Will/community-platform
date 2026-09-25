@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { NOINDEX_METADATA } from "@/lib/seo";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 import OnboardingForm from "./onboarding-form";
 
 export const metadata: Metadata = NOINDEX_METADATA;
@@ -42,6 +43,9 @@ export default async function OnboardingPage() {
           linkedin_url: profile?.linkedin_url ?? "",
           github_url: profile?.github_url ?? "",
           portfolio_url: profile?.portfolio_url ?? "",
+          // Opt-out: without a profile row yet, the member starts with the
+          // whole platform selected.
+          enabled_features: profile?.enabled_features ?? [...FEATURE_KEYS],
         }}
         userId={user.id}
       />

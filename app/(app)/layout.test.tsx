@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
 import { makeFeatureFlagRow } from "@/lib/__tests__/factories";
 import { resetFeatureFlagCacheForTests, type FeatureFlag } from "@/lib/feature-flags";
+import { FEATURE_KEYS } from "@/lib/feature-keys";
 import AppShell from "./app-shell";
 import AppLayout from "./layout";
 
@@ -35,6 +36,7 @@ function setUpLayout({
           avatar_url: null,
           is_onboarded: true,
           role,
+          enabled_features: [...FEATURE_KEYS],
         },
         error: null,
       },
