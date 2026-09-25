@@ -18,6 +18,41 @@ const eslintConfig = defineConfig([
     "coverage/**",
   ]),
   {
+    // data-ph-capture-attribute-* values bypass autocapture masking by design,
+    // so they must be static string literals (ADR-0013). AST-based so JSX
+    // whitespace, multiline bindings, and props objects can't evade it; the
+    // grep in scripts/ci/check-ph-capture-attrs.sh is a redundant layer.
+    files: ["**/*.tsx", "**/*.ts"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "JSXAttribute[name.name=/^data-ph-capture-attribute-/] > JSXExpressionContainer",
+          message:
+            "data-ph-capture-attribute-* values must be static string literals, not JSX expressions (docs/adr/0013-posthog-product-analytics.md).",
+        },
+        {
+          selector: "Property[key.value=/^data-ph-capture-attribute-/]",
+          message:
+            "data-ph-capture-attribute-* must be written as a static literal JSX attribute, not an object property (docs/adr/0013-posthog-product-analytics.md).",
+        },
+        {
+          selector:
+            "Property[computed=true][key.quasis.0.value.raw=/^data-ph-capture-attribute-/]",
+          message:
+            "data-ph-capture-attribute-* names must not be constructed dynamically (docs/adr/0013-posthog-product-analytics.md).",
+        },
+        {
+          selector:
+            "Property[computed=true][key.left.value=/^data-ph-capture-attribute-/]",
+          message:
+            "data-ph-capture-attribute-* names must not be constructed dynamically (docs/adr/0013-posthog-product-analytics.md).",
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.test.ts", "**/*.test.tsx"],
     plugins: { vitest },
     rules: {

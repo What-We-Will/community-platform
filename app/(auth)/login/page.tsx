@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import IdentityReset from "./identity-reset";
 import LoginForm from "./login-form";
 
 type LoginPageProps = {
@@ -17,7 +18,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const redirectTo = redirect ?? "/dashboard";
 
   return (
-    <Suspense
+    <>
+      <IdentityReset />
+      <Suspense
       fallback={
         <Card>
           <CardHeader>
@@ -33,7 +36,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </Card>
       }
     >
-      <LoginForm redirectTo={redirectTo} />
-    </Suspense>
+        <LoginForm redirectTo={redirectTo} />
+      </Suspense>
+    </>
   );
 }
