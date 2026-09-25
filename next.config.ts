@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Stopgap for GHSA-2xp9-vwfh-vxw4 (AVIF RCE in /_next/image) while next is pinned
+  // below 16.3.3. Remove when the next bump lands.
+  images: { unoptimized: true },
   env: {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY:
