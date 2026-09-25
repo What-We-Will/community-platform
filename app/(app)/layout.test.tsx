@@ -45,12 +45,10 @@ function setUpLayout({
         error: null,
       },
     },
+    rpc: {
+      get_total_unread_count: { data: 0, error: null },
+    },
   });
-  // buildMockSupabaseClient models the PostgREST query builder only;
-  // layout.tsx separately calls the `rpc()` boundary for the unread count.
-  (client as unknown as { rpc: unknown }).rpc = vi
-    .fn()
-    .mockResolvedValue({ data: 0, error: null });
   mockCreateClient.mockResolvedValue(client as unknown as SupabaseServerClient);
 }
 

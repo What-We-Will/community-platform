@@ -27,6 +27,12 @@ type BuildOptions = {
    * table — and a bare result is reused for every call.
    */
   tables?: Record<string, MockQueryResult | MockQueryResult[]>;
+  /**
+   * What each `rpc(name)` call resolves to, consumed in call order like
+   * `tables`. An RPC is a separate PostgREST boundary from the query builder:
+   * it takes no chained filters and resolves on its own.
+   */
+  rpc?: Record<string, MockQueryResult | MockQueryResult[]>;
 };
 
 const EMPTY_RESULT: MockQueryResult = { data: [], error: null };
@@ -65,23 +71,33 @@ const CHAINABLE_METHODS = [
  * which filters reached the query, not how the caller assembled them.
  */
 export function buildMockSupabaseClient(options: BuildOptions = {}) {
-  const { user = { id: "user-1" }, userError = null, tables = {} } = options;
+  const {
+    user = { id: "user-1" },
+    userError = null,
+    tables = {},
+    rpc = {},
+  } = options;
   const queries: RecordedQuery[] = [];
-  const consumed: Record<string, number> = {};
+  const consumedTables: Record<string, number> = {};
+  const consumedRpc: Record<string, number> = {};
 
-  function claimResult(table: string): MockQueryResult {
-    const configured = tables[table];
+  function claimResult(
+    configuredResults: Record<string, MockQueryResult | MockQueryResult[]>,
+    consumed: Record<string, number>,
+    key: string
+  ): MockQueryResult {
+    const configured = configuredResults[key];
     if (!configured) return EMPTY_RESULT;
     if (!Array.isArray(configured)) return configured;
-    const index = consumed[table] ?? 0;
-    consumed[table] = index + 1;
+    const index = consumed[key] ?? 0;
+    consumed[key] = index + 1;
     return configured[index] ?? EMPTY_RESULT;
   }
 
   function from(table: string) {
     // Claimed up front so each query keeps its own result regardless of the
     // order the caller awaits them in.
-    const result = claimResult(table);
+    const result = claimResult(tables, consumedTables, table);
     const recorded: RecordedQuery = { table, calls: [] };
     queries.push(recorded);
 
@@ -107,6 +123,9 @@ export function buildMockSupabaseClient(options: BuildOptions = {}) {
       }),
     },
     from: vi.fn(from),
+    rpc: vi.fn(async (name: string) =>
+      claimResult(rpc, consumedRpc, name)
+    ),
   };
 
   return { client, queries };
