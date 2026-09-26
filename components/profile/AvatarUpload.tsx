@@ -6,8 +6,52 @@ import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { uploadPublicFile, validateFile } from "@/lib/storage";
 
-const AVATAR_LIMIT_MB = 2;
+const AVATAR_LIMIT_MB = 10;
 const AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
+async function compressImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(img.src);
+      let width = img.width;
+      let height = img.height;
+      const maxSize = 1024;
+      if (width > maxSize || height > maxSize) {
+        if (width > height) {
+          height = (height / width) * maxSize;
+          width = maxSize;
+        } else {
+          width = (width / height) * maxSize;
+          height = maxSize;
+        }
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const newFileName = file.name.replace(/\.[^/.]+$/, ".jpg");
+            const compressedFile = new File([blob], newFileName, { type: "image/jpeg" });
+            resolve(compressedFile);
+          } else {
+            reject(new Error("Compression failed"));
+          }
+        },
+        "image/jpeg",
+        0.7
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src);
+      reject(new Error("Failed to load image"));
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
 
 interface AvatarUploadProps {
   userId: string;
@@ -44,10 +88,18 @@ export function AvatarUpload({
     }
 
     setUploading(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    let uploadFile = file;
+    let ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    try {
+      const compressed = await compressImage(file);
+      uploadFile = compressed;
+      ext = "jpg";
+    } catch {
+      // Fall back to original file
+    }
     const path = `${userId}/avatar.${ext}`;
 
-    const result = await uploadPublicFile("avatars", path, file);
+    const result = await uploadPublicFile("avatars", path, uploadFile);
 
     setUploading(false);
     if (result.error) {
