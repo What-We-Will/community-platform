@@ -15,7 +15,10 @@ export default async function ConversationPage({
 }: ConversationPageProps) {
   const { conversationId } = await params;
   const resolvedSearchParams = await searchParams;
-  const videoRoom = typeof resolvedSearchParams?.videoRoom === "string" ? resolvedSearchParams.videoRoom : null;
+  const videoRoom =
+    typeof resolvedSearchParams?.videoRoom === "string"
+      ? resolvedSearchParams.videoRoom
+      : null;
 
   const supabase = await createClient();
   const {
@@ -32,7 +35,10 @@ export default async function ConversationPage({
     .maybeSingle();
 
   if (myParticipationError) {
-    console.error("[conversation] myParticipation error:", myParticipationError);
+    console.error(
+      "[conversation] myParticipation error:",
+      myParticipationError,
+    );
   }
 
   if (!myParticipation) {
@@ -40,7 +46,12 @@ export default async function ConversationPage({
     if (conversationId === selfNotesConversationId(user.id)) {
       await getOrCreateSelfNotes(user.id);
     } else {
-      console.error("[conversation] user", user.id, "is not a participant in", conversationId);
+      console.error(
+        "[conversation] user",
+        user.id,
+        "is not a participant in",
+        conversationId,
+      );
       redirect("/messages");
     }
   }
@@ -93,25 +104,54 @@ export default async function ConversationPage({
 
     // Build profile cache for messages
     const profileCache = new Map<string, Profile>(
-      participants.map((p) => [p.id, p])
+      participants.map((p) => [p.id, p]),
     );
 
     const { data: rawMessages } = await supabase
       .from("messages")
       .select(
-        "id, conversation_id, sender_id, content, message_type, metadata, edited_at, created_at"
+        `
+    id, 
+    conversation_id, 
+    sender_id, 
+    content, 
+    message_type, 
+    metadata, 
+    edited_at, 
+    created_at
+  `,
       )
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
       .limit(50);
 
+    const { data: deletions, error: deletionsError } = await supabase
+      .from("message_deletions")
+      .select("message_id")
+      .eq("user_id", user.id)
+      .in("message_id", (rawMessages ?? []).map((m) => m.id));
+
+    if (deletionsError) {
+      console.error(
+        "[conversation] deletions fetch error:",
+        deletionsError,
+      );
+    }
+
+    const deletedMessageIds = new Set(
+      (deletions ?? []).map((d) => d.message_id),
+    );
+
     const messages: MessageWithSender[] = (rawMessages ?? [])
+      .filter((msg) => !deletedMessageIds.has(msg.id))
       .reverse()
       .map((msg) => ({
         ...msg,
         message_type: msg.message_type as MessageWithSender["message_type"],
         metadata: (msg.metadata ?? {}) as Record<string, unknown>,
-        sender: msg.sender_id ? (profileCache.get(msg.sender_id) ?? null) : null,
+        sender: msg.sender_id
+          ? (profileCache.get(msg.sender_id) ?? null)
+          : null,
       }));
 
     await supabase
@@ -138,33 +178,66 @@ export default async function ConversationPage({
   }
 
   // ── DM conversation ───────────────────────────────────────────────────────
-  const { data: otherParticipant, error: otherParticipantError } = await supabase
-    .from("conversation_participants")
-    .select("user_id")
-    .eq("conversation_id", conversationId)
-    .neq("user_id", user.id)
-    .maybeSingle();
+  const { data: otherParticipant, error: otherParticipantError } =
+    await supabase
+      .from("conversation_participants")
+      .select("user_id")
+      .eq("conversation_id", conversationId)
+      .neq("user_id", user.id)
+      .maybeSingle();
 
   if (otherParticipantError) {
-    console.error("[conversation] otherParticipant error:", otherParticipantError);
+    console.error(
+      "[conversation] otherParticipant error:",
+      otherParticipantError,
+    );
   }
 
   // Self-notes conversation: no other participant expected
-  const isSelfNotes = !otherParticipant && conversationId === selfNotesConversationId(user.id);
+  const isSelfNotes =
+    !otherParticipant && conversationId === selfNotesConversationId(user.id);
 
   if (!otherParticipant && !isSelfNotes) {
-    console.error("[conversation] no other participant found in", conversationId);
+    console.error(
+      "[conversation] no other participant found in",
+      conversationId,
+    );
     redirect("/messages");
   }
 
   const { data: rawMessages } = await supabase
     .from("messages")
     .select(
-      "id, conversation_id, sender_id, content, message_type, metadata, edited_at, created_at"
+      `
+    id, 
+    conversation_id, 
+    sender_id, content, 
+    message_type, 
+    metadata, 
+    edited_at, 
+    created_at
+  `,
     )
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(50);
+
+  const { data: deletions, error: deletionsError } = await supabase
+    .from("message_deletions")
+    .select("message_id")
+    .eq("user_id", user.id)
+    .in("message_id", (rawMessages ?? []).map((m) => m.id));
+
+  if (deletionsError) {
+    console.error(
+      "[conversation] deletions fetch error:",
+      deletionsError,
+    );
+  }
+
+  const deletedMessageIds = new Set(
+    (deletions ?? []).map((d) => d.message_id),
+  );
 
   const profileCache = new Map<string, Profile>([
     [user.id, currentUserProfile as Profile],
@@ -175,12 +248,15 @@ export default async function ConversationPage({
             .select("*")
             .eq("id", otherParticipant.user_id)
             .single();
-          return p ? [[otherParticipant.user_id, p as Profile] as [string, Profile]] : [];
+          return p
+            ? [[otherParticipant.user_id, p as Profile] as [string, Profile]]
+            : [];
         })()
       : []),
   ]);
 
   const messages: MessageWithSender[] = (rawMessages ?? [])
+    .filter((msg) => !deletedMessageIds.has(msg.id))
     .reverse()
     .map((msg) => ({
       ...msg,
@@ -211,7 +287,10 @@ export default async function ConversationPage({
 
   const otherUserProfile = profileCache.get(otherParticipant!.user_id);
   if (!otherUserProfile) {
-    console.error("[conversation] other user profile not found:", otherParticipant!.user_id);
+    console.error(
+      "[conversation] other user profile not found:",
+      otherParticipant!.user_id,
+    );
     redirect("/messages");
   }
 
