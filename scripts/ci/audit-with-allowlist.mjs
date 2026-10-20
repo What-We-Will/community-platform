@@ -17,7 +17,22 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-export const ALLOWLIST = [];
+export const ALLOWLIST = [
+  {
+    id: 'GHSA-vfj7-8cjw-p6xm',
+    expires: '2026-11-18',
+    reason:
+      'braces stack-exhaustion DoS via deeply nested patterns. Reachable only ' +
+      'through the shadcn devDependency (shadcn -> fast-glob -> micromatch -> ' +
+      'braces), which contributors run by hand to add UI primitives; the globs it ' +
+      'expands come from shadcn itself and the components a contributor chooses ' +
+      'to add, and nothing in the production bundle depends on braces. No patched ' +
+      'release exists: the advisory covers <=3.0.3 and 3.0.3 is the latest. ' +
+      "npm audit's suggested fix is a downgrade to shadcn 1.0.0, which is not " +
+      'viable. Blocked on upstream; re-check for a braces release or a shadcn ' +
+      'that drops fast-glob before renewing.',
+  },
+];
 
 const GATED_SEVERITIES = new Set(['high', 'critical']);
 // Ordering only. A higher rank at the head than at the merge base is an introduction,
