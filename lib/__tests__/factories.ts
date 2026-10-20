@@ -11,6 +11,22 @@ import type {
 } from "@/lib/types";
 import type { completeOnboarding } from "@/app/onboarding/actions";
 import type OnboardingForm from "@/app/onboarding/onboarding-form";
+import type { MockQueryResult } from "./supabase-mock";
+
+type PostgrestError = NonNullable<MockQueryResult["error"]>;
+
+/** PostgREST's error body; the default is the RLS-denial code. */
+export function makePostgrestError(
+  overrides: Partial<PostgrestError> = {}
+): PostgrestError {
+  return {
+    code: "42501",
+    message: "permission denied for table profiles",
+    details: null,
+    hint: null,
+    ...overrides,
+  };
+}
 
 // Derived from the action's own parameter type rather than restated, so a change
 // to what onboarding accepts breaks this at compile time instead of leaving the
@@ -48,6 +64,14 @@ export function makeOnboardingInitialData(
     enabled_features: [...FEATURE_KEYS],
     ...overrides,
   };
+}
+
+type ProfileAccessRow = Pick<Profile, "is_onboarded" | "approval_status">;
+
+export function makeProfileAccessRow(
+  overrides: Partial<ProfileAccessRow> = {}
+): ProfileAccessRow {
+  return { is_onboarded: true, approval_status: "approved", ...overrides };
 }
 
 type ProfileRoleRow = Pick<Profile, "role">;

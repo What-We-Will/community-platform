@@ -7,9 +7,8 @@ vi.mock("server-only", () => ({}));
 import type { MockedFunction } from "vitest";
 import { createClient } from "@/lib/supabase/server";
 import { buildMockSupabaseClient } from "@/lib/__tests__/supabase-mock";
-import { makeFeatureFlagRow } from "@/lib/__tests__/factories";
+import { makeBaseProfile, makeFeatureFlagRow } from "@/lib/__tests__/factories";
 import { resetFeatureFlagCacheForTests, type FeatureFlag } from "@/lib/feature-flags";
-import { FEATURE_KEYS } from "@/lib/feature-keys";
 import AppShell from "./app-shell";
 import AppLayout from "./layout";
 
@@ -17,7 +16,7 @@ type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 const mockCreateClient = createClient as MockedFunction<typeof createClient>;
 
-/** Wires an onboarded profile and a single off/on feature flag row. */
+/** Wires an onboarded, approved profile and a single off/on feature flag row. */
 function setUpLayout({
   role,
   enabled,
@@ -30,16 +29,7 @@ function setUpLayout({
   const { client } = buildMockSupabaseClient({
     user: { id: "user-1" },
     tables: {
-      profiles: {
-        data: {
-          display_name: "Test User",
-          avatar_url: null,
-          is_onboarded: true,
-          role,
-          enabled_features: [...FEATURE_KEYS],
-        },
-        error: null,
-      },
+      profiles: { data: makeBaseProfile({ role }), error: null },
       feature_flags: {
         data: [makeFeatureFlagRow({ key: flag, enabled })],
         error: null,
