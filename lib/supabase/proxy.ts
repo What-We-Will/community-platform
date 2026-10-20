@@ -4,16 +4,6 @@ import { type NextRequest, NextResponse } from "next/server";
 const LAST_SEEN_COOKIE = "last_seen";
 const LAST_SEEN_THRESHOLD_MS = 1 * 60 * 1000; // 1 minute — keep status accurate for chat
 
-// Caches is_onboarded=true in a cookie so we don't query the DB on every request.
-// The middleware only does a DB lookup when this cookie is absent (first request
-// per browser session, or after cookie expiry).
-export const ONBOARDED_COOKIE = "profile_onboarded";
-
-// Caches approval_status=approved in a short-lived cookie (5 min TTL).
-// Short TTL ensures approval takes effect within 5 minutes of admin action.
-export const APPROVED_COOKIE = "profile_approved";
-const APPROVED_COOKIE_TTL = 5 * 60; // 5 minutes
-
 export async function updateSession(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey =
@@ -65,39 +55,20 @@ export async function updateSession(request: NextRequest) {
 
   if (user) {
     // ── Onboarding + approval status ──────────────────────────────────────────
-    // Fast path: both cookies present — skip DB round-trip.
-    const onboardedCookie = request.cookies.get(ONBOARDED_COOKIE)?.value;
-    const approvedCookie = request.cookies.get(APPROVED_COOKIE)?.value;
+    // Always read from the database: a client-side cache of these flags is
+    // writable by the member and must never gate access.
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("is_onboarded, approval_status")
+      .eq("id", user.id)
+      .maybeSingle();
 
-    if (onboardedCookie === "1" && approvedCookie === "1") {
-      isOnboarded = true;
-      isApproved = true;
-    } else {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("is_onboarded, last_seen_at, approval_status")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      isOnboarded = profile?.is_onboarded ?? false;
-      isApproved = profile?.approval_status === "approved";
-
-      if (isOnboarded) {
-        supabaseResponse.cookies.set(ONBOARDED_COOKIE, "1", {
-          path: "/",
-          maxAge: 60 * 60 * 24 * 30,
-          sameSite: "lax",
-        });
-      }
-
-      if (isApproved) {
-        supabaseResponse.cookies.set(APPROVED_COOKIE, "1", {
-          path: "/",
-          maxAge: APPROVED_COOKIE_TTL,
-          sameSite: "lax",
-        });
-      }
+    if (profileError) {
+      console.error("[proxy] profile read failed:", profileError.message);
     }
+
+    isOnboarded = profile?.is_onboarded === true;
+    isApproved = profile?.approval_status === "approved";
 
     // ── last_seen_at update ────────────────────────────────────────────────
     const lastSeenCookie = request.cookies.get(LAST_SEEN_COOKIE)?.value;

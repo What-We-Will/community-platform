@@ -67,4 +67,18 @@ describe("proxy session-failure handling", () => {
     expect(response.status).toBe(307);
     expect(new URL(response.headers.get("location") as string).pathname).toBe("/login");
   });
+
+  it("should redirect to /pending-approval when an onboarded member is not approved", async () => {
+    vi.mocked(updateSession).mockResolvedValue({
+      supabaseResponse: NextResponse.next(),
+      user: { id: "user-1" } as Awaited<ReturnType<typeof updateSession>>["user"],
+      isOnboarded: true,
+      isApproved: false,
+    });
+
+    const response = await proxy(makeRequest("/dashboard"));
+
+    expect(response.status).toBe(307);
+    expect(new URL(response.headers.get("location") as string).pathname).toBe("/pending-approval");
+  });
 });

@@ -28,12 +28,18 @@ export default async function AppLayout({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name, avatar_url, is_onboarded, role, enabled_features")
+    .select(
+      "display_name, avatar_url, is_onboarded, approval_status, role, enabled_features"
+    )
     .eq("id", user.id)
     .maybeSingle();
 
   if (!profile?.is_onboarded) {
     redirect("/onboarding");
+  }
+
+  if (profile.approval_status !== "approved") {
+    redirect("/pending-approval");
   }
 
   const { data: total } = await supabase.rpc("get_total_unread_count");

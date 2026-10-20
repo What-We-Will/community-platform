@@ -27,7 +27,7 @@ export default function PendingApprovalPage() {
       .single();
 
     if (profile?.approval_status === "approved") {
-      // Clear stale cookies so middleware re-evaluates on next request
+      // Expire status cookies set by older builds; access no longer reads them
       document.cookie = "profile_onboarded=; path=/; max-age=0; samesite=lax";
       document.cookie = "profile_approved=; path=/; max-age=0; samesite=lax";
       router.push("/dashboard");
