@@ -385,7 +385,12 @@ function delta({
   list?: unknown[];
   today?: string;
 }) {
-  return evaluateDelta({ base, head, allowlist: list, today });
+  return evaluateDelta({
+    base,
+    head,
+    allowlist: list as { id: string; expires: string; reason: string }[],
+    today,
+  });
 }
 
 describe("Pre-merge gate scoped to advisories the change introduces", () => {
