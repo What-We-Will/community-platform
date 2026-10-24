@@ -57,7 +57,6 @@ export function ConversationList({
       .join(",");
     if (prevInitialIdsRef.current !== ids) {
       prevInitialIdsRef.current = ids;
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConversations(initialConversations);
     }
   }, [initialConversations]);

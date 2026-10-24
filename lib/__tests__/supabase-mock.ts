@@ -16,6 +16,16 @@ export type RecordedQuery = {
   calls: Array<{ method: string; args: unknown[] }>;
 };
 
+export type RecordedChannel = {
+  name: string;
+  /** Every `on(type, filter, callback)` binding, in call order. */
+  bindings: Array<{
+    type: string;
+    filter: unknown;
+    callback: (...args: unknown[]) => void;
+  }>;
+};
+
 type BuildOptions = {
   /** null models an unauthenticated session. */
   user?: { id: string } | null;
@@ -114,6 +124,29 @@ export function buildMockSupabaseClient(options: BuildOptions = {}) {
     return builder;
   }
 
+  // Realtime channels record their bindings so a test can fire the handler a
+  // component registered, the way a server broadcast would.
+  const channels: RecordedChannel[] = [];
+
+  function channel(name: string) {
+    const recorded: RecordedChannel = { name, bindings: [] };
+    channels.push(recorded);
+
+    const realtimeChannel: Record<string, unknown> = {
+      on: vi.fn(
+        (type: string, filter: unknown, callback: (...args: unknown[]) => void) => {
+          recorded.bindings.push({ type, filter, callback });
+          return realtimeChannel;
+        }
+      ),
+      subscribe: vi.fn(() => realtimeChannel),
+      presenceState: vi.fn(() => ({})),
+      track: vi.fn().mockResolvedValue("ok"),
+      untrack: vi.fn().mockResolvedValue("ok"),
+    };
+    return realtimeChannel;
+  }
+
   const client = {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user }, error: userError }),
@@ -126,9 +159,11 @@ export function buildMockSupabaseClient(options: BuildOptions = {}) {
     rpc: vi.fn(async (name: string) =>
       claimResult(rpc, consumedRpc, name)
     ),
+    channel: vi.fn(channel),
+    removeChannel: vi.fn().mockResolvedValue("ok"),
   };
 
-  return { client, queries };
+  return { client, queries, channels };
 }
 
 /** True when the query applied exactly this builder call. */
