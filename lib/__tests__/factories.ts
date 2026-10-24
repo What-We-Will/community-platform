@@ -7,8 +7,11 @@ import type {
   Event,
   EventRsvp,
   FeatureAdoptionRow,
+  PollWithDetails,
   Profile,
 } from "@/lib/types";
+import type { ScheduleRow } from "@/lib/utils/weekly-schedule";
+import type { Application } from "@/app/(app)/tracker/TrackerClient";
 import type { completeOnboarding } from "@/app/onboarding/actions";
 import type OnboardingForm from "@/app/onboarding/onboarding-form";
 import type { MockQueryResult } from "./supabase-mock";
@@ -170,5 +173,75 @@ export function makeCaptureEvent(
       ...properties,
     },
     ...rest,
+  };
+}
+
+type PollOptionWithVotes = PollWithDetails["options"][number];
+
+export function makePollOption(
+  overrides: Partial<PollOptionWithVotes> = {}
+): PollOptionWithVotes {
+  return {
+    id: "option-1",
+    poll_id: "poll-1",
+    label: "Option one",
+    order_index: 0,
+    voteCount: 0,
+    ...overrides,
+  };
+}
+
+export function makeBasePoll(
+  overrides: Partial<PollWithDetails> = {}
+): PollWithDetails {
+  return {
+    id: "poll-1",
+    question: "Which workshop next?",
+    created_by: "user-1",
+    group_id: null,
+    allow_multiple: false,
+    closes_at: null,
+    created_at: "2026-07-01T00:00:00.000Z",
+    options: [
+      makePollOption({ id: "option-1", label: "Resume review" }),
+      makePollOption({ id: "option-2", label: "Mock interviews", order_index: 1 }),
+    ],
+    totalVotes: 0,
+    userVotes: [],
+    creator: null,
+    ...overrides,
+  };
+}
+
+export function makeScheduleRow(overrides: Partial<ScheduleRow> = {}): ScheduleRow {
+  return {
+    id: "row-1",
+    name: "Weekly check-in",
+    days: "Mondays",
+    time: "6pm ET",
+    zoom_url: null,
+    position: 0,
+    category: "general",
+    ...overrides,
+  };
+}
+
+export function makeApplication(overrides: Partial<Application> = {}): Application {
+  return {
+    id: "app-1",
+    company: "Acme",
+    position: "Frontend Engineer",
+    applied_date: null,
+    status: "applied",
+    notes: null,
+    community_notes: null,
+    status_dates: {},
+    url: null,
+    is_shared: false,
+    job_posting_id: null,
+    created_at: "2026-07-01T00:00:00.000Z",
+    user_id: "user-1",
+    poster: null,
+    ...overrides,
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -372,9 +372,13 @@ export function TrackerClient({ applications, interviews, helpRequests, currentU
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [localApps, setLocalApps] = useState(applications);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [prevApplications, setPrevApplications] = useState(applications);
 
   // Sync local state when server data refreshes
-  useEffect(() => { setLocalApps(applications); }, [applications]);
+  if (applications !== prevApplications) {
+    setPrevApplications(applications);
+    setLocalApps(applications);
+  }
 
   const myApps = localApps.filter((a) => a.user_id === currentUserId);
   const activeApp = myApps.find((a) => a.id === activeId) ?? null;

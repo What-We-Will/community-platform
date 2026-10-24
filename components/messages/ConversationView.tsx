@@ -109,8 +109,10 @@ export function ConversationView({
   const [typingNames, setTypingNames] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [videoCallOpen, setVideoCallOpen] = useState(false);
-  const [videoRoomName, setVideoRoomName] = useState<string | null>(null);
+  const [videoCallOpen, setVideoCallOpen] = useState(Boolean(initialVideoRoom));
+  const [videoRoomName, setVideoRoomName] = useState<string | null>(
+    initialVideoRoom || null
+  );
   const [pendingAttachment, setPendingAttachment] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
@@ -120,9 +122,19 @@ export function ConversationView({
   );
 
   // Sync initial otherUser last_seen_at and poll for updates (DM only)
-  useEffect(() => {
-    setOtherUserLastSeenAt(otherUser?.last_seen_at ?? null);
-  }, [otherUser?.id, otherUser?.last_seen_at]);
+  const otherUserId = otherUser?.id;
+  const otherUserPropLastSeenAt = otherUser?.last_seen_at;
+  const [prevOtherUserSync, setPrevOtherUserSync] = useState({
+    otherUserId,
+    otherUserPropLastSeenAt,
+  });
+  if (
+    otherUserId !== prevOtherUserSync.otherUserId ||
+    otherUserPropLastSeenAt !== prevOtherUserSync.otherUserPropLastSeenAt
+  ) {
+    setPrevOtherUserSync({ otherUserId, otherUserPropLastSeenAt });
+    setOtherUserLastSeenAt(otherUserPropLastSeenAt ?? null);
+  }
 
   useEffect(() => {
     if (!otherUser?.id) return;
@@ -141,16 +153,20 @@ export function ConversationView({
   }, [otherUser?.id]);
 
   // Open video modal when landing with ?videoRoom= (e.g. from "Join call" in list)
-  useEffect(() => {
+  const [prevInitialVideoRoom, setPrevInitialVideoRoom] = useState(initialVideoRoom);
+  if (initialVideoRoom !== prevInitialVideoRoom) {
+    setPrevInitialVideoRoom(initialVideoRoom);
     if (initialVideoRoom) {
       setVideoRoomName(initialVideoRoom);
       setVideoCallOpen(true);
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("videoRoom");
-        window.history.replaceState({}, "", url.pathname + url.search);
-      }
     }
+  }
+
+  useEffect(() => {
+    if (!initialVideoRoom) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("videoRoom");
+    window.history.replaceState({}, "", url.pathname + url.search);
   }, [initialVideoRoom]);
 
   const bottomRef = useRef<HTMLDivElement>(null);

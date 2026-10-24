@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { FEATURE_KEYS } from "@/lib/feature-keys";
+import { FEATURE_KEYS, type FeatureKey } from "@/lib/feature-keys";
 import { FEATURE_DESCRIPTIONS } from "@/lib/feature-preferences";
 import FeaturePreferencesForm from "./feature-preferences-form";
 
@@ -45,6 +45,27 @@ describe("FeaturePreferencesForm — editing feature preferences after onboardin
     expect(
       screen.getByRole("checkbox", { name: FEATURE_DESCRIPTIONS.events.label })
     ).not.toBeChecked();
+    expect(
+      screen.getByRole("checkbox", {
+        name: FEATURE_DESCRIPTIONS.discussions.label,
+      })
+    ).toBeChecked();
+  });
+
+  it("should keep unsaved edits when the card re-renders with the same selection", async () => {
+    const user = userEvent.setup();
+    const initialFeatures: FeatureKey[] = ["events"];
+    const { rerender } = render(
+      <FeaturePreferencesForm initialFeatures={initialFeatures} />
+    );
+
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: FEATURE_DESCRIPTIONS.discussions.label,
+      })
+    );
+    rerender(<FeaturePreferencesForm initialFeatures={initialFeatures} />);
+
     expect(
       screen.getByRole("checkbox", {
         name: FEATURE_DESCRIPTIONS.discussions.label,

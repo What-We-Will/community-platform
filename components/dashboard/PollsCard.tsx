@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -25,13 +25,27 @@ export function PollsCard({ userId, initialPoll }: PollsCardProps) {
   const [voting, setVoting] = useState(false);
   const [voted, setVoted] = useState((initialPoll?.userVotes?.length ?? 0) > 0);
 
-  // Sync from server when initialPoll changes (e.g. after router.refresh())
-  useEffect(() => {
+  // Sync from server when initialPoll changes (e.g. after router.refresh()).
+  // Compared by these fields, not identity, so an equivalent re-render keeps a
+  // selection in progress.
+  const pollId = initialPoll?.id;
+  const totalVotes = initialPoll?.totalVotes;
+  const userVoteCount = initialPoll?.userVotes?.length;
+  const [prevPollSync, setPrevPollSync] = useState({
+    pollId,
+    totalVotes,
+    userVoteCount,
+  });
+  if (
+    pollId !== prevPollSync.pollId ||
+    totalVotes !== prevPollSync.totalVotes ||
+    userVoteCount !== prevPollSync.userVoteCount
+  ) {
+    setPrevPollSync({ pollId, totalVotes, userVoteCount });
     setPoll(initialPoll);
     setSelectedOptions(initialPoll?.userVotes ?? []);
     setVoted((initialPoll?.userVotes?.length ?? 0) > 0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPoll?.id, initialPoll?.totalVotes, initialPoll?.userVotes?.length]);
+  }
 
   const hasSelection = selectedOptions.length > 0;
   const allowMultiple = poll?.allow_multiple ?? false;

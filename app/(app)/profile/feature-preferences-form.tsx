@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FeaturePreferences } from "@/components/profile/FeaturePreferences";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,15 +22,18 @@ export default function FeaturePreferencesForm({
   initialFeatures,
 }: FeaturePreferencesFormProps) {
   const [features, setFeatures] = useState<FeatureKey[]>(initialFeatures);
+  const [prevInitialFeatures, setPrevInitialFeatures] =
+    useState(initialFeatures);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // A revalidation elsewhere re-renders this card with a fresh selection;
   // without resyncing, a Save with no edits would write the stale one back.
-  useEffect(() => {
+  if (initialFeatures !== prevInitialFeatures) {
+    setPrevInitialFeatures(initialFeatures);
     setFeatures(initialFeatures);
-  }, [initialFeatures]);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

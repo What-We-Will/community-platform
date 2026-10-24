@@ -105,7 +105,9 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     errorRef.current?.focus();
   }, [errorSeq]);
 
-  useEffect(() => {
+  const [prevProfile, setPrevProfile] = useState(profile);
+  if (profile !== prevProfile) {
+    setPrevProfile(profile);
     setDisplayName(profile.display_name);
     setHeadline(profile.headline ?? "");
     setLocation(profile.location ?? "");
@@ -116,7 +118,7 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
     setLinkedinUrl(profile.linkedin_url ?? "");
     setGithubUrl(profile.github_url ?? "");
     setPortfolioUrl(profile.portfolio_url ?? "");
-  }, [profile]);
+  }
 
   const router = useRouter();
 

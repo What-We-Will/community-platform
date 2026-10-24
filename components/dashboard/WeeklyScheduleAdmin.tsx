@@ -91,16 +91,20 @@ export function WeeklyScheduleAdmin({
     [rows, activeCategory]
   );
 
-  useEffect(() => {
+  const [prevActiveCategory, setPrevActiveCategory] = useState(activeCategory);
+  if (activeCategory !== prevActiveCategory) {
+    setPrevActiveCategory(activeCategory);
     setAdding(false);
     setEditingId(null);
     setNewRow(emptyForm(activeCategory));
     setEditRow(emptyForm(activeCategory));
-  }, [activeCategory]);
+  }
 
-  useEffect(() => {
+  const [prevInitialRows, setPrevInitialRows] = useState(initialRows);
+  if (initialRows !== prevInitialRows) {
+    setPrevInitialRows(initialRows);
     setRows(initialRows);
-  }, [initialRows]);
+  }
 
   useEffect(() => {
     onAddingChange?.(adding);
