@@ -31,6 +31,8 @@ export const SEVERITY_RANK = { info: 0, low: 1, moderate: 2, high: 3, critical: 
 // than being normalised into a severity the author never wrote.
 const KNOWN_SEVERITIES = new Set(['info', 'low', 'moderate', 'high', 'critical']);
 const ADVISORY_ID = /^GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}$/i;
+// Waivers match advisory ids exactly, so they must use the form npm reports.
+const WAIVER_ID = /^GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}$/;
 
 function describe(value) {
   if (value === null) return 'null';
@@ -58,18 +60,37 @@ function waiverProblems(entry, index) {
     return [`${label} — waiver is ${describe(entry)}, expected an object`];
   }
   const problems = [];
-  if (typeof entry.id !== 'string' || !ADVISORY_ID.test(entry.id)) {
-    problems.push(`${label} — advisory id ${JSON.stringify(entry.id)} is not a GHSA identifier`);
+  if (typeof entry.id !== 'string' || !WAIVER_ID.test(entry.id)) {
+    problems.push(`${label} — advisory id ${JSON.stringify(entry.id)} is not a GHSA identifier in npm's form (GHSA-xxxx-xxxx-xxxx, lowercase body)`);
   }
   if (!isCalendarDate(entry.expires)) {
     problems.push(`${label} — expiry ${JSON.stringify(entry.expires)} is not a real YYYY-MM-DD date`);
   }
+  if (typeof entry.reason !== 'string' || entry.reason.trim() === '') {
+    problems.push(`${label} — waiver has no written reason`);
+  }
   return problems;
 }
 
-// Each entry paired with its problems.
+// Each entry paired with its problems. Two entries for one advisory make its expiry
+// ambiguous, so every copy is a problem and none of them waives anything.
 function auditAllowlist(allowlist) {
-  return allowlist.map((entry, index) => ({ entry, problems: waiverProblems(entry, index) }));
+  const idKey = (entry) => (isPlainObject(entry) && typeof entry.id === 'string' ? entry.id.toLowerCase() : null);
+  const seen = new Map();
+  for (const entry of allowlist) {
+    const key = idKey(entry);
+    if (key === null) continue;
+    const known = seen.get(key);
+    seen.set(key, { id: known?.id ?? entry.id, copies: (known?.copies ?? 0) + 1 });
+  }
+  return allowlist.map((entry, index) => {
+    const problems = waiverProblems(entry, index);
+    const duplicate = seen.get(idKey(entry));
+    if (duplicate !== undefined && duplicate.copies > 1) {
+      problems.push(`${duplicate.id} — listed ${duplicate.copies} times; keep one waiver per advisory`);
+    }
+    return { entry, problems };
+  });
 }
 
 export function parseAuditReport(stdout) {
@@ -268,7 +289,7 @@ export function evaluateAudit({ vulnerabilities, allowlist = ALLOWLIST, today })
     stale:
       invalid.length === 0 && unresolved.length === 0
         ? allowlist.filter(
-            (entry) => isPlainObject(entry) && typeof entry.id === 'string' && ADVISORY_ID.test(entry.id) && !seenRoots.has(entry.id)
+            (entry) => isPlainObject(entry) && typeof entry.id === 'string' && WAIVER_ID.test(entry.id) && !seenRoots.has(entry.id)
           )
         : [],
     suppressed,
@@ -578,7 +599,7 @@ function runFullGate({ report }, today) {
   if (result.malformedWaivers.length > 0) {
     failures.push(
       `${result.malformedWaivers.length} malformed waiver(s) in ALLOWLIST. Every entry needs a ` +
-        `GHSA identifier and a real YYYY-MM-DD expiry, or it cannot be time-boxed.`
+        `GHSA identifier, a real YYYY-MM-DD expiry, and a written reason, once per advisory.`
     );
   }
   if (result.expired.length > 0) {
