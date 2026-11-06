@@ -1,6 +1,8 @@
 # Testing Standards — AI Use and Review
 
-Load this file for AI-assisted sessions, PR review, and pre-merge quality gates. Assumes preamble is loaded.
+Load this file when an AI agent writes, modifies, or reviews implementation or
+test code, and during PR review or pre-merge verification. It assumes
+`TESTING_STANDARDS.preamble.md` is already loaded.
 
 **Last updated:** 2026-06-06 · **Applies to:** Vitest 4 · **Owner:** platform lead
 
