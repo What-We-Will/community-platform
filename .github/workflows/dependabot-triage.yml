@@ -82,13 +82,14 @@ jobs:
       # Capped here as well as at the App installation, so broadening the App for
       # an unrelated reason can't silently widen this workflow. Requesting a
       # permission the installation lacks fails the mint, which is intended.
+      # Pull requests alone covers the issue-comment and label endpoints when the
+      # issue is a PR; GitHub accepts either permission for them.
       - name: Mint App token
         id: apptoken
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permission-issues: write
           permission-pull-requests: write
 
       # Posting failures warn rather than fail the job: this validates nothing

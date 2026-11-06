@@ -28,11 +28,11 @@ weekly batch quickly.
 One workflow (`dependabot-triage.yml`), running on every Dependabot PR (`pull_request`). GitHub
 caps Dependabot-triggered `pull_request` runs to a read-only `GITHUB_TOKEN` regardless of the
 declared `permissions:` block — a write here 403s ("Resource not accessible by integration") no
-matter what the workflow YAML asks for. So the write doesn't use `GITHUB_TOKEN` at all: the job
-mints a short-lived installation token from an org-owned GitHub App (`wwc-dependabot-triage`,
+matter what the workflow YAML asks for. So the write doesn't use `GITHUB_TOKEN` at all: the posting
+job mints a short-lived installation token from an org-owned GitHub App (`wwc-dependabot-triage`,
 installed on this repo only, scoped to Issues + Pull requests read/write), capped again in the
-minting step itself (`permission-issues: write`, `permission-pull-requests: write`) so the
-ceiling is visible in the workflow diff, not just in the App's installation settings. See
+minting step itself (`permission-pull-requests: write` only) so the ceiling is visible in the
+workflow diff, not just in the App's installation settings. See
 `docs/adr/github-app-token-dependabot-writes.md` for the full investigation and rejected
 alternatives (a repo-wide "send write tokens to fork PRs" setting, `pull_request_target` —
 banned by ADR-0003 — and a personal access token).
