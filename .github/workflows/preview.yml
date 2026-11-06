@@ -160,12 +160,14 @@ jobs:
         run: node scripts/ci/audit-with-allowlist.mjs --base-ref "$BASE_SHA" --head-ref "$HEAD_SHA"
 
   # Every secret-bearing step lives here. The job-level `if:` below is the gate;
-  # `needs: verify` makes the deploy wait on green checks and exposes the migrations
-  # paths-filter result. Skipped for forks (can't reach secrets) AND for Dependabot
-  # (GitHub withholds secrets from Dependabot runs, so a deploy attempt only ever
-  # fails at `vercel pull` — skipping avoids a spurious red check on dependency PRs).
+  # `needs:` makes the deploy wait on both secret-free jobs (so a detected secret or a
+  # newly introduced, un-waived high/critical advisory never reaches the preview DB or
+  # a build holding VERCEL_TOKEN) and exposes the migrations paths-filter result.
+  # Skipped for forks (can't reach secrets) AND for Dependabot (GitHub withholds
+  # secrets from Dependabot runs, so a deploy attempt fails at the first step that
+  # needs one — skipping avoids a spurious red check on dependency PRs).
   preview-deploy:
-    needs: verify
+    needs: [verify, security-scan]
     if: >-
       github.event.action != 'closed' &&
       github.actor != 'dependabot[bot]' &&
