@@ -31,6 +31,8 @@ export const SEVERITY_RANK = { info: 0, low: 1, moderate: 2, high: 3, critical: 
 // than being normalised into a severity the author never wrote.
 const KNOWN_SEVERITIES = new Set(['info', 'low', 'moderate', 'high', 'critical']);
 const ADVISORY_ID = /^GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}$/i;
+// Waivers match advisory ids exactly, so they must use the form npm reports.
+const WAIVER_ID = /^GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}$/;
 
 function describe(value) {
   if (value === null) return 'null';
@@ -52,22 +54,43 @@ function isCalendarDate(value) {
 
 // An unusable expiry is indistinguishable from no expiry at all under string comparison,
 // which would make the waiver permanent — the one thing the format exists to prevent.
-export function validateAllowlist(allowlist) {
+function waiverProblems(entry, index) {
+  const label = isPlainObject(entry) && typeof entry.id === 'string' ? entry.id : `entry ${index}`;
+  if (!isPlainObject(entry)) {
+    return [`${label} — waiver is ${describe(entry)}, expected an object`];
+  }
   const problems = [];
-  for (const [index, entry] of allowlist.entries()) {
-    const label = isPlainObject(entry) && typeof entry.id === 'string' ? entry.id : `entry ${index}`;
-    if (!isPlainObject(entry)) {
-      problems.push(`${label} — waiver is ${describe(entry)}, expected an object`);
-      continue;
-    }
-    if (typeof entry.id !== 'string' || !ADVISORY_ID.test(entry.id)) {
-      problems.push(`${label} — advisory id ${JSON.stringify(entry.id)} is not a GHSA identifier`);
-    }
-    if (!isCalendarDate(entry.expires)) {
-      problems.push(`${label} — expiry ${JSON.stringify(entry.expires)} is not a real YYYY-MM-DD date`);
-    }
+  if (typeof entry.id !== 'string' || !WAIVER_ID.test(entry.id)) {
+    problems.push(`${label} — advisory id ${JSON.stringify(entry.id)} is not a GHSA identifier in npm's form (GHSA-xxxx-xxxx-xxxx, lowercase body)`);
+  }
+  if (!isCalendarDate(entry.expires)) {
+    problems.push(`${label} — expiry ${JSON.stringify(entry.expires)} is not a real YYYY-MM-DD date`);
+  }
+  if (typeof entry.reason !== 'string' || entry.reason.trim() === '') {
+    problems.push(`${label} — waiver has no written reason`);
   }
   return problems;
+}
+
+// Each entry paired with its problems. Two entries for one advisory make its expiry
+// ambiguous, so every copy is a problem and none of them waives anything.
+function auditAllowlist(allowlist) {
+  const idKey = (entry) => (isPlainObject(entry) && typeof entry.id === 'string' ? entry.id.toLowerCase() : null);
+  const seen = new Map();
+  for (const entry of allowlist) {
+    const key = idKey(entry);
+    if (key === null) continue;
+    const known = seen.get(key);
+    seen.set(key, { id: known?.id ?? entry.id, copies: (known?.copies ?? 0) + 1 });
+  }
+  return allowlist.map((entry, index) => {
+    const problems = waiverProblems(entry, index);
+    const duplicate = seen.get(idKey(entry));
+    if (duplicate !== undefined && duplicate.copies > 1) {
+      problems.push(`${duplicate.id} — listed ${duplicate.copies} times; keep one waiver per advisory`);
+    }
+    return { entry, problems };
+  });
 }
 
 export function parseAuditReport(stdout) {
@@ -222,30 +245,16 @@ export function scanAdvisories(vulnerabilities) {
   return { invalid, unresolved, findings, roots, seenRoots };
 }
 
+// A broken waiver suppresses nothing, but it never stops the scan: the monitoring and
+// release lanes read this result, and a scan that ended at the first bad waiver would
+// leave both blind to every other advisory for as long as the waiver stayed broken.
 export function evaluateAudit({ vulnerabilities, allowlist = ALLOWLIST, today }) {
-  const empty = {
-    ok: false,
-    malformedWaivers: [],
-    expired: [],
-    invalid: [],
-    unresolved: [],
-    blocking: [],
-    waived: [],
-    stale: [],
-    suppressed: 0,
-  };
-
-  const malformedWaivers = validateAllowlist(allowlist);
-  if (malformedWaivers.length > 0) {
-    return { ...empty, malformedWaivers };
-  }
-
-  const expired = allowlist.filter((entry) => entry.expires < today);
-  if (expired.length > 0) {
-    return { ...empty, expired };
-  }
-
-  const allowed = new Set(allowlist.map((entry) => entry.id));
+  const audited = auditAllowlist(allowlist);
+  const malformedWaivers = [...new Set(audited.flatMap(({ problems }) => problems))];
+  const wellFormed = allowlist.filter((_, index) => audited[index].problems.length === 0);
+  const isExpired = (entry) => entry.expires < today;
+  const expired = wellFormed.filter(isExpired);
+  const allowed = new Set(wellFormed.filter((entry) => !isExpired(entry)).map((entry) => entry.id));
   const { invalid, unresolved, findings, seenRoots } = scanAdvisories(vulnerabilities);
   const blocking = new Map();
   const waived = new Map();
@@ -263,14 +272,26 @@ export function evaluateAudit({ vulnerabilities, allowlist = ALLOWLIST, today })
   }
 
   return {
-    ok: invalid.length === 0 && unresolved.length === 0 && blocking.size === 0,
-    malformedWaivers: [],
-    expired: [],
+    ok:
+      malformedWaivers.length === 0 &&
+      expired.length === 0 &&
+      invalid.length === 0 &&
+      unresolved.length === 0 &&
+      blocking.size === 0,
+    malformedWaivers,
+    expired,
     invalid,
     unresolved,
     blocking: [...blocking.values()],
     waived: [...waived.values()],
-    stale: allowlist.filter((entry) => !seenRoots.has(entry.id)),
+    // An entry the scan could not read may be the advisory a waiver names, so "not seen"
+    // only means "no longer reported" when every finding was interpreted.
+    stale:
+      invalid.length === 0 && unresolved.length === 0
+        ? allowlist.filter(
+            (entry) => isPlainObject(entry) && typeof entry.id === 'string' && WAIVER_ID.test(entry.id) && !seenRoots.has(entry.id)
+          )
+        : [],
     suppressed,
   };
 }
@@ -326,14 +347,15 @@ export function evaluateDelta({ base, head, allowlist = ALLOWLIST, today }) {
   const expired = [];
   const malformedWaivers = [];
 
+  const audited = auditAllowlist(allowlist);
   for (const root of introduced) {
-    const waiver = allowlist.find((entry) => isPlainObject(entry) && entry.id === root.id);
-    if (waiver === undefined) {
+    const match = audited.find(({ entry }) => isPlainObject(entry) && entry.id === root.id);
+    if (match === undefined) {
       blocking.push(root);
       continue;
     }
 
-    const problems = validateAllowlist([waiver]);
+    const { entry: waiver, problems } = match;
     if (problems.length > 0) {
       malformedWaivers.push(...problems);
       blocking.push(root);
@@ -550,26 +572,6 @@ function runFullGate({ report }, today) {
     });
   }
 
-  for (const problem of result.malformedWaivers) {
-    console.error(`  ${problem}`);
-  }
-  if (result.malformedWaivers.length > 0) {
-    fail(
-      `${result.malformedWaivers.length} malformed waiver(s) in ALLOWLIST. Every entry needs a ` +
-        `GHSA identifier and a real YYYY-MM-DD expiry, or it cannot be time-boxed.`
-    );
-  }
-
-  for (const entry of result.expired) {
-    console.error(`  ${entry.id} — waiver expired ${entry.expires}`);
-  }
-  if (result.expired.length > 0) {
-    fail(
-      `${result.expired.length} audit waiver(s) expired. Re-evaluate: fix the advisory, or ` +
-        `renew the entry in scripts/ci/audit-with-allowlist.mjs with fresh rationale.`
-    );
-  }
-
   for (const root of result.waived) {
     console.log(`• waived ${root.id} (${root.severity}) — ${root.name}: ${root.title}`);
   }
@@ -577,6 +579,12 @@ function runFullGate({ report }, today) {
     console.log(`• stale waiver ${entry.id} — no longer reported, safe to delete`);
   }
 
+  for (const problem of result.malformedWaivers) {
+    console.error(`  ${problem}`);
+  }
+  for (const entry of result.expired) {
+    console.error(`  ${entry.id} — waiver expired ${entry.expires}`);
+  }
   for (const finding of result.invalid) {
     console.error(`  ${finding.name} — ${finding.problem}`);
   }
@@ -587,24 +595,38 @@ function runFullGate({ report }, today) {
     console.error(`  ${root.id} (${root.severity}) — ${root.name}: ${root.title}`);
   }
 
+  const failures = [];
+  if (result.malformedWaivers.length > 0) {
+    failures.push(
+      `${result.malformedWaivers.length} malformed waiver(s) in ALLOWLIST. Every entry needs a ` +
+        `GHSA identifier, a real YYYY-MM-DD expiry, and a written reason, once per advisory.`
+    );
+  }
+  if (result.expired.length > 0) {
+    failures.push(
+      `${result.expired.length} audit waiver(s) expired. Re-evaluate: fix the advisory, or ` +
+        `renew the entry in scripts/ci/audit-with-allowlist.mjs with fresh rationale.`
+    );
+  }
   if (result.invalid.length > 0) {
-    fail(
+    failures.push(
       `${result.invalid.length} entry(ies) in the audit report could not be interpreted. ` +
         `Run \`npm audit\` directly — do not trust this gate until resolved.`
     );
   }
   if (result.unresolved.length > 0) {
-    fail(
+    failures.push(
       `${result.unresolved.length} high/critical finding(s) could not be traced to a root ` +
         `advisory. Run \`npm audit\` directly — do not trust this gate until resolved.`
     );
   }
   if (result.blocking.length > 0) {
-    fail(
+    failures.push(
       `${result.blocking.length} un-waived high/critical advisory(ies). Fix them, or add a ` +
         `justified, dated entry to ALLOWLIST in scripts/ci/audit-with-allowlist.mjs.`
     );
   }
+  if (failures.length > 0) fail(failures.join('\n✖ '));
 
   console.log(`\n✔ No un-waived high/critical advisories (${result.waived.length} waived, ${result.suppressed} finding(s) suppressed).`);
 }

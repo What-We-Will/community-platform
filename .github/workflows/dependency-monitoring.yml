@@ -24,6 +24,11 @@ permissions:
 
 jobs:
   monitor:
+    # Fixed group so a manual dispatch overlapping the cron cannot race it to file the
+    # same issue. A run already filing is never cancelled; at most one more waits.
+    concurrency:
+      group: ${{ github.workflow }}-monitor
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

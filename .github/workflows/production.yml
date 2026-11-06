@@ -11,6 +11,12 @@ permissions:
 
 jobs:
   deploy:
+    # Fixed group, not per-ref: a dispatch from any ref deploys to the same production
+    # target, so two runs must never overlap. A deploy in flight is never cancelled; a
+    # newer dispatch replaces one still pending, so the latest dispatch wins.
+    concurrency:
+      group: ${{ github.workflow }}-deploy
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -48,10 +54,14 @@ jobs:
               echo "**Audit unavailable — treat as unknown risk.**"
               echo ""
               echo "The dependency audit script exited ${audit_exit} without producing a report — it crashed rather than completing a scan. This deploy is proceeding anyway, but the full-tree dependency risk for this release is unknown."
+            elif ! jq -e 'type == "object"' "$REPORT_PATH" >/dev/null 2>&1; then
+              echo "**Audit unavailable — treat as unknown risk.**"
+              echo ""
+              echo "The dependency audit script exited ${audit_exit} and left a report that is not a JSON object. This deploy is proceeding anyway, but the full-tree dependency risk for this release is unknown."
             else
               failure_kind="$(jq -r '.failure.kind // empty' "$REPORT_PATH")"
               if [ -n "$failure_kind" ]; then
-                failure_detail="$(jq -r '.failure.detail // "no detail"' "$REPORT_PATH")"
+                failure_detail="$(jq -r '.failure.detail // "no detail" | tostring | gsub("\r|\n"; " ")' "$REPORT_PATH")"
                 echo "**Audit unavailable — treat as unknown risk.**"
                 echo ""
                 echo "The scanner could not produce a usable result (${failure_kind}): ${failure_detail}. This deploy is proceeding anyway, but the full-tree dependency risk for this release is unknown."
@@ -63,12 +73,30 @@ jobs:
                 stale_count="$(jq '.stale | length' "$REPORT_PATH")"
                 expired_count="$(jq '.expired | length' "$REPORT_PATH")"
                 malformed_count="$(jq '.malformedWaivers | length' "$REPORT_PATH")"
-                echo "**${blocking_count} un-waived high/critical advisory(ies) outstanding in the full dependency tree.**"
-                echo ""
-                echo "| ID | Severity | Package | Title |"
-                echo "|---|---|---|---|"
-                # Advisory titles are upstream free text; a pipe or newline would corrupt the table.
-                jq -r '.blocking[] | [.id, .severity, .name, .title] | map(tostring | gsub("[|]"; "&#124;") | gsub("\r|\n"; " ")) | "| \(.[0]) | \(.[1]) | \(.[2]) | \(.[3]) |"' "$REPORT_PATH"
+                invalid_count="$(jq '.invalid | length' "$REPORT_PATH")"
+                unresolved_count="$(jq '.unresolved | length' "$REPORT_PATH")"
+                if [ "$expired_count" -gt 0 ] || [ "$malformed_count" -gt 0 ]; then
+                  echo "**ALLOWLIST needs attention: ${expired_count} expired, ${malformed_count} malformed waiver(s).** A broken waiver suppresses nothing; any advisory it named that is still reported is counted below."
+                  echo ""
+                  jq -r '(.expired[] | "- \(.id): waiver expired \(.expires)"), (.malformedWaivers[] | "- \(.)") | gsub("\r|\n"; " ")' "$REPORT_PATH"
+                  echo ""
+                fi
+                if [ "$invalid_count" -gt 0 ] || [ "$unresolved_count" -gt 0 ]; then
+                  echo "**Scan incomplete — treat as unknown risk.** ${invalid_count} audit entry(ies) could not be interpreted and ${unresolved_count} high/critical finding(s) could not be traced to an advisory, so the count below is a lower bound."
+                  echo ""
+                  jq -r '(.invalid[] | "- \(.name): \(.problem)"), (.unresolved[] | "- \(.name): \(.problems | join("; "))") | gsub("\r|\n"; " ")' "$REPORT_PATH"
+                  echo ""
+                fi
+                if [ "$blocking_count" -gt 0 ]; then
+                  echo "**${blocking_count} un-waived high/critical advisory(ies) outstanding in the full dependency tree.**"
+                  echo ""
+                  echo "| ID | Severity | Package | Title |"
+                  echo "|---|---|---|---|"
+                  # Advisory titles are upstream free text; a pipe or newline would corrupt the table.
+                  jq -r '.blocking[] | [.id, .severity, .name, .title] | map(tostring | gsub("[|]"; "&#124;") | gsub("\r|\n"; " ")) | "| \(.[0]) | \(.[1]) | \(.[2]) | \(.[3]) |"' "$REPORT_PATH"
+                else
+                  echo "No un-waived high/critical advisory was traced, but this is not a clean result until the problems above are resolved."
+                fi
                 echo ""
                 echo "Waived: ${waived_count} · Stale waivers: ${stale_count} · Expired waivers: ${expired_count} · Malformed waivers: ${malformed_count}"
                 echo ""
@@ -129,23 +157,22 @@ jobs:
               core.setFailed(`Unexpected production URL: ${url}`);
               return;
             }
-            const { data: prs } = await github.rest.pulls.list({
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'closed',
-              sort: 'updated',
-              direction: 'desc',
-              per_page: 1,
+              commit_sha: context.sha,
             });
             const merged = prs.find(pr => pr.merge_commit_sha === context.sha);
-            if (merged) {
-              await github.rest.issues.createComment({
-                issue_number: merged.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `✅ Production deployed: ${url}`,
-              });
+            if (!merged) {
+              core.info(`No merged PR found for ${context.sha}; skipping the deploy comment.`);
+              return;
             }
+            await github.rest.issues.createComment({
+              issue_number: merged.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ Production deployed: ${url}`,
+            });
 
       - name: Slack notify failure
         if: failure()
