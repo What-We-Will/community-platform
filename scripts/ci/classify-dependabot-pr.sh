@@ -82,10 +82,19 @@ else
 fi
 
 echo "verdict=$verdict" >>"$GITHUB_OUTPUT"
+
+# reason can echo update-type, which comes from the PR's commit message. Random
+# tokens keep it from closing the output block or issuing workflow commands.
+random_token() { od -An -N16 -tx1 /dev/urandom | tr -d ' \n'; }
+
+delimiter="EOF_$(random_token)"
 {
-  echo "reason<<EOF_REASON"
-  echo "$reason"
-  echo "EOF_REASON"
+  echo "reason<<$delimiter"
+  printf '%s\n' "$reason"
+  echo "$delimiter"
 } >>"$GITHUB_OUTPUT"
 
-echo "Verdict: $verdict — $reason"
+stop_token="$(random_token)"
+echo "::stop-commands::$stop_token"
+printf 'Verdict: %s — %s\n' "$verdict" "$reason"
+echo "::$stop_token::"
