@@ -12,9 +12,9 @@ import { readFileSync, existsSync } from 'node:fs';
 const ADR_PATH = 'docs/adr/0012-dependency-risk-control-lanes.md';
 // Single source of truth for the tracking label. Discovery (fetchExistingIssues) is
 // entirely dependent on this label sticking — an issue that lost it is unreachable by
-// the search that finds "existing tracked issues" and would look, from here, exactly
-// like a finding nobody has filed yet. The defense is not wider discovery (a second
-// full-repo search would only rediscover the same unreachable-by-definition issue); it
+// the label-filtered listing that finds "existing tracked issues" and would look, from
+// here, exactly like a finding nobody has filed yet. The defense is not wider discovery
+// (a second full-repo listing would only rediscover the same unreachable issue); it
 // is never letting create/update/reopen return without the label applied.
 export const LABEL = 'dependency-monitoring';
 const ADVISORY_ID = /GHSA-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}/i;
@@ -45,8 +45,8 @@ export function extractAdvisoryId(text) {
   return match ? match[0] : null;
 }
 
-// Waiver problems are reported as free-text strings by validateAllowlist(), not
-// structured objects — see scripts/ci/audit-with-allowlist.mjs. The advisory id, when
+// Waiver problems are reported as free-text strings, not structured objects — see
+// waiverProblems() in scripts/ci/audit-with-allowlist.mjs. The advisory id, when
 // the entry had a well-formed one, is always the leading token before " — ".
 export function extractAdvisoryIdFromWaiverMessage(message) {
   return extractAdvisoryId(message.split(' — ')[0]);
@@ -88,7 +88,21 @@ export function planActions({ report, existingIssues }) {
   const closes = [];
   const warnings = [];
 
-  const degraded = report.malformedWaivers.length > 0 || report.expired.length > 0;
+  if (!Array.isArray(report.blocking)) {
+    throw new Error(`report has no usable blocking list (${typeof report.blocking}); cannot plan issues`);
+  }
+
+  // A missing list is treated as non-empty, and a failed report with no recorded cause
+  // is a failure this planner does not understand: neither gets stale-closing.
+  const hasEntries = (list) => !Array.isArray(list) || list.length > 0;
+  const explained =
+    hasEntries(report.malformedWaivers) ||
+    hasEntries(report.expired) ||
+    hasEntries(report.invalid) ||
+    hasEntries(report.unresolved);
+  const unexplainedFailure = report.ok !== true && report.blocking.length === 0;
+  const degraded = explained || unexplainedFailure;
+  const staleWaiverIds = new Set((report.stale ?? []).map((entry) => entry?.id));
 
   // Ownership enforcement never waits for a clean signal: any action that already
   // touches an issue (update, reopen, or create) also re-asserts EXPECTED_ASSIGNEE and
@@ -112,50 +126,37 @@ export function planActions({ report, existingIssues }) {
     return { note: parts.join(' '), reassign, relabel };
   }
 
-  if (degraded) {
-    for (const entry of report.expired) {
-      const existing = existingIssues.get(entry.id);
-      const baseNote = `Waiver expired ${entry.expires}; this advisory is no longer waived and needs a fresh disposition.`;
-      if (existing) {
-        const { note, reassign, relabel } = withRepairNote(existing, baseNote);
-        if (existing.state === 'closed') reopens.push({ id: entry.id, issue: existing, note, reassign, relabel });
-        else updates.push({ id: entry.id, issue: existing, note, reassign, relabel });
-      } else {
-        warnings.push(`expired waiver on ${entry.id}, but no tracked issue exists for it yet — will be filed once it reappears in a full scan`);
-      }
+  const waiverNotes = new Map();
+  for (const entry of report.expired ?? []) {
+    waiverNotes.set(entry.id, {
+      note: `Waiver expired ${entry.expires}; this advisory is no longer waived and needs a fresh disposition.`,
+      orphan: `expired waiver on ${entry.id}, but no tracked issue exists for it yet — will be filed once it reappears in a full scan`,
+    });
+  }
+  for (const message of report.malformedWaivers ?? []) {
+    const id = extractAdvisoryIdFromWaiverMessage(message);
+    if (!id) {
+      warnings.push(`malformed waiver entry could not be traced to an advisory id: ${message}`);
+      continue;
     }
-    for (const message of report.malformedWaivers) {
-      const id = extractAdvisoryIdFromWaiverMessage(message);
-      if (!id) {
-        warnings.push(`malformed waiver entry could not be traced to an advisory id: ${message}`);
-        continue;
-      }
-      const existing = existingIssues.get(id);
-      const baseNote = `Waiver entry is malformed (${message}); this advisory cannot be time-boxed until it is fixed.`;
-      if (existing) {
-        const { note, reassign, relabel } = withRepairNote(existing, baseNote);
-        if (existing.state === 'closed') reopens.push({ id, issue: existing, note, reassign, relabel });
-        else updates.push({ id, issue: existing, note, reassign, relabel });
-      } else {
-        warnings.push(`malformed waiver on ${id}, but no tracked issue exists for it yet — will be filed once it reappears in a full scan`);
-      }
-    }
-    // blocking[] is empty on a degraded report (evaluateAudit returns early), so it is
-    // not a real "nothing is blocking" result — stale-closing is skipped this run rather
-    // than closing issues based on an incomplete view.
-    return { creates, updates, reopens, closes, warnings, degraded };
+    waiverNotes.set(id, {
+      note: `Waiver entry is malformed (${message}); this advisory cannot be time-boxed until it is fixed.`,
+      orphan: `malformed waiver on ${id}, but no tracked issue exists for it yet — will be filed once it reappears in a full scan`,
+    });
   }
 
   const currentIds = new Set();
   for (const finding of report.blocking) {
     currentIds.add(finding.id);
+    const waiverNote = waiverNotes.get(finding.id)?.note ?? '';
     const existing = existingIssues.get(finding.id);
     if (!existing) {
-      creates.push({ id: finding.id, finding });
+      creates.push(waiverNote ? { id: finding.id, finding, note: waiverNote } : { id: finding.id, finding });
       continue;
     }
     if (existing.state === 'closed') {
-      const { note, reassign, relabel } = withRepairNote(existing, 'Reappeared in the scheduled full-tree audit.');
+      const baseNote = ['Reappeared in the scheduled full-tree audit.', waiverNote].filter(Boolean).join(' ');
+      const { note, reassign, relabel } = withRepairNote(existing, baseNote);
       reopens.push({ id: finding.id, issue: existing, finding, note, reassign, relabel });
       continue;
     }
@@ -163,18 +164,47 @@ export function planActions({ report, existingIssues }) {
     const severityChanged = previousSeverity !== finding.severity;
     const assigneeOk = isAssignedToOwner(existing.assignees);
     const labelOk = isLabeled(existing.labels);
-    if (severityChanged || !assigneeOk || !labelOk) {
-      const baseNote = severityChanged ? `Severity changed: ${previousSeverity ?? 'unknown'} → ${finding.severity}.` : '';
+    if (severityChanged || !assigneeOk || !labelOk || waiverNote) {
+      const severityNote = severityChanged ? `Severity changed: ${previousSeverity ?? 'unknown'} → ${finding.severity}.` : '';
+      const baseNote = [severityNote, waiverNote].filter(Boolean).join(' ');
       const { note, reassign, relabel } = withRepairNote(existing, baseNote);
       updates.push({ id: finding.id, issue: existing, finding, note, reassign, relabel });
     }
-    // Unchanged severity, correct assignee, and correct label, still open: nothing to
-    // do — avoids a daily comment for every finding that has not moved or drifted.
+    // Unchanged severity, correct assignee and label, no waiver problem, still open:
+    // nothing to do — avoids a daily comment for every finding that has not moved.
   }
 
-  for (const [id, issue] of existingIssues) {
-    if (issue.state === 'open' && !currentIds.has(id)) {
-      closes.push({ id, issue });
+  // A broken waiver whose advisory is not blocking. If the advisory is no longer reported
+  // the fix is deleting the waiver, which no comment on its issue can prompt better than
+  // a warning. Otherwise its finding could not be traced and the issue keeps the problem.
+  for (const [id, { note: baseNote, orphan }] of waiverNotes) {
+    if (currentIds.has(id)) continue;
+    if (staleWaiverIds.has(id)) {
+      warnings.push(`broken waiver on ${id} names an advisory no longer reported — delete the waiver`);
+      continue;
+    }
+    const existing = existingIssues.get(id);
+    if (!existing) {
+      warnings.push(orphan);
+      continue;
+    }
+    const { note, reassign, relabel } = withRepairNote(existing, baseNote);
+    if (existing.state === 'closed') reopens.push({ id, issue: existing, note, reassign, relabel });
+    else updates.push({ id, issue: existing, note, reassign, relabel });
+  }
+
+  for (const entry of report.invalid ?? []) {
+    warnings.push(`audit entry ${entry.name} could not be interpreted (${entry.problem}); stale-closing skipped`);
+  }
+  for (const entry of report.unresolved ?? []) {
+    warnings.push(`high/critical finding ${entry.name} could not be traced to an advisory (${entry.problems.join('; ')}); stale-closing skipped`);
+  }
+
+  if (!degraded) {
+    for (const [id, issue] of existingIssues) {
+      if (issue.state === 'open' && !currentIds.has(id)) {
+        closes.push({ id, issue });
+      }
     }
   }
 
@@ -212,30 +242,36 @@ async function githubRequest(path, init = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-async function fetchExistingIssues(repo) {
+// The repository issue list, not the search API: search indexes new issues with a delay,
+// so a run started right after another could miss what that run just filed.
+export async function fetchExistingIssues(repo) {
+  const [owner, name] = repo.split('/');
   const existing = new Map();
-  let page = 1;
-  for (;;) {
-    const q = encodeURIComponent(`repo:${repo} label:${LABEL} is:issue`);
-    const data = await githubRequest(`/search/issues?q=${q}&per_page=100&page=${page}`);
-    for (const issue of data.items) {
+  for (let page = 1; ; page += 1) {
+    const query = new URLSearchParams({ labels: LABEL, state: 'all', per_page: '100', page: String(page) });
+    const items = await githubRequest(`/repos/${owner}/${name}/issues?${query}`);
+    for (const issue of items) {
+      if (issue.pull_request) continue;
       const id = extractAdvisoryId(issue.body) ?? extractAdvisoryId(issue.title);
       if (!id) continue;
+      const known = existing.get(id);
+      if (known !== undefined) {
+        console.warn(`⚠ issues #${known.number} and #${issue.number} both track ${id}; keeping the open one`);
+        if (known.state === 'open' && issue.state !== 'open') continue;
+      }
       existing.set(id, {
         number: issue.number,
         state: issue.state,
         body: issue.body ?? '',
         title: issue.title,
         assignees: (issue.assignees ?? []).map((a) => a.login),
-        // Cheap discovery widening: the search query already filters on label:LABEL,
-        // but recording what GitHub actually returned (rather than assuming the filter
-        // guarantees it) lets planActions catch a labeling problem on an issue the
-        // search still surfaced, without a second full-repo call.
+        // Recording the labels GitHub returned, rather than assuming the label filter
+        // guarantees them, lets planActions catch a labeling problem on an issue the
+        // listing still surfaced.
         labels: (issue.labels ?? []).map((l) => (typeof l === 'string' ? l : l.name)),
       });
     }
-    if (data.items.length < 100) break;
-    page += 1;
+    if (items.length < 100) break;
   }
   return existing;
 }
@@ -254,9 +290,9 @@ export function assertLabeled(issue, id, action) {
   }
 }
 
-async function createIssue(repo, { id, finding, today }) {
+export async function createIssue(repo, { id, finding, note, today }) {
   const [owner, name] = repo.split('/');
-  const body = buildIssueBody({ ...finding, today });
+  const body = buildIssueBody({ ...finding, note, today });
   const issue = await githubRequest(`/repos/${owner}/${name}/issues`, {
     method: 'POST',
     body: JSON.stringify({
@@ -276,7 +312,7 @@ async function createIssue(repo, { id, finding, today }) {
 // transient assignment or labeling failure on one run is repaired the next time this
 // issue is touched, rather than silently surviving because planActions only re-checked
 // severity. (A tracked issue that lost the label entirely is unreachable by the
-// label-scoped search that builds `existingIssues` in the first place — the only defense
+// label-filtered listing that builds `existingIssues` in the first place — the only defense
 // against that case is never letting the label fail to stick here.)
 export async function commentAndMaybeReopen(repo, { id, issue, note, finding, reopen, today }) {
   const [owner, name] = repo.split('/');
@@ -407,7 +443,7 @@ async function main() {
   console.log(
     `\nSummary: ${plan.creates.length} filed, ${plan.updates.length} updated, ` +
       `${plan.reopens.length} reopened, ${plan.closes.length} closed` +
-      (plan.degraded ? ' (degraded report: full blocking set unknown, stale-closing skipped)' : '') +
+      (plan.degraded ? ' (degraded report: waiver problems or uninterpretable audit entries, stale-closing skipped)' : '') +
       '.'
   );
 
