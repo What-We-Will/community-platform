@@ -1,6 +1,9 @@
 version: 2
 
 updates:
+  # dependabot-triage.yml posts a verdict only for npm, on branches named
+  # dependabot/npm_and_yarn/...; renaming them, or adding an ecosystem,
+  # gets no comment or label.
   - package-ecosystem: npm
     directory: /
     schedule:

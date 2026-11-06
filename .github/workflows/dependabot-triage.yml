@@ -25,34 +25,30 @@ permissions:
   contents: read
 
 jobs:
-  triage:
+  # Secret-free: on a github-actions bump this job runs the bumped, unreviewed
+  # action code, so it holds nothing worth stealing.
+  classify:
     # Author, not github.actor: actor is whoever acted on the PR last, which is
-    # not the same question and is the weaker gate on a job that mints a token.
+    # not the same question and is the weaker gate on a workflow that mints a token.
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
     outputs:
+      verdict: ${{ steps.classify.outputs.verdict }}
+      reason: ${{ steps.classify.outputs.reason }}
       is-ui-surface: ${{ steps.classify.outputs.is-ui-surface }}
+      dependency-names: ${{ steps.metadata.outputs.dependency-names }}
+      update-type: ${{ steps.metadata.outputs.update-type }}
+      dependency-type: ${{ steps.metadata.outputs.dependency-type }}
+      package-ecosystem: ${{ steps.metadata.outputs.package-ecosystem }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-
-      # Capped here as well as at the App installation, so broadening the App for
-      # an unrelated reason can't silently widen this workflow. Requesting a
-      # permission the installation lacks fails the mint, which is intended.
-      - name: Mint App token
-        id: apptoken
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          permission-issues: write
-          permission-pull-requests: write
 
       - name: Fetch Dependabot metadata
         id: metadata
@@ -67,6 +63,34 @@ jobs:
           PACKAGE_ECOSYSTEM: ${{ steps.metadata.outputs.package-ecosystem }}
         run: scripts/ci/classify-dependabot-pr.sh
 
+  # Holds the App key, so it runs only on npm bumps. A github-actions bump's
+  # workflow resolves the bumped action pins, including the two used here; those
+  # PRs are always needs-review and lose only the comment and label. An allowlist,
+  # so a branch-naming change in dependabot.yml drops the comment rather than
+  # exposing the key. The branch check reads the event payload; the metadata
+  # output repeats it via an action a github-actions bump can replace.
+  post-verdict:
+    needs: classify
+    if: >-
+      startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/')
+      && needs.classify.outputs.package-ecosystem == 'npm_and_yarn'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+
+    steps:
+      # Capped here as well as at the App installation, so broadening the App for
+      # an unrelated reason can't silently widen this workflow. Requesting a
+      # permission the installation lacks fails the mint, which is intended.
+      - name: Mint App token
+        id: apptoken
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-issues: write
+          permission-pull-requests: write
+
       # Posting failures warn rather than fail the job: this validates nothing
       # about the update, so a transient API hiccup shouldn't red-X the PR. Same
       # reasoning as the Slack notify steps in preview.yml.
@@ -76,12 +100,12 @@ jobs:
       - name: Post verdict comment and label
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
-          VERDICT: ${{ steps.classify.outputs.verdict }}
-          REASON: ${{ steps.classify.outputs.reason }}
-          IS_UI_SURFACE: ${{ steps.classify.outputs.is-ui-surface }}
-          DEPENDENCY_NAMES: ${{ steps.metadata.outputs.dependency-names }}
-          UPDATE_TYPE: ${{ steps.metadata.outputs.update-type }}
-          DEPENDENCY_TYPE: ${{ steps.metadata.outputs.dependency-type }}
+          VERDICT: ${{ needs.classify.outputs.verdict }}
+          REASON: ${{ needs.classify.outputs.reason }}
+          IS_UI_SURFACE: ${{ needs.classify.outputs.is-ui-surface }}
+          DEPENDENCY_NAMES: ${{ needs.classify.outputs.dependency-names }}
+          UPDATE_TYPE: ${{ needs.classify.outputs.update-type }}
+          DEPENDENCY_TYPE: ${{ needs.classify.outputs.dependency-type }}
         with:
           github-token: ${{ steps.apptoken.outputs.token }}
           script: |
@@ -232,8 +256,8 @@ jobs:
   # preview.yml's `verify` job: nothing is withheld on a Dependabot-triggered
   # run, and unreviewed dependency code never sees a real credential.
   ui-smoke-screenshots:
-    needs: triage
-    if: needs.triage.outputs.is-ui-surface == 'true'
+    needs: classify
+    if: needs.classify.outputs.is-ui-surface == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

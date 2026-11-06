@@ -23,7 +23,7 @@ The App is `wwc-dependabot-triage`, owned by the `What-We-Will` organization, in
 
 The minting step additionally declares `permission-issues: write` and `permission-pull-requests: write`. These cap the token in the workflow file rather than letting it inherit whatever the installation holds, so the ceiling is visible in a diff and enforced in two places. Requesting a permission the installation lacks fails the mint outright, which is preferred over minting a token that 403s later.
 
-`GITHUB_TOKEN` in the triage job stays at `contents: read`; it is used only to check out the classifier script. All writes go through the App token. The `dependabot-triage.yml` workflow keeps its `pull_request` trigger and its `github.actor == 'dependabot[bot]'` job gate. The `workflow_run` second stage and the artifact handoff that existed only to feed it are removed.
+Classification and posting run in separate jobs. `classify` holds no secrets; its `GITHUB_TOKEN` stays at `contents: read` and is used only to check out the classifier script. `post-verdict` mints the App token and makes every write, with no `GITHUB_TOKEN` scopes. It runs only on npm bumps, because a github-actions PR's workflow resolves the bumped action pins and those must not run beside the private key. The gate is an allowlist on the default `dependabot/npm_and_yarn/` branch name, so a naming change fails closed. The `dependabot-triage.yml` workflow keeps its `pull_request` trigger and gates on the PR author, not `github.actor`, being `dependabot[bot]`. The `workflow_run` second stage and the artifact handoff that existed only to feed it are removed.
 
 ## Alternatives considered
 
@@ -55,7 +55,7 @@ The minting step additionally declares `permission-issues: write` and `permissio
 
 **Risks introduced.** A failure to mint the token, or a revoked installation, produces the same failure shape that made the original problem hard to diagnose: posting errors are logged as warnings rather than failing the job, so the run stays green while nothing is posted. Anyone verifying this feature should judge it by the PR's comment and labels, not by the job's status.
 
-**Contributor workflow change.** None for contributors. Triage comments now appear authored by `wwc-dependabot-triage[bot]` rather than `github-actions[bot]`.
+**Contributor workflow change.** None for contributors. Triage comments now appear authored by `wwc-dependabot-triage[bot]` rather than `github-actions[bot]`. Dependabot github-actions PRs get no triage comment or label; they are always `needs-review`.
 
 ## Open questions
 

@@ -8,7 +8,8 @@ weekly batch quickly.
 
 1. Read the **triage comment** the bot posts on the PR (`.github/workflows/dependabot-triage.yml`)
    — it applies this same decision matrix automatically and labels the PR `ready to merge` or
-   `status: needs-review`. It does not merge anything; a human still clicks merge.
+   `status: needs-review`. It does not merge anything; a human still clicks merge. Only npm
+   bumps get a comment and label; treat github-actions bumps as `needs-review`.
 2. The label is **not** a CI verdict. It is computed from the bump's metadata alone, so a PR
    can be labelled `ready to merge` while its checks are red. Always read the checks too:
    **`verify`** green = the migration-collision check plus `npm ci --ignore-scripts`, lint,
@@ -37,12 +38,13 @@ alternatives (a repo-wide "send write tokens to fork PRs" setting, `pull_request
 banned by ADR-0003 — and a personal access token).
 
 `scripts/ci/classify-dependabot-pr.sh` reads `dependabot/fetch-metadata` output (bump type,
-dependency type, package names) and mirrors the matrix below; the same job then posts the
-verdict comment and swaps the `ready to merge` / `status: needs-review` label using the App
-token. It re-runs on every push and, when the posting step succeeds, updates the comment and
-label for the latest commit on the PR. A posting failure (rate limit, transient API hiccup, a
-renamed label) logs a warning instead of failing the job — this stage doesn't validate the
-dependency update itself, so its failure shouldn't red-X the PR the way a broken build should.
+dependency type, package names) and mirrors the matrix below in a job that holds no secrets; a
+second job then mints the App token, posts the verdict comment, and swaps the `ready to merge` /
+`status: needs-review` label. It re-runs on every push and, when the posting step succeeds,
+updates the comment and label for the latest commit on the PR. A posting failure (rate limit,
+transient API hiccup, a renamed label) logs a warning instead of failing the job — this stage
+doesn't validate the dependency update itself, so its failure shouldn't red-X the PR the way a
+broken build should.
 
 It does not distinguish security updates from version updates — reading Dependabot alerts needs
 a `security_events` scope the App isn't granted (the default `GITHUB_TOKEN` can't read them
@@ -56,7 +58,11 @@ matrix," not "already merged."
 
 github-actions bumps always come back `needs-review` regardless of bump size — they change
 pinned workflow SHAs, which is a different risk category (CI trust, not just build
-correctness) than an npm dependency bump.
+correctness) than an npm dependency bump. For the same reason the posting job runs only on
+npm bumps: a github-actions PR's workflow runs the bumped action pins, and the posting job is
+the one holding the App's private key. Those PRs get no comment or label; the verdict is in the
+`classify` job's log. The posting job matches the default `dependabot/npm_and_yarn/` branch
+name, so changing branch naming in `.github/dependabot.yml` stops the comments.
 
 ## Reading the checks
 
