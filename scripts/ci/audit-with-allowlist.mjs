@@ -18,22 +18,8 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const ALLOWLIST = [
-  {
-    id: 'GHSA-vfj7-8cjw-p6xm',
-    expires: '2026-11-18',
-    reason:
-      'braces stack-exhaustion DoS via deeply nested patterns. Reachable only ' +
-      'through devDependencies, all via fast-glob -> micromatch -> braces: ' +
-      'eslint-config-next (@next/eslint-plugin-next, run by every lint in CI and ' +
-      'locally) and shadcn (directly and via ts-morph, run by hand to add UI ' +
-      'primitives). The globs expanded come from repository lint config and ' +
-      'shadcn itself, not from users, and nothing in the production bundle ' +
-      'depends on braces. No patched release exists: the advisory covers ' +
-      "<=3.0.3 and 3.0.3 is the latest. npm audit's suggested fix is a " +
-      'downgrade to shadcn 1.0.0, which is not viable and would leave the ' +
-      'eslint-config-next path. Blocked on upstream; re-check for a braces ' +
-      'release, or fast-glob dropping micromatch, before renewing.',
-  },
+  // Empty since 2026-11-06: the braces waiver (GHSA-vfj7-8cjw-p6xm) went stale when
+  // npm audit stopped reporting it. Entries are { id, expires: 'YYYY-MM-DD', reason }.
 ];
 
 const GATED_SEVERITIES = new Set(['high', 'critical']);
