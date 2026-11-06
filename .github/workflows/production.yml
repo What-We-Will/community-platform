@@ -157,23 +157,22 @@ jobs:
               core.setFailed(`Unexpected production URL: ${url}`);
               return;
             }
-            const { data: prs } = await github.rest.pulls.list({
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'closed',
-              sort: 'updated',
-              direction: 'desc',
-              per_page: 1,
+              commit_sha: context.sha,
             });
             const merged = prs.find(pr => pr.merge_commit_sha === context.sha);
-            if (merged) {
-              await github.rest.issues.createComment({
-                issue_number: merged.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `✅ Production deployed: ${url}`,
-              });
+            if (!merged) {
+              core.info(`No merged PR found for ${context.sha}; skipping the deploy comment.`);
+              return;
             }
+            await github.rest.issues.createComment({
+              issue_number: merged.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ Production deployed: ${url}`,
+            });
 
       - name: Slack notify failure
         if: failure()
