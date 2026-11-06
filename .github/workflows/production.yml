@@ -11,6 +11,12 @@ permissions:
 
 jobs:
   deploy:
+    # Fixed group, not per-ref: a dispatch from any ref deploys to the same production
+    # target, so two runs must never overlap. A deploy in flight is never cancelled; a
+    # newer dispatch replaces one still pending, so the latest dispatch wins.
+    concurrency:
+      group: ${{ github.workflow }}-deploy
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
