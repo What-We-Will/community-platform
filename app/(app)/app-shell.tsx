@@ -49,8 +49,7 @@ import { UnreadBadge } from "@/components/messages/UnreadBadge";
 
 const HEARTBEAT_INTERVAL_MS = 45_000; // 45s — keep last_seen_at fresh so others see you online
 
-const SLACK_INVITE_URL =
-  "https://join.slack.com/t/whatwewill/shared_invite/zt-3zxh2f0x0-~zvous3lLva6Pi8IJQ0T8A";
+const SLACK_INVITE_URL = "https://tinyurl.com/joinwhatwewill";
 
 interface NavItem {
   href: string;
