@@ -79,7 +79,7 @@ cleanup() {
   if [ "$keep" -eq 1 ]; then
     echo
     echo "worktree retained at $wt"
-    echo "  boot the app:  cd $wt && npm run start"
+    echo "  boot the app:  cd $wt && npm run dev   # not start: the build inlined placeholder env"
     echo "  remove it:     git worktree remove --force $wt"
     return
   fi
