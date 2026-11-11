@@ -240,11 +240,11 @@ scripts/validate-dep-pr.sh <pr-number>        # e.g. 207  (resolves the branch v
 scripts/validate-dep-pr.sh <branch-ref>       # e.g. dependabot/npm_and_yarn/next-...
 ```
 
-It fetches the branch into a throwaway worktree, runs `npm ci --ignore-scripts` + lint +
-type-check + tests + a production build with placeholder non-secret env, reports pass/fail,
-and cleans up without touching your current branch. It does not run CI's migration-collision
-check or its `npm install --dry-run` resolution check, so green here does not mean `verify`
-would be green. For a visual smoke, follow
+It fetches the branch into a throwaway worktree, runs `npm ci --ignore-scripts` + the
+`npm install --dry-run` resolution check + lint + type-check + tests + a production build
+with placeholder non-secret env, reports pass/fail, and cleans up without touching your
+current branch. It does not run CI's migration-collision or analytics-attribute checks, so
+green here does not mean `verify` would be green. For a visual smoke, follow
 [Visual smoke for UI-surface bumps](#visual-smoke-for-ui-surface-bumps) — it names the
 surfaces to check and what counts as a failure, rather than leaving it to eyeballing.
 
