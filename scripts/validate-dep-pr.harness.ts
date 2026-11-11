@@ -14,7 +14,7 @@ const SCRIPT = join(import.meta.dirname, "validate-dep-pr.sh");
 export type RunOptions = {
   args?: string[];
   npmExitCode?: number;
-  /** Make only this npm subcommand (e.g. "install") exit 1; every other npm call succeeds. */
+  /** Make this npm subcommand (e.g. "install") exit 1; other npm calls exit with npmExitCode. */
   failOnNpmSubcommand?: string;
 };
 

@@ -8,8 +8,9 @@
 # local sanity check, or for the cases that still want a human eye (major bumps,
 # visual-surface changes) where you also want to boot the app afterwards.
 #
-# Not a complete stand-in for the check: `verify` also runs the migration-collision
-# check, which this script omits. Green here does not mean `verify` would be green.
+# Not a complete stand-in for the check: `verify` also runs the migration-collision and
+# analytics-attribute checks, which this script omits. Green here does not mean `verify`
+# would be green.
 #
 # Usage:
 #   scripts/validate-dep-pr.sh [--keep] <pr-number|branch-ref>
