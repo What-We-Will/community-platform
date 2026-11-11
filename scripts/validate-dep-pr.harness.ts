@@ -14,6 +14,8 @@ const SCRIPT = join(import.meta.dirname, "validate-dep-pr.sh");
 export type RunOptions = {
   args?: string[];
   npmExitCode?: number;
+  /** Make only this npm subcommand (e.g. "install") exit 1; every other npm call succeeds. */
+  failOnNpmSubcommand?: string;
 };
 
 export type RunResult = {
@@ -40,20 +42,25 @@ function makeOriginRepo(root: string): string {
   return origin;
 }
 
-function makeStubBin(root: string, npmExitCode: number): string {
+function makeStubBin(root: string, npmExitCode: number, failOnNpmSubcommand?: string): string {
   const bin = join(root, "bin");
+  const failOn = failOnNpmSubcommand ? `[ "$1" = "${failOnNpmSubcommand}" ] && exit 1\n` : "";
 
   mkdirSync(bin);
   for (const name of ["npm", "npx"]) {
     const stub = join(bin, name);
-    writeFileSync(stub, `#!/bin/sh\necho "stub ${name} $*"\nexit ${npmExitCode}\n`);
+    writeFileSync(stub, `#!/bin/sh\necho "stub ${name} $*"\n${failOn}exit ${npmExitCode}\n`);
     chmodSync(stub, 0o755);
   }
 
   return bin;
 }
 
-export function runValidateDepPr({ args = ["main"], npmExitCode = 0 }: RunOptions = {}): RunResult {
+export function runValidateDepPr({
+  args = ["main"],
+  npmExitCode = 0,
+  failOnNpmSubcommand,
+}: RunOptions = {}): RunResult {
   const root = mkdtempSync(join(tmpdir(), "validate-dep-pr-"));
   let retained: string | undefined;
 
@@ -64,7 +71,7 @@ export function runValidateDepPr({ args = ["main"], npmExitCode = 0 }: RunOption
     mkdirSync(join(clone, "scripts"), { recursive: true });
     cpSync(SCRIPT, join(clone, "scripts", "validate-dep-pr.sh"));
 
-    const bin = makeStubBin(root, npmExitCode);
+    const bin = makeStubBin(root, npmExitCode, failOnNpmSubcommand);
     const result = spawnSync("bash", [join(clone, "scripts", "validate-dep-pr.sh"), ...args], {
       cwd: clone,
       encoding: "utf8",
