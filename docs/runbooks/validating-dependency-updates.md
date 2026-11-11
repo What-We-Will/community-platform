@@ -11,8 +11,9 @@ weekly batch quickly.
    `status: needs-review`. It does not merge anything; a human still clicks merge.
 2. The label is **not** a CI verdict. It is computed from the bump's metadata alone, so a PR
    can be labelled `ready to merge` while its checks are red. Always read the checks too:
-   **`verify`** green = the migration-collision check plus `npm ci --ignore-scripts`, lint,
-   type-check, unit tests, and a production build all passed against the new dependency.
+   **`verify`** green = the migration-collision check plus `npm ci --ignore-scripts`, an
+   `npm install --dry-run` resolution check, lint, type-check, unit tests, and a production
+   build all passed against the new dependency.
 3. Ignore `preview-deploy` on Dependabot PRs — it is **skipped** (it needs deploy secrets
    that GitHub withholds from Dependabot). A skipped or absent preview is expected, not a
    failure.
@@ -64,13 +65,15 @@ After the preview pipeline split, `preview.yml` runs three jobs:
 
 | Job | Needs secrets? | Runs on Dependabot? | What green means |
 |-----|----------------|---------------------|------------------|
-| `verify` | No | Yes | Checks migration filename collisions; installs, lints, type-checks, tests, **and builds** the app on the new deps |
+| `verify` | No | Yes | Checks migration filename collisions; installs, confirms `npm install` can resolve the lockfile the way the deploy's install does, lints, type-checks, tests, **and builds** the app on the new deps |
 | `security-scan` | No | Yes | Secret + hidden-char scan, and an `npm audit` scoped to the advisories this PR introduces |
 | `preview-deploy` | Yes | **No (skipped)** | Live preview URL — only on same-repo, non-Dependabot PRs |
 
-`security-scan` is the required check on `main`. `verify` is the one that tells you the
-update is sound — green means the app builds and tests pass with it — but it is not what
-blocks the merge button. `preview-deploy` being skipped on a Dependabot PR is by design.
+`verify` and `security-scan` are both required checks on `main` (see
+[ADR-0015](../adr/0015-verify-required-check-alongside-security-scan.md)); either one red
+blocks the merge button. `verify` is the one that tells you the update is sound — green
+means the lockfile resolves, and the app builds and tests pass with it. `preview-deploy`
+being skipped on a Dependabot PR is by design.
 
 Green on `security-scan` does **not** mean the tree is free of high or critical advisories.
 Per [ADR-0012](../adr/0012-dependency-risk-control-lanes.md) the gate is delta-scoped: it
@@ -240,7 +243,8 @@ scripts/validate-dep-pr.sh <branch-ref>       # e.g. dependabot/npm_and_yarn/nex
 It fetches the branch into a throwaway worktree, runs `npm ci --ignore-scripts` + lint +
 type-check + tests + a production build with placeholder non-secret env, reports pass/fail,
 and cleans up without touching your current branch. It does not run CI's migration-collision
-check, so green here does not mean `verify` would be green. For a visual smoke, follow
+check or its `npm install --dry-run` resolution check, so green here does not mean `verify`
+would be green. For a visual smoke, follow
 [Visual smoke for UI-surface bumps](#visual-smoke-for-ui-surface-bumps) — it names the
 surfaces to check and what counts as a failure, rather than leaving it to eyeballing.
 
@@ -270,7 +274,7 @@ Order in an incident: **Vercel rollback → `git revert` → pin.** A pre-merge 
 
 GitHub runs Dependabot-triggered workflows against a separate, empty secret store, so
 `VERCEL_TOKEN` and the Supabase keys are blank and any deploy step fails at `vercel pull`.
-The pipeline is split so the secret-free jobs — `verify` and `security-scan`, the
-required check — always run and carry the signals a merge decision needs, and
+The pipeline is split so the secret-free jobs — `verify` and `security-scan`, the two
+required checks — always run and carry the signals a merge decision needs, and
 `preview-deploy` is skipped for Dependabot (and for forks, which also can't reach secrets).
 This is a platform constraint, not a misconfiguration.

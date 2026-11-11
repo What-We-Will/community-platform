@@ -135,7 +135,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 |---|---|---|---|---|
 | [0001](./0001-playwright-for-e2e-testing.md) | Playwright for end-to-end browser testing | Accepted 2026-04-27 | — | @tonyrosario |
 | [0002](./0002-migrations-timestamps-and-local-first.md) | Timestamp-based migrations and local-first authoring | Accepted 2026-05-19 | — | @timchaffee |
-| [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | Audit step amended by [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md); gate scope amended by [0012](./0012-dependency-risk-control-lanes.md) | @tonyrosario |
+| [0003](./0003-pre-merge-supply-chain-gate.md) | Pre-merge supply-chain security gate | Accepted 2026-06-04 | Audit step amended by [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md); gate scope amended by [0012](./0012-dependency-risk-control-lanes.md); required-check boundary amended by [0015](./0015-verify-required-check-alongside-security-scan.md) | @tonyrosario |
 | [0004](./0004-router-push-for-filter-urls.md) | router.push as default for filter and search URL updates | Accepted 2026-05-31 | — | @tonyrosario |
 | [0005](./0005-vitest-for-unit-testing.md) | Vitest for unit and component testing | Proposed 2026-06-05 | — | @tonyrosario |
 | [0006](./0006-profiles-protected-column-enforcement.md) | Profiles protected-column enforcement | Accepted 2026-07-26 | — | @tonyrosario |
@@ -146,6 +146,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0012](./0012-dependency-risk-control-lanes.md) | Dependency-risk control lanes | Accepted 2026-08-11 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) and [0009](./0009-time-boxed-waivers-for-unfixable-advisories.md) | @tonyrosario |
 | [0013](./0013-posthog-product-analytics.md) | PostHog for product analytics | Accepted 2026-09-25 | — | @tonyrosario |
 | [0014](./0014-calver-release-tags.md) | Calendar versioning for production release tags | Accepted 2026-09-04 | — | @tonyrosario |
+| [0015](./0015-verify-required-check-alongside-security-scan.md) | `verify` as a second required check on `main` | Accepted 2026-11-11 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay
