@@ -2,11 +2,11 @@
 #
 # validate-dep-pr.sh — reproduce the dependency portion of CI's `verify` job locally.
 #
-# Runs npm ci --ignore-scripts + lint + type-check + unit tests + a production build
-# (with placeholder, non-secret env) against a PR's branch in a throwaway git worktree,
-# then cleans up. Useful for a local sanity check, or for the cases that still want a
-# human eye (major bumps, visual-surface changes) where you also want to boot the app
-# afterwards.
+# Runs npm ci --ignore-scripts, an npm install --dry-run resolution check, lint,
+# type-check, unit tests and a production build (with placeholder, non-secret env)
+# against a PR's branch in a throwaway git worktree, then cleans up. Useful for a
+# local sanity check, or for the cases that still want a human eye (major bumps,
+# visual-surface changes) where you also want to boot the app afterwards.
 #
 # Not a complete stand-in for the check: `verify` also runs the migration-collision
 # check, which this script omits. Green here does not mean `verify` would be green.
@@ -102,6 +102,9 @@ export SUPABASE_SERVICE_ROLE_KEY=placeholder-service-role-key
 run() { echo; echo "==> $1"; shift; "$@"; }
 
 run "npm ci"        npm ci --ignore-scripts
+# vercel build runs `npm install`, which re-resolves peer deps that `npm ci` trusts
+# the lockfile on; CI's verify job runs this same check.
+run "install check" npm install --dry-run --ignore-scripts --no-audit --no-fund
 run "lint"          npm run lint
 run "type check"    npx tsc --noEmit
 run "unit tests"    npm test
