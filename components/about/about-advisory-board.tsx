@@ -1,12 +1,12 @@
 const ADVISORY_BOARD = [
   {
     name: "Helen Y.",
-    affiliation: "Tech Worker Coalition (Steering Committee Member), former Amazon worker",
+    affiliation: "Tech Workers Coalition (Steering Committee & Education Lead), former Amazon worker",
     barClass: "bg-primary-orange",
   },
   {
     name: "Michelle B.",
-    affiliation: "Co-Founder/Organizer, Oracle Workers Collective",
+    affiliation: "Co-Founder/Organizer, Oracle Workers Collective (What We Will), former Oracle worker",
     barClass: "bg-accent-blue",
   },
   {
@@ -16,7 +16,7 @@ const ADVISORY_BOARD = [
   },
   {
     name: "Jerome Greco",
-    affiliation: "Public Defender, Legal Aid Society, Digital Surveillance & Tech Policy",
+    affiliation: "Public Defender, Legal Aid Society, Digital Forensics Unit, Anti-Surveillance & Tech/AI Policy",
     barClass: "bg-accent-gold",
   },
   {
