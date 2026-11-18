@@ -5,7 +5,6 @@ import { AboutHero } from "@/components/about/about-hero";
 import { AboutOrganization } from "@/components/about/about-organization";
 import { AboutTeam } from "@/components/about/about-team";
 import { AboutAdvisoryBoard } from "@/components/about/about-advisory-board";
-import { AboutVolunteers } from "@/components/about/about-volunteers";
 
 import type { Metadata } from "next";
 import { canonicalPath } from "@/lib/seo";
@@ -30,7 +29,7 @@ export default async function AboutPage() {
         <AboutHero />
         <AboutOrganization />
         <AboutTeam />
-        <AboutVolunteers />
+        {/* <AboutVolunteers /> */}
         <AboutAdvisoryBoard />
       </main>
       <LandingFooter />

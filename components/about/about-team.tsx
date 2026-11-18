@@ -1,97 +1,243 @@
 import Image from "next/image";
+import Link from "next/link";
+import type { ReactNode } from "react";
 
 type TeamMember = {
   name: string;
   role: string;
-  bio: string;
+  bio: ReactNode;
   image?: string;
   imagePosition?: string;
 };
 
-const FOUNDING_TEAM: TeamMember[] = [
+const WORKING_GROUPS: TeamMember[] = [
   {
-    name: "Kaitlin Cort",
-    role: "Founder/Co-Director, Lead Organizer & Platform Engineer",
-    bio: "Shaping vision, strategy, programs and partnerships. Software engineer with background in government executive leadership, policy research, and labor organizing.",
+    name: "Steering Committee",
+    role: "Elected Worker Representatives",
+    bio: (
+      <>
+        Shaping strategy, programs, partnerships, budgets, and the creation of new working groups.
+        <br />
+        <br />
+        <span className="text-xs">
+          Board members with fiduciary responsibility can take part, but do not make decisions for the collective.
+        </span>
+      </>
+    ),
   },
   {
-    name: "Charise Van Liew",
-    role: "Co-Director, Fundraising & Development",
-    bio: "Strategic resource development specialist, with 20+ years of nonprofit executive leadership. Passionate about youth empowerment and social justice.",
+    name: "Organizing Working Group",
+    role: "Layoff Crisis Support",
+    bio: (
+      <span className="text-xs">
+        Join to learn organizing skills and movement strategy, support fellow workers facing layoffs, and fight alongside other organizations for worker power and dignity.
+        <br />
+        <br />
+        <span className="text-[0.625rem]">
+          <b>Past campaigns:</b> Collective severance negotiation with 600+{" "}
+          <Link
+            href="https://movement.wwwrise.org/oracle"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover"
+          >
+            Oracle workers
+          </Link>
+          , and fighting AI workplace surveillance at{" "}
+          <Link
+            href="https://www.techpolicy.press/tech-workers-are-fighting-against-silicon-valleys-ai-push"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover"
+          >
+            Meta
+          </Link>
+          .
+        </span>
+      </span>
+    ),
   },
   {
-    name: "Kyle A.",
-    role: "Creative Director & Media Strategy",
-    bio: "Creative Director shaping our visual identity, narrative content, and creative media campaigns. Video producer, graphic designer, and writer.",
+    name: "Community Job Support",
+    role: "Job Search Councils & Daily Programming",
+    bio: (
+      <>
+        Community-building, job search support and workshops, mutual aid, remote co-working, games, movies, and fun activities.
+        <br />
+        <br />
+        This is the heart of our community. If you&apos;re newly unemployed,{" "}
+        <Link
+          href="https://slack.wwwrise.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover"
+        >
+          join here
+        </Link>
+        .
+      </>
+    ),
   },
   {
-    name: "Sabrina Shuss",
-    role: "Program Manager & Operations",
-    bio: "Project manager and operations specialist, with financial management skills. Coordinating volunteer teams and ensuring our daily programs run smoothly.",
+    name: "Participatory Action Research Team",
+    role: "Interviews & Publications",
+    bio: (
+      <>
+        <span className="text-xs">
+        Join the team to practice participatory research skills, and help gather stories, data, and insights from workers to inform our organizing and advocacy.
+        <br />
+        <br />
+          In partnership with{" "}
+          <Link
+            href="https://techequity.us"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover"
+          >
+            Tech Equity
+          </Link>
+          , publication forthcoming Dec. 2026.
+        </span>
+      </>
+    ),
   },
   {
-    name: "Daniel Buk",
-    role: "Partnerships Research & Digital Outreach",
-    bio: "Research specialist leading digital outreach and prospective partnerships. M.A. in Labor Studies from CUNY School of Labor and Urban Studies.",
+    name: "Advocacy Working Group",
+    role: "Public Education & Policy Research",
+    bio: (
+      <span className="text-xs">
+        Join this team to better understand laws and policy proposals that impact workers. Help create public education programs, worker storytelling and media trainings, and virtual events.
+        <br />
+        <br />
+        Be part of coalitions in CA, NY, and federally, advocating for worker rights and a stronger social safety net.
+      </span>
+    ),
   },
   {
-    name: "Helen Yang",
-    role: "Tech Worker Organizing & Political Education",
-    bio: "Championing worker-led organizing within workplaces, and broader tech industry activism at the Tech Workers Coalition.",
+    name: "Platform Engineering Team",
+    role: "Worker-Owned Tech Cooperative",
+    bio: (
+      <>
+        We build the tools and platforms that power our organization.
+        <br />
+        <br />
+        <span className="text-xs">
+          Join to help us build a membership platform and organizing tools that are secure, accessible, and open source. Part of a long-term goal to build a cooperative that can provide paid work to unemployed workers.
+        </span>
+      </>
+    ),
+  },
+  {
+    name: "Media & Digital Organizing",
+    role: "Newsletter & Social Media",
+    bio: (
+      <>
+        Inspire the Gen-Z, Millennial, and Gen-X workers facing layoffs and prolonged unemployment.
+        <br />
+        <br />
+        <span className="text-xs">
+          Join to help build creative campaigns, and empower a broader movement.
+        </span>
+      </>
+    ),
+  },
+  {
+    name: "Governance, Safety Committees",
+    role: "How we work together",
+    bio: (
+      <>
+        Staying in alignment with our values and principles.
+        <br />
+        <br />
+        <span className="text-xs">
+          Join to help us maintain a cooperative culture of care that ensures safety, accountability, and transparency.
+        </span>
+      </>
+    ),
   },
 ];
 
 const CORE_TEAM: TeamMember[] = [
   {
-    name: "Joshua S-R.",
-    role: "Movement-Building, Policy & Research",
+    name: "AM",
+    role: "Lead Organizer - Advocacy & Policy Research",
     bio: "",
   },
   {
-    name: "Andrew M.",
-    role: "Lead Organizer - Policy & Advocacy Working Group",
+    name: "AS",
+    role: "Product Manager / Layoff Crisis Support",
     bio: "",
   },
   {
-    name: "Sonia J.",
-    role: "Lead Organizer - Participatory Action Research Working Group",
+    name: "AT",
+    role: "Governance / Policy / Fundraising",
     bio: "",
   },
   {
-    name: "Margaret G.",
-    role: "Researcher & Policy Analysis",
+    name: "BB",
+    role: "Community Job Support / Engineering & Policy",
     bio: "",
   },
   {
-    name: "Isaac L.",
-    role: "Lead Organizer - Community Job Support Program",
+    name: "CV",
+    role: "Fundraising & Grants",
     bio: "",
   },
   {
-    name: "Tony R.",
-    role: "Lead Platform Engineer, WWW Tech Worker Cooperative",
+    name: "DH",
+    role: "Lead Organizer & Participatory Action Researcher",
     bio: "",
   },
   {
-    name: "Tim C.",
-    role: "Lead Platform Engineer, WWW Tech Worker Cooperative",
+    name: "DM",
+    role: "Engineer / Community Job Support",
     bio: "",
   },
   {
-    name: "Annette S.",
-    role: "Product Manager - Layoff Crisis Support",
+    name: "EO",
+    role: "Lead Community Builder - Engineer / Job Search Council",
     bio: "",
   },
   {
-    name: "Allen P.",
-    role: "Media & Newsletter",
+    name: "HJ",
+    role: "Lead Organizer - Media & Digital Organizing Team",
     bio: "",
   },
   {
-    name: "Warren L.",
-    role: "Education & Curriculum-Development",
+    name: "KA",
+    role: "Designer / Media",
     bio: "",
   },
+  {
+    name: "KC",
+    role: "Lead Organizer - Layoff Crisis Support / Organizing & Policy",
+    bio: "",
+  },
+  {
+    name: "MG",
+    role: "Researcher / Job Search Council facilitator",
+    bio: "",
+  },
+  {
+    name: "MM",
+    role: "Lead Organizer & Technologist / Layoff Crisis Support",
+    bio: "",
+  },
+  {
+    name: "SJ",
+    role: "Lead Organizer - Participatory Action Research",
+    bio: "",
+  },
+  {
+    name: "SS",
+    role: "Lead Organizer - Community Job Support",
+    bio: "",
+  },
+  {
+    name: "TR",
+    role: "Lead Organizer - Platform Engineering Team",
+    bio: "",
+  }
 ];
 
 function TeamCard({
@@ -103,7 +249,7 @@ function TeamCard({
 }: {
   name: string;
   role: string;
-  bio: string;
+  bio: ReactNode;
   image?: string;
   imagePosition?: string;
 }) {
@@ -158,9 +304,34 @@ export function AboutTeam() {
       <div className="mx-auto max-w-6xl space-y-16">
         <div>
           <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-            Founding Members
+            Workers Collective
           </h2>
-          <TeamGrid members={FOUNDING_TEAM} />
+          <p className="mx-auto mt-8 max-w-4xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            As a democratic and worker-led organization, we share in distributed decision-making across <b>Working Groups</b> and the <b>Steering Committee</b>, which is elected by the <b>Assembly</b> of all members.
+          </p>
+          <p className="mx-auto mt-8 max-w-4xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            All members have a vote in our weekly{" "}
+            <Link
+              href="https://tinyurl.com/calendarwww"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover"
+            >
+              All Hands
+            </Link>{" "}
+            meeting. We encourage you to join and take ownership in our{" "}
+            <Link
+              href="https://www.theselc.org/worker_selfdirected_nonprofits"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary-orange underline underline-offset-2 hover:text-primary-orange-hover"
+            >
+              cooperative organization
+            </Link>
+            . In the model of sociocracy, we value worker solidarity, mutual aid, and organize to empower leadership by directly impacted workers across diverse experiences and fields.
+          </p>
+          <br/>
+          <TeamGrid members={WORKING_GROUPS} />
         </div>
 
         <div>
