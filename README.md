@@ -48,6 +48,8 @@ Those committed settings also stop mise from resolving the
 
 ### 2. Environment variables
 
+If you haven't created a blank new Supabase project for this repo, do so now.
+
 Create `.env.local` in the project root:
 
 ```env
@@ -64,36 +66,23 @@ NEXT_PUBLIC_JITSI_APP_ID=your-jaas-app-id
 
 Get the Supabase values from your project’s **Settings → API** in the Supabase dashboard. If the anon or service role keys are not shown there, check the legacy API tab.
 
-If you have not created a blank new Supabase project for this repo please do so now.
-
 ### 3. Database
 
-
-Apply migrations so the schema and RLS policies exist:
+Link the Supabase CLI to your project, then deploy local migration files to your remote project database so the schema and RLS policies exist:
 
 ```bash
+npx supabase login
+npx supabase link --project-ref <your-project-ref>
 npx supabase db push
 ```
 
-Or, if using Supabase CLI linked to your project:
+Or, to apply new local migration files to your local development database:
 
 ```bash
 npx supabase migration up
 ```
 
-**NOTE**: If the above command gives an error `Cannot find project ref. Have you run supabase link?` run these commands and then retry the above command:
-
-```bash
-npx supabase login
-```
-
-Link to your Supabase project, selecting the appropriate project:
-
-```bash
-npx supabase link
-```
-
-**NOTE**: Migrations live in `supabase/migrations/`. The legacy range `001_*.sql` → `057_*.sql` runs first in numeric order; new migrations are timestamp-named (`YYYYMMDDHHMMSS_<slug>.sql`) and sort after. See [`supabase/migrations/CONVENTIONS.md`](supabase/migrations/CONVENTIONS.md).
+**NOTE**: All database changes should live in migration files `supabase/migrations/` instead of ad-hoc queries. The legacy range `001_*.sql` → `057_*.sql` runs first in numeric order; new migrations are timestamp-named (`YYYYMMDDHHMMSS_<slug>.sql`) and sort after. See [`supabase/migrations/CONVENTIONS.md`](supabase/migrations/CONVENTIONS.md).
 
 ### 4. Run the app
 
