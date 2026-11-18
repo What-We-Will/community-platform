@@ -160,62 +160,7 @@ const WORKING_GROUPS: TeamMember[] = [
 const CORE_TEAM: TeamMember[] = [
   {
     name: "AM",
-    role: "Lead Organizer - Policy & Advocacy Working Group",
-    bio: "",
-  },
-  {
-    name: "SJ",
-    role: "Lead Organizer - Participatory Action Research Working Group",
-    bio: "",
-  },
-  {
-    name: "DH",
-    role: "Lead Organizer / Researcher",
-    bio: "",
-  },
-  {
-    name: "MM",
-    role: "Lead Organizer / Technologist",
-    bio: "",
-  },
-  {
-    name: "SS",
-    role: "Lead Organizer - Community Job Support",
-    bio: "",
-  },
-  {
-    name: "KC",
-    role: "Lead Organizer - Layoff Crisis Support",
-    bio: "",
-  },
-  {
-    name: "HJ",
-    role: "Lead Organizer - Media Team",
-    bio: "",
-  },
-  {
-    name: "EO",
-    role: "Lead Community Builder / Engineer",
-    bio: "",
-  },
-  {
-    name: "TR",
-    role: "Lead Organizer - Platform Engineering Team",
-    bio: "",
-  },
-  {
-    name: "MG",
-    role: "Researcher / Job Search Support facilitator",
-    bio: "",
-  },
-  {
-    name: "AT",
-    role: "Governance / Policy",
-    bio: "",
-  },
-  {
-    name: "CV",
-    role: "Fundraising & Grants",
+    role: "Lead Organizer - Advocacy & Policy Research",
     bio: "",
   },
   {
@@ -224,8 +169,38 @@ const CORE_TEAM: TeamMember[] = [
     bio: "",
   },
   {
+    name: "AT",
+    role: "Governance / Policy / Fundraising",
+    bio: "",
+  },
+  {
+    name: "BB",
+    role: "Community Job Support / Engineering & Policy",
+    bio: "",
+  },
+  {
+    name: "CV",
+    role: "Fundraising & Grants",
+    bio: "",
+  },
+  {
+    name: "DH",
+    role: "Lead Organizer & Participatory Action Researcher",
+    bio: "",
+  },
+  {
     name: "DM",
-    role: "Engineer / Job Search Support",
+    role: "Engineer / Community Job Support",
+    bio: "",
+  },
+  {
+    name: "EO",
+    role: "Lead Community Builder - Engineer / Job Search Council",
+    bio: "",
+  },
+  {
+    name: "HJ",
+    role: "Lead Organizer - Media & Digital Organizing Team",
     bio: "",
   },
   {
@@ -234,10 +209,35 @@ const CORE_TEAM: TeamMember[] = [
     bio: "",
   },
   {
-    name: "BB",
-    role: "Engineer / Policy",
+    name: "KC",
+    role: "Lead Organizer - Layoff Crisis Support / Organizing & Policy",
     bio: "",
   },
+  {
+    name: "MG",
+    role: "Researcher / Job Search Council facilitator",
+    bio: "",
+  },
+  {
+    name: "MM",
+    role: "Lead Organizer & Technologist / Layoff Crisis Support",
+    bio: "",
+  },
+  {
+    name: "SJ",
+    role: "Lead Organizer - Participatory Action Research",
+    bio: "",
+  },
+  {
+    name: "SS",
+    role: "Lead Organizer - Community Job Support",
+    bio: "",
+  },
+  {
+    name: "TR",
+    role: "Lead Organizer - Platform Engineering Team",
+    bio: "",
+  }
 ];
 
 function TeamCard({
