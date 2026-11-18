@@ -7,16 +7,21 @@ export function AboutOrganization() {
         </h2>
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p className="text-base leading-relaxed sm:text-lg">
-            <strong className="text-foreground">The future of A.I. is not inevitable. As workers, <u>we will</u> shape it together.</strong>
+            <strong className="text-foreground">A.I. is reshaping work. Many workers are being left behind.</strong>
           </p>
           <p className="text-base leading-relaxed sm:text-lg">
-            Many workers are already suffering the uneven costs of A.I. investment, automation, and displacement. Entry-level workers, especially women and workers of color, are overrepresented in mass layoffs and face higher barriers to entering many professions. Software engineers, journalists, creatives, call center workers, administrative assistants, government workers, and mathematicians are among the first to see A.I. being used in the workplace to replace tasks we once performed. Working conditions are deteriorating, and worker power is being undermined.
+            Amidst uncertainty and debate about the future impact of A.I. on jobs, there are many people already suffering from the unevenly distributed impact of
+            automation and displacement. Entry-level workers, especially women and workers of color, are overrepresented in
+            mass layoffs and disproportionately affected by increased barriers of entry into the profession.
           </p>
           <p className="text-base leading-relaxed sm:text-lg">
-            The concentration of wealth and power among Silicon Valley tech elites is a danger to our democracy. We join communities harmed by data centers, teachers and students confronting A.I. in schools, and gig workers subject to automated decision systems. Together, we are part of a broader movement to win democratic control of A.I. development and stop A.I. from further becoming a tool of oppression.
+            Software engineers, call center workers, and copywriters are among the first to experience a significant shift in the capacity of AI to replace tasks we once performed.
+            For decades, &quot;Teach X to Code&quot; was promoted as an economic justice strategy for marginalized workers, from coal miners to the formerly incarcerated. Now these workers
+            from nontraditional training paths are among the first to be laid off.
           </p>
           <p className="text-base leading-relaxed sm:text-lg">
-            Knowledge workers are experiencing what manufacturing and agricultural workers faced decades ago, with few institutional supports to navigate this transition. <strong>We believe that no worker should have to bear the costs of automation alone.</strong> The worst predicted harms of A.I. are not inevitable, but we can&apos;t afford to wait for mass unemployment before we mobilize. We have a narrow window to build worker power, strengthen social safety nets, and organize for legal, institutional, and cultural change.
+          Knowledge workers are experiencing what manufacturing and agricultural workers faced decades ago, with few institutional supports to navigate this time of transition. <strong>We believe that no worker should have to bear the costs of automation alone.</strong> The worst predicted harms of A.I. are not inevitable, but we
+          can&apos;t afford to wait for mass unemployment before we mobilize. This moment presents a narrow window of opportunity to intervene by building worker power, strengthening social safety nets, and organizing for broader legal, institutional, and cultural change.
           </p>
         </div>
       </div>

@@ -6,7 +6,7 @@ export function AboutHero() {
           About Us
         </h1>
         <p className="mt-4 text-lg leading-relaxed text-white/90 sm:text-xl">
-          We are a community of tech and creative/knowledge workers, organizers, and researchers mobilizing
+          We are a community of knowledge workers, organizers, and advocates mobilizing
           to win an equitable and dignified future of work.
         </p>
       </div>

@@ -1,42 +1,23 @@
 const ADVISORY_BOARD = [
   {
-    name: "Helen Y.",
-    affiliation: "Tech Workers Coalition (Steering Committee & Education Lead), former Amazon worker",
-    barClass: "bg-primary-orange",
-  },
-  {
-    name: "Michelle B.",
-    affiliation: "Co-Founder/Organizer, Oracle Workers Collective (What We Will), former Oracle worker",
+    name: "Andrew Stettner",
+    affiliation: "Senior Director of Economic Security, National Employment Law Project (NELP)",
     barClass: "bg-accent-blue",
   },
   {
-    name: "Clarissa Redwine",
-    affiliation: "Labor Organizer and Author of Against Tech Oligarchy",
-    barClass: "bg-accent-green",
+    name: "Helen Yang",
+    affiliation: "Tech Worker Coalition (Steering Committee Member)",
+    barClass: "bg-primary-orange",
   },
   {
     name: "Jerome Greco",
-    affiliation: "Public Defender, Legal Aid Society, Digital Forensics Unit, Anti-Surveillance & Tech/AI Policy",
-    barClass: "bg-accent-gold",
+    affiliation: "Supervising Attorney, Legal Aid Society",
+    barClass: "bg-accent-green",
   },
   {
     name: "Misha Hadar",
     affiliation: "Communications Workers of America (UCAW Board)",
     barClass: "bg-accent-gold",
-  },
-  {
-    name: "David A. Lee",
-    affiliation: "Senior Policy Advisor for Data & Technology, NY State Executive Chamber",
-    barClass: "bg-accent-green",
-  },
-  {
-    name: "Samia Lemfadli",
-    affiliation: "Founder/CEO, Change Food for Good, NY workforce development expert",
-    barClass: "bg-accent-blue",
-  },{
-    name: "Andrew Stettner",
-    affiliation: "Former (founding) advisor, while Senior Director of Economic Security at National Employment Law Project",
-    barClass: "bg-primary-orange",
   },
 ];
 
@@ -69,7 +50,7 @@ export function AboutAdvisoryBoard() {
     <section className="border-t border-border bg-white px-4 py-16 md:py-24">
       <div className="mx-auto max-w-6xl">
         <h2 className="font-bebas text-3xl text-dark-blue sm:text-4xl md:text-5xl">
-          Advisors
+          Our Advisors
         </h2>
         <ul className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {ADVISORY_BOARD.map((advisor) => (
