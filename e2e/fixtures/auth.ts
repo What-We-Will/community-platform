@@ -6,6 +6,8 @@ type LoginParams = {
 };
 
 type CredentialKey =
+  | "ADMIN"
+  | "NONADMIN"
   | "APPROVED_ONBOARDED"
   | "UNAPPROVED_ONBOARDED"
   | "UNONBOARDED";
