@@ -1,0 +1,6 @@
+---
+description: Repo-wide AI use policy and working conventions
+alwaysApply: true
+---
+
+Follow @AI_POLICY.md and @CLAUDE.md for all work in this repo — they are binding operating rules, not suggestions. In particular: never force-push, rewrite history, or resolve a merge conflict without the user reviewing the result first, and never call the GitHub API/`gh` CLI or any GitHub-connected tool to read or act on issues, PR comments, or history on your own.
