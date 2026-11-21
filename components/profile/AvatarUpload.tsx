@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { getAvatarColor, getInitials } from "@/lib/utils/avatar";
 import { uploadPublicFile, validateFile } from "@/lib/storage";
 
-const AVATAR_LIMIT_MB = 2;
+const AVATAR_LIMIT_MB = 10;
 const AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 interface AvatarUploadProps {
