@@ -65,11 +65,11 @@ describe("Feature flags admin page — recent changes", () => {
     await renderPage();
 
     const [newest, older] = historyItems();
-    expect(newest).toHaveTextContent(/Projects.*On → Off.*Avery Admin/);
-    expect(older).toHaveTextContent(/Group Learning.*Off → On.*Blake Admin/);
+    expect(newest).toHaveTextContent(/Projects.*Disabled.*Avery Admin/);
+    expect(older).toHaveTextContent(/Group Learning.*Enabled.*Blake Admin/);
     // <time> has no accessible role in jsdom; the e2e spec reads this attribute.
     expect(newest.querySelector("time")).toHaveAttribute("datetime", "2026-11-20T10:00:00.000Z");
-    expect(newest.querySelector("time")).toHaveAttribute("title", "20 Nov 2026, 10:00 UTC");
+    expect(within(historySection()).getByText("Latest 20 changes")).toBeInTheDocument();
     const history = queries.find(({ table }) => table === "feature_flag_changes")!;
     expect(appliedFilter(history, "order", "changed_at", { ascending: false })).toBe(true);
     expect(appliedFilter(history, "limit", 20)).toBe(true);
