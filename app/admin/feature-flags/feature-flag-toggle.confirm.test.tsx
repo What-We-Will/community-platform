@@ -77,4 +77,19 @@ describe("Feature flag toggle — confirming before turning a flag off", () => {
 
     await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
   });
+
+  it.each([
+    ["cancels with Escape", "{Escape}"],
+    ["confirms with Enter on Turn off", "{Tab}{Enter}"],
+  ])("should return keyboard focus to the switch when the admin %s", async (_case, keys) => {
+    const toggle = renderToggle(true);
+    toggle.focus();
+    await userEvent.keyboard(" ");
+    await screen.findByRole("alertdialog");
+
+    await userEvent.keyboard(keys);
+
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+    await waitFor(() => expect(toggle).toHaveFocus());
+  });
 });

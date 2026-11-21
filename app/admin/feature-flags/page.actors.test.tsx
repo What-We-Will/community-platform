@@ -73,7 +73,7 @@ describe("Feature flags admin page — who made each change", () => {
     await renderPage();
 
     const [item] = historyItems();
-    expect(item).toHaveTextContent("On → Off");
+    expect(item).toHaveTextContent("Disabled");
     expect(item).toHaveTextContent("Outside the app");
     expect(queries.some(({ table }) => table === "profiles")).toBe(false);
   });

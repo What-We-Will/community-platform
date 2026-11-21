@@ -98,13 +98,14 @@ describe("Feature flags admin page — current flag state", () => {
     expect(screen.queryAllByRole("switch")).toHaveLength(0);
   });
 
-  it("should explain propagation delay and the admin preview when the page loads", async () => {
+  it("should explain propagation delay and what admins can do in features that are off when the page loads", async () => {
     mockFlags({ data: ALL_ROWS, error: null });
 
     await renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "Feature flags" })).toBeInTheDocument();
-    expect(screen.getByText(/about 30 seconds/)).toBeInTheDocument();
+    expect(screen.getByText(/usually reach members within about 30 seconds/)).toBeInTheDocument();
+    expect(screen.getByText(/cannot make changes within them/)).toBeInTheDocument();
     expect(screen.getByText(/member account/)).toBeInTheDocument();
   });
 });

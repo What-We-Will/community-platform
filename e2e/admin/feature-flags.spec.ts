@@ -47,7 +47,7 @@ async function memberSeesProjects(member: Page) {
   return member.getByRole("link", { name: "Projects", exact: true }).isVisible();
 }
 
-const transition = (from: boolean) => `${from ? "On" : "Off"} → ${from ? "Off" : "On"}`;
+const transition = (from: boolean) => (from ? "Disabled" : "Enabled");
 
 test.describe("Admin feature flags", () => {
   // The flip test changes a site-wide flag, so runs must not overlap,

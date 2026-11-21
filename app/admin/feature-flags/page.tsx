@@ -7,7 +7,7 @@ import type { FeatureFlagChangeRow } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/utils/time";
-import { formatInTimeZone } from "@/lib/utils/timezone";
+import { ChangeTime } from "./change-time";
 import { FeatureFlagToggle } from "./feature-flag-toggle";
 import { FEATURE_FLAG_LABELS } from "./labels";
 
@@ -22,8 +22,8 @@ function labelFor(key: string): string {
     : key;
 }
 
-function stateLabel(enabled: boolean): string {
-  return enabled ? "On" : "Off";
+function actionLabel(newEnabled: boolean): string {
+  return newEnabled ? "Enabled" : "Disabled";
 }
 
 export default async function FeatureFlagsPage() {
@@ -70,15 +70,16 @@ export default async function FeatureFlagsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-10">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col-reverse items-start gap-2 sm:flex-row sm:justify-between sm:gap-4">
         <div>
           <h1 className="text-2xl font-semibold">Feature flags</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Changes reach all members within about 30 seconds.
+            Control which features are available to members. Changes usually
+            reach members within about 30 seconds.
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Admins always see every feature. Check the effect with a member
-            account.
+            Admins can still view features that are off, but cannot make
+            changes within them. Check member visibility with a member account.
           </p>
         </div>
         <Link href="/dashboard">
@@ -96,7 +97,7 @@ export default async function FeatureFlagsPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="gap-0 py-0">
           <CardContent className="p-0">
             <ul className="divide-y">
               {FLAG_KEYS.map((key) => {
@@ -127,9 +128,12 @@ export default async function FeatureFlagsPage() {
       )}
 
       <section aria-labelledby="recent-changes-heading" className="space-y-3">
-        <h2 id="recent-changes-heading" className="text-lg font-semibold">
-          Recent changes
-        </h2>
+        <div>
+          <h2 id="recent-changes-heading" className="text-lg font-semibold">
+            Recent changes
+          </h2>
+          <p className="text-sm text-muted-foreground">Latest 20 changes</p>
+        </div>
         {changesFailed ? (
           <Card>
             <CardContent role="alert" className="py-8 text-center text-muted-foreground">
@@ -139,28 +143,24 @@ export default async function FeatureFlagsPage() {
         ) : changes.length === 0 ? (
           <p className="text-sm text-muted-foreground">No changes recorded yet.</p>
         ) : (
-          <Card>
+          <Card className="gap-0 py-0">
             <CardContent className="p-0">
               <ul className="divide-y text-sm">
                 {changes.map((change) => (
                   <li
                     key={change.id}
-                    className="grid grid-cols-2 items-baseline gap-x-4 gap-y-1 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)_5.5rem]"
+                    className="grid grid-cols-2 items-baseline gap-x-4 gap-y-0.5 px-4 py-2 sm:grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)_5.5rem]"
                   >
                     <span className="font-medium">{labelFor(change.flag_key)}</span>
                     <span className="text-right sm:text-left">
-                      {stateLabel(change.old_enabled)} → {stateLabel(change.new_enabled)}
+                      {actionLabel(change.new_enabled)}
                     </span>
                     <span className="text-muted-foreground">
                       {actorFor(change.changed_by)}
                     </span>
-                    <time
-                      dateTime={change.changed_at}
-                      title={formatInTimeZone(change.changed_at, "UTC", "d MMM yyyy, HH:mm 'UTC'")}
-                      className="text-right text-muted-foreground"
-                    >
+                    <ChangeTime dateTime={change.changed_at}>
                       {formatRelativeTime(change.changed_at)}
-                    </time>
+                    </ChangeTime>
                   </li>
                 ))}
               </ul>

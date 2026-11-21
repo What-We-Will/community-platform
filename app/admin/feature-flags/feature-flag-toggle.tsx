@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { FeatureFlag } from "@/lib/feature-flags";
 import { Label } from "@/components/ui/label";
@@ -40,9 +40,24 @@ export function FeatureFlagToggle({
   const [isPending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState<keyof typeof ERROR_MESSAGES | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const returnFocusAfterSave = useRef(false);
+  const switchRef = useRef<HTMLButtonElement>(null);
   const id = `feature-flag-${flagKey}`;
 
+  // Disabling the switch while saving drops its focus to the body. Hand it back once the
+  // save ends, unless the admin has already moved focus somewhere else.
+  useEffect(() => {
+    if (!isPending && returnFocusAfterSave.current) {
+      returnFocusAfterSave.current = false;
+      const active = document.activeElement;
+      if (active === null || active === document.body) switchRef.current?.focus();
+    }
+  }, [isPending]);
+
   function submit(next: boolean) {
+    setSuccess(null);
+    returnFocusAfterSave.current = true;
     startTransition(async () => {
       let result: SetFeatureFlagResult;
       try {
@@ -55,6 +70,7 @@ export function FeatureFlagToggle({
         result = { ok: false, error: "failed" };
       }
       setError(result.ok ? null : result.error);
+      setSuccess(result.ok ? `${label} turned ${next ? "on" : "off"}.` : null);
       if (!result.ok && result.error === "conflict") router.refresh();
     });
   }
@@ -71,20 +87,39 @@ export function FeatureFlagToggle({
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-3">
         <Label htmlFor={id}>{label}</Label>
-        <Switch
-          id={id}
-          checked={enabled}
-          disabled={isPending}
-          onCheckedChange={handleCheckedChange}
-        />
+        <div className="flex items-center gap-2">
+          {/* The switch already announces its state; this text is for sighted users. */}
+          <span aria-hidden="true" className="text-sm text-muted-foreground">
+            {isPending ? "Saving…" : enabled ? "On" : "Off"}
+          </span>
+          <Switch
+            ref={switchRef}
+            id={id}
+            checked={enabled}
+            disabled={isPending}
+            onCheckedChange={handleCheckedChange}
+          />
+        </div>
       </div>
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {ERROR_MESSAGES[error]}
         </p>
       )}
+      {/* Screen readers only: sighted admins see the switch settle and the new history row.
+          Always mounted, because only changes to an existing live region are announced. */}
+      <p role="status" className="sr-only">
+        {success}
+      </p>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(event) => {
+            // The dialog has no trigger to return focus to. After a confirm the switch is
+            // disabled, so this is a no-op and the save effect restores focus instead.
+            event.preventDefault();
+            switchRef.current?.focus();
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Turn off {label}?</AlertDialogTitle>
             <AlertDialogDescription>
