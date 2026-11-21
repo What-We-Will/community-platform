@@ -1,14 +1,9 @@
 # ADR-0016 — Feature flag definitions change only through migrations
 
-**Status:** Proposed 2026-11-20
+**Status:** Accepted 2026-11-21
 **TL;DR:** Through the API, an admin can only turn a feature flag on or off. Creating, deleting or reconfiguring a flag (type, fail mode, expiry) happens only in a migration. Every on/off change is recorded in `feature_flag_changes`, with who made it and when.
 **Author:** @tonyrosario
 **Sponsoring Lead:** @tonyrosario
-
-<!--
-Merge-time checklist: flip Status to Accepted, strip all HTML comments,
-add the Index row to docs/adr/README.md.
--->
 
 ## Context
 
