@@ -1,6 +1,6 @@
 begin;
 
-select plan(28);
+select plan(34);
 
 insert into auth.users (
   instance_id,
@@ -41,11 +41,28 @@ values
     '{}'::jsonb,
     now(),
     now()
+  ),
+  (
+    '00000000-0000-0000-0000-000000000000',
+    '00000000-0000-0000-0000-000000000103',
+    'authenticated',
+    'authenticated',
+    'feature-flags-moderator@example.com',
+    'not-used-by-pgtap',
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    now(),
+    now()
   );
 
 update public.profiles
 set role = 'admin'
 where id = '00000000-0000-0000-0000-000000000102';
+
+update public.profiles
+set role = 'moderator'
+where id = '00000000-0000-0000-0000-000000000103';
 
 select is(
   (
@@ -92,39 +109,69 @@ select ok(
   'authenticated can select some feature_flags columns'
 );
 
-select ok(
-  has_column_privilege('authenticated', 'public.feature_flags', 'key', 'select')
-  and has_column_privilege('authenticated', 'public.feature_flags', 'enabled', 'select')
-  and has_column_privilege('authenticated', 'public.feature_flags', 'fail_mode', 'select')
-  and has_column_privilege('authenticated', 'public.feature_flags', 'updated_at', 'select'),
+select is(
+  array(
+    select a.attname::text
+    from pg_attribute a
+    where a.attrelid = 'public.feature_flags'::regclass
+      and a.attnum > 0
+      and not a.attisdropped
+      and has_column_privilege('authenticated', a.attrelid, a.attnum, 'select')
+    order by 1
+  ),
+  array['enabled', 'fail_mode', 'key', 'updated_at']::text[],
   'authenticated can select exactly the resolver columns'
 );
 
 select ok(
+  not has_table_privilege('authenticated', 'public.feature_flags', 'insert'),
+  'authenticated has no insert on feature flags'
+);
+
+select ok(
+  not has_table_privilege('authenticated', 'public.feature_flags', 'update'),
+  'authenticated has no table-level update on feature flags'
+);
+
+select ok(
+  not has_table_privilege('authenticated', 'public.feature_flags', 'delete'),
+  'authenticated has no delete on feature flags'
+);
+
+select ok(
   not (
-    has_column_privilege('authenticated', 'public.feature_flags', 'type', 'select')
-    or has_column_privilege('authenticated', 'public.feature_flags', 'owner', 'select')
-    or has_column_privilege('authenticated', 'public.feature_flags', 'description', 'select')
-    or has_column_privilege('authenticated', 'public.feature_flags', 'expires_at', 'select')
-    or has_column_privilege('authenticated', 'public.feature_flags', 'created_at', 'select')
-    or has_column_privilege('authenticated', 'public.feature_flags', 'seed_id', 'select')
+    has_table_privilege('authenticated', 'public.feature_flags', 'truncate')
+    or has_table_privilege('authenticated', 'public.feature_flags', 'references')
+    or has_table_privilege('authenticated', 'public.feature_flags', 'trigger')
   ),
-  'authenticated cannot select non-resolver feature_flags columns'
+  'authenticated has no truncate, references or trigger on feature flags'
 );
 
 select ok(
-  has_table_privilege('authenticated', 'public.feature_flags', 'insert'),
-  'authenticated can attempt feature flag inserts for RLS evaluation'
+  not (
+    has_any_column_privilege('anon', 'public.feature_flags', 'select')
+    or has_table_privilege('anon', 'public.feature_flags', 'insert')
+    or has_any_column_privilege('anon', 'public.feature_flags', 'update')
+    or has_table_privilege('anon', 'public.feature_flags', 'delete')
+    or has_table_privilege('anon', 'public.feature_flags', 'truncate')
+    or has_any_column_privilege('anon', 'public.feature_flags', 'references')
+    or has_table_privilege('anon', 'public.feature_flags', 'trigger')
+  ),
+  'anon has no privileges on feature flags'
 );
 
-select ok(
-  has_table_privilege('authenticated', 'public.feature_flags', 'update'),
-  'authenticated can attempt feature flag updates for RLS evaluation'
-);
-
-select ok(
-  has_table_privilege('authenticated', 'public.feature_flags', 'delete'),
-  'authenticated can attempt feature flag deletes for RLS evaluation'
+select is(
+  array(
+    select a.attname::text
+    from pg_attribute a
+    where a.attrelid = 'public.feature_flags'::regclass
+      and a.attnum > 0
+      and not a.attisdropped
+      and has_column_privilege('authenticated', a.attrelid, a.attnum, 'update')
+    order by 1
+  ),
+  array['enabled']::text[],
+  'authenticated can update exactly the enabled column'
 );
 
 select ok(
@@ -212,17 +259,37 @@ select throws_ok(
     values ('pgtapMemberInsertFeatureFlag', 'ops')
   $$,
   '42501',
-  'new row violates row-level security policy for table "feature_flags"',
+  'permission denied for table feature_flags',
   'authenticated non-admin cannot insert feature flags'
 );
 
-select is_empty(
+select throws_ok(
   $$
     delete from public.feature_flags
     where key = 'pgtapFeatureFlag'
+  $$,
+  '42501',
+  'permission denied for table feature_flags',
+  'authenticated non-admin cannot delete feature flags'
+);
+
+reset role;
+
+select set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-0000-0000-000000000103',
+  true
+);
+set local role authenticated;
+
+select is_empty(
+  $$
+    update public.feature_flags
+    set enabled = true
+    where key = 'pgtapFeatureFlag'
     returning key
   $$,
-  'authenticated non-admin cannot delete feature flags'
+  'moderator cannot update feature flags'
 );
 
 reset role;
@@ -245,24 +312,52 @@ select results_eq(
   'admin can update feature flags'
 );
 
-select results_eq(
+select is_empty(
   $$
-    insert into public.feature_flags (key, type)
-    values ('pgtapAdminInsertFeatureFlag', 'ops')
+    update public.feature_flags
+    set enabled = false
+    where key = 'pgtapFeatureFlag'
+      and updated_at = '2000-01-01T00:00:00Z'
     returning key
   $$,
-  $$ values ('pgtapAdminInsertFeatureFlag') $$,
-  'admin can insert feature flags'
+  'admin update guarded by a stale updated_at matches no row'
 );
 
 select results_eq(
+  $$ select enabled from public.feature_flags where key = 'pgtapFeatureFlag' $$,
+  $$ values (true) $$,
+  'a stale-version update leaves the flag unchanged'
+);
+
+select throws_ok(
+  $$
+    insert into public.feature_flags (key, type)
+    values ('pgtapAdminInsertFeatureFlag', 'ops')
+  $$,
+  '42501',
+  'permission denied for table feature_flags',
+  'admin cannot insert feature flags through the API role'
+);
+
+select throws_ok(
   $$
     delete from public.feature_flags
-    where key = 'pgtapAdminInsertFeatureFlag'
-    returning key
+    where key = 'pgtapFeatureFlag'
   $$,
-  $$ values ('pgtapAdminInsertFeatureFlag') $$,
-  'admin can delete feature flags'
+  '42501',
+  'permission denied for table feature_flags',
+  'admin cannot delete feature flags through the API role'
+);
+
+select throws_ok(
+  $$
+    update public.feature_flags
+    set fail_mode = 'open'
+    where key = 'pgtapFeatureFlag'
+  $$,
+  '42501',
+  'permission denied for table feature_flags',
+  'admin cannot change a flag definition through the API role'
 );
 
 select ok(
@@ -273,6 +368,10 @@ select ok(
   ),
   'raw SQL updates refresh updated_at through the shared trigger'
 );
+
+-- The constraint is checked as a privileged role: as authenticated, the
+-- missing insert privilege would fail first and the constraint would go untested.
+reset role;
 
 select throws_ok(
   $$
@@ -290,16 +389,14 @@ select results_eq(
     from pg_policies
     where schemaname = 'public' and tablename = 'feature_flags'
   $$,
-  $$ values (4) $$,
-  'feature_flags has exactly four RLS policies'
+  $$ values (2) $$,
+  'feature_flags has exactly two RLS policies'
 );
 
 select policies_are(
   'public',
   'feature_flags',
   array[
-    'Admins can delete feature flags',
-    'Admins can insert feature flags',
     'Admins can update feature flags',
     'Authenticated users can read feature flags'
   ]::name[],

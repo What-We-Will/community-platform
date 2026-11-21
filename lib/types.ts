@@ -73,6 +73,17 @@ export interface FeatureAdoptionRow {
   member_total: number;
 }
 
+// One row of feature_flag_changes as the admin page reads it. `flag_key` is a
+// plain string: history outlives flags that the code no longer knows.
+export interface FeatureFlagChangeRow {
+  id: number;
+  flag_key: string;
+  old_enabled: boolean;
+  new_enabled: boolean;
+  changed_by: string | null;
+  changed_at: string;
+}
+
 // ─── Messaging ───────────────────────────────────────────────────────────────
 
 export interface Conversation {

@@ -147,6 +147,7 @@ If a convention conflicts with an accepted ADR, the ADR wins until a new ADR sup
 | [0013](./0013-posthog-product-analytics.md) | PostHog for product analytics | Accepted 2026-09-25 | — | @tonyrosario |
 | [0014](./0014-calver-release-tags.md) | Calendar versioning for production release tags | Accepted 2026-09-04 | — | @tonyrosario |
 | [0015](./0015-verify-required-check-alongside-security-scan.md) | `verify` as a second required check on `main` | Accepted 2026-11-11 | Partially amends [0003](./0003-pre-merge-supply-chain-gate.md) | @tonyrosario |
+| [0016](./0016-flag-definitions-via-migrations.md) | Feature flag definitions change only through migrations | Accepted 2026-11-21 | Sits alongside [0011](./0011-feature-flags-not-an-authorization-boundary.md) | @tonyrosario |
 
 <!--
 Keep the index sorted by number ascending. Superseded and Rejected ADRs stay

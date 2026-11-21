@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import type { AnalyticsBrowserEvent } from "@/lib/analytics/types";
+import { FLAG_KEYS, type FeatureFlag } from "@/lib/feature-flag-keys";
 import type { FeatureFlagRow } from "@/lib/feature-flags";
 import { FEATURE_KEYS } from "@/lib/feature-keys";
 import type {
@@ -7,6 +8,7 @@ import type {
   Event,
   EventRsvp,
   FeatureAdoptionRow,
+  FeatureFlagChangeRow,
   PollWithDetails,
   Profile,
 } from "@/lib/types";
@@ -14,6 +16,8 @@ import type { ScheduleRow } from "@/lib/utils/weekly-schedule";
 import type { Application } from "@/app/(app)/tracker/TrackerClient";
 import type { completeOnboarding } from "@/app/onboarding/actions";
 import type OnboardingForm from "@/app/onboarding/onboarding-form";
+import type { setFeatureFlagEnabled } from "@/app/admin/feature-flags/actions";
+import type AppShell from "@/app/(app)/app-shell";
 import type { MockQueryResult } from "./supabase-mock";
 
 type PostgrestError = NonNullable<MockQueryResult["error"]>;
@@ -123,6 +127,67 @@ export function makeFeatureFlagRow(
     updated_at: "2026-07-30T00:00:00.000Z",
     ...overrides,
   };
+}
+
+export function makeFeatureFlagChangeRow(
+  overrides: Partial<FeatureFlagChangeRow> = {}
+): FeatureFlagChangeRow {
+  return {
+    id: 1,
+    flag_key: "projects",
+    old_enabled: false,
+    new_enabled: true,
+    changed_by: "user-1",
+    changed_at: "2026-11-20T10:00:00.000Z",
+    ...overrides,
+  };
+}
+
+type SetFeatureFlagInput = Parameters<typeof setFeatureFlagEnabled>[0];
+
+export function makeSetFeatureFlagInput(
+  overrides: Partial<SetFeatureFlagInput> = {}
+): SetFeatureFlagInput {
+  return {
+    key: "projects",
+    enabled: true,
+    expectedUpdatedAt: "2026-11-20T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+type AppShellUser = ComponentProps<typeof AppShell>["user"];
+
+export function makeAppShellUser(
+  overrides: Partial<AppShellUser> = {}
+): AppShellUser {
+  return {
+    id: "user-1",
+    email: "member@example.com",
+    displayName: "Member One",
+    avatarUrl: null,
+    unreadCount: 0,
+    ...overrides,
+  };
+}
+
+/** Every flag hidden unless overridden. */
+export function makeVisibleFlags(
+  overrides: Partial<Record<FeatureFlag, boolean>> = {}
+): Record<FeatureFlag, boolean> {
+  return {
+    ...(Object.fromEntries(FLAG_KEYS.map((key) => [key, false])) as Record<
+      FeatureFlag,
+      boolean
+    >),
+    ...overrides,
+  };
+}
+
+export function makeProfileNameRow(
+  overrides: Partial<Pick<Profile, "id" | "display_name">> = {}
+): Pick<Profile, "id" | "display_name"> {
+  return { id: "user-1", display_name: "Test User", ...overrides };
 }
 
 export function makeAdoptionRow(

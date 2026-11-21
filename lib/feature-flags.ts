@@ -7,16 +7,9 @@ import "server-only";
 
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { FLAG_KEYS, type FeatureFlag } from "@/lib/feature-flag-keys";
 
-export const FLAG_KEYS = [
-  "jobApplicationTracker",
-  "learningTracker",
-  "ghostJobBoard",
-  "groupLearning",
-  "projects",
-] as const;
-
-export type FeatureFlag = (typeof FLAG_KEYS)[number];
+export { FLAG_KEYS, type FeatureFlag };
 
 export type FlagContext = {
   targetingKey: string;
@@ -64,6 +57,8 @@ export const SCOPE_CHAIN: readonly ScopeLevel[] = ["site"];
 let lastKnownGood:
   | { snapshot: FlagSnapshot; refreshedAt: number }
   | undefined;
+// Bumped on invalidation so a read already in flight cannot cache pre-flip data.
+let snapshotGeneration = 0;
 
 function isFeatureFlagKey(value: string): value is FeatureFlag {
   return FLAG_KEY_SET.has(value);
@@ -111,6 +106,7 @@ async function readFlagSnapshot(
     return lastKnownGood.snapshot;
   }
 
+  const generation = snapshotGeneration;
   const { data, error } = await supabase
     .from("feature_flags")
     .select("key, enabled, fail_mode, updated_at");
@@ -120,7 +116,9 @@ async function readFlagSnapshot(
   }
 
   const snapshot = validateSnapshot(data);
-  lastKnownGood = { snapshot, refreshedAt: now };
+  if (generation === snapshotGeneration) {
+    lastKnownGood = { snapshot, refreshedAt: now };
+  }
   return snapshot;
 }
 
@@ -278,6 +276,9 @@ export async function canMutateFeature(
   );
 }
 
-export function resetFeatureFlagCacheForTests() {
+export function invalidateFlagSnapshot(): void {
+  snapshotGeneration += 1;
   lastKnownGood = undefined;
 }
+
+export const resetFeatureFlagCacheForTests = invalidateFlagSnapshot;
