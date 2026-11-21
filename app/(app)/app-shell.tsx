@@ -24,6 +24,7 @@ import {
   MessageSquare,
   UsersRound,
   Bug,
+  Flag,
   type LucideIcon,
 } from "lucide-react";
 import type { FeatureFlag } from "@/lib/feature-flags";
@@ -89,6 +90,7 @@ const profileNavItems: NavItem[] = [
 const adminNavItems: NavItem[] = [
   { href: "/admin/approvals", label: "Approvals", icon: ShieldCheck },
   { href: "/admin/feature-preferences", label: "Feature preferences", icon: SlidersHorizontal },
+  { href: "/admin/feature-flags", label: "Feature flags", icon: Flag },
 ];
 
 /**

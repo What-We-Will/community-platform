@@ -96,7 +96,7 @@ The auth specs need real users in **your own Supabase project**. 🛑 Never poin
 
 Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `.env.local` to your personal project. If you don't have one, create a free project at [supabase.com](https://supabase.com), run the migrations in `supabase/migrations/` against it, and use those credentials.
 
-### 2. Create the three test users via the signup flow
+### 2. Create the five test users via the signup flow
 
 Run `npm run dev`, go to `/signup`, and create:
 
@@ -105,6 +105,8 @@ Run `npm run dev`, go to `/signup`, and create:
 | Approved     | `you+e2e-approved@example.com`              |
 | Unapproved   | `you+e2e-unapproved@example.com`            |
 | Unonboarded  | `you+e2e-unonboarded@example.com`           |
+| Admin        | `you+e2e-admin@example.com`                 |
+| Non-admin    | `you+e2e-member@example.com`                |
 
 Use any password you'll remember — you'll put them in `.env.e2e` next.
 
@@ -115,13 +117,15 @@ Use any password you'll remember — you'll put them in `.env.e2e` next.
 The `handle_new_user` trigger creates a profile row on signup with default state. Each test user needs an explicit profile state so the test isn't coupled to whatever the trigger defaults happen to be. Run this in the Supabase SQL editor:
 
 ```sql
--- Confirm all three emails so sign-in works
+-- Confirm all four emails so sign-in works
 UPDATE auth.users
 SET email_confirmed_at = now()
 WHERE email IN (
   'you+e2e-approved@example.com',
   'you+e2e-unapproved@example.com',
-  'you+e2e-unonboarded@example.com'
+  'you+e2e-unonboarded@example.com',
+  'you+e2e-admin@example.com',
+  'you+e2e-member@example.com'
 )
 AND email_confirmed_at IS NULL;
 
@@ -141,7 +145,23 @@ UPDATE public.profiles
 SET is_onboarded = false,
     approval_status = 'approved'
 WHERE id = (SELECT id FROM auth.users WHERE email = 'you+e2e-unonboarded@example.com');
+
+-- Admin user: onboarded, approved, and an admin, so it can reach /admin/*
+UPDATE public.profiles
+SET is_onboarded = true,
+    approval_status = 'approved',
+    role = 'admin'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'you+e2e-admin@example.com');
+
+-- Non-admin user: onboarded and approved, role explicitly member, for specs that need a plain member
+UPDATE public.profiles
+SET is_onboarded = true,
+    approval_status = 'approved',
+    role = 'member'
+WHERE id = (SELECT id FROM auth.users WHERE email = 'you+e2e-member@example.com');
 ```
+
+The admin specs change shared state: `e2e/admin/feature-flags.spec.ts` flips the `projects` flag and puts it back afterwards. Run them only against your own project.
 
 **Why these states?** The `proxy.ts` router checks `is_onboarded` first, then `approval_status`. So:
 
@@ -155,7 +175,7 @@ WHERE id = (SELECT id FROM auth.users WHERE email = 'you+e2e-unonboarded@example
 cp .env.e2e.example .env.e2e
 ```
 
-Fill in the six values with the emails and passwords from step 2. `.env.e2e` is gitignored — never commit it.
+Fill in the ten values with the emails and passwords from step 2 (`PW_E2E_ADMIN_*` for the admin user, `PW_E2E_NONADMIN_*` for the non-admin user). `.env.e2e` is gitignored — never commit it.
 
 ### 5. Run the tests
 
